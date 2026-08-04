@@ -360,6 +360,7 @@
       <button id="mt1" onclick="switchTab(1)">分析</button>
       <button id="mt2" onclick="switchTab(2)">交易</button>
       <button id="mt3" onclick="switchTab(3)">债券</button>
+      <button id="mt4" onclick="switchTab(4)">个股</button>
     </div>
 
     <!-- Tab 0: 持仓 -->
@@ -451,6 +452,11 @@
       <div id="bondContent"></div>
     </div>
 
+    <!-- Tab 4: 个股 -->
+    <div class="tab-panel" id="tp4">
+      <div id="stockContent"></div>
+    </div>
+
   </div>
 
   <!-- ================= 详情页 ================= -->
@@ -529,10 +535,11 @@ document.addEventListener('click', function(e){ if(!e.target.closest('.more-menu
 let activeTab=0;
 function switchTab(i){
   activeTab=i;
-  [0,1,2,3].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
+  [0,1,2,3,4].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
   if(i===2){ renderTrade(); renderTimelines(); }
   if(i===3){ renderBond(); }
+  if(i===4){ renderStocks(); fetchStockQuotes(); }
 }
 
 function setSort(s){
@@ -956,8 +963,8 @@ function renderTimelines(){
 function buildFundsView(){
   // 复合键 (账户||基金名)：同一基金可在多个账户分别持有
   const keys=[...new Set([
-    ...snaps.map(s=>accKey(accOf(s),s.name)),
-    ...trades.map(t=>accKey(accOf(t),t.name))
+    ...snaps.filter(s=>(s.type||'fund')!=='stock').map(s=>accKey(accOf(s),s.name)),
+    ...trades.filter(t=>(t.type||'fund')!=='stock').map(t=>accKey(accOf(t),t.name))
   ])].map(k=>{ const i=k.indexOf('||'); return {acc:k.slice(0,i), name:k.slice(i+2)}; }).filter(x=>x.name);
   const all=keys.map(({acc,name})=>{
     const tr=trades.filter(t=>accOf(t)===acc && t.name===name);
@@ -1070,6 +1077,7 @@ function render(){
     if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
     if(activeTab===2){ renderTrade(); renderTimelines(); }
     if(activeTab===3){ renderBond(); }
+    if(activeTab===4){ renderStocks(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
   restoreFocus();
 }
@@ -1766,8 +1774,8 @@ function parseCSV(text){
   if(!lines.length) return 0;
   const split=l=>l.split(l.includes('\t')?/\t+/:/[,，]/).map(s=>s.trim().replace(/^"|"$/g,''));
   const head=split(lines[0]);
-  const col={name:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1};
-  const kw={ name:['名称','基金','代码','标的'], date:['日期','时间','买入日','成交日'], type:['方向','类型','买卖','操作'], amount:['金额','份额金额','成交金额','资金','金额(元)','金额元'], nav:['净值','单价','成交净值','单位净值'], fee:['费用','手续费','佣金','申购费','赎回费'], account:['账户','账号','平台','来源'] };
+  const col={name:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1};
+  const kw={ name:['名称','基金','代码','标的'], date:['日期','时间','买入日','成交日'], type:['方向','类型','买卖','操作'], amount:['金额','份额金额','成交金额','资金','金额(元)','金额元'], nav:['净值','单价','成交净值','单位净值'], fee:['费用','手续费','佣金','申购费','赎回费'], account:['账户','账号','平台','来源'], market:['市场','交易所','地区'], code:['代码','代号','证券代码','ticker'], shares:['股数','数量','持股数','股份'], price:['价格','成交价','现价','市价'] };
   const find=(arr)=>{ for(let i=0;i<head.length;i++){ if(arr.some(k=>head[i].includes(k))) return i; } return -1; };
   Object.keys(kw).forEach(k=>col[k]=find(kw[k]));
   const guessType=(s)=>{ const v=String(s||'').toLowerCase(); if(/买|申购|定投/.test(v)) return 'buy'; if(/卖|赎/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; if(/拆/.test(v)) return 'split'; return 'buy'; };
@@ -1778,6 +1786,20 @@ function parseCSV(text){
   for(let i=start;i<lines.length;i++){
     const c=split(lines[i]);
     if(c.length<2) continue;
+    if(col.market>=0){
+      const m=stockMktFromText(c[col.market]); if(!m){ continue; }
+      const codeRaw=col.code>=0?c[col.code]:(col.name>=0?c[col.name]:'');
+      const nameS=col.name>=0?c[col.name]:codeRaw;
+      const dateS=col.date>=0?c[col.date]:'';
+      const tt=col.type>=0?guessType(c[col.type]):'buy';
+      const sh=col.shares>=0?parseFloat(String(c[col.shares]).replace(/[^\d.\-]/g,''))||0:0;
+      const pr=col.price>=0?parseFloat(String(c[col.price]).replace(/[^\d.\-]/g,''))||0:0;
+      const feS=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
+      const amtS=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
+      if(!(sh||pr||amtS)) continue;
+      added.push({type:'stock',market:m,code:codeRaw,name:nameS,date:dateS,ttype:tt,shares:sh,price:pr,fee:feS,amount:amtS});
+      continue;
+    }
     const name=col.name>=0?c[col.name]:''; if(!name) continue;
     const date=col.date>=0?c[col.date]:'';
     const type=col.type>=0?guessType(c[col.type]):'buy';
@@ -1793,6 +1815,160 @@ function parseCSV(text){
 }
 function clearAll(){ if(confirm('确定要清空所有数据吗？\n\n将删除全部持仓、交易流水与手动净值，且不可恢复（已保存的本地数据也会被覆盖）。\n\n建议先点「💾 保存下载」备份。')){ snaps=[]; trades=[]; navCache={}; localStorage.removeItem('ft_data'); renderTrade(); compute(); toast('已清空所有数据'); } }
 function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); }
+
+
+// ================= 个股追踪 =================
+// 与基金共用 trades/snaps 数组，用 type:'stock' 区分；行情复用腾讯 gtimg + parseQt（A/HK/US 通用）
+const STOCK_CCY={A:'CNY',HK:'HKD',US:'USD'};
+const STOCK_CCY_SYM={CNY:'¥',HKD:'HK$',USD:'$'};
+const STOCK_MKT_NAME={A:'A股',HK:'港股',US:'美股'};
+function stockGtimgCode(o){
+  const m=o.market, c=String(o.code||'').replace(/\s/g,'');
+  if(m==='A'){ const d=c.replace(/\D/g,''); if(/^6/.test(d)) return 'sh'+d; if(/^[03]/.test(d)) return 'sz'+d; if(/^[48]/.test(d)) return 'bj'+d; return 'sh'+d; }
+  if(m==='HK'){ return 'hk'+c.replace(/\D/g,'').padStart(5,'0'); }
+  if(m==='US'){ return 'us'+c.toUpperCase(); }
+  return c;
+}
+function stockCurrency(m){ return STOCK_CCY[m]||'CNY'; }
+function stockMktFromText(t){ const v=String(t||''); if(/美|US|美股|纳斯达克|纽|道琼/i.test(v)) return 'US'; if(/港|HK|港股/i.test(v)) return 'HK'; if(/A股|A|沪|深|沪深/i.test(v)) return 'A'; return null; }
+let stockQuotes={};          // gtimgCode -> {price,chg,pct,ts}
+let _allStocks=[];
+function buildStocksView(){
+  const stockSnaps=snaps.filter(s=>(s.type||'fund')==='stock');
+  const stockTrades=trades.filter(t=>(t.type||'fund')==='stock');
+  const map={};
+  const ensure=(market,code)=>{ const k=market+'|'+code; if(!map[k]) map[k]={market,code,snap:null,tr:[]}; return map[k]; };
+  stockSnaps.forEach(s=>{ const e=ensure(s.market||'A',String(s.code)); e.snap=s; });
+  stockTrades.forEach(t=>{ const e=ensure(t.market||'A',String(t.code)); e.tr.push(t); });
+  const all=Object.values(map).map(e=>{
+    const {market,code,snap,tr}=e;
+    const name=(snap&&snap.name)||(tr[0]&&tr[0].name)||code;
+    let f;
+    if(tr.length){
+      let shares=0,cost=0,firstDate=null,realized=0;
+      [...tr].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(t=>{
+        const ty=t.ttype||'buy', sh=+t.shares||0, price=+t.price||0, fee=+t.fee||0;
+        if(ty==='buy'){ shares+=sh; cost+=sh*price+fee; }
+        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(price-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } cost-=fee; }
+        else if(ty==='dividend'){ const amt=+t.amount||0; cost=Math.max(0,cost-amt); realized+=amt; }
+        if(shares<0) shares=0; if(cost<0) cost=0;
+        if(!firstDate||(t.date&&t.date<firstDate)) firstDate=t.date;
+      });
+      const q=stockQuotes[stockGtimgCode({market,code})];
+      const px=q?q.price:(snap&&snap.lastPx)||0;
+      const mv=shares*px, profit=mv-cost, ret=cost>0?profit/cost*100:0;
+      f={market,code,name,shares,cost,costPx:shares?cost/shares:0,price:px,chg:q?q.chg:null,pct:q?q.pct:null,mv,profit,ret,realized,trades:tr};
+    } else if(snap){
+      const px=snap.lastPx||0, shares=snap.shares||0, costPx=snap.costPx||0, cost=shares*costPx;
+      const mv=shares*px, profit=mv-cost, ret=cost>0?profit/cost*100:0;
+      f={market,code,name,shares,cost,costPx,price:px,chg:null,pct:null,mv,profit,ret,realized:0,trades:[]};
+    } else { f={market,code,name,shares:0,cost:0,costPx:0,price:0,chg:null,pct:null,mv:0,profit:0,ret:0,realized:0,trades:[]}; }
+    return f;
+  });
+  _allStocks=all;
+  return all;
+}
+function fmtC(ccy,v){ return (STOCK_CCY_SYM[ccy]||'')+(v==null?'—':fmt(v)); }
+function qty(n){ return (n%1===0)?String(n):fmt(n); }
+function fetchStockQuotes(){
+  const all=buildStocksView();
+  const codes=[...new Set(all.map(f=>stockGtimgCode(f)))];
+  if(!codes.length){ renderStocks(); return; }
+  if(window._stockScript&&window._stockScript.parentNode) window._stockScript.parentNode.removeChild(window._stockScript);
+  const sc=document.createElement('script');
+  sc.src='https://qt.gtimg.cn/q='+codes.join(',');
+  sc.onload=()=>{ codes.forEach(code=>{ const raw=window['v_'+code]; if(raw) stockQuotes[code]=parseQt(raw); }); renderStocks(); };
+  sc.onerror=()=>{ toast('行情源未连接（腾讯财经），稍后点刷新重试'); };
+  window._stockScript=sc; document.body.appendChild(sc);
+}
+function renderStocks(){
+  const box=document.getElementById('stockContent'); if(!box) return;
+  const all=buildStocksView();
+  const groups={}; all.forEach(f=>{ const ccy=stockCurrency(f.market); (groups[ccy]=groups[ccy]||[]).push(f); });
+  const ccyOrder=['CNY','HKD','USD'].filter(c=>groups[c]&&groups[c].length);
+  let html='<div class="sec-head"><h2 style="margin:0;font-size:15px">个股追踪</h2>'
+         +'<span class="hint" style="font-size:11px">A股/港股/美股 · 按原币种展示（不折算）</span>'
+         +'<button class="btn sm" style="margin-left:auto" onclick="fetchStockQuotes()">↻ 刷新行情</button>'
+         +'<button class="btn sm" onclick="loadStockSample()">载入示例</button></div>';
+  if(!ccyOrder.length){
+    html+='<div class="card"><p class="hint">还没有个股持仓。点「载入示例」看演示（茅台/腾讯/苹果），或在下方交易流水手动记一笔。</p></div>';
+    html+=renderStockTrades();
+    box.innerHTML=html; return;
+  }
+  ccyOrder.forEach(c=>{
+    const fs=groups[c];
+    const mv=fs.reduce((a,f)=>a+f.mv,0), fl=fs.reduce((a,f)=>a+f.profit,0), rl=fs.reduce((a,f)=>a+(f.realized||0),0);
+    html+='<div class="card"><div class="sec-head"><h3 style="margin:0;font-size:13px">'+c+' 持仓概览</h3>'
+         +'<span class="hint" style="font-size:11px">'+fs.length+' 只</span></div><div class="mcards">'
+         +'<div class="mcard"><p class="lbl">市值</p><p class="val">'+fmtC(c,mv)+'</p></div>'
+         +'<div class="mcard"><p class="lbl">浮动盈亏</p><p class="val '+(fl>=0?'pos':'neg')+'">'+(fl>=0?'+':'')+fmtC(c,fl)+'</p></div>'
+         +'<div class="mcard"><p class="lbl">已实现盈亏</p><p class="val '+(rl>=0?'pos':'neg')+'">'+(rl>=0?'+':'')+fmtC(c,rl)+'</p></div>'
+         +'</div></div>';
+  });
+  ccyOrder.forEach(c=>{
+    const fs=groups[c].slice().sort((a,b)=>b.mv-a.mv);
+    html+='<div class="card"><div class="sec-head"><h3 style="margin:0;font-size:13px">'+c+' · 持仓明细</h3></div>'
+         +'<table class="hk-table"><thead><tr><th>代码/名称</th><th>市场</th><th>现价</th><th>今日</th><th>持仓</th><th>成本均价</th><th>市值</th><th>浮动盈亏</th><th>已实现</th></tr></thead><tbody>';
+    fs.forEach(f=>{
+      const gcls=f.pct>0?'pos':(f.pct<0?'neg':'zero'), arrow=f.pct>0?'▲':(f.pct<0?'▼':'');
+      html+='<tr>'
+        +'<td><b>'+esc(f.code)+'</b><br><span class="hint" style="font-size:11px">'+esc(f.name)+'</span></td>'
+        +'<td>'+STOCK_MKT_NAME[f.market]+'</td>'
+        +'<td>'+(f.price?fmt(f.price):'—')+'</td>'
+        +'<td class="'+gcls+'">'+(f.pct!=null?arrow+Math.abs(f.pct).toFixed(2)+'%':'—')+'</td>'
+        +'<td>'+qty(f.shares)+'</td>'
+        +'<td>'+(f.costPx?fmt(f.costPx):'—')+'</td>'
+        +'<td>'+fmtC(c,f.mv)+'</td>'
+        +'<td class="'+(f.profit>=0?'pos':'neg')+'">'+(f.profit>=0?'+':'')+fmtC(c,f.profit)+'<br><span class="hint" style="font-size:11px">'+f.ret.toFixed(2)+'%</span></td>'
+        +'<td class="'+(f.realized>=0?'pos':'neg')+'">'+fmtC(c,f.realized||0)+'</td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  html+=renderStockTrades();
+  box.innerHTML=html;
+}
+function renderStockTrades(){
+  const st=trades.filter(t=>(t.type||'fund')==='stock');
+  const mkTypes=[['buy','买入'],['sell','卖出'],['dividend','现金分红']];
+  const mkMkt=[['A','A股'],['HK','港股'],['US','美股']];
+  let h='<div class="card"><div class="sec-head"><h3 style="margin:0;font-size:13px">交易流水（个股）</h3>'
+       +'<button class="btn sm" onclick="addStockTradeRow()">+ 记一笔</button></div>';
+  h+='<table class="hk-table"><thead><tr><th>市场</th><th>代码</th><th>名称</th><th>日期</th><th>方向</th><th>股数</th><th>价格</th><th>费用</th><th>分红金额</th><th></th></tr></thead><tbody>';
+  st.forEach(t=>{
+    const ri=trades.indexOf(t);
+    h+='<tr>'
+      +'<td><select onchange="trades['+ri+'].market=this.value;compute();silentSave()">'+mkMkt.map(([v,l])=>'<option value="'+v+'" '+((t.market||'A')===v?'selected':'')+'>'+l+'</option>').join('')+'</select></td>'
+      +'<td><input value="'+esc(t.code||'')+'" oninput="trades['+ri+'].code=this.value;compute();silentSave()"></td>'
+      +'<td><input value="'+esc(t.name||'')+'" oninput="trades['+ri+'].name=this.value;compute();silentSave()"></td>'
+      +'<td><input value="'+esc(t.date||'')+'" placeholder="2026-01-15" oninput="trades['+ri+'].date=this.value;compute();silentSave()"></td>'
+      +'<td><select onchange="trades['+ri+'].ttype=this.value;compute();silentSave()">'+mkTypes.map(([v,l])=>'<option value="'+v+'" '+((t.ttype||'buy')===v?'selected':'')+'>'+l+'</option>').join('')+'</select></td>'
+      +'<td><input type="number" step="any" value="'+(t.shares||'')+'" oninput="trades['+ri+'].shares=+this.value;compute();silentSave()"></td>'
+      +'<td><input type="number" step="any" value="'+(t.price||'')+'" oninput="trades['+ri+'].price=+this.value;compute();silentSave()"></td>'
+      +'<td><input type="number" step="any" value="'+(t.fee||'')+'" oninput="trades['+ri+'].fee=+this.value;compute();silentSave()"></td>'
+      +'<td><input type="number" step="any" value="'+(t.amount||'')+'" oninput="trades['+ri+'].amount=+this.value;compute();silentSave()" title="仅分红填"></td>'
+      +'<td><button class="del" onclick="trades.splice('+ri+',1);compute();silentSave();fetchStockQuotes()">✕</button></td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  h+='<p class="hint" style="font-size:11px">买入/卖出填「股数+价格」（如 100 股 @1500）；现金分红填「分红金额」（降成本并计入已实现）。代码：A股 6 位(600519)、港股 5 位(00700)、美股 ticker(AAPL)。行情来自腾讯财经，切到本页或点「↻ 刷新行情」自动拉取。</p></div>';
+  return h;
+}
+function addStockTradeRow(){
+  trades.push({type:'stock',market:'A',code:'',name:'',date:new Date().toISOString().slice(0,10),ttype:'buy',shares:0,price:0,fee:0,amount:0});
+  compute(); silentSave(); if(activeTab===4) renderStocks();
+}
+function loadStockSample(){
+  const ss=[
+    {type:'stock',market:'A',code:'600519',name:'贵州茅台',date:'2025-06-10',ttype:'buy',shares:100,price:1500,fee:0},
+    {type:'stock',market:'A',code:'600519',name:'贵州茅台',date:'2026-03-15',ttype:'sell',shares:30,price:1700,fee:5},
+    {type:'stock',market:'HK',code:'00700',name:'腾讯控股',date:'2025-09-01',ttype:'buy',shares:200,price:350,fee:0},
+    {type:'stock',market:'HK',code:'00700',name:'腾讯控股',date:'2026-05-20',ttype:'dividend',amount:800,fee:0},
+    {type:'stock',market:'US',code:'AAPL',name:'苹果',date:'2025-11-12',ttype:'buy',shares:20,price:190,fee:1}
+  ];
+  trades=trades.concat(ss);
+  renderTrade(); compute(); silentSave(); switchTab(4); toast('已载入个股示例（茅台/腾讯/苹果）');
+}
 
 // ---------- ANALYSIS 数据对象（详情页内联渲染）----------
 const HOLD022=[

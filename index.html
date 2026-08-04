@@ -46,6 +46,52 @@
   .loading { font-size: 12px; color: #8a8f99; }
   @media (max-width: 680px){ .cards4{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;} }
 
+  /* ================= 📱 手机端深度适配 ================= */
+  @media (max-width: 768px) {
+    .wrap { padding: 14px 12px 24px; }
+    h1 { font-size: 18px; }
+    .sub { font-size: 12px; margin-bottom: 14px; }
+
+    /* 概览卡片 2x2 */
+    .cards4 { grid-template-columns: repeat(2,1fr); gap: 8px; }
+    .mcard { padding: 12px; }
+    .mcard .val { font-size: 18px; }
+
+    /* 图表单列 + 限高 */
+    .grid2 { grid-template-columns: 1fr; gap: 14px; }
+    .grid2 .card { padding: 14px; }
+    .chart-box { height: 210px !important; }
+
+    /* 卡片间距收紧 */
+    .card { padding: 14px; margin-bottom: 14px; }
+
+    /* 表格横向平滑滚动（快照/流水用） */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-scroll table { min-width: 660px; }
+    #detailTable { min-width: 0; }   /* 明细表走卡片流，不横滚 */
+
+    /* 输入框：16px 防 iOS 缩放 + 大点按区 */
+    td input, td select { font-size: 16px !important; padding: 9px 6px !important; }
+    #lock input { font-size: 16px; }
+
+    /* 操作按钮换行 + 大点按区 */
+    .toolbar { flex-wrap: wrap; gap: 6px; }
+    .toolbar .btn { padding: 10px 10px; font-size: 13px; flex: 1 1 auto; min-height: 42px; }
+
+    /* 诊断建议紧凑 */
+    .advice { font-size: 13px; padding: 9px 12px; }
+  }
+
+  /* 持仓明细表 → 手机卡片流 */
+  @media (max-width: 768px) {
+    #detailTable thead { display: none; }
+    #detailTable, #detailTable tbody, #detailTable tr, #detailTable td { display: block; width: 100%; }
+    #detailTable tr { background:#fff; border:1px solid #ebedf0; border-radius:10px; padding:8px 12px; margin-bottom:10px; }
+    #detailTable td { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #f3f4f6; text-align:right; }
+    #detailTable td:last-child { border-bottom:none; }
+    #detailTable td::before { content: attr(data-label); color:#8a8f99; font-size:12px; font-weight:500; text-align:left; margin-right:12px; }
+  }
+
   /* ---------- 打印 / 导出 PDF 优化 ---------- */
   @media print {
     body { background:#fff; }
@@ -80,19 +126,23 @@
 
     <h2>当前持仓快照 <span class="tag">从你的截图/App抄这里</span></h2>
     <p class="hint">把基金 App 里的「市值」和「持有收益率」抄过来即可。想更精细就填下面的「交易流水」。</p>
+    <div class="table-scroll">
     <table id="snapTable">
       <thead><tr><th style="width:38%">基金名称</th><th style="width:16%">类别</th><th class="num">当前市值(元)</th><th class="num">持有收益率(%)</th><th style="width:14%">最新净值</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
+    </div>
   </div>
 
   <div class="card">
     <h2>交易流水（进阶） <span class="tag">记买卖点 · 用于单只复盘</span></h2>
     <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，覆盖上面的快照收益率。</p>
+    <div class="table-scroll">
     <table id="tradeTable">
       <thead><tr><th style="width:30%">基金名称</th><th>日期</th><th>方向</th><th class="num">金额(元)</th><th class="num">当时净值</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
+    </div>
   </div>
 
   <div class="card">
@@ -102,21 +152,23 @@
   <div class="grid2">
     <div class="card">
       <h2>资产配置</h2>
-      <div style="position:relative;height:240px"><canvas id="pie" role="img" aria-label="资产配置饼图"></canvas></div>
+      <div class="chart-box" style="position:relative;height:240px"><canvas id="pie" role="img" aria-label="资产配置饼图"></canvas></div>
       <div class="legend" id="pieLegend"></div>
     </div>
     <div class="card">
       <h2>盈亏分布</h2>
-      <div style="position:relative;height:240px"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div>
+      <div class="chart-box" style="position:relative;height:240px"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div>
     </div>
   </div>
 
   <div class="card">
     <h2>持仓明细</h2>
+    <div class="table-scroll">
     <table id="detailTable">
       <thead><tr><th>基金名称</th><th>类别</th><th class="num">市值</th><th class="num">成本</th><th class="num">收益</th><th class="num">收益率</th><th class="num">持有天数</th><th>信号</th></tr></thead>
       <tbody></tbody>
     </table>
+    </div>
   </div>
 
   <div class="card">
@@ -272,8 +324,8 @@ function renderSnap(){
     tb.innerHTML += `<tr>
       <td><input value="${s.name}" oninput="snaps[${i}].name=this.value;compute();silentSave()"></td>
       <td><input value="${s.cat||''}" oninput="snaps[${i}].cat=this.value;compute();silentSave()"></td>
-      <td class="num"><input class="num" type="number" value="${s.mv}" oninput="snaps[${i}].mv=+this.value;compute();silentSave()"></td>
-      <td class="num"><input class="num" type="number" value="${s.ret}" oninput="snaps[${i}].ret=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" step="any" inputmode="decimal" value="${s.mv}" oninput="snaps[${i}].mv=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" step="any" inputmode="decimal" value="${s.ret}" oninput="snaps[${i}].ret=+this.value;compute();silentSave()"></td>
       <td><input value="${navCache[s.name]?navCache[s.name].nav:''}" placeholder="自动" oninput="navCache[snaps[${i}].name]={nav:+this.value,date:'手动'};compute();silentSave()"></td>
       <td><button class="del" onclick="snaps.splice(${i},1);renderSnap();compute();silentSave()">✕</button></td>
     </tr>`;
@@ -287,8 +339,8 @@ function renderTrade(){
       <td><input value="${t.name}" oninput="trades[${i}].name=this.value;compute();silentSave()"></td>
       <td><input value="${t.date}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
       <td><select onchange="trades[${i}].type=this.value;compute();silentSave()"><option ${t.type==='buy'?'selected':''}>buy</option><option ${t.type==='sell'?'selected':''}>sell</option></select></td>
-      <td class="num"><input class="num" type="number" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
-      <td class="num"><input class="num" type="number" value="${t.nav||''}" placeholder="买时净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="买时净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
       <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
     </tr>`;
   });
@@ -396,11 +448,15 @@ function renderDetail(){
     else if(f.ret>=CONFIG.takeProfit1){ sig='止盈区'; sigbg='#fff6e6'; sigfg='#b8760a'; }
     if(f.ret<=CONFIG.stopLoss){ sig='止损检查'; sigbg='#fdf0f0'; sigfg='#c0392b'; }
     const sigHtml = sig?`<span style="font-size:11px;padding:1px 7px;border-radius:5px;background:${sigbg};color:${sigfg}">${sig}</span>`:'<span class="zero">—</span>';
-    tb.innerHTML+=`<tr><td>${f.name}</td><td><span class="tag">${f.cat}</span></td>
-      <td class="num">¥${fmt(f.mv)}</td><td class="num">¥${fmt(f.cost)}</td>
-      <td class="num ${pcls}">${f.profit>=0?'+':''}¥${fmt(f.profit)}</td>
-      <td class="num ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</td>
-      <td class="num">${f.days??'—'}</td><td>${sigHtml}</td></tr>`;
+    tb.innerHTML+=`<tr>
+      <td data-label="基金">${f.name}</td>
+      <td data-label="类别"><span class="tag">${f.cat}</span></td>
+      <td class="num" data-label="市值">¥${fmt(f.mv)}</td>
+      <td class="num" data-label="成本">¥${fmt(f.cost)}</td>
+      <td class="num ${pcls}" data-label="收益">${f.profit>=0?'+':''}¥${fmt(f.profit)}</td>
+      <td class="num ${rcls}" data-label="收益率">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</td>
+      <td class="num" data-label="持有天数">${f.days??'—'}</td>
+      <td data-label="信号">${sigHtml}</td></tr>`;
   });
 }
 

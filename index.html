@@ -207,6 +207,8 @@
   .idx-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(144px, 1fr)); gap: 10px; }
   .idx-chip { display: flex; flex-direction: column; gap: 2px; background: var(--surface-3); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
   .idx-chip:hover { background: var(--surface-2); border-color: var(--border-strong); }
+  /* 拉不到数据的指数：淡灰占位卡（不隐藏，保证网格始终填满） */
+  .idx-chip-empty { opacity: .55; border-style: dashed; }
   .idx-name { font-size: 12px; color: var(--text-2); }
   /* 点位 + 涨跌幅：默认同一行（4 位数正好放下，跟在后面）；5 位数放不下时涨跌幅优雅换到下一行，不会把数字从中断开 */
   /* 点位 + 涨跌幅：强制同一行（nowrap），5 位数也不会掉到下一行；字体与卡片宽度已调到最长组合也能单行容纳 */
@@ -1577,6 +1579,9 @@ const INDEX_LIST=[
   {code:'usSPX', name:'标普500'},
   {code:'jpN225', name:'日经225'},
   {code:'krKS11', name:'韩国KOSPI'},
+  {code:'ukFTSE', name:'富时100'},
+  {code:'inSENSEX', name:'印度SENSEX'},
+  {code:'vnVNINDEX', name:'越南VNINDEX'},
 ];
 let _idxScript=null;
 function parseQt(raw){
@@ -1613,11 +1618,11 @@ function renderIdxInto(boxId, timeId){
     const d=raw?parseQt(raw):null;
     const ms=mktOpenWindow(it.code);
     const msTxt=ms?'<span class="idx-dot idx-dot-open"></span>交易中':'<span class="idx-dot idx-dot-closed"></span>已收盘';
-    if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-pricerow"><span class="idx-val" data-val="${it.code}">—</span><span class="idx-pct"></span></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
+    if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-pricerow"><span class="idx-val" data-val="${it.code}">—</span><span class="idx-pct"></span></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}">— 无分时</span></span>`;
     const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
     const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
     const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
-    return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-pricerow"><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)}</span><span class="idx-pct ${cls}">${pctTxt}</span></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
+    return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-pricerow"><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)}</span><span class="idx-pct ${cls}">${pctTxt}</span></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}">— 无分时</span></span>`;
   }).join('');
   const te=document.getElementById(timeId);
   if(te){
@@ -1629,7 +1634,7 @@ function renderIdxInto(boxId, timeId){
 }
 // ---------- 指数迷你走势 Sparkline（按市场分级，不画假图） ----------
 // A股：新浪 5 分钟真实分时；港股：腾讯日线近 30 日（诚实标注）；美股：无免费源，降级显示
-function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^(us|jp|kr)/.test(code)) return 'foreign'; return 'a'; }
+function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^(us|jp|kr|uk|in|vn)/.test(code)) return 'foreign'; return 'a'; }
 // 各市场盘中/收盘判定（北京时）。解决"右上角已收盘"对美/日/韩市场的语义歧义。
 function mktOpenWindow(code){
   const now=new Date(); const day=now.getDay(); const wd=(day!==0 && day!==6);
@@ -1639,10 +1644,13 @@ function mktOpenWindow(code){
   if(/^us/.test(code)){ return wd && (t>=1290 || t<=240); }                            // 美股 21:30–次日04:00（夏令近似）
   if(/^jp/.test(code)){ return wd && ((t>=480&&t<=630)||(t>=690&&t<=840)); }           // 日股 08:00–10:30 / 11:30–14:00
   if(/^kr/.test(code)){ return wd && (t>=480&&t<=870); }                               // 韩股 08:00–14:30
+  if(/^uk/.test(code)){ return wd && (t>=900&&t<=1410); }                              // 英股 富时100 ≈北京15:00–23:30（伦敦冬/夏令近似）
+  if(/^in/.test(code)){ return wd && (t>=705&&t<=1080); }                              // 印度 09:15–15:30 ≈北京11:45–18:00
+  if(/^vn/.test(code)){ return wd && (t>=600&&t<=945); }                               // 越南 09:00–14:45 ≈北京10:00–15:45
   return false;
 }
 // 外围指数（美股/日股/韩股）腾讯无源，统一用东方财富日线 secid
-const FOREIGN_SECID={ usDJI:'100.DJI', usIXIC:'100.NDX', usSPX:'100.SPX', jpN225:'100.N225', krKS11:'100.KS11' };
+const FOREIGN_SECID={ usDJI:'100.DJI', usIXIC:'100.NDX', usSPX:'100.SPX', jpN225:'100.N225', krKS11:'100.KS11', ukFTSE:'100.FTSE', inSENSEX:'100.BSESN', vnVNINDEX:'100.vnindex' };
 function isForeign(code){ return Object.prototype.hasOwnProperty.call(FOREIGN_SECID, code); }
 const _idxSparkCache={};   // code -> { series:[{t,v}], kind, label }
 const _idxSparkBusy={};    // code -> true 防止重复拉取
@@ -1729,10 +1737,9 @@ function degradeSpark(code){
   document.querySelectorAll('[data-spark="'+code+'"]').forEach(el=>{
     el.className='idx-nospark';
     el.textContent='— 无分时';
-    // 若该指数仍无有效价（"—"），整卡隐藏，避免空卡占位造成网格缺口
+    // 拉不到数据：不再隐藏，改为淡灰占位卡（网格始终填满，不再有缺口）
     const chip=el.closest?el.closest('.idx-chip'):null;
-    const val=chip&&chip.querySelector?chip.querySelector('.idx-val'):null;
-    if(val && (val.textContent||'').trim()==='—'){ if(chip) chip.style.display='none'; }
+    if(chip) chip.classList.add('idx-chip-empty');
   });
 }
 function drawSpark(code, obj){

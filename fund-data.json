@@ -176,7 +176,8 @@
       "type": "buy",
       "amount": 4000,
       "nav": 1.5127,
-      "fee": 0
+      "fee": 0,
+      "time": "14:57"
     },
     {
       "name": "摩根日本精选股票(QDII)C",
@@ -184,7 +185,8 @@
       "type": "buy",
       "amount": 500,
       "nav": 2.1673,
-      "fee": 0
+      "fee": 0,
+      "time": "14:24"
     }
   ],
   "navCache": {}

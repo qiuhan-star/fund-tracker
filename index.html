@@ -455,7 +455,7 @@
         <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，并画出买卖点时间轴。</p>
         <div class="table-scroll">
         <table id="tradeTable">
-          <thead><tr><th style="width:20%">基金名称</th><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead>
+          <thead><tr><th style="width:20%">基金名称</th><th>账户</th><th>日期</th><th>时间</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
         </div>
@@ -512,8 +512,8 @@ const SAMPLE_SNAP = [
   {name:'南方纳斯达克100指数发起(QDII)C', code:'016453', cat:'QDII', mv:10.01, ret:1.70, shares:4.49, costPx:2.2293}
 ];
 const SAMPLE_TRADE = [
-  {name:'上银丰益混合C', date:'2026-08-03', type:'buy', amount:4000, nav:1.5127, fee:0},
-  {name:'摩根日本精选股票(QDII)C', date:'2026-08-03', type:'buy', amount:500, nav:2.1673, fee:0}
+  {name:'上银丰益混合C', date:'2026-08-03', time:'14:57', type:'buy', amount:4000, nav:1.5127, fee:0},
+  {name:'摩根日本精选股票(QDII)C', date:'2026-08-03', time:'14:24', type:'buy', amount:500, nav:2.1673, fee:0}
 ];
 
 let snaps=[], trades=[], navCache={};
@@ -830,91 +830,105 @@ function renderAdvice(){
   drawDough('pieSug',sugLabels,sugData);
   const lg2=document.getElementById('pieSugLg'); if(lg2) lg2.innerHTML=sugLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${sugData[i]}%</span>`).join('');
 }
-// ---------- 债券板块：债市温度计 + 防御配置建议 ----------
-let bondState={dir:'bear', y10:1.72, adv:false};
-function loadBond(){ try{const s=localStorage.getItem('ft_bond'); if(s){const b=JSON.parse(s); if(b&&typeof b==='object') bondState={...bondState,...b};}}catch(e){} }
+// ---------- 债券板块：我的债基（不看 10Y、不看温度计） ----------
+let bondState={dates:{},amts:{}};
+function loadBond(){ try{const s=localStorage.getItem('ft_bond'); if(s){const b=JSON.parse(s); if(b&&typeof b==='object'){ bondState={...bondState,...b}; if(!bondState.dates) bondState.dates={}; if(!bondState.amts) bondState.amts={}; }} }catch(e){} }
 function saveBond(){ try{localStorage.setItem('ft_bond',JSON.stringify(bondState));}catch(e){} }
-const BOND_DIR={
-  bull:{dur:'适度拉长久期（&gt;3 年）以锁定资本利得。',cr:'利差若收窄可小幅下沉信用博票息，但仍以高等级为主。',alt:'<b>当前判断：</b>看多利率（收益率下行）。存量债基净值受益、新买入可拉长久期放大收益；注意若已处历史低位，下行空间有限，勿过度追涨。'},
-  bear:{dur:'缩短久期（&lt;2 年）以降低净价波动风险。',cr:'偏好利率债 / 高等级信用，回避低评级与长久期信用品种。',alt:'<b>当前判断：</b>看空利率（收益率上行）。存量债基净值承压，新买入宜短久期、控信用；若仅是阶段性回调而非趋势反转，可逢收益率高点分批建仓。'},
-  neutral:{dur:'中等久期（2–3 年）均衡配置，兼顾票息与波动。',cr:'利率债与高等级信用均衡，控制单一主体 / 行业敞口。',alt:'<b>当前判断：</b>利率中性。以票息为主要收益来源，保持组合流动性，等待方向进一步明确再加久期或下沉信用。'}
-};
-function bondThermoBadge(v){ if(v>0&&v<1.7) return ['ts-low','偏低 · 债券偏贵']; if(v>=1.7&&v<=2.2) return ['ts-mid','中性区间']; if(v>2.2) return ['ts-high','偏高 · 票息吸引']; return ['ts-mid','—']; }
+
+// 静态资料（已核实，截至 2026-08-04）；买入日 / 金额可在工具内编辑
+const BOND_FUNDS=[
+  {code:'019445',name:'华富恒盛纯债E',company:'华富',acc:'支付宝',amt:10000,y1:2.47,since:8.88,risk:'中低',lock:0,mix:false},
+  {code:'007330',name:'摩根瑞益纯债C',company:'摩根',acc:'支付宝',amt:10000,y1:2.25,since:18.50,risk:'中低',lock:0,mix:false},
+  {code:'011505',name:'上银丰益混合C',company:'上银',acc:'支付宝',amt:4000,y1:29.58,since:50.30,risk:'中',lock:0,mix:true},
+  {code:'016211',name:'摩根瑞享纯债C',company:'摩根',acc:'小号',amt:50000,y1:3.04,since:13.68,risk:'中低',lock:0,mix:false},
+  {code:'018665',name:'南方宁元债券A',company:'南方',acc:'小号',amt:50000,y1:3.02,since:9.91,risk:'中低',lock:0,mix:false},
+  {code:'016426',name:'国泰信瑞纯债',company:'国泰',acc:'小号',amt:50000,y1:5.32,since:14.40,risk:'中低',lock:0,mix:false},
+  {code:'012279',name:'嘉实稳和6个月持有纯债A',company:'嘉实',acc:'小号',amt:1.65,y1:1.63,since:12.29,risk:'中低',lock:6,mix:false},
+];
+const BOND_DEF_DATES={'019445':'2026-07-25','007330':'2026-07-30','011505':'2026-06-15','016211':'2026-07-28','018665':'2026-07-10','016426':'2026-07-31','012279':'2026-07-20'};
+function pad2(n){return n<10?'0'+n:''+n;}
+function fmtDate(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+function addDays(d,n){const x=new Date(d); x.setDate(x.getDate()+n); return x;}
+function addMonths(d,m){const x=new Date(d); const day=x.getDate(); x.setMonth(x.getMonth()+m); if(x.getDate()!==day) x.setDate(0); return x;}
+function daysBetween(a,b){return Math.floor((new Date(b)-new Date(a))/86400000);}
+function bondAmt(f){ return (bondState.amts&&bondState.amts[f.code]!=null)?bondState.amts[f.code]:f.amt; }
+function bondDate(f){ return (bondState.dates&&bondState.dates[f.code])?bondState.dates[f.code]:(BOND_DEF_DATES[f.code]||''); }
+function bondStatus(f,today){
+  const pd=bondDate(f);
+  if(!pd) return {txt:'未填买入日',cls:'st-none',sub:'点表格「买入日」填写'};
+  const p=new Date(pd); if(isNaN(p)) return {txt:'日期格式有误',cls:'st-none',sub:''};
+  const held=daysBetween(p,today);
+  if(f.lock>0){
+    const unlock=addMonths(p,f.lock);
+    if(today<unlock){ const left=daysBetween(today,unlock); return {txt:'🔒 持有期内不可卖',cls:'st-lock',sub:'约 '+fmtDate(unlock)+' 解锁（剩 '+left+' 天）'}; }
+    return {txt:'✅ 持有期满·可赎回',cls:'st-ok',sub:fmtDate(unlock)+' 起可赎'};
+  }
+  if(held<7){ const free=addDays(p,7); const left=daysBetween(today,free); return {txt:'⚠️ 7天内赎回收1.5%',cls:'st-warn',sub:'约 '+fmtDate(free)+' 免赎回费（剩 '+left+' 天）'}; }
+  return {txt:'✅ 可卖·免赎回费',cls:'st-ok',sub:'已持有 '+held+' 天'};
+}
+function setBondDate(code,v){ if(!bondState.dates) bondState.dates={}; bondState.dates[code]=v; saveBond(); renderBond(); }
+function setBondAmt(code,v){ const n=parseFloat(v); if(isNaN(n)) return; if(!bondState.amts) bondState.amts={}; bondState.amts[code]=n; saveBond(); renderBond(); }
+
 function renderBond(){
   const bc=document.getElementById('bondContent'); if(!bc) return;
-  if(!_profileLoaded) loadProfile(); loadBond();
-  const total=fundsView.reduce((a,f)=>a+f.mv,0);
-  const catPct=getCatAllocation(); const cats={}; catPct.forEach(([k,v])=>cats[k]=v);
-  const defCur=cats['混合/债']||0;
-  const M2=profileModel(userProfile); const target=M2.def;
-  const gap=Math.max(0,target-defCur); const gapAmt=total*gap/100;
-  const seg=(k,opts)=>`<div class="pf-seg">${opts.map(o=>`<button class="${userProfile[k]===o.v?'on':''}" onclick="setProfile('${k}','${o.v}')">${o.l}</button>`).join('')}</div>`;
-  const d=BOND_DIR[bondState.dir]||BOND_DIR.bear;
-  const ts=bondThermoBadge(bondState.y10);
-  let html=`<div class="card">
-    <h2>债市温度计 <span class="hint">（不用懂债券也能用）</span></h2>
-    <p class="hint" style="margin:-4px 0 12px">你对利率环境的判断，决定该买长久期还是短久期、偏利率债还是信用债。拿不准就选「中性」。</p>
-    <div class="pf-row" style="justify-content:center"><div class="pf-seg" id="segDir">
-      <button data-v="bull" class="${bondState.dir==='bull'?'on':''}" onclick="setBondDir('bull',this)">看多利率↓</button>
-      <button data-v="bear" class="${bondState.dir==='bear'?'on':''}" onclick="setBondDir('bear',this)">看空利率↑</button>
-      <button data-v="neutral" class="${bondState.dir==='neutral'?'on':''}" onclick="setBondDir('neutral',this)">中性</button>
-    </div></div>
-    <div class="sub2" style="text-align:center;margin-top:6px">看多=预期收益率下行（债价涨）；看空=收益率上行（债价跌）</div>
-    <div style="margin-top:14px">
-      <div class="adk medium"><span class="adk-badge">久期建议</span><div><div class="adk-body" id="durText">${d.dur}</div></div></div>
-      <div class="adk medium"><span class="adk-badge">信用偏好</span><div><div class="adk-body" id="creditText">${d.cr}</div></div></div>
-      <div class="adk-alt" id="dirAlt">${d.alt}</div>
-    </div>
-    <div class="adv-toggle" onclick="toggleBondAdv()">${bondState.adv?'▾':'▸'} 高级（可选）：10Y 国债收益率</div>
-    <div id="bondAdv" style="display:${bondState.adv?'block':'none'};margin-top:8px">
-      <div class="yield-box">
-        <div class="lbl">10Y 国债收益率（锚）</div>
-        <div class="yield-input"><input id="y10" type="number" step="0.01" value="${bondState.y10}"> <span class="pct">%</span></div>
-        <button class="btn sm" onclick="bondAutoFetch()">自动获取</button>
-        <div style="margin-top:8px"><span id="tsBadge" class="thermo-status ${ts[0]}">${ts[1]}</span></div>
-        <div class="sub2" style="margin-top:4px">1.7%–2.2% 视为中性；低于偏贵、高于票息更吸引</div>
-      </div>
-    </div>
-  </div>`;
-  html+=`<div class="card">
-    <h2>防御配置建议 <span class="hint">（读取你的风险画像 → 算出该补多少防御资产）</span></h2>
-    <div class="pf-panel">
-      <div class="pf-row"><span class="pf-lab">风险偏好</span>${seg('risk',[{v:'保守',l:'保守'},{v:'稳健',l:'稳健'},{v:'激进',l:'激进'}])}</div>
-      <div class="pf-row"><span class="pf-lab">投资期限</span>${seg('horizon',[{v:'短期(<1年)',l:'短期'},{v:'中期(1-3年)',l:'中期'},{v:'长期(>3年)',l:'长期'}])}</div>
-      <div class="pf-row"><span class="pf-lab">流动性需求</span>${seg('liquidity',[{v:'高',l:'高'},{v:'中',l:'中'},{v:'低',l:'低'}])}</div>
-      <p class="pf-note">防御目标 = 风险基准（保守25% / 稳健15% / 激进8%）+ 流动性高 +5% + 期限短期 +5%（上限60%）。与「分析」Tab 共用同一份风险画像。</p>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px">
-      <div class="mcard"><div class="lbl">当前防御占比</div><div class="val ${defCur<target?'neg':'pos'}">${defCur.toFixed(1)}%</div><div class="sub2">组合内混合 / 债 / 货币合计</div></div>
-      <div class="mcard"><div class="lbl">建议防御目标</div><div class="val pos">${target.toFixed(1)}%</div><div class="sub2">${userProfile.risk}档 · ${userProfile.horizon} · 流动性${userProfile.liquidity}</div></div>
-    </div>
-    <div class="cmp-bar"><div class="fill" style="width:${Math.min(100,defCur)}%;background:#27ae60"></div><div class="target" style="left:${Math.min(100,target)}%"></div></div>
-    <div class="cmp-legend"><span><i style="background:#27ae60"></i>当前 ${defCur.toFixed(1)}%</span><span><i style="background:#2f6fed"></i>目标 ${target.toFixed(1)}%</span></div>
-    <p class="hint" style="margin-top:10px">待补金额：<b>${total>0?M(gapAmt):'¥—'}</b>（= 组合当前市值 ${total>0?M(total):'—'} × 缺口 ${gap.toFixed(1)}%）。</p>
-    <div style="margin-top:12px">
-      <div class="adk high"><span class="adk-badge">买什么</span><div><div class="adk-title">按「核心—卫星」搭防御层</div><ul>
-        <li><b>利率债基金（纯债）</b>：作为核心，久期匹配温度计判断，波动最小；</li>
-        <li><b>高等级信用债基金</b>：票息略高，承担有限信用风险；</li>
-        <li><b>固收+（≤20% 股票）</b>：攻守兼备，但波动大于纯债，不宜超防御仓的 1/3。</li>
-      </ul></div></div>
-      <div class="adk low"><span class="adk-badge">分批计划</span><div><div class="adk-title">3 个月梯次建仓（避免一次性买在时点高点）</div><ul>
-        <li><b>第 1 个月</b>：暂停权益类定投，先建核心利率债 1/3；</li>
-        <li><b>第 2 个月</b>：补高等级信用债，防御升至约 ${(target/2).toFixed(0)}%；</li>
-        <li><b>第 3 个月</b>：补齐至目标 ${target.toFixed(0)}%，完成再平衡。</li>
-      </ul><div class="adk-alt"><b>替代方案：</b>若担心利率上行，可改用「周定投」平滑成本，而非月内一次性买入。</div></div></div>
-    </div>
-  </div>`;
-  html+=`<div class="card roadmap"><div class="rh"><h2 style="margin:0">债基持仓</h2><span class="pill">未来接入</span></div>
-    <p class="hint">等你实际买入债基后，这里会自动接上——记录净值、久期、信用暴露、与权益侧对称的盈亏视图。当前防御占比 ${defCur.toFixed(1)}%，暂无数据。</p>
-    <div style="border:1px dashed #dcdfe4;border-radius:10px;padding:18px;text-align:center;color:#9aa0aa;font-size:12.5px">买入债基后，此卡片亮起 → 跟踪每只债基的净值 / 久期 / 信用等级 / 再平衡提醒</div>
-  </div>`;
-  bc.innerHTML=html;
-  const y10=document.getElementById('y10');
-  if(y10) y10.addEventListener('input',function(){ bondState.y10=parseFloat(this.value)||0; saveBond(); const v=bondState.y10; const b=document.getElementById('tsBadge'); const t=bondThermoBadge(v); b.className='thermo-status '+t[0]; b.textContent=t[1]; });
+  loadBond();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const accs=['支付宝','小号'];
+  let accCards=accs.map(a=>{ const fs=BOND_FUNDS.filter(f=>f.acc===a); const sum=fs.reduce((s,f)=>s+bondAmt(f),0); return '<div class="mcard"><div class="lbl">'+a+'</div><div class="val">'+M(sum)+'</div><div class="sub2">'+fs.length+' 只债基</div></div>'; }).join('');
+  const totalAll=BOND_FUNDS.reduce((s,f)=>s+bondAmt(f),0);
+  accCards+='<div class="mcard hl"><div class="lbl">合计</div><div class="val">'+M(totalAll)+'</div><div class="sub2">'+BOND_FUNDS.length+' 只</div></div>';
+
+  let rows=BOND_FUNDS.map(f=>{
+    const st=bondStatus(f,today);
+    const tag=f.mix?'<span class="tag-mix">含股票</span>':'';
+    const lockTxt=f.lock>0?'<span class="tag-lock">'+f.lock+'个月锁定期</span>':'';
+    return '<tr>'
+      +'<td><b>'+f.code+'</b><br><span class="nm">'+f.name+'</span></td>'
+      +'<td>'+f.acc+'</td>'
+      +'<td><input class="amt-in" type="number" value="'+bondAmt(f)+'" data-code="'+f.code+'" onchange="setBondAmt(this.dataset.code,this.value)" style="width:84px"></td>'
+      +'<td>'+f.risk+tag+lockTxt+'</td>'
+      +'<td><input class="date-in" type="date" value="'+bondDate(f)+'" data-code="'+f.code+'" onchange="setBondDate(this.dataset.code,this.value)"></td>'
+      +'<td class="'+st.cls+'">'+st.txt+'<br><span class="sub2">'+st.sub+'</span></td>'
+    +'</tr>';
+  }).join('');
+
+  const best=Math.max.apply(null,BOND_FUNDS.map(f=>f.y1));
+  const worst=Math.min.apply(null,BOND_FUNDS.map(f=>f.y1));
+  let cmp=BOND_FUNDS.map(f=>{
+    const yc=f.y1===best?'cmp-best':(f.y1===worst?'cmp-worst':'');
+    const mc=f.mix?'<span class="tag-mix">混合</span>':'';
+    return '<tr>'
+      +'<td><b>'+f.code+'</b> '+f.name+mc+'</td>'
+      +'<td class="'+yc+'">'+f.y1.toFixed(2)+'%</td>'
+      +'<td>'+f.since.toFixed(2)+'%</td>'
+      +'<td>'+f.risk+'</td>'
+      +'<td>'+f.company+'</td>'
+    +'</tr>';
+  }).join('');
+
+  const byCompany={};
+  BOND_FUNDS.forEach(f=>{ (byCompany[f.company]=byCompany[f.company]||[]).push(f); });
+  let conv=Object.keys(byCompany).map(c=>{
+    const fs=byCompany[c];
+    if(fs.length>1){ return '<div class="conv-ok">✅ <b>'+c+'</b>：'+fs.map(x=>x.code).join(' ↔ ')+' 可同公司互转</div>'; }
+    return '<div class="conv-no">· <b>'+c+'</b>：'+fs[0].code+' 账户内仅 1 只，无同公司互转对象</div>';
+  }).join('');
+
+  bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:13px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid #eef0f3;padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:#8a909a;font-weight:600;white-space:nowrap}.bond-tbl .nm{color:#9aa0aa;font-size:11.5px}.tag-mix{display:inline-block;background:#fff3e0;color:#c77700;border:1px solid #ffd9a0;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-lock{display:inline-block;background:#eef2ff;color:#3a5bd9;border:1px solid #c7d2fe;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:#9aa0aa}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.conv-ok{background:#eafaf0;border:1px solid #bfe9cd;color:#1f7a45;padding:8px 10px;border-radius:8px;margin:4px 0}.conv-no{color:#6b7280;padding:4px 2px}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:13px;color:#3a3f47}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12.5px}.mcard.hl{background:#f3f7ff;border-color:#c7d2fe}.tbl-wrap{overflow-x:auto}</style>'
+    +'<div class="card"><h2>持仓总览 <span class="hint">（按账户）</span></h2>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'+accCards+'</div>'
+    +'<p class="hint" style="margin-top:10px">金额、买入日均可点开直接改，自动重算卖出时点与锁定期。</p></div>'
+    +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/风险</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+    +'<div class="card"><h2>几只比一比 <span class="hint">（近1年 · 成立以来，截至 2026-08-04）</span></h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>近1年</th><th>成立以来</th><th>风险</th><th>公司</th></tr></thead><tbody>'+cmp+'</tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。注意 <b>011505 是混合基金（含股票）</b>，波动远大于纯债，不能与纯债直接比收益。</p></div>'
+    +'<div class="card"><h2>可转换提示</h2><p class="hint" style="margin-bottom:8px">基金转换（把 A 基金份额转成同公司 B 基金）通常只限<b>同一基金公司</b>内，且转入基金需开放转换。</p>'+conv+'</div>'
+    +'<div class="card"><h2>债基规则速记 <span class="hint">（小白必看）</span></h2><ul class="rules">'
+    +'<li><b>赎回费：</b>多数债基持有 <b>＜7 天</b>赎回收 <b>1.5%</b> 惩罚费；满 7 天通常免赎回费（具体看基金合同）。</li>'
+    +'<li><b>锁定期：</b><b>012279 嘉实稳和</b>有 <b>6 个月持有期</b>，买入后 6 个月内<b>不能卖</b>，期满后才可赎。</li>'
+    +'<li><b>含股票：</b><b>011505 上银丰益混合C</b> 是<b>混合基金（含股票）</b>，不是纯债，波动更大、收益更高，不属于稳健防御仓。</li>'
+    +'<li><b>可转换：</b>仅<b>摩根</b>的 007330 ↔ 016211 可在同公司内互转；其余各公司仅 1 只，无互转对象。</li>'
+    +'<li><b>债基 vs 单只债券：</b>你买的是<b>债基（基金）</b>，随时可向基金公司赎回（受上述规则约束），不是交易所上市债券。</li>'
+    +'</ul></div>';
 }
-function setBondDir(v,el){ bondState.dir=v; saveBond(); const d=BOND_DIR[v]||BOND_DIR.bear; document.querySelectorAll('#segDir button').forEach(b=>b.classList.remove('on')); if(el) el.classList.add('on'); const dt=document.getElementById('durText'),ct=document.getElementById('creditText'),da=document.getElementById('dirAlt'); if(dt)dt.innerHTML=d.dur; if(ct)ct.innerHTML=d.cr; if(da)da.innerHTML=d.alt; }
-function bondAutoFetch(){ alert('自动获取 10Y 国债收益率需接入免 CORS 的公开源，当前未接入；请手动填入（数据源待补充）。'); }
-function toggleBondAdv(){ bondState.adv=!bondState.adv; saveBond(); const el=document.getElementById('bondAdv'); const tg=document.querySelector('.adv-toggle'); if(el) el.style.display=bondState.adv?'block':'none'; if(tg) tg.innerHTML=(bondState.adv?'▾':'▸')+' 高级（可选）：10Y 国债收益率'; }
 
 
 
@@ -930,6 +944,7 @@ function renderTrade(){
       <td><input data-fld="ht-name-${i}" value="${esc(t.name)}" oninput="trades[${i}].name=this.value;compute();silentSave()"></td>
       <td><select data-fld="ht-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
       <td><input data-fld="ht-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
+      <td><input data-fld="ht-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></td>
       <td><select data-fld="ht-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
       <td class="num"><input data-fld="ht-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()" title="${isSplit?'拆分倍数(如2=1拆2)':'金额(元)'}"></td>
       <td class="num"><input data-fld="ht-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
@@ -1202,6 +1217,7 @@ function liveSection(f){
     trades.forEach((t,i)=>{ if(t.name===f.name){ h+=`<tr>
       <td><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
       <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
+      <td><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></td>
       <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
       <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
       <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
@@ -1237,8 +1253,8 @@ function liveSection(f){
 
 // ---------- 新增 / 删除 ----------
 function addSnapRow(){ snaps.push({name:'新基金',cat:'',mv:0,ret:0}); compute(); }
-function addTradeRow(){ trades.push({name:'',date:'',type:'buy',amount:0,nav:'',account:'支付宝'}); renderTrade(); }
-function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name)}); compute(); }
+function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:'支付宝'}); renderTrade(); }
+function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',time:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name)}); compute(); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
   if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
@@ -1700,13 +1716,17 @@ function openIdxModal(code){
     const src=isDaily?'近30日日线（东方财富，非盘中）':'A股分时（5分钟，新浪）';
     const grid='<line x1="'+pad+'" y1="'+pad+'" x2="'+(W-pad)+'" y2="'+pad+'" stroke="#eef0f3" stroke-width="1"/><line x1="'+pad+'" y1="'+(H/2)+'" x2="'+(W-pad)+'" y2="'+(H/2)+'" stroke="#f4f5f7" stroke-width="1"/><line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="#eef0f3" stroke-width="1"/>';
     const area='<polygon points="'+pad+','+(H-pad)+' '+pts+' '+(W-pad)+','+(H-pad)+'" fill="'+color+'" fill-opacity="0.08"/>';
+    const reDt=/(\d{4})[-/](\d{2})[-/](\d{2})/;
+    const dm=obj.series[0].t&&obj.series[0].t.match(reDt), dM=obj.series[n-1].t&&obj.series[n-1].t.match(reDt);
+    let range='';
+    if(dm&&dM){ const sd=dm[1]+'-'+dm[2]+'-'+dm[3], ed=dM[1]+'-'+dM[2]+'-'+dM[3];
+      range = sd===ed ? '当日分时' : ('近'+Math.round((new Date(dM[1],dM[2]-1,dM[3])-new Date(dm[1],dm[2]-1,dm[3]))/864e5+1)+'日 ('+sd+'→'+ed+')'); }
     const svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="240" preserveAspectRatio="none">'+grid+area+'<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
       '<text x="'+pad+'" y="'+(pad+11)+'" font-size="11" fill="#9aa0a8">高 '+max.toFixed(2)+'</text>'+
       '<text x="'+pad+'" y="'+(H-pad-5)+'" font-size="11" fill="#9aa0a8">低 '+min.toFixed(2)+'</text>'+
-      '<text x="'+(W-pad-52)+'" y="'+(pad+11)+'" font-size="11" fill="#9aa0a8">'+n+' 点</text>'+
       '</svg>';
     html+='<div class="idx-modal-chart">'+svg+'</div>';
-    html+='<div class="idx-sparkcap" style="margin-top:8px">'+src+(isDaily?'（日线，非盘中实时）':'（盘中实时）')+'</div>';
+    html+='<div class="idx-sparkcap" style="margin-top:8px">'+src+(isDaily?'（日线，非盘中实时）':'（盘中实时）')+(range?(' · '+range):'')+'</div>';
   } else {
     html+='<div class="hint" style="padding:22px 4px">该指数暂无可用走势数据（数据源未提供分时），暂不可放大。当前价：'+cur+'。</div>';
   }

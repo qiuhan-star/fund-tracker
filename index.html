@@ -270,11 +270,11 @@ function renderSnap(){
   const tb = document.querySelector('#snapTable tbody'); tb.innerHTML='';
   snaps.forEach((s,i)=>{
     tb.innerHTML += `<tr>
-      <td><input value="${s.name}" onchange="snaps[${i}].name=this.value;compute();silentSave()"></td>
-      <td><input value="${s.cat||''}" onchange="snaps[${i}].cat=this.value;compute();silentSave()"></td>
-      <td class="num"><input class="num" type="number" value="${s.mv}" onchange="snaps[${i}].mv=+this.value;compute();silentSave()"></td>
-      <td class="num"><input class="num" type="number" value="${s.ret}" onchange="snaps[${i}].ret=+this.value;compute();silentSave()"></td>
-      <td><input value="${navCache[s.name]?navCache[s.name].nav:''}" placeholder="自动" onchange="navCache[snaps[${i}].name]={nav:+this.value,date:'手动'};compute();silentSave()"></td>
+      <td><input value="${s.name}" oninput="snaps[${i}].name=this.value;compute();silentSave()"></td>
+      <td><input value="${s.cat||''}" oninput="snaps[${i}].cat=this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" value="${s.mv}" oninput="snaps[${i}].mv=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" value="${s.ret}" oninput="snaps[${i}].ret=+this.value;compute();silentSave()"></td>
+      <td><input value="${navCache[s.name]?navCache[s.name].nav:''}" placeholder="自动" oninput="navCache[snaps[${i}].name]={nav:+this.value,date:'手动'};compute();silentSave()"></td>
       <td><button class="del" onclick="snaps.splice(${i},1);renderSnap();compute();silentSave()">✕</button></td>
     </tr>`;
   });
@@ -284,11 +284,11 @@ function renderTrade(){
   const tb = document.querySelector('#tradeTable tbody'); tb.innerHTML="";
   trades.forEach((t,i)=>{
     tb.innerHTML += `<tr>
-      <td><input value="${t.name}" onchange="trades[${i}].name=this.value;compute();silentSave()"></td>
-      <td><input value="${t.date}" placeholder="2026-01-15" onchange="trades[${i}].date=this.value;compute();silentSave()"></td>
+      <td><input value="${t.name}" oninput="trades[${i}].name=this.value;compute();silentSave()"></td>
+      <td><input value="${t.date}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
       <td><select onchange="trades[${i}].type=this.value;compute();silentSave()"><option ${t.type==='buy'?'selected':''}>buy</option><option ${t.type==='sell'?'selected':''}>sell</option></select></td>
-      <td class="num"><input class="num" type="number" value="${t.amount}" onchange="trades[${i}].amount=+this.value;compute();silentSave()"></td>
-      <td class="num"><input class="num" type="number" value="${t.nav||''}" placeholder="买时净值" onchange="trades[${i}].nav=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" value="${t.nav||''}" placeholder="买时净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
       <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
     </tr>`;
   });
@@ -366,11 +366,13 @@ function renderOverview(){
     <div class="mcard"><p class="lbl">前三大赛道集中度</p><p class="val ${top3>CONFIG.top3Warn?'neg':'pos'}">${top3.toFixed(0)}%</p></div>`;
 }
 
+let pieChart=null, barChart=null;
 function renderPie(){
   const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
   const labels=Object.keys(cats), data=Object.values(cats);
   const colors=['#e24b4a','#ba7517','#378add','#0f6e56','#993c1d','#534ab7','#888780','#ef9f27','#3b6d11'];
-  new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'58%'}});
+  if(pieChart) pieChart.destroy();
+  pieChart = new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'58%'}});
   const tot=data.reduce((a,b)=>a+b,0);
   document.getElementById('pieLegend').innerHTML = labels.map((l,i)=>`<span><i style="background:${colors[i]}"></i>${l} ${(data[i]/tot*100).toFixed(1)}%</span>`).join('');
 }
@@ -380,7 +382,8 @@ function renderBar(){
   const labels=sorted.map(f=>f.name.length>9?f.name.slice(0,9)+'…':f.name);
   const data=sorted.map(f=>+f.ret.toFixed(2));
   const colors=sorted.map(f=>f.ret>=0?'#c0392b':'#27ae60');
-  new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
+  if(barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
 }
 
 function renderDetail(){
@@ -408,7 +411,7 @@ function renderTimelines(){
   withTr.forEach(f=>{
     const tr=[...f.trades].sort((a,b)=>a.date.localeCompare(b.date));
     const dates=tr.map(t=>t.date); const min=dates[0], max=dates[dates.length-1]||min;
-    const W=860,H=46,pad=30;
+    const W=880,H=48,pad=36;
     const x=d=> pad + (max===min?W/2-pad:(new Date(d)-new Date(min))/(new Date(max)-new Date(min)))*(W-2*pad);
     let dots='';
     tr.forEach(t=>{
@@ -416,10 +419,12 @@ function renderTimelines(){
       dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${t.type==='buy'?'买入':'卖出'} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
       dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':'S'}</text>`;
     });
+    const labels = (min===max)
+      ? `<text x="${W/2}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="middle">${min}（同日）</text>`
+      : `<text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text>
+         <text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text>`;
     box.innerHTML+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:500;margin-bottom:2px">${f.name}</div>
-      <svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}
-      <text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text>
-      <text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text></svg></div>`;
+      <svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}${labels}</svg></div>`;
   });
 }
 

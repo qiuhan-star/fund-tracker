@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的基金追踪器 · Fund Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; background: #f5f6f8; color: #1f2329; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { font-size: 20px; margin: 0 0 4px; font-weight: 600; }
+  .sub { color: #8a8f99; font-size: 13px; margin: 0 0 20px; }
+  .card { background: #fff; border: 1px solid #ebedf0; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+  .card h2 { font-size: 15px; margin: 0 0 14px; font-weight: 600; }
+  .cards4 { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; }
+  .mcard { background: #f7f8fa; border-radius: 10px; padding: 14px; }
+  .mcard .lbl { font-size: 12px; color: #8a8f99; margin: 0 0 6px; }
+  .mcard .val { font-size: 22px; font-weight: 600; margin: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 8px; text-align: left; border-bottom: 1px solid #f0f1f3; }
+  th { color: #8a8f99; font-weight: 500; font-size: 12px; }
+  td input { width: 100%; border: none; background: transparent; font-size: 13px; font-family: inherit; padding: 2px 0; color: #1f2329; }
+  td input:focus { outline: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pos { color: #c0392b; }
+  .neg { color: #27ae60; }
+  .zero { color: #8a8f99; }
+  .btn { border: 1px solid #d0d3d9; background: #fff; border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn:hover { background: #f5f6f8; }
+  .btn.primary { background: #2f6fed; color: #fff; border-color: #2f6fed; }
+  .btn.primary:hover { background: #2560d4; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 11px; background: #eef1f6; color: #5a6270; }
+  .advice { border-left: 3px solid #e0a800; background: #fffdf5; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 10px; font-size: 13px; line-height: 1.7; }
+  .advice.danger { border-left-color: #e24b4a; background: #fdf5f5; }
+  .advice.good { border-left-color: #27ae60; background: #f5fdf7; }
+  .del { color: #c0392b; cursor: pointer; border: none; background: none; font-size: 13px; }
+  .hint { font-size: 12px; color: #8a8f99; line-height: 1.7; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; margin-top: 10px; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .tl { width: 100%; }
+  details summary { cursor: pointer; font-size: 13px; color: #2f6fed; }
+  .loading { font-size: 12px; color: #8a8f99; }
+  @media (max-width: 680px){ .cards4{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;} }
+
+  /* ---------- 打印 / 导出 PDF 优化 ---------- */
+  @media print {
+    body { background:#fff; }
+    .wrap { max-width:none; padding:0; }
+    .toolbar, .del, #lock, details, #encBadge { display:none !important; }
+    .card { box-shadow:none; border:1px solid #ddd; break-inside:avoid; }
+    .hint { display:none !important; }
+    td input, td select { border:none !important; background:transparent !important; -webkit-appearance:none; appearance:none; padding:0; color:#1f2329; }
+    .mcard { border:1px solid #eee; }
+    .sub { margin-bottom:8px; }
+    #updated { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>我的基金追踪器</h1>
+  <p class="sub">记交易流水 · 看实时动态 · 单只复盘 · 总体优化 &nbsp;|&nbsp; <span id="updated" class="loading">数据未刷新</span> &nbsp; <span id="encBadge" class="loading"></span></p>
+
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary" onclick="refresh()">↻ 刷新最新净值</button>
+      <button class="btn" onclick="addSnapRow()">+ 加一只基金</button>
+      <button class="btn" onclick="addTradeRow()">+ 记一笔交易</button>
+      <button class="btn" onclick="saveLocal()">保存</button>
+      <button class="btn" onclick="exportJSON()">导出</button>
+      <button class="btn" onclick="importJSON()">导入</button>
+      <button class="btn" onclick="window.print()">导出PDF</button>
+      <button class="btn" onclick="lockNow()">🔒 锁定</button>
+      <button class="btn" onclick="clearAll()">清空示例</button>
+    </div>
+
+    <h2>当前持仓快照 <span class="tag">从你的截图/App抄这里</span></h2>
+    <p class="hint">把基金 App 里的「市值」和「持有收益率」抄过来即可。想更精细就填下面的「交易流水」。</p>
+    <table id="snapTable">
+      <thead><tr><th style="width:38%">基金名称</th><th style="width:16%">类别</th><th class="num">当前市值(元)</th><th class="num">持有收益率(%)</th><th style="width:14%">最新净值</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>交易流水（进阶） <span class="tag">记买卖点 · 用于单只复盘</span></h2>
+    <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，覆盖上面的快照收益率。</p>
+    <table id="tradeTable">
+      <thead><tr><th style="width:30%">基金名称</th><th>日期</th><th>方向</th><th class="num">金额(元)</th><th class="num">当时净值</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="cards4" id="overview"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>资产配置</h2>
+      <div style="position:relative;height:240px"><canvas id="pie" role="img" aria-label="资产配置饼图"></canvas></div>
+      <div class="legend" id="pieLegend"></div>
+    </div>
+    <div class="card">
+      <h2>盈亏分布</h2>
+      <div style="position:relative;height:240px"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>持仓明细</h2>
+    <table id="detailTable">
+      <thead><tr><th>基金名称</th><th>类别</th><th class="num">市值</th><th class="num">成本</th><th class="num">收益</th><th class="num">收益率</th><th class="num">持有天数</th><th>信号</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>单只买卖点时间轴</h2>
+    <div id="timelines"></div>
+  </div>
+
+  <div class="card">
+    <h2>优化建议（自动生成）</h2>
+    <div id="advice"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>怎么用？以后该给我（或填这里）什么数据？</summary>
+      <div style="margin-top:12px;font-size:13px;line-height:1.8;color:#3a3f47">
+        <p><b>方式一（最快，匹配你现在的截图）：</b>在「当前持仓快照」表里，把基金 App 里的 <b>基金名称 / 当前市值 / 持有收益率</b> 抄过来。每天打开点「刷新」就能看动态。</p>
+        <p><b>方式二（推荐，能做单只复盘）：</b>在「交易流水」表里，<b>每买卖一次记一笔</b>——日期、买/卖、金额、当时净值（App 里都能看到）。这样我能帮你复盘「这只买点好不好、该不该补/减」。</p>
+        <p><b>和我的配合：</b>你可以直接把截图丢给我，我转成上面的数据；或者把导出的 JSON 发我，我帮你分析、给调仓方案。净值我工具会自动从天天基金拉，拉不到你手填一行即可。</p>
+        <p><b>数据怎么保证第二天还在？</b>每次改表或刷新，数据会自动写进浏览器的 localStorage；用<b>本机同一个浏览器</b>打开同一文件，第二天数据都在。但 WorkBuddy 预览面板里填的是临时沙箱，关掉就没；清缓存或换浏览器也会丢。<b>最稳妥两种方式：</b>① 点「保存」会同时下载一份 <code>fund-data-日期.json</code> 存档，第二天用「导入」恢复；② 直接把数据发给我，我把真实数据写死进这个 HTML 文件，文件自带数据，永远不丢。</p>
+      <p><b>关于「实时」：</b>这是本地文件，你每次双击打开点「刷新」即看到最新（需联网）。若想要每日自动推送，需要部署到云端，后续可以帮你做。</p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ---------- 密码锁覆盖层（方案C：公开部署防泄露）---------->
+<div id="lock" style="position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column">
+  <div style="max-width:340px;width:100%;padding:0 20px;text-align:center">
+    <h1 style="font-size:19px;margin-bottom:6px">🔒 我的基金追踪器</h1>
+    <p class="sub" id="lockSub">请输入访问密码</p>
+    <input id="pw1" type="password" placeholder="访问密码" onkeydown="if(event.key==='Enter')lockSubmit()" style="width:100%;padding:11px;border:1px solid #d0d3d9;border-radius:8px;margin-bottom:10px;font-size:14px;font-family:inherit">
+    <input id="pw2" type="password" placeholder="确认密码" onkeydown="if(event.key==='Enter')lockSubmit()" style="width:100%;padding:11px;border:1px solid #d0d3d9;border-radius:8px;margin-bottom:12px;font-size:14px;font-family:inherit;display:none">
+    <button id="lockBtn" class="btn primary" onclick="lockSubmit()" style="width:100%;padding:11px;font-size:14px">解锁</button>
+    <p id="lockErr" style="color:#c0392b;font-size:12px;min-height:16px;margin:10px 0 0"></p>
+    <button id="resetBtn" class="btn" onclick="resetVault()" style="display:none;margin-top:6px;font-size:12px;color:#8a8f99">忘记密码？清空重置（数据不可恢复）</button>
+    <p class="hint" style="margin-top:14px">数据用密码加密后只存在你本地浏览器。部署到公开网址后，没有密码的人看不到你的持仓。</p>
+  </div>
+</div>
+
+<script>
+// ---------- 示例数据（来自你的截图，已反推近似成本，请替换为真实交易）----------
+const SAMPLE_SNAP = [
+  {name:'汇添富中证芯片产业指数增强C', cat:'芯片', mv:15507.63, ret:-14.06},
+  {name:'华夏有色金属ETF联接D', cat:'周期资源', mv:8230.93, ret:-5.53},
+  {name:'富国全球科技互联网股票(QDII)C', cat:'QDII', mv:7145.42, ret:-9.23},
+  {name:'广发中证军工ETF联接C', cat:'制造', mv:5377.23, ret:-9.35},
+  {name:'招商中证煤炭等权指数E', cat:'周期资源', mv:5096.45, ret:1.93},
+  {name:'广发工程机械主题ETF联接C', cat:'制造', mv:5000.00, ret:0},
+  {name:'嘉实全球产业升级股票(QDII)C', cat:'QDII', mv:4059.75, ret:3.45},
+  {name:'中欧医疗创新股票C', cat:'医药', mv:4421.27, ret:-3.89},
+  {name:'上银丰益混合C', cat:'混合', mv:4000.00, ret:0},
+  {name:'嘉实中证细分化工产业主题ETF联接C', cat:'周期资源', mv:3846.46, ret:-1.84},
+  {name:'招商国证生物医药指数C', cat:'医药', mv:3744.31, ret:-0.55},
+  {name:'广发港股创新药ETF联接(QDII)C', cat:'QDII', mv:2961.06, ret:-1.22},
+  {name:'易方达上证科创板芯片ETF联接C', cat:'芯片', mv:3216.20, ret:-10.58},
+  {name:'华宝中证港股通信息技术综合ETF联接', cat:'QDII', mv:1909.89, ret:-7.1},
+  {name:'南方恒生科技ETF联接(QDII)C', cat:'QDII', mv:1179.52, ret:2.57},
+  {name:'华夏中证金融科技主题ETF联接C', cat:'科技', mv:604.49, ret:5.21},
+  {name:'摩根日本精选股票(QDII)C', cat:'QDII', mv:500.00, ret:0},
+  {name:'天弘中证计算机主题ETF联接C', cat:'科技', mv:397.97, ret:-1.01},
+  {name:'南方纳斯达克100指数(QDII)C', cat:'QDII', mv:10.00, ret:0}
+];
+const SAMPLE_TRADE = [];
+
+let snaps = [], trades = [], navCache = {};
+let vaultPass = null;
+let lockMode = 'unlock';
+const VAULT_KEY = 'ft_vault';
+const HAS_SUBTLE = !!(window.crypto && window.crypto.subtle);
+
+// ---------- 密码保护 / 加密（https 环境用 AES-GCM，file:// 退化为 XOR 混淆）----------
+function bufToB64(buf){ const b=new Uint8Array(buf), s=[]; for(let i=0;i<b.length;i++) s.push(String.fromCharCode(b[i])); return btoa(s.join('')); }
+function b64ToBuf(b64){ const s=atob(b64), b=new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return b; }
+async function deriveKey(password, salt){
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:100000, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
+}
+function xorCrypt(str, password){
+  const p=Array.from(new TextEncoder().encode(password));
+  const bytes=Array.from(new TextEncoder().encode(str));
+  let out=''; for(let i=0;i<bytes.length;i++) out+=String.fromCharCode(bytes[i]^p[i%p.length]);
+  return out;
+}
+async function encryptVault(obj, password){
+  const json = JSON.stringify(obj);
+  if(HAS_SUBTLE){
+    const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+    const key=await deriveKey(password, salt);
+    const ct=await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(json));
+    return JSON.stringify({strong:true, salt:bufToB64(salt), iv:bufToB64(iv), ct:bufToB64(ct)});
+  }
+  return JSON.stringify({strong:false, ct: btoa(xorCrypt(json, password))});
+}
+async function decryptVault(str, password){
+  const o=JSON.parse(str);
+  if(o.strong){
+    const key=await deriveKey(password, b64ToBuf(o.salt));
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM', iv:b64ToBuf(o.iv)}, key, b64ToBuf(o.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  return JSON.parse(xorCrypt(atob(o.ct), password));
+}
+async function silentSave(){
+  if(!vaultPass) return;
+  try{ localStorage.setItem(VAULT_KEY, await encryptVault({snaps,trades,navCache}, vaultPass)); }catch(e){ console.error(e); }
+}
+function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({snaps,trades,navCache},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data-'+ts+'.json'; a.click(); document.getElementById('updated').textContent='已保存并下载存档 '+ts; }
+
+// ---------- 密码锁界面逻辑 ----------
+function showLock(setup){
+  const el=document.getElementById('lock'); el.style.display='flex';
+  document.getElementById('pw2').style.display = setup?'block':'none';
+  document.getElementById('resetBtn').style.display = setup?'none':'block';
+  document.getElementById('lockSub').textContent = setup ? '首次使用：设置访问密码（数据加密保存，公开部署也不泄露）' : '请输入访问密码';
+  document.getElementById('lockBtn').textContent = setup ? '设置并进入' : '解锁';
+  document.getElementById('lockErr').textContent='';
+  document.getElementById('pw1').value=''; document.getElementById('pw2').value='';
+  document.getElementById('pw1').focus();
+  lockMode = setup ? 'setup' : 'unlock';
+}
+async function lockSubmit(){
+  const pw=document.getElementById('pw1').value, err=document.getElementById('lockErr');
+  if(pw.length<4){ err.textContent='密码至少 4 位'; return; }
+  if(lockMode==='setup'){
+    if(pw!==document.getElementById('pw2').value){ err.textContent='两次输入不一致'; return; }
+    const old=localStorage.getItem('ft_snaps'); // 迁移旧明文数据
+    if(old){ try{ snaps=JSON.parse(old); trades=JSON.parse(localStorage.getItem('ft_trades')||'[]'); navCache=JSON.parse(localStorage.getItem('ft_nav')||'{}'); }catch(e){} }
+    else { snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
+    vaultPass=pw; await silentSave();
+    localStorage.removeItem('ft_snaps'); localStorage.removeItem('ft_trades'); localStorage.removeItem('ft_nav');
+    enterApp();
+  } else {
+    try{
+      const o=await decryptVault(localStorage.getItem(VAULT_KEY), pw);
+      snaps=o.snaps||[]; trades=o.trades||[]; navCache=o.navCache||{};
+      vaultPass=pw; enterApp();
+    }catch(e){ err.textContent='密码错误，请重试'; }
+  }
+}
+function enterApp(){
+  document.getElementById('lock').style.display='none';
+  document.getElementById('encBadge').textContent = HAS_SUBTLE ? '🔒 AES 加密保存' : '🔓 轻量加密(file://)';
+  renderSnap(); renderTrade(); compute();
+}
+function lockNow(){ vaultPass=null; snaps=[]; trades=[]; navCache={}; showLock(false); }
+function resetVault(){ if(confirm('清空所有数据并重置密码？此操作不可恢复！')){ localStorage.removeItem(VAULT_KEY); showLock(true); } }
+
+// ---------- 渲染表格 ----------
+function renderSnap(){
+  const tb = document.querySelector('#snapTable tbody'); tb.innerHTML='';
+  snaps.forEach((s,i)=>{
+    tb.innerHTML += `<tr>
+      <td><input value="${s.name}" onchange="snaps[${i}].name=this.value;compute();silentSave()"></td>
+      <td><input value="${s.cat||''}" onchange="snaps[${i}].cat=this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" value="${s.mv}" onchange="snaps[${i}].mv=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" value="${s.ret}" onchange="snaps[${i}].ret=+this.value;compute();silentSave()"></td>
+      <td><input value="${navCache[s.name]?navCache[s.name].nav:''}" placeholder="自动" onchange="navCache[snaps[${i}].name]={nav:+this.value,date:'手动'};compute();silentSave()"></td>
+      <td><button class="del" onclick="snaps.splice(${i},1);renderSnap();compute();silentSave()">✕</button></td>
+    </tr>`;
+  });
+}
+function setNav(i,v){ if(v) navCache[snaps[i].name]={nav:+v,date:'手动'}; }
+function renderTrade(){
+  const tb = document.querySelector('#tradeTable tbody'); tb.innerHTML="";
+  trades.forEach((t,i)=>{
+    tb.innerHTML += `<tr>
+      <td><input value="${t.name}" onchange="trades[${i}].name=this.value;compute();silentSave()"></td>
+      <td><input value="${t.date}" placeholder="2026-01-15" onchange="trades[${i}].date=this.value;compute();silentSave()"></td>
+      <td><select onchange="trades[${i}].type=this.value;compute();silentSave()"><option ${t.type==='buy'?'selected':''}>buy</option><option ${t.type==='sell'?'selected':''}>sell</option></select></td>
+      <td class="num"><input class="num" type="number" value="${t.amount}" onchange="trades[${i}].amount=+this.value;compute();silentSave()"></td>
+      <td class="num"><input class="num" type="number" value="${t.nav||''}" placeholder="买时净值" onchange="trades[${i}].nav=+this.value;compute();silentSave()"></td>
+      <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
+    </tr>`;
+  });
+}
+function addSnapRow(){ snaps.push({name:'新基金', cat:'', mv:0, ret:0}); renderSnap(); }
+function addTradeRow(){ trades.push({name:'', date:'', type:'buy', amount:0, nav:''}); renderTrade(); }
+
+// ---------- 计算 ----------
+let fundsView = [];
+function compute(){
+  const names = [...new Set([...snaps.map(s=>s.name), ...trades.map(t=>t.name)])].filter(Boolean);
+  fundsView = names.map(name=>{
+    const tr = trades.filter(t=>t.name===name);
+    const snap = snaps.find(s=>s.name===name);
+    const cat = snap?.cat || guessCat(name);
+    if(tr.length && tr.every(t=>t.nav)){
+      let shares=0, cost=0, firstDate=null;
+      tr.forEach(t=>{
+        const sh=t.amount/t.nav;
+        if(t.type==='buy'){ shares+=sh; cost+=t.amount; } else { shares-=sh; cost-=t.amount; }
+        if(!firstDate||t.date<firstDate) firstDate=t.date;
+      });
+      const nav = navCache[name]?navCache[name].nav:(snap?snap.mv/(shares||1):0);
+      const mv = shares*nav;
+      const profit = mv-cost;
+      const ret = cost>0?profit/cost*100:0;
+      const days = firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
+      return {name,cat,shares,cost,mv,profit,ret,days,trades:tr};
+    }
+    // 快照模式
+    const mv = snap?snap.mv:0;
+    const ret = snap?snap.ret:0;
+    const cost = mv/(1+ret/100);
+    const profit = mv-cost;
+    const days = null;
+    return {name,cat,shares:null,cost,mv,profit,ret,days,trades:tr};
+  });
+  renderOverview(); renderPie(); renderBar(); renderDetail(); renderTimelines(); renderAdvice(); silentSave();
+}
+
+function guessCat(name){
+  if(/芯片|半导体/.test(name)) return '芯片';
+  if(/医疗|医药|生物|健康/.test(name)) return '医药';
+  if(/有色|煤炭|化工|钢铁|资源|稀土/.test(name)) return '周期资源';
+  if(/军工|国防/.test(name)) return '制造';
+  if(/港股|恒生|纳斯达克|日本|全球|QDII|海外|美国|标普|道琼/.test(name)) return 'QDII';
+  if(/金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网/.test(name)) return '科技';
+  if(/混合|债|货币/.test(name)) return '混合/债';
+  if(/指数|ETF|联接/.test(name)) return '宽基/行业';
+  return '其他';
+}
+
+// 投顾阈值（可自行调整）
+const CONFIG = { tinyThreshold:1000, takeProfit1:15, takeProfit2:20, stopLoss:-15, top3Warn:70, singleWarn:20 };
+function getCatAllocation(){
+  const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  return Object.entries(cats).map(([k,v])=>[k, total? v/total*100:0]).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderOverview(){
+  const total = fundsView.reduce((a,f)=>a+f.mv,0);
+  const cost = fundsView.reduce((a,f)=>a+f.cost,0);
+  const profit = total-cost;
+  const pret = cost>0?profit/cost*100:0;
+  const win = fundsView.filter(f=>f.ret>0).length;
+  const lose = fundsView.filter(f=>f.ret<0).length;
+  const cls = profit>=0?'pos':'neg';
+  const top3 = getCatAllocation().slice(0,3).reduce((a,b)=>a+b[1],0);
+  document.getElementById('overview').innerHTML = `
+    <div class="mcard"><p class="lbl">总市值</p><p class="val">¥${fmt(total)}</p></div>
+    <div class="mcard"><p class="lbl">总收益</p><p class="val ${cls}">${profit>=0?'+':''}¥${fmt(profit)}</p></div>
+    <div class="mcard"><p class="lbl">总收益率</p><p class="val ${cls}">${pret>=0?'+':''}${pret.toFixed(2)}%</p></div>
+    <div class="mcard"><p class="lbl">基金数 / 盈:亏</p><p class="val">${fundsView.length} <span class="pos">${win}</span>:<span class="neg">${lose}</span></p></div>
+    <div class="mcard"><p class="lbl">前三大赛道集中度</p><p class="val ${top3>CONFIG.top3Warn?'neg':'pos'}">${top3.toFixed(0)}%</p></div>`;
+}
+
+function renderPie(){
+  const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
+  const labels=Object.keys(cats), data=Object.values(cats);
+  const colors=['#e24b4a','#ba7517','#378add','#0f6e56','#993c1d','#534ab7','#888780','#ef9f27','#3b6d11'];
+  new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'58%'}});
+  const tot=data.reduce((a,b)=>a+b,0);
+  document.getElementById('pieLegend').innerHTML = labels.map((l,i)=>`<span><i style="background:${colors[i]}"></i>${l} ${(data[i]/tot*100).toFixed(1)}%</span>`).join('');
+}
+
+function renderBar(){
+  const sorted=[...fundsView].sort((a,b)=>a.ret-b.ret);
+  const labels=sorted.map(f=>f.name.length>9?f.name.slice(0,9)+'…':f.name);
+  const data=sorted.map(f=>+f.ret.toFixed(2));
+  const colors=sorted.map(f=>f.ret>=0?'#c0392b':'#27ae60');
+  new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
+}
+
+function renderDetail(){
+  const tb=document.querySelector('#detailTable tbody'); tb.innerHTML="";
+  [...fundsView].sort((a,b)=>b.mv-a.mv).forEach(f=>{
+    const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
+    const pcls=f.profit>0?'pos':f.profit<0?'neg':'zero';
+    let sig='', sigbg='', sigfg='';
+    if(f.ret>=CONFIG.takeProfit2){ sig='止盈·卖1/3'; sigbg='#fdf0f0'; sigfg='#c0392b'; }
+    else if(f.ret>=CONFIG.takeProfit1){ sig='止盈区'; sigbg='#fff6e6'; sigfg='#b8760a'; }
+    if(f.ret<=CONFIG.stopLoss){ sig='止损检查'; sigbg='#fdf0f0'; sigfg='#c0392b'; }
+    const sigHtml = sig?`<span style="font-size:11px;padding:1px 7px;border-radius:5px;background:${sigbg};color:${sigfg}">${sig}</span>`:'<span class="zero">—</span>';
+    tb.innerHTML+=`<tr><td>${f.name}</td><td><span class="tag">${f.cat}</span></td>
+      <td class="num">¥${fmt(f.mv)}</td><td class="num">¥${fmt(f.cost)}</td>
+      <td class="num ${pcls}">${f.profit>=0?'+':''}¥${fmt(f.profit)}</td>
+      <td class="num ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</td>
+      <td class="num">${f.days??'—'}</td><td>${sigHtml}</td></tr>`;
+  });
+}
+
+function renderTimelines(){
+  const box=document.getElementById('timelines'); box.innerHTML="";
+  const withTr=fundsView.filter(f=>f.trades&&f.trades.length);
+  if(!withTr.length){ box.innerHTML='<p class="hint">还没有交易流水。在「交易流水」表里记一笔，这里会画出买卖点时间轴。</p>'; return; }
+  withTr.forEach(f=>{
+    const tr=[...f.trades].sort((a,b)=>a.date.localeCompare(b.date));
+    const dates=tr.map(t=>t.date); const min=dates[0], max=dates[dates.length-1]||min;
+    const W=860,H=46,pad=30;
+    const x=d=> pad + (max===min?W/2-pad:(new Date(d)-new Date(min))/(new Date(max)-new Date(min)))*(W-2*pad);
+    let dots='';
+    tr.forEach(t=>{
+      const cx=x(t.date); const col=t.type==='buy'?'#27ae60':'#c0392b';
+      dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${t.type==='buy'?'买入':'卖出'} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
+      dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':'S'}</text>`;
+    });
+    box.innerHTML+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:500;margin-bottom:2px">${f.name}</div>
+      <svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}
+      <text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text>
+      <text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text></svg></div>`;
+  });
+}
+
+function renderAdvice(){
+  const box=document.getElementById('advice'); const adv=[];
+  const catPct=getCatAllocation();
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  const cats={}; catPct.forEach(([k,v])=>cats[k]=v/100*total);
+
+  // 优化③：前三大赛道集中度
+  const top3Pct=catPct.slice(0,3).reduce((a,b)=>a+b[1],0);
+  if(top3Pct>CONFIG.top3Warn) adv.push({t:`前三大赛道（${catPct.slice(0,3).map(c=>c[0]).join('/')}）合计占比高达 ${top3Pct.toFixed(1)}%，组合抗风险能力极差，建议将部分资金转向低相关性资产（如债基/红利）。`, c:'danger'});
+
+  // 单一赛道暴露过高
+  catPct.forEach(([k,p])=>{ if(p>CONFIG.singleWarn) adv.push({t:`「${k}」占比 ${p.toFixed(1)}%，单一赛道暴露过高`, c:'danger'}); });
+
+  // 防御类不足
+  const def=(cats['混合/债']||0)/total*100; if(def<8) adv.push({t:`防御类（混合/债）仅 ${def.toFixed(1)}%，回撤保护不足，建议提升至 10-15%`, c:''});
+
+  // 优化①：碎屑持仓
+  const tinyFunds=fundsView.filter(f=>f.mv>0 && f.mv<CONFIG.tinyThreshold);
+  if(tinyFunds.length>0) adv.push({t:`你有 ${tinyFunds.length} 只基金金额低于 ${CONFIG.tinyThreshold} 元（如 ${tinyFunds.map(f=>f.name.slice(0,5)).join('、')}），建议直接清仓合并，精简持仓。`, c:'danger'});
+
+  // 优化①：严重同质化（同一行业赛道持有多只）
+  const byCat={}; fundsView.forEach(f=>{(byCat[f.cat]=byCat[f.cat]||[]).push(f);});
+  Object.entries(byCat).forEach(([k,arr])=>{
+    if(arr.length>=2 && ['芯片','医药','周期资源','制造','科技'].includes(k))
+      adv.push({t:`「${k}」赛道持有 ${arr.length} 只（${arr.map(f=>f.name.slice(0,6)).join('、')}），严重同质化，建议合并保留 1 只。`, c:'danger'});
+  });
+
+  // 优化②：回撤止损 / 逻辑失效
+  fundsView.filter(f=>f.ret<=CONFIG.stopLoss).forEach(f=>adv.push({t:`${f.name} 回撤已达 ${f.ret.toFixed(1)}%（超 ${CONFIG.stopLoss}%），不要盲目补仓——检查行业基本面，若非长期看好，停止定投。`, c:'danger'}));
+
+  // 优化②：收益率止盈触发线
+  fundsView.filter(f=>f.ret>=CONFIG.takeProfit2).forEach(f=>adv.push({t:`${f.name} 收益率 ${f.ret.toFixed(1)}% 已达强止盈线（${CONFIG.takeProfit2}%），建议分批卖出 1/3 落袋。`, c:'good'}));
+  fundsView.filter(f=>f.ret>=CONFIG.takeProfit1 && f.ret<CONFIG.takeProfit2).forEach(f=>adv.push({t:`${f.name} 收益率 ${f.ret.toFixed(1)}% 进入止盈区（${CONFIG.takeProfit1}%），可设反弹到 8-10% 分批减仓。`, c:'good'}));
+
+  // 接近止损线（温和提示）
+  fundsView.filter(f=>f.ret<-10 && f.ret>CONFIG.stopLoss).forEach(f=>adv.push({t:`${f.name} 接近止损线（${f.ret.toFixed(1)}%），检查行业基本面，若非长期看好，停止定投/减仓。`, c:'danger'}));
+
+  if(!adv.length) adv.push({t:'当前配置较为均衡，继续观察。', c:'good'});
+  box.innerHTML=adv.map(a=>`<div class="advice ${a.c}">${a.t}</div>`).join('');
+}
+
+function fmt(n){ return (n||0).toLocaleString('zh-CN',{maximumFractionDigits:0}); }
+
+// ---------- 自动拉净值（天天基金 JSONP）----------
+function fetchNav(name){
+  return new Promise(resolve=>{
+    const timer=setTimeout(()=>resolve(null),4000);
+    searchCode(name).then(code=>{
+      if(!code){ clearTimeout(timer); resolve(null); return; }
+      const s2=document.createElement('script');
+      const cb2='n2_'+Math.random().toString(36).slice(2);
+      window[cb2]=dd=>{ clearTimeout(timer); try{ if(dd&&dd.dwjz) resolve({nav:+dd.gsz||+dd.dwjz,date:dd.jzrq}); else resolve(null);}catch(e){resolve(null);} delete window[cb2]; s2.remove(); };
+      s2.onerror=()=>{ clearTimeout(timer); resolve(null); delete window[cb2]; };
+      s2.src=`https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}&callback=${cb2}`;
+      document.body.appendChild(s2);
+    });
+  });
+}
+function searchCode(name){
+  return new Promise(resolve=>{
+    const timer=setTimeout(()=>resolve(null),4000);
+    const s=document.createElement('script');
+    const cb='s_'+Math.random().toString(36).slice(2);
+    window[cb]=d=>{ clearTimeout(timer); try{ const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]); resolve(arr&&arr[0]?arr[0].CODE:null);}catch(e){resolve(null);} delete window[cb]; s.remove(); };
+    s.onerror=()=>{ clearTimeout(timer); resolve(null); };
+    s.src=`https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key=${encodeURIComponent(name)}&callback=${cb}`;
+    document.body.appendChild(s);
+  });
+}
+async function refresh(){
+  document.getElementById('updated').textContent='正在拉取最新净值…';
+  const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);
+  let done=0;
+  await Promise.all(names.map(async nm=>{
+    const r=await fetchNav(nm);
+    if(r) navCache[nm]=r;
+    done++;
+  }));
+  // 回填快照表的净值列显示
+  renderSnap();
+  compute();
+  document.getElementById('updated').textContent='已刷新 · '+new Date().toLocaleString('zh-CN')+' （拉到 '+Object.keys(navCache).length+'/'+names.length+' 只）';
+}
+
+// ---------- 导入导出 ----------
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({snaps,trades,navCache},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click();
+}
+function importJSON(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); snaps=d.snaps||snaps; trades=d.trades||trades; navCache=d.navCache||navCache; renderSnap(); renderTrade(); compute(); saveLocal(); }catch(e){alert('解析失败');} }; r.readAsText(f); };
+  inp.click();
+}
+function clearAll(){ if(confirm('清空示例数据？此操作不可撤销（已保存的本地数据会被覆盖）。')){ snaps=[]; trades=[]; navCache={}; renderSnap(); renderTrade(); compute(); } }
+
+// ---------- 启动 ----------
+if(localStorage.getItem(VAULT_KEY)) showLock(false); else showLock(true);
+</script>
+</body>
+</html>

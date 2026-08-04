@@ -82,6 +82,19 @@
   .tag-宽基\/行业 { background: #f3eefb; color: #7a4ab7; }
   .tag-其他 { background: #f2f3f5; color: #6b7280; }
 
+  /* 数据隐蔽模式 */
+  #eyeBtn { font-size: 15px; line-height: 1; padding: 6px 10px; }
+  /* 板块集中度 warn */
+  .cb-fill.warn { background: #e24b4b; }
+  /* 预警高亮（止盈/止损） */
+  .hl-row.alert-tp { background: #fff8e1; box-shadow: inset 3px 0 0 #e0a800; }
+  .hl-row.alert-tp:hover { background: #fff3cc; }
+  .hl-row.alert-sl { background: #fdecec; box-shadow: inset 3px 0 0 #e24b4b; }
+  .hl-row.alert-sl:hover { background: #fbe0e0; }
+  /* 刷新状态指示 */
+  #updated.live { color: #0f8a63; } #updated.closed { color: #8a8f99; }
+  .al-input { width: 70px; padding: 5px 8px; border: 1px solid #d0d3d9; border-radius: 8px; font-size: 13px; font-family: inherit; }
+
   /* 赛道筛选 chips */
   .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .cat-chip { border: 1px solid #d0d3d9; background: #fff; border-radius: 16px; padding: 4px 12px; font-size: 12px; cursor: pointer; font-family: inherit; color: #5a6270; transition: all .15s; }
@@ -186,19 +199,22 @@
         <h1>我的基金追踪器</h1>
         <p class="sub"><span id="updated" class="loading">数据未刷新</span></p>
       </div>
-      <div class="more-menu">
-        <button class="btn sm" onclick="toggleMore(event)">⋯ 更多</button>
-        <div class="drop" id="moreDrop">
-          <button onclick="refresh();closeMore()">↻ 刷新最新净值</button>
-          <button onclick="addSnapRow();closeMore()">+ 加一只基金</button>
-          <button onclick="addTradeRow();switchTab(2);closeMore()">+ 记一笔交易</button>
-          <hr>
-          <button onclick="saveLocal();closeMore()">💾 保存下载</button>
-          <button onclick="exportJSON();closeMore()">📤 导出 JSON</button>
-          <button onclick="importJSON();closeMore()">📥 导入 JSON</button>
-          <button onclick="window.print();closeMore()">🖨 导出 PDF</button>
-          <hr>
-          <button onclick="clearAll();closeMore()" style="color:#c0392b">🗑 清空示例数据</button>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <button class="btn sm" id="eyeBtn" onclick="toggleHidden()" title="隐藏/显示金额">👁</button>
+        <div class="more-menu">
+          <button class="btn sm" onclick="toggleMore(event)">⋯ 更多</button>
+          <div class="drop" id="moreDrop">
+            <button onclick="refresh();closeMore()">↻ 刷新最新净值</button>
+            <button onclick="addSnapRow();closeMore()">+ 加一只基金</button>
+            <button onclick="addTradeRow();switchTab(2);closeMore()">+ 记一笔交易</button>
+            <hr>
+            <button onclick="saveLocal();closeMore()">💾 保存下载</button>
+            <button onclick="exportJSON();closeMore()">📤 导出 JSON</button>
+            <button onclick="importJSON();closeMore()">📥 导入 JSON</button>
+            <button onclick="window.print();closeMore()">🖨 导出 PDF</button>
+            <hr>
+            <button onclick="clearAll();closeMore()" style="color:#c0392b">🗑 清空示例数据</button>
+          </div>
         </div>
       </div>
     </div>
@@ -237,6 +253,11 @@
           <div><h2>资产配置</h2><div class="chart-box"><canvas id="pie" role="img" aria-label="资产配置饼图"></canvas></div><div class="legend" id="pieLegend"></div></div>
           <div><h2>盈亏分布</h2><div class="chart-box"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div></div>
         </div>
+      </div>
+      <div class="card">
+        <h2>板块配置穿透 <span class="tag">按市值</span></h2>
+        <div id="sectorBars"></div>
+        <div id="sectorWarn"></div>
       </div>
       <div class="card">
         <h2>优化建议 + 止盈止损信号 <span class="tag">自动生成</span></h2>
@@ -309,6 +330,7 @@ let flashMap={}, todayGain=null;
 let holdSort='mv', holdCatFilter='全部';
 let currentView='home', detailName=null, detailChartFund=null;
 let _focusFld=null, _focusPos=0;
+let hidden=false; let alerts={};
 
 function captureFocus(){
   const a=document.activeElement;
@@ -335,7 +357,7 @@ let activeTab=0;
 function switchTab(i){
   activeTab=i;
   [0,1,2].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
-  if(i===1){ renderPie(); renderBar(); }
+  if(i===1){ renderPie(); renderBar(); renderSector(); }
   if(i===2){ renderTrade(); renderTimelines(); }
 }
 
@@ -374,12 +396,15 @@ function renderHomeList(){
   box.innerHTML=list.map(f=>{
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
     const flash=flashMap[f.name]!=null?(flashMap[f.name]>=0?'flash pos':'flash neg'):'';
-    return `<div class="hl-row ${flash}" onclick="goDetail('${encodeURIComponent(f.name)}')">
+    const al=alerts[f.name]||{}; let alertCls='';
+    if(al.tp!=null && f.ret>=al.tp) alertCls=' alert-tp';
+    else if(al.sl!=null && f.ret<=-al.sl) alertCls=' alert-sl';
+    return `<div class="hl-row ${flash}${alertCls}" onclick="goDetail('${encodeURIComponent(f.name)}')">
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
-        <span>净值 ${navFmt(f.nav)}</span><span class="hl-sep">|</span><span>成本 ${navFmt(f.costPx)}</span>${dayFmt(f)}
+        <span>净值 ${mask4(f.nav)}</span><span class="hl-sep">|</span><span>成本 ${mask4(f.costPx)}</span>${dayFmt(f)}
       </div></div>
-      <div class="hl-num"><div class="hl-mv">¥${fmt(f.mv)}</div><div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
+      <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div><div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       <div class="hl-arrow">›</div>
     </div>`;
   }).join('');
@@ -394,12 +419,12 @@ function renderOverview(){
   const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length;
   const cls=profit>=0?'pos':'neg';
   const top3=getCatAllocation().slice(0,3).reduce((a,b)=>a+b[1],0);
-  const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+'¥'+fmt(Math.abs(todayGain));
+  const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'zero':(todayGain>=0?'pos':'neg');
   document.getElementById('overview').innerHTML=`
-    <div class="mcard"><p class="lbl">总市值</p><p class="val">¥${fmt(total)}</p></div>
+    <div class="mcard"><p class="lbl">总市值</p><p class="val">${M(total)}</p></div>
     <div class="mcard"><p class="lbl">今日预估</p><p class="val ${tgcls}">${tg}</p></div>
-    <div class="mcard"><p class="lbl">持有总收益</p><p class="val ${cls}">${profit>=0?'+':''}¥${fmt(profit)}</p></div>
+    <div class="mcard"><p class="lbl">持有总收益</p><p class="val ${cls}">${profit>=0?'+':''}${M(profit)}</p></div>
     <div class="mcard"><p class="lbl">总收益率</p><p class="val ${cls}">${pret>=0?'+':''}${pret.toFixed(2)}%</p></div>
     <div class="mcard"><p class="lbl">基金数 / 盈:亏</p><p class="val">${fundsView.length} <span class="pos">${win}</span>:<span class="neg">${lose}</span></p></div>
     <div class="mcard"><p class="lbl">前三大赛道集中度</p><p class="val ${top3>CONFIG.top3Warn?'neg':'pos'}">${top3.toFixed(0)}%</p></div>`;
@@ -542,7 +567,7 @@ function render(){
   captureFocus();
   if(currentView==='home'){
     renderOverview(); renderHomeList(); renderCatFilter();
-    if(activeTab===1){ renderPie(); renderBar(); } renderAdvice();
+    if(activeTab===1){ renderPie(); renderBar(); renderSector(); } renderAdvice();
     if(activeTab===2){ renderTrade(); renderTimelines(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?fundsView.find(x=>x.name===detailName):null); }
   restoreFocus();
@@ -581,32 +606,32 @@ function headerHtml(f){
     <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
     <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">删除该基金</button></div></div>
     <div class="cards4">
-      <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">¥${fmt(f.mv)}</p></div>
+      <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">${M(f.mv)}</p></div>
       <div class="mcard"><p class="lbl">持有收益率</p><p class="val ${rcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</p></div>
-      <div class="mcard"><p class="lbl">成本</p><p class="val" id="dhCost">¥${fmt(f.cost)}</p></div>
-      <div class="mcard"><p class="lbl">收益</p><p class="val ${pcls}" id="dhProfit">${f.profit>=0?'+':''}¥${fmt(f.profit)}</p></div>
+      <div class="mcard"><p class="lbl">成本</p><p class="val" id="dhCost">${M(f.cost)}</p></div>
+      <div class="mcard"><p class="lbl">收益</p><p class="val ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</p></div>
     </div></div>`;
 }
 function updateDetailHeader(f){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('dhMv','¥'+fmt(f.mv));
+  set('dhMv',M(f.mv));
   const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.className='val '+(f.ret>0?'pos':f.ret<0?'neg':'zero');}
-  set('dhCost','¥'+fmt(f.cost));
-  const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+'¥'+fmt(f.profit); e2.className='val '+(f.profit>0?'pos':f.profit<0?'neg':'zero');}
+  set('dhCost',M(f.cost));
+  const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+M(f.profit); e2.className='val '+(f.profit>0?'pos':f.profit<0?'neg':'zero');}
 }
 function genericDetail(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero';
   const mx=Math.max(f.cost,f.mv,1), costPct=(f.cost/mx*100).toFixed(1), mvPct=(f.mv/mx*100).toFixed(1);
   let h=`<div class="card"><h2>基金基础数据</h2><table class="am-t"><tbody>
     <tr><th>类别</th><td>${f.cat}</td><th>持有份额</th><td>${f.shares!=null?fmt(f.shares):'—'}</td></tr>
-    <tr><th>当前市值</th><td>¥${fmt(f.mv)}</td><th>成本</th><td>¥${fmt(f.cost)}</td></tr>
-    <tr><th>持有收益</th><td class="${pcls}">${f.profit>=0?'+':''}¥${fmt(f.profit)}</td><th>收益率</th><td class="${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</td></tr>
+    <tr><th>当前市值</th><td>${M(f.mv)}</td><th>成本</th><td>${M(f.cost)}</td></tr>
+    <tr><th>持有收益</th><td class="${pcls}">${f.profit>=0?'+':''}${M(f.profit)}</td><th>收益率</th><td class="${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</td></tr>
     <tr><th>持有天数</th><td>${f.days!=null?f.days+' 天':'—'}</td><th>最新净值</th><td>${navCache[f.name]?navCache[f.name].nav:'自动/未填'}</td></tr>
     </tbody></table>
     <h4 class="am-h"><span class="n">★</span>成本 vs 现价</h4>
     <div class="cmp-bar">
-      <div class="cb-row"><span class="cb-l">成本</span><div class="cb-track"><div class="cb-fill" style="width:${costPct}%"></div></div><span class="cb-v">¥${fmt(f.cost)}</span></div>
-      <div class="cb-row"><span class="cb-l">当前</span><div class="cb-track"><div class="cb-fill cur" style="width:${mvPct}%"></div></div><span class="cb-v">¥${fmt(f.mv)}</span></div>
+      <div class="cb-row"><span class="cb-l">成本</span><div class="cb-track"><div class="cb-fill" style="width:${costPct}%"></div></div><span class="cb-v">${M(f.cost)}</span></div>
+      <div class="cb-row"><span class="cb-l">当前</span><div class="cb-track"><div class="cb-fill cur" style="width:${mvPct}%"></div></div><span class="cb-v">${M(f.mv)}</span></div>
     </div>
     <div class="am-note">说明：本对比基于你的持仓成本与当前市值，不含历史净值走势。若要每日净值走势曲线，需接入历史 NAV 数据（可后续补充）。</div></div>`;
   h+=`<div class="card"><h2>十大重仓</h2><div class="am-empty">📊 该基金暂无深度持仓分析。<br>把它的持仓截图发我，我就能生成和「富国全球科技互联网(QDII)C（022184）」一样的分析并自动接进来。</div></div>`;
@@ -637,6 +662,29 @@ function liveSection(f){
       <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td></tr>`; } });
     h+=`</tbody></table></div><div style="margin-top:12px"><div style="font-size:14px;font-weight:600;margin:0 0 6px">买卖点</div>${miniTimeline(f)}</div>`;
   } else { h+=`<p class="hint">还没有交易流水。点「+ 记一笔」记录买卖。</p>`; }
+
+  const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
+  if(f.shares!=null && calcNav){
+    const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(calcNav>0&&curCost)?(curCost-calcNav)/calcNav*100:0;
+    h+=`<div class="card"><h2>回本 / 补仓计算器</h2>
+      <p class="hint">当前持仓成本 <b>${M(curCost)}</b>/份，最新净值 <b>${calcNav.toFixed(4)}</b>${f.nav?'':'（按市值/份额推算）'}，需再涨 <b class="${need>0?'neg':'pos'}">${need>=0?'+':''}${need.toFixed(2)}%</b> 回本。</p>
+      <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
+        <span style="font-size:13px">计划补仓</span>
+        <input id="bkAmt" type="number" step="any" inputmode="decimal" placeholder="如 2000" style="width:120px;padding:6px;border:1px solid #d0d3d9;border-radius:8px;font-size:13px" oninput="bkCalc('${encodeURIComponent(f.name)}',this.value)">
+        <span style="font-size:13px;color:#8a8f99">元</span>
+      </div>
+      <div id="bkRes" class="advice">输入补仓金额查看预测。</div>
+    </div>`;
+  }
+  const al=alerts[f.name]||{};
+  h+=`<div class="card"><h2>止盈 / 止损预警线</h2>
+    <p class="hint">设置后，首页列表里该基金会按当前收益率高亮提醒（刷新后生效）。</p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <label style="font-size:13px">止盈 +<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.tp!=null?al.tp:''}" placeholder="如 20" oninput="setAlert('${encodeURIComponent(f.name)}','tp',this.value)">%</label>
+      <label style="font-size:13px">止损 −<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.sl!=null?al.sl:''}" placeholder="如 15" oninput="setAlert('${encodeURIComponent(f.name)}','sl',this.value)">%</label>
+    </div>
+  </div>`;
+
   h+=`</div>`; return h;
 }
 
@@ -686,7 +734,10 @@ async function refresh(){
   fundsView.forEach(f=>{ if(flashMap[f.name]!=null){ const chg=flashMap[f.name]/100; const oldMV=f.mv/(1+chg); todayGain+=(f.mv-oldMV); anyG=true; } });
   todayGain=anyG?todayGain:null; if(currentView==='home') renderOverview();
   const got=Object.keys(navCache).length;
-  document.getElementById('updated').textContent='已刷新 · '+new Date().toLocaleString('zh-CN')+'（拉到 '+got+'/'+names.length+' 只'+(got<names.length?'，部分未拉到已用缓存':'');
+  const now=new Date(), market=isMarketOpen(now), miss=got<names.length;
+  const u=document.getElementById('updated');
+  u.className=market?'live':'closed';
+  u.textContent='已刷新 · '+now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+' · '+(market?'盘中实时估值':'历史净值（收盘）')+'（'+got+'/'+names.length+' 只'+(miss?'，部分未拉到已用缓存':'');
 }
 
 // ---------- 导入导出 ----------
@@ -778,12 +829,24 @@ function amShowHold(mode){ document.getElementById('amChartHold').style.display=
 
 function esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
 function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function M(n){ return hidden ? '••••' : '¥'+fmt(n); }
+function mask4(v){ return hidden ? '••••' : (v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'); }
+function isMarketOpen(d){ const day=d.getDay(); if(day===0||day===6) return false; const t=d.getHours()*60+d.getMinutes(); return t>=570 && t<=900; }
+function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} const eb=document.getElementById('eyeBtn'); if(eb) eb.textContent=hidden?'🙈':'👁'; render(); }
+function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alerts));}catch(e){} }
+function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
+function bkCalc(enc,val){ const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return; const res=document.getElementById('bkRes'); if(!res) return; const nav=f.nav||(f.shares?f.mv/f.shares:0); const curCost=f.costPx||(f.shares?f.cost/f.shares:0); const need=nav>0?(curCost-nav)/nav*100:0; const add=+val||0; if(add<=0||nav<=0){ res.className='advice'; res.innerHTML='输入补仓金额查看预测。'; return; } const newShares=f.shares+add/nav, newCost=f.cost+add, newCostPx=newShares>0?newCost/newShares:0, newNeed=nav>0?(newCostPx-nav)/nav*100:0; res.className='advice'; res.innerHTML=`<b>补仓 ${M(add)}</b> 后：成本降至 <b>${M(newCostPx)}</b>/份，需再涨 <b class="${newNeed>0?'neg':'pos'}">${newNeed>=0?'+':''}${newNeed.toFixed(2)}%</b> 回本（当前需 ${need>=0?'+':''}${need.toFixed(2)}%）。`; }
+function renderSector(){ const catPct=getCatAllocation(); const box=document.getElementById('sectorBars'); if(!box) return; const maxPct=catPct.length?catPct[0][1]:0; box.innerHTML=catPct.map(([k,p])=>`<div class="cb-row"><span class="cb-l">${k}</span><div class="cb-track"><div class="cb-fill${p>45?' warn':''}" style="width:${Math.min(100,p)}%"></div></div><span class="cb-v ${p>45?'neg':''}">${p.toFixed(1)}%</span></div>`).join(''); const w=document.getElementById('sectorWarn'); if(maxPct>45){ w.innerHTML=`<div class="advice danger">⚠️ 单一板块「${catPct[0][0]}」占比 <b>${maxPct.toFixed(1)}%</b>，集中度过高，回撤时会同涨同跌、缺乏对冲。</div>`; } else w.innerHTML=''; }
 
 // ---------- 启动 ----------
 (function init(){
   const saved=localStorage.getItem('ft_data');
   if(saved){ try{ const d=JSON.parse(saved); snaps=d.snaps||[]; trades=d.trades||[]; navCache=d.navCache||{}; } catch(e){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; } }
   else { snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
+  try{ const a=localStorage.getItem('ft_alerts'); alerts=a?JSON.parse(a):{}; }catch(e){ alerts={}; }
+  hidden=localStorage.getItem('ft_hidden')==='1';
+  document.body.classList.toggle('masked',hidden);
+  const eb=document.getElementById('eyeBtn'); if(eb) eb.textContent=hidden?'🙈':'👁';
   buildFundsView();
   window.addEventListener('hashchange', route);
   route();

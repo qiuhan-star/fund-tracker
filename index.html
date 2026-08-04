@@ -38,6 +38,43 @@
   .advice { border-left: 3px solid #e0a800; background: #fffdf5; padding: 9px 13px; border-radius: 0 8px 8px 0; margin-bottom: 8px; font-size: 12.5px; line-height: 1.7; }
   .advice.danger { border-left-color: #e24b4b; background: #fdf5f5; }
   .advice.good { border-left-color: #27ae60; background: #f5fdf7; }
+
+  /* ===== 个性化面板 ===== */
+  .pf-panel { background: #f7f8fa; border: 1px solid #eef1f6; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+  .pf-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .pf-lab { font-size: 12.5px; color: #5a6270; min-width: 68px; font-weight: 500; }
+  .pf-seg { display: inline-flex; background: #fff; border: 1px solid #dce0e6; border-radius: 8px; overflow: hidden; }
+  .pf-seg button { border: none; background: transparent; padding: 5px 14px; font-size: 12.5px; color: #5a6270; cursor: pointer; font-family: inherit; border-right: 1px solid #eef1f6; }
+  .pf-seg button:last-child { border-right: none; }
+  .pf-seg button.on { background: #2f6fed; color: #fff; }
+  .pf-note { font-size: 11.5px; color: #9aa0aa; margin: 4px 0 0; }
+  /* 当前 vs 建议 对比 */
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 12px; }
+  .cmp .cc { background: #fafbfc; border: 1px solid #eef1f6; border-radius: 10px; padding: 10px; }
+  .cmp h3 { font-size: 12.5px; margin: 0 0 6px; color: #5a6270; font-weight: 600; text-align: center; }
+  .cmp .chart-box { height: 180px; }
+  .cmp .legend { justify-content: center; margin-top: 6px; }
+  .risk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: #5a6270; margin: 2px 0 14px; justify-content: center; }
+  .risk-legend span { display: flex; align-items: center; gap: 5px; }
+  .risk-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  /* 优先级建议卡 */
+  .adk { display: flex; gap: 10px; border: 1px solid #eef1f6; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+  .adk-badge { flex: 0 0 auto; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; height: fit-content; white-space: nowrap; }
+  .adk.high { border-left: 3px solid #e24b4b; } .adk.high .adk-badge { background: #fdeaea; color: #d23b3b; }
+  .adk.medium { border-left: 3px solid #e0a800; } .adk.medium .adk-badge { background: #fff4e0; color: #b9791a; }
+  .adk.low { border-left: 3px solid #2f6fed; } .adk.low .adk-badge { background: #eaf1fd; color: #2f6fed; }
+  .adk-title { font-size: 13.5px; font-weight: 600; margin: 0 0 4px; }
+  .adk-body { font-size: 12.5px; color: #4a505a; line-height: 1.65; margin: 0 0 8px; }
+  .adk ul { margin: 0 0 6px; padding-left: 18px; font-size: 12.5px; color: #3a4049; line-height: 1.7; }
+  .adk-alt { font-size: 12px; color: #6b7280; background: #f7f8fa; border-radius: 8px; padding: 7px 10px; line-height: 1.6; }
+  .adk-alt b { color: #5a6270; }
+  /* 分阶段计划 */
+  .plan { background: #f7f8fa; border-radius: 10px; padding: 12px 14px; margin-top: 6px; }
+  .plan h3 { font-size: 13px; margin: 0 0 10px; font-weight: 600; }
+  .pl { display: flex; gap: 10px; margin-bottom: 10px; }
+  .pl:last-child { margin-bottom: 0; }
+  .pl-m { flex: 0 0 auto; width: 64px; font-size: 12px; font-weight: 600; color: #2f6fed; padding-top: 1px; }
+  .pl-c { font-size: 12.5px; color: #3a4049; line-height: 1.65; }
   .hint { font-size: 12px; color: #8a8f99; line-height: 1.7; }
   .privacy { color: #6b7280; font-size: 12px; margin: 8px 0 0; padding: 8px 10px; background: #f7f8fa; border-radius: 8px; line-height: 1.6; }
   .legend { display: flex; flex-wrap: wrap; gap: 9px; font-size: 12px; margin-top: 8px; }
@@ -109,6 +146,16 @@
   .idx-name { font-size: 12px; color: #6b7280; }
   .idx-val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .idx-pct { font-size: 11px; margin-left: 4px; font-weight: 500; }
+  /* 主题 / 板块热力 */
+  .theme-heat { display: flex; flex-wrap: wrap; gap: 8px; }
+  .th-cell { flex: 1 1 120px; min-width: 116px; border: 1px solid #ebedf0; border-radius: 10px; padding: 10px 12px; background: rgba(47,111,237, calc(.05 + var(--int,0) * .14)); transition: background .25s; }
+  .th-cell.th-total { flex: 0 0 auto; background: #f7f8fa; border-style: dashed; }
+  .th-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  .th-cat { font-size: 13.5px; font-weight: 600; color: #1f2329; }
+  .th-n { font-size: 11px; color: #8a8f99; flex: 0 0 auto; }
+  .th-pct { font-size: 15px; font-weight: 700; color: #1f2329; font-variant-numeric: tabular-nums; }
+  .th-ret { font-size: 12.5px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .th-ret.pos { color: #c0392b; } .th-ret.neg { color: #27ae60; } .th-ret.zero { color: #8a8f99; }
   /* 空状态引导 */
   .empty-state { text-align: center; padding: 40px 16px; }
   .empty-state .es-emoji { font-size: 42px; }
@@ -292,6 +339,11 @@
         <div id="sectorWarn"></div>
       </div>
       <div class="card">
+        <h2>主题 / 板块热力 <span class="tag">按持仓</span></h2>
+        <p class="hint">把你的基金按分类标签聚合成"热力瓦片"：面积越大=占比越高，<span class="pos">红涨</span>/<span class="neg">绿跌</span>=该类加权收益率。一眼看清钱压在哪、哪类在赚/亏。</p>
+        <div class="theme-heat" id="themeHeat"></div>
+      </div>
+      <div class="card">
         <h2>累计收益 / 总资产曲线 <span class="tag">随记录变真实</span></h2>
         <p class="hint">当前无历史时序数据，下面是一条示意曲线。点「记录此刻」会把当前的<b>总资产</b>与<b>累计收益</b>存为一个数据点；坚持记录，曲线就会变成你账户的真实净值轨迹。</p>
         <div class="chart-box"><canvas id="growth" role="img" aria-label="累计收益曲线"></canvas></div>
@@ -397,7 +449,7 @@ let activeTab=0;
 function switchTab(i){
   activeTab=i;
   [0,1,2].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
-  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); }
+  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
   if(i===2){ renderTrade(); renderTimelines(); }
 }
 
@@ -633,6 +685,25 @@ function getCatAllocation(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   return Object.entries(cats).map(([k,v])=>[k,total?v/total*100:0]).sort((a,b)=>b[1]-a[1]);
 }
+function renderThemeHeat(){
+  const box=document.getElementById('themeHeat'); if(!box) return;
+  if(!fundsView.length){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  const map={};
+  fundsView.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0,n:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); m.n++; });
+  const rows=Object.entries(map).map(([k,m])=>({cat:k, mv:m.mv, pct:total?m.mv/total*100:0, wret:m.mv?m.retW/m.mv:0, n:m.n})).sort((a,b)=>b.mv-a.mv);
+  const maxPct=rows.length?rows[0].pct:1;
+  box.innerHTML=rows.map(r=>{
+    const cls=r.wret>0?'pos':r.wret<0?'neg':'zero';
+    const arrow=r.wret>0?'▲':r.wret<0?'▼':'';
+    const intensity=maxPct?Math.min(1,r.pct/maxPct):0;
+    return `<div class="th-cell" style="--int:${intensity.toFixed(2)}">
+      <div class="th-top"><span class="th-cat">${r.cat}</span><span class="th-n">${r.n}只</span></div>
+      <div class="th-pct">${r.pct.toFixed(1)}%</div>
+      <div class="th-ret ${cls}">${arrow}${Math.abs(r.wret).toFixed(2)}%</div>
+    </div>`;
+  }).join('') + `<div class="th-cell th-total"><div class="th-top"><span class="th-cat">合计</span></div><div class="th-pct">100%</div><div class="th-ret">${fundsView.length}只</div></div>`;
+}
 function compute(){ buildFundsView(); render(); silentSave(); }
 
 // ---------- 渲染调度 ----------
@@ -640,7 +711,7 @@ function render(){
   captureFocus();
   if(currentView==='home'){
     renderOverview(); renderHomeList(); renderCatFilter();
-    if(activeTab===1){ renderPie(); renderBar(); renderSector(); } renderAdvice();
+    if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); } renderAdvice();
     if(activeTab===2){ renderTrade(); renderTimelines(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?fundsView.find(x=>x.name===detailName):null); }
   restoreFocus();

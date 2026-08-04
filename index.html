@@ -109,6 +109,9 @@
   .nk-est { background: #fff3e0; color: #e8820c; }
   .nk-off { background: #eaf6ec; color: #2f9e44; }
   .nk-man { background: #eef2fb; color: #2f6bd6; }
+  .hist-ranges { display: inline-flex; gap: 4px; }
+  .mini-btn { font-size: 11px; border: 1px solid #d7dbe2; background: #fff; color: #5b6068; border-radius: 6px; padding: 1px 8px; cursor: pointer; line-height: 1.6; }
+  .mini-btn.on { background: #2f6bed; border-color: #2f6bed; color: #fff; }
   .nav-edit { cursor: pointer; border-bottom: 1px dashed #c8ccd4; }
   .nav-edit:hover { border-bottom-color: #2f6bd6; color: #2f6bd6; }
   .hl-num { flex: 0 0 auto; text-align: right; }
@@ -883,6 +886,7 @@ function enterDetail(f){
   c.innerHTML=headerHtml(f)
     +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span id="idxTimeD" class="idx-status"></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
     +`<div id="detailIntraday"></div>`
+    +`<div id="detailHistory"></div>`
     +`<div id="detailStatic"></div>`+`<div id="detailLive"></div>`;
   renderIndices();
   const st=document.getElementById('detailStatic');
@@ -890,6 +894,7 @@ function enterDetail(f){
   else { st.innerHTML=genericDetail(f); }
   renderDetailLive(f);
   renderIntraday(f);
+  renderNavHistory(f);
 }
 function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
@@ -1155,6 +1160,54 @@ function drawIntraday(f, data, live){
     xAxis:{type:'category',data:labels,boundaryGap:false,axisLabel:{fontSize:9,interval:Math.floor(labels.length/6)},axisLine:{lineStyle:{color:'#ddd'}},axisTick:{show:false}},
     yAxis:{type:'value',axisLabel:{fontSize:9,formatter:'{value}%'},splitLine:{lineStyle:{color:'rgba(0,0,0,.05)'}},scale:true},
     series:[{type:'line',data:pcts,showSymbol:false,smooth:false,lineStyle:{color:line,width:2},areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:line+'33'},{offset:1,color:line+'00'}])},markLine:{silent:true,symbol:'none',lineStyle:{color:'#999',type:'dashed'},data:[{yAxis:0}]}}]
+  });
+}
+// ---------- 历史净值走势（天天基金 pingzhongdata，单位净值真值；A股+QDII 通用） ----------
+const histCache={}; // code -> [{t:Date, nav, ret}]
+function fetchNavHistory(code){
+  return new Promise(resolve=>{
+    if(histCache[code]){ resolve(histCache[code]); return; }
+    const s=document.createElement('script');
+    const timer=setTimeout(()=>{ resolve(null); },10000);
+    s.onload=()=>{
+      clearTimeout(timer);
+      try{
+        const raw=window.Data_netWorthTrend;
+        if(!Array.isArray(raw)||!raw.length){ resolve(null); return; }
+        const arr=raw.map(p=>{ const o=Array.isArray(p)?{x:p[0],y:p[1],equityReturn:p[2]}:p; const nav=+o.y; return {t:new Date(+o.x), nav:isNaN(nav)?null:nav, ret:o.equityReturn!=null?+o.equityReturn:null}; }).filter(p=>p.nav!=null&&!isNaN(p.t.getTime()));
+        histCache[code]=arr; resolve(arr);
+      }catch(e){ resolve(null); }
+      s.remove();
+    };
+    s.onerror=()=>{ clearTimeout(timer); resolve(null); };
+    s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
+    document.body.appendChild(s);
+  });
+}
+let histRange=90;
+function setHistRange(d){ histRange=d; const f=fundsView.find(x=>x.name===detailName); if(f) renderNavHistory(f); }
+async function renderNavHistory(f){
+  const box=document.getElementById('detailHistory'); if(!box) return;
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">历史净值走势 <span class="tag">天天基金</span></h2><span class="hist-ranges">${[30,90,180,0].map(d=>`<button class="mini-btn${histRange===d?' on':''}" onclick="setHistRange(${d})">${d===0?'全部':d+'天'}</button>`).join('')}</span></div><div id="histChart" style="width:100%;height:240px"></div><p class="hint" id="histNote" style="margin:6px 0 0">正在加载历史净值…</p></div>`;
+  const code=await resolveCode(f.name);
+  if(!code){ const n=document.getElementById('histNote'); if(n) n.textContent='未匹配到基金代码，无法加载历史净值。'; const c=document.getElementById('histChart'); if(c) c.style.display='none'; return; }
+  const all=await fetchNavHistory(code);
+  if(!all||!all.length){ const n=document.getElementById('histNote'); if(n) n.textContent='历史净值获取失败（天天基金接口未返回，可能被拦截/离线）。'; const c=document.getElementById('histChart'); if(c) c.style.display='none'; return; }
+  drawHist(all);
+}
+function drawHist(all){
+  const data = histRange>0 ? all.slice(-histRange) : all;
+  const labels=data.map(p=>{ const y=p.t.getFullYear(),m=('0'+(p.t.getMonth()+1)).slice(-2),d=('0'+p.t.getDate()).slice(-2); return y+'-'+m+'-'+d; });
+  const vals=data.map(p=>p.nav);
+  const last=vals[vals.length-1], first=vals[0], up=last>=first, line=up?'#c0392b':'#27ae60';
+  const note=document.getElementById('histNote'); if(note) note.textContent=`区间 ${labels[0]} ~ ${labels[labels.length-1]} · ${data.length} 个交易日 · 单位净值 ${first.toFixed(4)} → ${last.toFixed(4)}（区间 ${up?'+':''}${(((last-first)/first)*100).toFixed(2)}%）`;
+  amChart('histChart',{
+    grid:{left:52,right:16,top:18,bottom:46},
+    tooltip:{trigger:'axis',formatter:function(ps){const p=ps[0];const d=data[p.dataIndex];return p.axisValue+'<br/>单位净值 '+d.nav.toFixed(4)+(d.ret!=null?'<br/>当日 '+(d.ret>=0?'+':'')+d.ret+'%':'')+'<br/>区间涨跌 '+(((d.nav-first)/first)*100).toFixed(2)+'%';}},
+    xAxis:{type:'category',data:labels,boundaryGap:false,axisLabel:{fontSize:9,interval:Math.floor(labels.length/6)},axisLine:{lineStyle:{color:'#ddd'}},axisTick:{show:false}},
+    yAxis:{type:'value',scale:true,axisLabel:{fontSize:9,formatter:v=>v.toFixed(3)},splitLine:{lineStyle:{color:'rgba(0,0,0,.05)'}}},
+    dataZoom:[{type:'inside'},{type:'slider',height:14,bottom:6}],
+    series:[{type:'line',data:vals,showSymbol:false,smooth:true,lineStyle:{color:line,width:2},areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:line+'33'},{offset:1,color:line+'00'}])}}]
   });
 }
 // 批量刷新净值：FundMNFInfo 一次拿全部 → QDII 新浪兜底 → 缺失单只 fundgz 兜底

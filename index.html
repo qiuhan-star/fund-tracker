@@ -508,10 +508,12 @@ function buildFundsView(){
   const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);
   fundsView=names.map(name=>{
     const tr=trades.filter(t=>t.name===name), snap=snaps.find(s=>s.name===name), cat=snap?.cat||guessCat(name);
-    if(tr.length&&tr.every(t=>t.nav)){
+    if(tr.length&&tr.every(t=>t.nav&&t.nav>0)){
       let shares=0,cost=0,firstDate=null;
-      tr.forEach(t=>{ const sh=t.amount/t.nav; if(t.type==='buy'){shares+=sh;cost+=t.amount;}else{shares-=sh;cost-=t.amount;} if(!firstDate||t.date<firstDate) firstDate=t.date; });
-      const nav=navCache[name]?navCache[name].nav:(snap?snap.mv/(shares||1):0), mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
+      const sortedTr=[...tr].sort((a,b)=>a.date.localeCompare(b.date));
+      sortedTr.forEach(t=>{ const sh=t.amount/t.nav; if(t.type==='buy'){shares+=sh;cost+=t.amount;}else{ if(shares>0){ cost-=cost*(sh/shares); shares-=sh; } } if(!firstDate||t.date<firstDate) firstDate=t.date; });
+      shares=Math.max(0,shares); cost=Math.max(0,cost);
+      const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:0), mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
       return {name,cat,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr};
     }
     const mv=snap?snap.mv:0, ret=snap?snap.ret:0, cost=mv/(1+ret/100), profit=mv-cost, nav=navCache[name]?navCache[name].nav:null;
@@ -575,7 +577,7 @@ function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=ANALYSIS[f.name];
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
-    <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn" onclick="delFundByIndex(${fundsView.indexOf(f)})">删除该基金</button></div></div>
+    <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">删除该基金</button></div></div>
     <div class="cards4">
       <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">¥${fmt(f.mv)}</p></div>
       <div class="mcard"><p class="lbl">持有收益率</p><p class="val ${rcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</p></div>
@@ -622,6 +624,7 @@ function liveSection(f){
   h+=`<tr><td>最新净值</td><td><input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={nav:+this.value,date:'手动'};compute();silentSave()"></td></tr></tbody></table></div></div>`;
   const tr=trades.filter(t=>t.name===f.name);
   h+=`<div class="card"><div class="sec-head"><h2>交易流水（${tr.length} 笔）</h2><button class="btn sm" onclick="addTradeFor('${encodeURIComponent(f.name)}')">+ 记一笔</button></div>`;
+  if(tr.length) h+=`<p class="hint" style="margin:0 0 8px">已记流水：收益按流水精确计算（快照仅作参考）；卖出按比例扣减成本，避免收益率失真。</p>`;
   if(tr.length){
     h+=`<div class="table-scroll"><table class="am-t"><thead><tr><th>日期</th><th>方向</th><th class="num">金额(元)</th><th class="num">当时净值</th><th></th></tr></thead><tbody>`;
     trades.forEach((t,i)=>{ if(t.name===f.name){ h+=`<tr>
@@ -639,8 +642,8 @@ function liveSection(f){
 function addSnapRow(){ snaps.push({name:'新基金',cat:'',mv:0,ret:0}); compute(); }
 function addTradeRow(){ trades.push({name:'',date:'',type:'buy',amount:0,nav:''}); renderTrade(); }
 function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',type:'buy',amount:0,nav:''}); compute(); }
-function delFundByIndex(i){
-  const nm=fundsView[i]&&fundsView[i].name; if(!nm) return;
+function delFundByIndex(enc){
+  const nm=decodeURIComponent(enc); if(!nm) return;
   if(currentView==='detail'&&detailName===nm) location.hash='#/';
   snaps=snaps.filter(s=>s.name!==nm); trades=trades.filter(t=>t.name!==nm); delete navCache[nm];
   renderTrade(); compute(); silentSave();
@@ -653,8 +656,8 @@ function fetchNav(name){
     searchCode(name).then(code=>{
       if(!code){clearTimeout(timer);resolve(null);return;}
       const s2=document.createElement('script'), cb2='n2_'+Math.random().toString(36).slice(2);
-      window[cb2]=dd=>{ clearTimeout(timer); try{if(dd&&dd.dwjz) resolve({nav:+dd.gsz||+dd.dwjz,date:dd.jzrq});else resolve(null);}catch(e){resolve(null);} delete window[cb2]; s2.remove(); };
-      s2.onerror=()=>{ clearTimeout(timer); resolve(null); delete window[cb2]; };
+      window[cb2]=dd=>{ clearTimeout(timer); try{if(dd&&dd.dwjz) resolve({nav:+dd.gsz||+dd.dwjz,date:dd.jzrq});else resolve(null);}catch(e){resolve(null);} window[cb2]=null; s2.remove(); };
+      s2.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb2]=null; };
       s2.src=`https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}&callback=${cb2}`;
       document.body.appendChild(s2);
     });
@@ -664,8 +667,8 @@ function searchCode(name){
   return new Promise(resolve=>{
     const timer=setTimeout(()=>resolve(null),4000);
     const s=document.createElement('script'), cb='s_'+Math.random().toString(36).slice(2);
-    window[cb]=d=>{ clearTimeout(timer); try{const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]);resolve(arr&&arr[0]?arr[0].CODE:null);}catch(e){resolve(null);} delete window[cb]; s.remove(); };
-    s.onerror=()=>{ clearTimeout(timer); resolve(null); delete window[cb]; };
+    window[cb]=d=>{ clearTimeout(timer); try{const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]);resolve(arr&&arr[0]?arr[0].CODE:null);}catch(e){resolve(null);} window[cb]=null; s.remove(); };
+    s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
     s.src=`https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key=${encodeURIComponent(name)}&callback=${cb}`;
     document.body.appendChild(s);
   });
@@ -680,7 +683,8 @@ async function refresh(){
   compute(); todayGain=0; let anyG=false;
   fundsView.forEach(f=>{ if(flashMap[f.name]!=null){ const chg=flashMap[f.name]/100; const oldMV=f.mv/(1+chg); todayGain+=(f.mv-oldMV); anyG=true; } });
   todayGain=anyG?todayGain:null; if(currentView==='home') renderOverview();
-  document.getElementById('updated').textContent='已刷新 · '+new Date().toLocaleString('zh-CN')+' （拉到 '+Object.keys(navCache).length+'/'+names.length+' 只）';
+  const got=Object.keys(navCache).length;
+  document.getElementById('updated').textContent='已刷新 · '+new Date().toLocaleString('zh-CN')+'（拉到 '+got+'/'+names.length+' 只'+(got<names.length?'，部分未拉到已用缓存':'');
 }
 
 // ---------- 导入导出 ----------
@@ -771,7 +775,7 @@ function amChart(id,opt){ const el=document.getElementById(id); if(!el)return; c
 function amShowHold(mode){ document.getElementById('amChartHold').style.display=mode==='chart'?'block':'none'; document.getElementById('amTableHold').style.display=mode==='table'?'block':'none'; document.getElementById('amBtnChart').className=mode==='chart'?'on':''; document.getElementById('amBtnTable').className=mode==='table'?'on':''; }
 
 function esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
-function fmt(n){ return (n||0).toLocaleString('zh-CN',{maximumFractionDigits:0}); }
+function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 // ---------- 启动 ----------
 (function init(){

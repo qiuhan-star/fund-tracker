@@ -977,7 +977,7 @@ function buildFundsView(){
       sortedTr.forEach(t=>{
         const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0, sh=nav>0?amt/nav:0;
         if(ty==='buy'){ shares+=sh; cost+=amt+fee; }
-        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } cost-=fee; }
+        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
         else if(ty==='dividend'){ cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
         else if(ty==='reinvest'){ if(nav>0) shares+=amt/nav; cost+=amt; }        // 红利再投：增份额、加成本（无申购费）
         else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }             // 份额拆分：份额×比例、成本不变
@@ -1849,7 +1849,7 @@ function buildStocksView(){
       [...tr].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(t=>{
         const ty=t.ttype||'buy', sh=+t.shares||0, price=+t.price||0, fee=+t.fee||0;
         if(ty==='buy'){ shares+=sh; cost+=sh*price+fee; }
-        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(price-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } cost-=fee; }
+        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(price-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
         else if(ty==='dividend'){ const amt=+t.amount||0; cost=Math.max(0,cost-amt); realized+=amt; }
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||(t.date&&t.date<firstDate)) firstDate=t.date;

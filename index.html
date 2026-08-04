@@ -187,6 +187,11 @@
   .tag-混合\/债 { background: var(--down-bg); color: #3a8a4a; }
   .tag-宽基\/行业 { background: var(--accent-soft); color: #7a4ab7; }
   .tag-其他 { background: var(--border-3); color: var(--text-2); }
+  /* 首页持仓列表：基金内"重仓"小条（前三大） */
+  .hl-hold { display:none; margin-top:6px; font-size:11px; color:var(--text-3); align-items:center; flex-wrap:wrap; gap:6px; }
+  .hh-label { font-weight:600; margin-right:2px; }
+  .hh-chip { background:var(--surface-3); border:1px solid var(--border-2); border-radius:5px; padding:1px 6px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .hh-chip b { color:var(--text); margin-left:3px; font-weight:600; }
 
   /* 数据隐蔽模式 */
   #eyeBtn { font-size: 15px; line-height: 1; padding: 6px 10px; }
@@ -788,6 +793,7 @@ function renderHomeList(){
   const dayFmt=f=> flashMap[f.name]!=null?`<span class="hl-sep">|</span><span class="${flashMap[f.name]>=0?'pos':'neg'}">${flashMap[f.name]>=0?'▲':'▼'}${Math.abs(flashMap[f.name]).toFixed(2)}%</span>`:'';
   box.innerHTML=list.map(f=>{
     const key=encodeURIComponent(accKey(f.account,f.name));
+    const code=syncCode(f.name);
     const isOpen=openSet.has(accKey(f.account,f.name));
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
     const flash=flashMap[f.name]!=null?(flashMap[f.name]>=0?'flash pos':'flash neg'):'';
@@ -803,7 +809,7 @@ function renderHomeList(){
         <span class="tag tag-${f.cat}">${f.cat}</span>
         <span class="tag">${f.account||'支付宝'}</span>
         <span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
-      </div></div>
+      </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       <div class="hl-arrow">›</div>
     </div>`;
@@ -826,6 +832,7 @@ function renderHomeList(){
     </div>`;
     return `<div class="hl ${flash}${alertCls}${isOpen?' open':''}">${head}${body}</div>`;
   }).join('');
+  list.forEach(f=>{ const c=syncCode(f.name); if(c&&holdingsCache[c]) paintHomeHold(c, holdingsCache[c]); });
 }
 function goDetail(enc, acc){ pendingAcc=acc||null; location.hash='#/fund/'+enc; }
 
@@ -2164,8 +2171,8 @@ async function renderFundProfile(f){
   const box=document.getElementById('detailProfile'); if(!box) return;
   const code=await resolveCode(f.name);
   if(!code){ box.innerHTML=''; return; }
-  const d=await fetchFundBaseInfo(code);
-  if(!d){ box.innerHTML='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">基金档案 <span class="tag">天天基金</span></h2></div><p class="hint" style="margin:8px 0 0">档案接口暂未返回（可能被拦截/离线）。</p></div>'; return; }
+  const h=await loadProfile(code,false); const d=h&&h.data;
+  if(!d){ box.innerHTML='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">基金档案 <span class="tag">天天基金</span></h2></div><p class="hint" style="margin:8px 0 0">档案接口暂未返回（可能被拦截/离线），已用本地缓存。</p></div>'; return; }
   const risk={1:'低风险',2:'中低风险',3:'中风险',4:'中高风险',5:'高风险'}[d.RISKLEVEL]||(d.RISKLEVEL?('R'+d.RISKLEVEL):'—');
   const rows=[
     ['基金经理', d.JJJL||'—'],
@@ -2184,28 +2191,87 @@ async function renderFundProfile(f){
   ];
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">基金档案 <span class="tag">天天基金</span></h2></div><div class="profile-grid">`+rows.map(r=>`<div class="pf-item"><span class="pf-k">${r[0]}</span><span class="pf-v">${r[1]}</span></div>`).join('')+`</div></div>`;
 }
+// ---------- 持仓/档案 缓存层（离线/被限流时回退本地，避免"暂无数据"）----------
+let holdingsCache={}, profileCache={};
+const HOLD_TTL=7*24*3600*1000;
+try{ holdingsCache=JSON.parse(localStorage.getItem('ft_holdings')||'{}')||{}; }catch(e){}
+try{ profileCache=JSON.parse(localStorage.getItem('ft_fundprofile')||'{}')||{}; }catch(e){}
+function _saveHC(){ try{localStorage.setItem('ft_holdings',JSON.stringify(holdingsCache));}catch(e){} }
+function _savePC(){ try{localStorage.setItem('ft_fundprofile',JSON.stringify(profileCache));}catch(e){} }
+// 带缓存 + 回退的持仓加载；返回 {ts,reportDate,stocks} 或 null
+async function loadHoldings(code, force){
+  if(!code) return null;
+  const hit=holdingsCache[code];
+  if(!force && hit && (Date.now()-hit.ts)<HOLD_TTL) return hit;
+  const fresh=await fetchFundHoldings(code);            // {stocks,reportDate}|null
+  if(fresh && fresh.stocks && fresh.stocks.length){
+    const obj={ts:Date.now(), reportDate:fresh.reportDate||null, stocks:fresh.stocks};
+    holdingsCache[code]=obj; _saveHC(); return obj;
+  }
+  if(fresh && fresh.stocks && fresh.stocks.length===0){ // 真·空（新基金）
+    const obj={ts:Date.now(), reportDate:fresh.reportDate||null, stocks:[]};
+    holdingsCache[code]=obj; _saveHC(); return obj;
+  }
+  return hit||null;                                      // 网络失败 → 回退缓存
+}
+async function loadProfile(code, force){
+  if(!code) return null;
+  const hit=profileCache[code];
+  if(!force && hit && (Date.now()-hit.ts)<HOLD_TTL) return hit;
+  const fresh=await fetchFundBaseInfo(code);
+  if(fresh){ const obj={ts:Date.now(), data:fresh}; profileCache[code]=obj; _savePC(); return obj; }
+  return hit||null;
+}
+// 首页持仓列表里的小"重仓"条（前三大），仅在有缓存时显示
+function syncCode(name){ return (codeCache&&codeCache[name]) || ((snaps.find(s=>s.name===name))||{}).code || null; }
+function paintHomeHold(code, h){
+  if(!code) return;
+  const el=document.querySelector('.hl-hold[data-code="'+code+'"]');
+  if(!el) return;
+  if(!h||!h.stocks||!h.stocks.length){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='flex';
+  const top=h.stocks.slice(0,3).map(s=>{
+    const pct=(+s.JZBL||0).toFixed(1);
+    return '<span class="hh-chip">'+esc(s.GPJC||s.GPDM||'—')+'<b>'+pct+'%</b></span>';
+  }).join('');
+  el.innerHTML='<span class="hh-label">重仓</span>'+top;
+}
+// 后台预拉取全部持有基金的持仓并刷新首页"重仓"条（不阻塞 UI）
+async function prefetchHoldings(){
+  const names=[...new Set(fundsView.map(f=>f.name))];
+  for(const nm of names){
+    const code=await resolveCode(nm); if(!code) continue;
+    const h=await loadHoldings(code,false);
+    paintHomeHold(code, h);
+  }
+}
 async function fetchFundHoldings(code){
   try{
     const url='https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE='+encodeURIComponent(code)+'&deviceid=Wap&plat=WAP&product=EFund&version=2.0.0';
     const r=await fetch(url,{headers:{'Referer':'https://fundmobapi.eastmoney.com/'}});
     const j=await r.json();
-    return (j&&j.Datas&&j.Datas.fundStocks)?j.Datas.fundStocks:null;
+    const d=j&&j.Datas; if(!d) return null;
+    const stocks=d.fundStocks||[];
+    const rd=d.EndDate||d.FSRQ||(stocks[0]&&stocks[0].FSRQ);
+    return { stocks, reportDate: rd?(''+rd).slice(0,10):null };
   }catch(e){ return null; }
 }
 async function renderFundHoldings(f){
   const box=document.getElementById('detailHoldings'); if(!box) return;
   const code=await resolveCode(f.name);
-  if(!code){ box.innerHTML=''; return; }
-  const stocks=await fetchFundHoldings(code);
-  if(!stocks||!stocks.length){ box.innerHTML='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2></div><p class="hint" style="margin:8px 0 0">暂无持仓数据（QDII/新基金可能为空）。</p></div>'; return; }
+  if(!code){ box.innerHTML='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2></div><p class="hint" style="margin:8px 0 0">未解析到基金代码，无法拉取持仓。</p></div>'; return; }
+  const h=await loadHoldings(code,false);
+  const stocks=h&&h.stocks;
+  const rpt=h&&h.reportDate?`<span class="hint" style="font-size:11px">· 报告期 ${h.reportDate}</span>`:'';
+  if(!stocks||!stocks.length){ box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2></div><p class="hint" style="margin:8px 0 0">${h?'本地缓存为空（QDII/新基金可能为空）。':'持仓接口未返回（可能被拦截/离线），已用本地缓存。'}</p></div>`; return; }
   const total=stocks.reduce((s,x)=>s+(+x.JZBL||0),0);
   const rows=stocks.map((x,i)=>{
     const pct=+x.JZBL||0;
     const chg=(x.PCTNVCHG!=null&&x.PCTNVCHG!=='')?(+x.PCTNVCHG).toFixed(2)+'%':'—';
     const tagCls=x.PCTNVCHGTYPE==='增持'?'pos':x.PCTNVCHGTYPE==='减持'?'neg':'';
-    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${x.GPJC||x.GPDM||'—'}</td><td class="hk-sec">${x.INDEXNAME||'—'}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg ${tagCls}">${(x.PCTNVCHGTYPE||'—')+' '+chg}</td></tr>`;
+    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${esc(x.GPJC||x.GPDM||'—')}</td><td class="hk-sec">${esc(x.INDEXNAME||'—')}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg ${tagCls}">${esc(x.PCTNVCHGTYPE||'—')+' '+chg}</td></tr>`;
   }).join('');
-  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}%</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>行业</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>行业</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 async function refresh(){
   const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';
@@ -2235,6 +2301,7 @@ async function refresh(){
   compute(); todayGain=0; let anyG=false;
   fundsView.forEach(f=>{ if(flashMap[f.name]!=null){ const chg=flashMap[f.name]/100; const oldMV=f.mv/(1+chg); todayGain+=(f.mv-oldMV); anyG=true; } });
   todayGain=anyG?todayGain:null; if(currentView==='home') renderOverview();
+  prefetchHoldings();
   const got=Object.keys(navCache).length;
   const now=new Date(), market=isMarketOpen(now), miss=got<names.length;
   try{ localStorage.setItem('ft_lastSync', now.getTime()); }catch(e){}
@@ -2648,6 +2715,7 @@ function recordGrowth(){
   buildFundsView();
   window.addEventListener('hashchange', route);
   route();
+  prefetchHoldings();
   fetchIndices();
   try{ document.getElementById('updated').textContent=lastUpdatedLabel(); }catch(e){}
 })();

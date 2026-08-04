@@ -225,6 +225,22 @@
   .tp-list { display:flex; flex-direction:column; gap:4px; }
   .tp-item { text-align:left; padding:9px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface-2); cursor:pointer; font-size:13px; color:var(--text); }
   .tp-item:hover { border-color:var(--accent-text); background:var(--accent-soft); }
+  /* 全部交易聚合弹窗 */
+  #allTradesModal { display:none; position: fixed; inset:0; z-index:1000; align-items:center; justify-content:center; }
+  .at-pop { position:relative; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); width:min(680px,94vw); max-height:84vh; display:flex; flex-direction:column; padding:16px; }
+  .at-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .at-head h3 { margin:0; font-size:15px; }
+  .at-head .count { font-size:12px; color:var(--text-3); }
+  .at-search { width:100%; padding:8px 10px; border:1px solid var(--border-strong); border-radius:9px; font-size:13px; margin-bottom:8px; box-sizing:border-box; font-family:inherit; }
+  .at-scroll { overflow:auto; flex:1; }
+  .at-table { width:100%; }
+  .at-table tbody tr { cursor:pointer; }
+  .at-table tbody tr:hover { background:var(--accent-soft); }
+  .at-row .nm { font-weight:600; }
+  .at-row .tag { font-size:10px; margin-left:2px; }
+  .at-row .pending-nav { color:var(--warn); font-weight:600; }
+  .at-empty { padding:28px 10px; text-align:center; color:var(--text-3); font-size:13px; line-height:1.7; }
+  .at-foot { text-align:right; margin-top:10px; }
   /* 刷新状态指示 */
   #updated.live { color: #0f8a63; } #updated.closed { color: var(--text-3); }
   /* Toast 轻提示 */
@@ -430,6 +446,7 @@ input[type="number"] { -moz-appearance: textfield; }
             <button onclick="refresh();closeMore()">↻ 刷新净值·行情</button>
             <button onclick="addSnapRow();closeMore()">+ 加一只基金</button>
             <button onclick="addTradeMenu();closeMore()">+ 记一笔交易</button>
+            <button onclick="openAllTrades();closeMore()">📒 全部交易</button>
             <hr>
             <button onclick="saveLocal();closeMore()">💾 保存下载</button>
             <button onclick="exportJSON();closeMore()">📤 导出 JSON</button>
@@ -551,6 +568,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
   <!-- 交易选择器弹窗 -->
   <div id="tradePicker"></div>
+  <div id="allTradesModal"></div>
 
 <script>
 // ---------- 示例数据 ----------
@@ -608,8 +626,55 @@ function restoreFocus(){
 }
 
 // ---------- 持久化 ----------
-async function silentSave(){ try{localStorage.setItem('ft_data',JSON.stringify({snaps,trades,navCache}));}catch(e){console.error(e);} }
-function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({snaps,trades,navCache},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data-'+ts+'.json'; a.click(); document.getElementById('updated').textContent='已保存并下载存档 '+ts; toast('已保存并下载存档'); }
+// ===== Schema 版本控制与自动迁移（重构第6项 · 防止旧数据升级白屏崩溃）=====
+const SCHEMA_VERSION = '2.0.0';
+
+// 语义化版本比较：a<b 返回负数
+function cmpVer(a, b){
+  const pa=String(a).split('.').map(Number), pb=String(b).split('.').map(Number);
+  for(let i=0;i<3;i++){ const x=pa[i]||0, y=pb[i]||0; if(x!==y) return x-y; }
+  return 0;
+}
+
+// 最新结构的空数据（兜底，绝不白屏）
+function freshData(){
+  return { schemaVersion: SCHEMA_VERSION, updatedAt: new Date().toISOString(), snaps: [], trades: [], navCache: {} };
+}
+
+// 迁移链：把"低于 to 版本"的数据升到 to 版本。
+// 未来做第2/3/4/5项结构重构时，往这里追加 { to:'3.0.0', up: d=>{...} } 即可平滑升级。
+const MIGRATIONS = [
+  {
+    to: '2.0.0',
+    up: function(d){
+      // 旧线上数据无 schemaVersion（平铺 {snaps,trades,navCache}），视作 1.0.0 基线
+      return {
+        schemaVersion: '2.0.0',
+        updatedAt: new Date().toISOString(),
+        snaps: Array.isArray(d.snaps) ? d.snaps : [],
+        trades: Array.isArray(d.trades) ? d.trades : [],
+        navCache: (d.navCache && typeof d.navCache==='object') ? d.navCache : {}
+      };
+    }
+  }
+];
+
+// 自动迁移：localStorage / 导入文件 等任何来源的旧结构都经此平滑升级
+function migrate(raw){
+  if(!raw || typeof raw!=='object' || Array.isArray(raw)) return freshData();
+  let data = raw;
+  if(!data.schemaVersion) data = Object.assign({}, data, { schemaVersion: '1.0.0' }); // 旧平铺结构视为 1.0.0 基线
+  for(const m of MIGRATIONS){ if(cmpVer(data.schemaVersion, m.to) < 0) data = m.up(data); }
+  if(!data.schemaVersion) data.schemaVersion = SCHEMA_VERSION;
+  if(!data.updatedAt) data.updatedAt = new Date().toISOString();
+  if(!Array.isArray(data.snaps)) data.snaps = [];
+  if(!Array.isArray(data.trades)) data.trades = [];
+  if(!data.navCache || typeof data.navCache!=='object') data.navCache = {};
+  return data;
+}
+
+async function silentSave(){ try{localStorage.setItem('ft_data',JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache}));}catch(e){console.error(e);} }
+function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data-'+ts+'.json'; a.click(); document.getElementById('updated').textContent='已保存并下载存档 '+ts; toast('已保存并下载存档'); }
 
 // ---------- 更多菜单 ----------
 function toggleMore(e){ e.stopPropagation(); document.getElementById('moreDrop').classList.toggle('show'); }
@@ -1420,6 +1485,27 @@ function addTradeMenu(){
 function closeTradePicker(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; }
 function tpFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#tpList .tp-item').forEach(b=>{ b.style.display=(!q||b.textContent.includes(q))?'':'none'; }); }
 function tpPick(nm,acc){ const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; window._autoTrade=true; goDetail(nm,decodeURIComponent(acc)); }
+
+function openAllTrades(){
+  const list=trades.slice().sort(function(a,b){return (b.date+' '+(b.time||'')).localeCompare(a.date+' '+(a.time||''));});
+  const box=document.getElementById('allTradesModal');
+  if(!list.length){
+    box.innerHTML="<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3></div><div class=\"at-empty\">还没有任何交易记录。<br>点「⋯ 更多 → + 记一笔交易」开始记录第一笔。</div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
+    box.style.display='flex'; return;
+  }
+  const rows=list.map(function(t){
+    const enc=encodeURIComponent(t.name||'');
+    const acc=accOf(t);
+    const bg=t.type==='sell'?'var(--down-bg)':'var(--up-bg)';
+    const col=t.type==='sell'?'var(--down)':'var(--up)';
+    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class=\"pending-nav\">待填</span>')+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
+  }).join('');
+  box.innerHTML="<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><table class=\"am-t at-table\"><thead><tr><th>基金 / 账户</th><th>日期</th><th>方向</th><th class=\"num\">金额</th><th class=\"num\">净值</th><th class=\"num\">费用</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
+  box.style.display='flex';
+}
+function closeAllTrades(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('allTradesModal'); if(b) b.style.display='none'; }
+function atFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#allTradesModal .at-row').forEach(function(r){ r.style.display=(!q||r.textContent.includes(q))?'':'none'; }); }
+function atGo(nm,acc){ closeAllTrades(); goDetail(nm,acc); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
   if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
@@ -2089,10 +2175,10 @@ async function refresh(){
 }
 
 // ---------- 导入导出 ----------
-function exportJSON(){ const blob=new Blob([JSON.stringify({snaps,trades,navCache},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click(); toast('已导出 fund-data.json'); }
+function exportJSON(){ const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click(); toast('已导出 fund-data.json'); }
 function exportHoldingsCSV(){ if(!fundsView.length){ toast('暂无可导出的持仓'); return; } const head='基金名称,类别,持有份额,成本单价,最新净值,市值,盈亏,收益率%\n'; const rows=fundsView.map(f=>[f.name,f.cat||'',f.shares!=null?f.shares:'',f.costPx!=null?f.costPx:'',f.nav!=null?f.nav:'',f.mv!=null?f.mv:'',f.profit!=null?f.profit:'',f.ret!=null?f.ret.toFixed(2):''].join(',')).join('\n'); const blob=new Blob(['\ufeff'+head+rows],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click(); toast('已导出持仓 fund-holdings.csv'); }
 function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n汇添富中证芯片产业指数增强C,2026-01-15,买入,10000,1.9500,0\n汇添富中证芯片产业指数增强C,2026-03-20,卖出,5000,2.1000,5\n华夏有色金属ETF联接D,2026-02-01,定投,2000,1.2000,\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板'); }
-function importJSON(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); snaps=d.snaps||snaps; trades=d.trades||trades; navCache=d.navCache||navCache; renderTrade(); compute(); saveLocal(); toast('已导入 JSON'); }catch(e){alert('解析失败');} }; r.readAsText(f); }; inp.click(); }
+function importJSON(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader(); r.onload=()=>{ try{ const d=migrate(JSON.parse(r.result)); snaps=d.snaps; trades=d.trades; navCache=d.navCache; renderTrade(); compute(); saveLocal(); toast('已导入 JSON（已自动升级到 v'+SCHEMA_VERSION+'）'); }catch(e){alert('解析失败');} }; r.readAsText(f); }; inp.click(); }
 
 function syncOnline(){
   if(!confirm('将从线上拉取最新数据并合并到本地（同步前会自动备份当前数据到下载）。\n\n· 线上的基金/交易会更新进来\n· 你本地手动新增的基金和交易会保留\n· 实时净值缓存不动\n\n确认同步？')) return;
@@ -2469,7 +2555,13 @@ function recordGrowth(){
 // ---------- 启动 ----------
 (function init(){
   const saved=localStorage.getItem('ft_data');
-  if(saved){ try{ const d=JSON.parse(saved); snaps=d.snaps||[]; trades=d.trades||[]; navCache=d.navCache||{}; } catch(e){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; } }
+  if(saved){
+    try{
+      const migrated=migrate(JSON.parse(saved));
+      snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache;
+      try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){} // 升级后立即回写，下次即为新模式
+    }catch(e){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
+  }
   else { snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
   try{ const a=localStorage.getItem('ft_alerts'); alerts=a?JSON.parse(a):{}; }catch(e){ alerts={}; }
   try{ const g=localStorage.getItem('ft_growth'); growthSeries=g?JSON.parse(g):[]; }catch(e){ growthSeries=[]; }

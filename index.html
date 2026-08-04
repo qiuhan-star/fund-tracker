@@ -481,6 +481,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="main-tabs">
       <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
       <button id="mt1" onclick="switchTab(1)">分析</button>
+      <button id="mt2" onclick="switchTab(2)">清仓</button>
       <button id="mt3" onclick="switchTab(3)">债券</button>
       <button id="mt4" onclick="switchTab(4)">个股</button>
     </div>
@@ -545,6 +546,7 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
     </div>
 
+    <div class="tab-panel" id="tp2"></div>
     <!-- Tab 2（交易）已并入各基金持仓 / 详情，不再单独成页 -->
     <!-- Tab 3: 债券 -->
     <div class="tab-panel" id="tp3">
@@ -685,8 +687,9 @@ document.addEventListener('click', function(e){ if(!e.target.closest('.more-menu
 let activeTab=0;
 function switchTab(i){
   activeTab=i;
-  [0,1,3,4].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
+  [0,1,2,3,4].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
+  if(i===2){ renderLiquidated(); }
   if(i===3){ renderBond(); }
   if(i===4){ renderStocks(); fetchStockQuotes(); }
 }
@@ -1163,6 +1166,80 @@ function renderTimelines(){
 }
 
 // ---------- 计算 ----------
+let liqSort='realized';
+function buildLiquidatedView(){
+  const out=[];
+  const names=new Set();
+  trades.forEach(function(t){ if((t.type||'fund')!=='stock'){ names.add(accKey(accOf(t),t.name)); } });
+  const keys=[...names].map(function(k){ const i=k.indexOf('||'); return {acc:k.slice(0,i), name:k.slice(i+2)}; }).filter(function(x){ return x.name; });
+  keys.forEach(function(ref){
+    const acc=ref.acc, name=ref.name;
+    const tr=trades.filter(function(t){ return accOf(t)===acc && t.name===name; }).slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
+    if(!tr.length) return;
+    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null;
+    tr.forEach(function(t){
+      const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0, sh=nav>0?amt/nav:0;
+      if(ty==='buy'){ totalBuy+=amt+fee; if(nav>0){ shares+=sh; cost+=amt+fee; } }
+      else if(ty==='sell'){ totalSell+=amt; if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
+      else if(ty==='dividend'){ div+=amt; cost=Math.max(0,cost-amt); realized+=amt; }
+      else if(ty==='reinvest'){ if(nav>0){ shares+=amt/nav; cost+=amt; } }
+      else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }
+      if(shares<0) shares=0; if(cost<0) cost=0;
+      if(ty==='buy'||ty==='reinvest'){ if(!firstBuy||t.date<firstBuy) firstBuy=t.date; }
+      if(ty==='sell'){ if(!lastSell||t.date>lastSell) lastSell=t.date; if(!firstBuy) firstBuy=t.date; }
+    });
+    const EPS=1e-6;
+    if(totalSell<=0) return;     // 没卖过 → 不算清仓
+    if(shares>EPS) return;       // 仍持有 → 不算清仓
+    const cat=guessCat(name);
+    const days=(firstBuy&&lastSell)?Math.max(0,Math.round((new Date(lastSell)-new Date(firstBuy))/864e5)):0;
+    const retPct=totalBuy>0?realized/totalBuy*100:0;
+    const annual=(days>0&&totalBuy>0&&(realized/totalBuy)>-1)?(Math.pow(1+realized/totalBuy,365/days)-1)*100:null;
+    out.push({name:name, account:acc, cat:cat, totalBuy:totalBuy, totalSell:totalSell, div:div, realized:realized, days:days, firstBuy:firstBuy, lastSell:lastSell, retPct:retPct, annual:annual, win:realized>=0});
+  });
+  out.sort(function(a,b){ return liqSort==='ret' ? (b.retPct-a.retPct) : (b.realized-a.realized); });
+  return out;
+}
+function goLiq(el){ goDetail(el.dataset.nm, el.dataset.acc); }
+function setLiqSort(s){ liqSort=s; renderLiquidated(); }
+function renderLiquidated(){
+  const box=document.getElementById('tp2'); if(!box) return;
+  const list=buildLiquidatedView();
+  let sumR=0, sumB=0, sumS=0, wins=0, sumD=0;
+  list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; if(f.win) wins++; });
+  const cnt=list.length, winRate=cnt?wins/cnt*100:0, avgD=cnt?Math.round(sumD/cnt):0;
+  const cls=function(v){ return v>=0?'pos':'neg'; }, sign=function(v){ return v>=0?'+':''; };
+  const sum='<div class="cards4">'
+    +'<div class="mcard"><p class="lbl">清仓基金数</p><p class="val">'+cnt+'</p></div>'
+    +'<div class="mcard"><p class="lbl">累计已实现盈亏</p><p class="val '+cls(sumR)+'">'+sign(sumR)+M(sumR)+'</p></div>'
+    +'<div class="mcard"><p class="lbl">累计投入</p><p class="val">'+M(sumB)+'</p></div>'
+    +'<div class="mcard"><p class="lbl">累计赎回</p><p class="val">'+M(sumS)+'</p></div>'
+    +'<div class="mcard"><p class="lbl">胜率（赚/亏）</p><p class="val">'+(cnt?wins+'/'+cnt:'—')+'</p><p class="lbl" style="margin:4px 0 0">'+winRate.toFixed(0)+'%</p></div>'
+    +'<div class="mcard"><p class="lbl">平均持有天数</p><p class="val">'+(cnt?avgD:'—')+'</p></div>'
+    +'</div>';
+  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button></span></div><p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。</p>"+sum;
+  if(!cnt){
+    box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。</div></div>';
+    return;
+  }
+  const rows=list.map(function(f){
+    const enc=encodeURIComponent(f.name||'');
+    return "<tr><td><span class='nm'>"+esc(f.name||'—')+"</span> <span class='tag'>"+esc(f.account)+"</span></td>"
+      +"<td>"+esc(f.cat)+"</td>"
+      +"<td class='num'>"+M(f.totalBuy)+"</td>"
+      +"<td class='num'>"+M(f.totalSell)+"</td>"
+      +"<td class='num "+cls(f.realized)+"'>"+sign(f.realized)+M(f.realized)+"</td>"
+      +"<td class='num "+cls(f.realized)+"'>"+sign(f.retPct)+f.retPct.toFixed(2)+"%</td>"
+      +"<td class='num'>"+f.days+"</td>"
+      +"<td class='num'>"+(f.annual!=null?sign(f.annual)+f.annual.toFixed(1)+'%':'—')+"</td>"
+      +"<td>"+(f.lastSell||'—')+"</td>"
+      +"<td><button class='btn sm' data-nm='"+enc+"' data-acc='"+esc(f.account)+"' onclick='goLiq(this)'>查看 →</button></td></tr>";
+  }).join('');
+  box.innerHTML='<div class="card">'+head+'<div class="table-scroll" style="margin-top:12px"><table class="am-t"><thead><tr><th>基金 / 账户</th><th>类别</th><th class="num">累计投入</th><th class="num">累计赎回</th><th class="num">已实现盈亏</th><th class="num">收益率</th><th class="num">持有天数</th><th class="num">年化</th><th>清仓日</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+
+
 function buildFundsView(){
   // 交易默认锁定（旧数据未标记的补 locked=true）
   trades.forEach(t=>{ if(t.locked===undefined) t.locked=true; });

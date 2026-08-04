@@ -183,13 +183,15 @@
   /* 赛道筛选 chips */
   .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .idx-card .sec-head { margin-bottom: 8px; }
-  .idx-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .idx-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(144px, 1fr)); gap: 10px; }
   .idx-chip { display: flex; flex-direction: column; gap: 2px; background: #fafbfc; border: 1px solid #ebedf0; border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
   .idx-chip:hover { background: #f0f4fa; border-color: #c9d3e0; }
   .idx-name { font-size: 12px; color: #6b7280; }
-  /* 上下分行排版：上点位、下涨跌幅，避免 5 位数点位把涨跌幅挤到第二行 */
-  .idx-val { font-size: 15px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
-  .idx-pct { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /* 点位 + 涨跌幅：默认同一行（4 位数正好放下，跟在后面）；5 位数放不下时涨跌幅优雅换到下一行，不会把数字从中断开 */
+  /* 点位 + 涨跌幅：强制同一行（nowrap），5 位数也不会掉到下一行；字体与卡片宽度已调到最长组合也能单行容纳 */
+  .idx-pricerow { display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; }
+  .idx-val { font-size: 13px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .idx-pct { font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .idx-mktstatus { font-size: 9.5px; color: #9aa0a8; margin-top: 1px; display: inline-flex; align-items: center; gap: 3px; }
   .idx-status { font-size: 11px; color: #8a8f99; display: inline-flex; align-items: center; gap: 3px; }
   /* 指数迷你走势 Sparkline（A股真分时 / 港股近30日日线 / 美股降级不画假图） */
@@ -1571,11 +1573,11 @@ function renderIdxInto(boxId, timeId){
     const d=raw?parseQt(raw):null;
     const ms=mktOpenWindow(it.code);
     const msTxt=ms?'🔴 交易中':'🟢 已收盘';
-    if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-val" data-val="${it.code}">—</span><span class="idx-pct"></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
+    if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-pricerow"><span class="idx-val" data-val="${it.code}">—</span><span class="idx-pct"></span></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
     const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
     const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
     const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
-    return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)}</span><span class="idx-pct ${cls}">${pctTxt}</span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
+    return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-pricerow"><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)}</span><span class="idx-pct ${cls}">${pctTxt}</span></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
   }).join('');
   const te=document.getElementById(timeId);
   if(te){

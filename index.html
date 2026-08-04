@@ -183,12 +183,14 @@
   /* 赛道筛选 chips */
   .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .idx-card .sec-head { margin-bottom: 8px; }
-  .idx-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 10px; }
+  .idx-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
   .idx-chip { display: flex; flex-direction: column; gap: 2px; background: #fafbfc; border: 1px solid #ebedf0; border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
   .idx-chip:hover { background: #f0f4fa; border-color: #c9d3e0; }
   .idx-name { font-size: 12px; color: #6b7280; }
-  .idx-val { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .idx-pct { font-size: 11px; margin-left: 4px; font-weight: 500; }
+  /* 上下分行排版：上点位、下涨跌幅，避免 5 位数点位把涨跌幅挤到第二行 */
+  .idx-val { font-size: 15px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .idx-pct { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .idx-mktstatus { font-size: 9.5px; color: #9aa0a8; margin-top: 1px; display: inline-flex; align-items: center; gap: 3px; }
   .idx-status { font-size: 11px; color: #8a8f99; display: inline-flex; align-items: center; gap: 3px; }
   /* 指数迷你走势 Sparkline（A股真分时 / 港股近30日日线 / 美股降级不画假图） */
   .idx-spark { display: block; margin-top: 5px; line-height: 0; }
@@ -323,6 +325,13 @@
     td input,td select{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:#1f2329;}
     .mcard{border:1px solid #eee;} .sub{margin-bottom:6px;} #updated{display:none;}
   }
+
+/* 隐藏数字输入框原生微调箭头 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+/* 数值输入框内文字右对齐（与列对齐一致） */
+.num input, td.num input { text-align: right; }
 </style>
 </head>
 <body>
@@ -455,7 +464,7 @@
         <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，并画出买卖点时间轴。</p>
         <div class="table-scroll">
         <table id="tradeTable">
-          <thead><tr><th style="width:20%">基金名称</th><th>账户</th><th>日期</th><th>时间</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead>
+          <thead><tr><th style="width:20%">基金名称</th><th>账户</th><th>日期</th><th>时间</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用(元)</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
         </div>
@@ -948,7 +957,7 @@ function renderTrade(){
       <td><select data-fld="ht-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
       <td class="num"><input data-fld="ht-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()" title="${isSplit?'拆分倍数(如2=1拆2)':'金额(元)'}"></td>
       <td class="num"><input data-fld="ht-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
-      <td class="num"><input data-fld="ht-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
+      <td class="num"><input data-fld="ht-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
       <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
     </tr>`;
   });
@@ -963,7 +972,7 @@ function miniTimeline(f){
   const x=d=> pad+(max===min?(W-2*pad)/2:(new Date(d)-new Date(min))/(new Date(max)-new Date(min))*(W-2*pad));
   let dots='';
   tr.forEach(t=>{
-    const cx=x(t.date), col=t.type==='buy'?'#27ae60':'#c0392b';
+    const cx=x(t.date), col=t.type==='buy'?'#c0392b':'#27ae60';
     dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${t.type==='buy'?'买入':'卖出'} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
     dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':'S'}</text>`;
   });
@@ -983,7 +992,7 @@ function renderTimelines(){
     const x=d=> pad+(max===min?(W-2*pad)/2:(new Date(d)-new Date(min))/(new Date(max)-new Date(min))*(W-2*pad));
     let dots='';
     tr.forEach(t=>{
-      const cx=x(t.date), col=t.type==='buy'?'#27ae60':'#c0392b';
+      const cx=x(t.date), col=t.type==='buy'?'#c0392b':'#27ae60';
       dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${t.type==='buy'?'买入':'卖出'} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
       dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':'S'}</text>`;
     });
@@ -1221,7 +1230,7 @@ function liveSection(f){
       <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
       <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
       <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
-      <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
+      <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
       <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td></tr>`; } });
     h+=`</tbody></table></div><div style="margin-top:12px"><div style="font-size:14px;font-weight:600;margin:0 0 6px">买卖点</div>${miniTimeline(f)}</div>`;
   } else { h+=`<p class="hint">还没有交易流水。点「+ 记一笔」记录买卖。</p>`; }
@@ -1551,29 +1560,39 @@ function renderIndices(){
 }
 function renderIdxInto(boxId, timeId){
   const box=document.getElementById(boxId); if(!box) return;
-  let anyTs=null;
   box.innerHTML=INDEX_LIST.map(it=>{
     const raw=window['v_'+it.code];
     const d=raw?parseQt(raw):null;
-    if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-val" data-val="${it.code}">—</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
-    if(d.ts && !anyTs) anyTs=d.ts;
+    const ms=mktOpenWindow(it.code);
+    const msTxt=ms?'🔴 交易中':'🟢 已收盘';
+    if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-val" data-val="${it.code}">—</span><span class="idx-pct"></span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
     const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
     const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
     const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
-    return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
+    return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)}</span><span class="idx-pct ${cls}">${pctTxt}</span><span class="idx-mktstatus">${msTxt}</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
   }).join('');
   const te=document.getElementById(timeId);
   if(te){
-    if(anyTs){
-      const now=new Date(), open=isMarketOpen(now);
-      const hhmm=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-      te.innerHTML = open ? ('🔴 交易中 '+hhmm) : ('🟢 已收盘 '+anyTs);
-    } else te.textContent='';
+    // 右上角状态明确标注范围：仅反映 A股/港股（美日韩各有独立状态，见各卡片）
+    const aOpen=mktOpenWindow('sh000001');
+    const hhmm=new Date().getHours().toString().padStart(2,'0')+':'+new Date().getMinutes().toString().padStart(2,'0');
+    te.innerHTML = aOpen ? ('🔴 A股/港股 交易中 '+hhmm) : '🟢 A股/港股 已收盘';
   }
 }
 // ---------- 指数迷你走势 Sparkline（按市场分级，不画假图） ----------
 // A股：新浪 5 分钟真实分时；港股：腾讯日线近 30 日（诚实标注）；美股：无免费源，降级显示
 function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^(us|jp|kr)/.test(code)) return 'foreign'; return 'a'; }
+// 各市场盘中/收盘判定（北京时）。解决"右上角已收盘"对美/日/韩市场的语义歧义。
+function mktOpenWindow(code){
+  const now=new Date(); const day=now.getDay(); const wd=(day!==0 && day!==6);
+  const t=now.getHours()*60+now.getMinutes();
+  if(/^(sh|sz)/.test(code)){ return wd && ((t>=570&&t<=690)||(t>=780&&t<=900)); }      // A股 09:30–11:30 / 13:00–15:00
+  if(/^hk/.test(code)){ return wd && ((t>=570&&t<=720)||(t>=780&&t<=960)); }           // 港股 09:30–12:00 / 13:00–16:00
+  if(/^us/.test(code)){ return wd && (t>=1290 || t<=240); }                            // 美股 21:30–次日04:00（夏令近似）
+  if(/^jp/.test(code)){ return wd && ((t>=480&&t<=630)||(t>=690&&t<=840)); }           // 日股 08:00–10:30 / 11:30–14:00
+  if(/^kr/.test(code)){ return wd && (t>=480&&t<=870); }                               // 韩股 08:00–14:30
+  return false;
+}
 // 外围指数（美股/日股/韩股）腾讯无源，统一用东方财富日线 secid
 const FOREIGN_SECID={ usDJI:'100.DJI', usIXIC:'100.NDX', usSPX:'100.SPX', jpN225:'100.N225', krKS11:'100.KS11' };
 function isForeign(code){ return Object.prototype.hasOwnProperty.call(FOREIGN_SECID, code); }
@@ -1644,13 +1663,16 @@ function fetchForeignIdx(code){
 }
 function applyForeign(code, obj){
   // 仅当腾讯快照未提供价（外围指数缺腾讯源）时，用日线最新收盘补价/涨跌
+  const cls=obj.pct>0?'pos':obj.pct<0?'neg':'zero';
+  const arrow=obj.pct>0?'▲':obj.pct<0?'▼':'';
   document.querySelectorAll('[data-val="'+code+'"]').forEach(el=>{
     if((el.textContent||'').trim()==='—'){
-      const cls=obj.pct>0?'pos':obj.pct<0?'neg':'zero';
-      const arrow=obj.pct>0?'▲':obj.pct<0?'▼':'';
       el.className='idx-val '+cls;
-      el.innerHTML=obj.price.toFixed(2)+' <span class="idx-pct">'+arrow+Math.abs(obj.pct).toFixed(2)+'%</span>';
-      el.dataset.filled='1';
+      el.textContent=obj.price.toFixed(2);
+      const pctEl=el.parentElement?el.parentElement.querySelector('.idx-pct'):null;
+      if(pctEl){ pctEl.className='idx-pct '+cls; pctEl.textContent=arrow+Math.abs(obj.pct).toFixed(2)+'%'; }
+      const chip=el.closest?el.closest('.idx-chip'):null;
+      if(chip) chip.style.display='';
     }
   });
   drawSpark(code, obj);
@@ -1659,6 +1681,10 @@ function degradeSpark(code){
   document.querySelectorAll('[data-spark="'+code+'"]').forEach(el=>{
     el.className='idx-nospark';
     el.textContent='— 无分时';
+    // 若该指数仍无有效价（"—"），整卡隐藏，避免空卡占位造成网格缺口
+    const chip=el.closest?el.closest('.idx-chip'):null;
+    const val=chip&&chip.querySelector?chip.querySelector('.idx-val'):null;
+    if(val && (val.textContent||'').trim()==='—'){ if(chip) chip.style.display='none'; }
   });
 }
 function drawSpark(code, obj){

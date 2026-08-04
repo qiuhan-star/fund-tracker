@@ -281,13 +281,13 @@
 <script>
 // ---------- 示例数据 ----------
 const SAMPLE_SNAP = [
-  {name:'汇添富中证芯片产业指数增强C', cat:'芯片', mv:15507.63, ret:-14.06},
+  {name:'汇添富中证芯片产业指数增强C', cat:'芯片', mv:15507.63, ret:-14.06, shares:9163.64, costPx:1.9691},
   {name:'华夏有色金属ETF联接D', cat:'周期资源', mv:8230.93, ret:-5.53},
-  {name:'富国全球科技互联网股票(QDII)C', cat:'QDII', mv:7145.42, ret:-9.23},
+  {name:'富国全球科技互联网股票(QDII)C', cat:'QDII', mv:7145.42, ret:-9.23, shares:1362.20, costPx:5.7787},
   {name:'广发中证军工ETF联接C', cat:'制造', mv:5377.23, ret:-9.35},
   {name:'招商中证煤炭等权指数E', cat:'周期资源', mv:5096.45, ret:1.93},
   {name:'广发工程机械主题ETF联接C', cat:'制造', mv:5000.00, ret:0},
-  {name:'嘉实全球产业升级股票(QDII)C', cat:'QDII', mv:4059.75, ret:3.45},
+  {name:'嘉实全球产业升级股票(QDII)C', cat:'QDII', mv:4059.75, ret:3.45, shares:1091.80, costPx:3.5944},
   {name:'中欧医疗创新股票C', cat:'医药', mv:4421.27, ret:-3.89},
   {name:'上银丰益混合C', cat:'混合', mv:4000.00, ret:0},
   {name:'嘉实中证细分化工产业主题ETF联接C', cat:'周期资源', mv:3846.46, ret:-1.84},
@@ -517,7 +517,9 @@ function buildFundsView(){
       return {name,cat,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr};
     }
     const mv=snap?snap.mv:0, ret=snap?snap.ret:0, cost=mv/(1+ret/100), profit=mv-cost, nav=navCache[name]?navCache[name].nav:null;
-    return {name,cat,shares:null,cost,mv,profit,ret,days:null,nav,costPx:(nav&&mv)?cost/mv*nav:null,trades:tr};
+    const ss=snap&&snap.shares!=null?snap.shares:null;
+    const cpx=snap&&snap.costPx!=null?snap.costPx:((nav&&mv)?cost/mv*nav:null);
+    return {name,cat,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr};
   });
 }
 function guessCat(name){

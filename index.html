@@ -103,6 +103,12 @@
 
   /* 赛道筛选 chips */
   .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .idx-card .sec-head { margin-bottom: 8px; }
+  .idx-list { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+  .idx-chip { display: flex; flex-direction: column; gap: 2px; white-space: nowrap; }
+  .idx-name { font-size: 12px; color: #6b7280; }
+  .idx-val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .idx-pct { font-size: 11px; margin-left: 4px; font-weight: 500; }
   /* 空状态引导 */
   .empty-state { text-align: center; padding: 40px 16px; }
   .empty-state .es-emoji { font-size: 42px; }
@@ -216,7 +222,7 @@
         <div class="more-menu">
           <button class="btn sm" onclick="toggleMore(event)">⋯ 更多</button>
           <div class="drop" id="moreDrop">
-            <button onclick="refresh();closeMore()">↻ 刷新最新净值</button>
+            <button onclick="refresh();closeMore()">↻ 刷新净值·行情</button>
             <button onclick="addSnapRow();closeMore()">+ 加一只基金</button>
             <button onclick="addTradeRow();switchTab(2);closeMore()">+ 记一笔交易</button>
             <hr>
@@ -233,6 +239,15 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- 大盘实时（腾讯财经，独立备用源） -->
+    <div class="card idx-card">
+      <div class="sec-head">
+        <h2 style="margin:0;font-size:14px">大盘实时 <span class="tag">腾讯财经</span></h2>
+        <span id="idxTime" class="hint" style="font-size:11px"></span>
+      </div>
+      <div class="idx-list" id="idxList"><span class="hint">加载中…</span></div>
     </div>
 
     <!-- 主 Tab 导航 -->
@@ -295,7 +310,7 @@
           <h2 style="margin:0;font-size:14px">交易流水录入</h2>
           <div style="display:flex;gap:8px">
             <button class="btn sm primary" onclick="addTradeRow()">+ 记一笔</button>
-            <button class="btn sm" onclick="refresh()">↻ 刷新净值</button>
+            <button class="btn sm" onclick="refresh()">↻ 刷新净值·行情</button>
           </div>
         </div>
         <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，并画出买卖点时间轴。</p>
@@ -789,6 +804,50 @@ function lastUpdatedLabel(){
   return '数据未刷新（点「↻ 刷新最新净值」联网获取）';
 }
 function lastSyncLabel(){ const d=localStorage.getItem('ft_lastSync'); return d?new Date(+d).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):'—'; }
+// ---------- 大盘实时（腾讯财经 qt.gtimg.cn，独立备用源，不与天天基金耦合） ----------
+const INDEX_LIST=[
+  {code:'sh000001', name:'上证指数'},
+  {code:'sz399001', name:'深证成指'},
+  {code:'sz399006', name:'创业板指'},
+  {code:'sh000300', name:'沪深300'},
+  {code:'sh000688', name:'科创50'},
+];
+let _idxScript=null;
+function parseQt(raw){
+  if(!raw) return null;
+  const p=raw.split('~');
+  const ti=p.findIndex(x=>/^\d{14}$/.test(x));
+  const price=parseFloat(p[3]);
+  const chg=ti>=0?parseFloat(p[ti+1]):null;
+  const pct=ti>=0?parseFloat(p[ti+2]):null;
+  const ts=ti>=0?p[ti]:null;
+  return {price, chg, pct, ts};
+}
+function fetchIndices(){
+  const codes=INDEX_LIST.map(x=>x.code).join(',');
+  if(_idxScript && _idxScript.parentNode) _idxScript.parentNode.removeChild(_idxScript);
+  const s=document.createElement('script');
+  s.src='https://qt.gtimg.cn/q='+codes;
+  s.onload=()=>{ renderIndices(); };
+  s.onerror=()=>{ const b=document.getElementById('idxList'); if(b) b.innerHTML='<span class="hint">行情源未连接（腾讯财经），可稍后点刷新重试</span>'; };
+  _idxScript=s; document.body.appendChild(s);
+}
+function renderIndices(){
+  const box=document.getElementById('idxList'); if(!box) return;
+  let anyTs=null;
+  box.innerHTML=INDEX_LIST.map(it=>{
+    const raw=window['v_'+it.code];
+    const d=raw?parseQt(raw):null;
+    if(!d || isNaN(d.price)) return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val">—</span></span>`;
+    if(d.ts && !anyTs) anyTs=d.ts;
+    const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
+    const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
+    const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
+    return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span></span>`;
+  }).join('');
+  const te=document.getElementById('idxTime');
+  if(te){ if(anyTs&&/^\d{14}$/.test(anyTs)){ te.textContent='行情 '+anyTs.slice(8,10)+':'+anyTs.slice(10,12); } else te.textContent=''; }
+}
 async function refresh(){
   const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';
   const prev={}; Object.keys(navCache).forEach(k=>prev[k]=navCache[k].nav);
@@ -811,6 +870,7 @@ async function refresh(){
     u.textContent='已刷新 · '+lk+' · '+(market?'盘中实时估值':'历史净值（收盘）')+'（'+got+'/'+names.length+' 只'+(miss?'，部分未拉到已用缓存':'')+'）';
   }
   toast(got===0?'刷新失败：已用缓存/手动净值':'已刷新 '+got+' 只 · '+lk);
+  fetchIndices();
 }
 
 // ---------- 导入导出 ----------
@@ -997,6 +1057,7 @@ function recordGrowth(){
   buildFundsView();
   window.addEventListener('hashchange', route);
   route();
+  fetchIndices();
   try{ document.getElementById('updated').textContent=lastUpdatedLabel(); }catch(e){}
 })();
 </script>

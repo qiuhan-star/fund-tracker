@@ -81,6 +81,26 @@
   .legend span { display: flex; align-items: center; gap: 5px; }
   .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
   .tl { width: 100%; }
+  /* ===== 债券板块 ===== */
+  .sub2 { font-size: 11px; color: #9aa0aa; margin: 3px 0 0; }
+  .thermo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .yield-box { background: #fafbfc; border: 1px solid #eef1f6; border-radius: 10px; padding: 12px; }
+  .yield-box .lbl { font-size: 11.5px; color: #8a8f99; }
+  .yield-input { display: flex; align-items: baseline; gap: 4px; margin: 6px 0; }
+  .yield-input input { width: 92px; border: 1px solid #dce0e6; border-radius: 8px; padding: 6px 8px; font-size: 22px; font-weight: 600; font-family: inherit; color: #1f2329; }
+  .yield-input .pct { font-size: 16px; color: #5a6270; }
+  .thermo-status { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+  .ts-low { background: #fdeaea; color: #d23b3b; }
+  .ts-mid { background: #eaf1fd; color: #2f6fed; }
+  .ts-high { background: #fff4e0; color: #b9791a; }
+  .cmp-bar { height: 26px; border-radius: 8px; background: #eef1f6; position: relative; overflow: hidden; margin: 8px 0 4px; }
+  .cmp-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; }
+  .cmp-bar .target { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #2f6fed; }
+  .cmp-legend { display: flex; gap: 16px; font-size: 12px; color: #5a6270; margin-top: 4px; }
+  .cmp-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: 0; }
+  .roadmap { opacity: .72; }
+  .roadmap .rh { display: flex; align-items: center; gap: 8px; }
+  .pill { font-size: 11px; padding: 1px 8px; border-radius: 4px; background: #eef1f6; color: #8a8f99; }
   .loading { font-size: 12px; color: #8a8f99; }
   .chart-box { position: relative; height: 230px; }
 
@@ -170,6 +190,7 @@
   .idx-status { font-size: 11px; color: #8a8f99; display: inline-flex; align-items: center; gap: 3px; }
   /* 指数迷你走势 Sparkline（A股真分时 / 港股近30日日线 / 美股降级不画假图） */
   .idx-spark { display: block; margin-top: 5px; line-height: 0; }
+  .idx-sparkcap { display: block; margin-top: 2px; font-size: 9px; color: #b3b7bf; letter-spacing: .2px; line-height: 1; }
   .idx-nospark { display: block; margin-top: 6px; font-size: 10px; color: #b3b7bf; letter-spacing: .3px; min-height: 14px; }
   /* 主题 / 板块热力（统一规格网格，不表示面积） */
   .theme-heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
@@ -336,6 +357,7 @@
       <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
       <button id="mt1" onclick="switchTab(1)">分析</button>
       <button id="mt2" onclick="switchTab(2)">交易</button>
+      <button id="mt3" onclick="switchTab(3)">债券</button>
     </div>
 
     <!-- Tab 0: 持仓 -->
@@ -351,6 +373,7 @@
             <button id="sName" onclick="setSort('name')">名称</button>
           </div>
         </div>
+        <div class="cat-filter" id="accFilter"></div>
         <div class="cat-filter" id="catFilter"></div>
         <div id="homeList"></div>
         <p class="hint">点任意一行进入该基金的详情页（实时估值、成本 vs 现价、交易流水、十大重仓与复盘）。</p>
@@ -361,6 +384,7 @@
     <!-- Tab 1: 分析 -->
     <div class="tab-panel" id="tp1">
       <div class="card"><div class="cards4" id="overview"></div></div>
+      <div class="card" id="accSummaryCard" style="display:none"><div class="sec-head"><h2 style="margin:0;font-size:14px">按账户汇总</h2><span class="hint" style="font-size:11px">浮动 + 已实现</span></div><div id="accSummary"></div></div>
       <div class="card">
         <div class="grid2">
           <div><h2>资产配置</h2><div class="chart-box"><canvas id="pie" role="img" aria-label="资产配置饼图"></canvas></div><div class="legend" id="pieLegend"></div></div>
@@ -409,7 +433,7 @@
         <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，并画出买卖点时间轴。</p>
         <div class="table-scroll">
         <table id="tradeTable">
-          <thead><tr><th style="width:22%">基金名称</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead>
+          <thead><tr><th style="width:20%">基金名称</th><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
         </div>
@@ -418,6 +442,11 @@
         <h2>单只买卖点时间轴</h2>
         <div id="timelines"></div>
       </div>
+    </div>
+
+    <!-- Tab 3: 债券 -->
+    <div class="tab-panel" id="tp3">
+      <div id="bondContent"></div>
     </div>
 
   </div>
@@ -461,10 +490,16 @@ const SAMPLE_TRADE = [
 ];
 
 let snaps=[], trades=[], navCache={};
-let fundsView=[];
+let fundsView=[], _allHoldings=[];
+const ACCOUNTS=['支付宝','小号','微信'];
+let curAccount='全部', curGroup='全部', pendingAcc=null;
+function accOf(x){ return (x&&x.account)?x.account:'支付宝'; }
+function accKey(acc,name){ return acc+'||'+name; }
+function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
+function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'支付宝'; }
 let flashMap={}, todayGain=null;
 let holdSort='mv', holdCatFilter='全部';
-let currentView='home', detailName=null, detailChartFund=null;
+let currentView='home', detailName=null, detailAcc='支付宝', detailChartFund=null;
 let _focusFld=null, _focusPos=0;
 let hidden=false; let alerts={}; let growthSeries=[];
 
@@ -492,9 +527,10 @@ document.addEventListener('click', function(e){ if(!e.target.closest('.more-menu
 let activeTab=0;
 function switchTab(i){
   activeTab=i;
-  [0,1,2].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
+  [0,1,2,3].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
   if(i===2){ renderTrade(); renderTimelines(); }
+  if(i===3){ renderBond(); }
 }
 
 function setSort(s){
@@ -513,6 +549,37 @@ function filterCat(c){
   holdCatFilter=c;
   renderCatFilter();
   if(activeTab===0) renderHomeList();
+}
+
+// ---------- 账户筛选 + 按账户汇总 ----------
+function renderAccFilter(){
+  const box=document.getElementById('accFilter'); if(!box) return;
+  const accs=['全部', ...ACCOUNTS, ...new Set(_allHoldings.map(f=>f.account))].filter((v,i,a)=>a.indexOf(v)===i);
+  box.innerHTML=accs.map(c=>`<button class="cat-chip${c===curAccount?' on':''}" onclick="filterAccount('${esc(c)}')">${c}</button>`).join('');
+}
+function filterAccount(a){
+  curAccount=a;
+  renderAccFilter(); renderOverview(); renderHomeList(); renderCatFilter();
+  if(activeTab===1) renderAccountSummary();
+}
+function renderAccountSummary(){
+  const box=document.getElementById('accSummary'); if(!box) return;
+  const card=document.getElementById('accSummaryCard');
+  const accs=[...new Set(_allHoldings.map(f=>f.account))];
+  if(!accs.length){ if(card) card.style.display='none'; return; }
+  if(card) card.style.display='';
+  const totMv=_allHoldings.reduce((a,f)=>a+f.mv,0)||1;
+  const rows=accs.map(acc=>{
+    const fs=_allHoldings.filter(f=>f.account===acc);
+    const mv=fs.reduce((a,f)=>a+f.mv,0), cost=fs.reduce((a,f)=>a+f.cost,0), fl=mv-cost, rl=fs.reduce((a,f)=>a+(f.realized||0),0);
+    return {acc, mv, fl, rl, pct:mv/totMv*100};
+  }).sort((a,b)=>b.mv-a.mv);
+  const tMv=rows.reduce((a,r)=>a+r.mv,0), tFl=rows.reduce((a,r)=>a+r.fl,0), tRl=rows.reduce((a,r)=>a+r.rl,0);
+  const cls=v=>v>=0?'pos':'neg', sign=v=>v>=0?'+':'';
+  box.innerHTML=`<table class="hk-table" style="margin-top:0"><thead><tr><th>账户</th><th>市值</th><th>浮动收益</th><th>已实现</th><th>合计收益</th><th>占比</th></tr></thead><tbody>`
+    + rows.map(r=>`<tr><td class="hk-name">${r.acc}</td><td>${M(r.mv)}</td><td class="${cls(r.fl)}">${sign(r.fl)}${M(r.fl)}</td><td class="${cls(r.rl)}">${sign(r.rl)}${M(r.rl)}</td><td class="${cls(r.fl+r.rl)}">${sign(r.fl+r.rl)}${M(r.fl+r.rl)}</td><td>${r.pct.toFixed(1)}%</td></tr>`).join('')
+    + `<tr style="font-weight:700"><td class="hk-name">合计</td><td>${M(tMv)}</td><td class="${cls(tFl)}">${sign(tFl)}${M(tFl)}</td><td class="${cls(tRl)}">${sign(tRl)}${M(tRl)}</td><td class="${cls(tFl+tRl)}">${sign(tFl+tRl)}${M(tFl+tRl)}</td><td>100%</td></tr>`
+    + `</tbody></table>`;
 }
 
 // ---------- 持仓列表 ----------
@@ -554,9 +621,10 @@ function renderHomeList(){
     const _nc=navCache[f.name];
     const _mkt=isMarketOpen(new Date());
     const estTag=(_mkt&&_nc&&_nc.gsz!=null)?`<span class="hl-sep">|</span><span class="est ${_nc.gszzl>=0?'pos':'neg'}">估 ${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>`:'';
-    return `<div class="hl-row ${flash}${alertCls}" onclick="goDetail('${encodeURIComponent(f.name)}')">
+    return `<div class="hl-row ${flash}${alertCls}" onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
+        <span class="tag">${f.account||'支付宝'}</span>
         <span class="nav-edit" ${hidden?'':'onclick="event.stopPropagation();setManualNav(\''+encodeURIComponent(f.name)+'\')"'} title="点击手动填写净值">净值 ${mask4(f.nav)} ${hidden?'':navBadge(_nc)}</span><span class="hl-sep">|</span><span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
       </div></div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
@@ -565,12 +633,13 @@ function renderHomeList(){
   }).join('');
 }
 
-function goDetail(enc){ location.hash='#/fund/'+enc; }
+function goDetail(enc, acc){ pendingAcc=acc||null; location.hash='#/fund/'+enc; }
 
 // ---------- 分析（概览/饼/柱/建议）----------
 function renderOverview(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0), cost=fundsView.reduce((a,f)=>a+f.cost,0);
   const profit=total-cost, pret=cost>0?profit/cost*100:0;
+  const realized=fundsView.reduce((a,f)=>a+(f.realized||0),0);
   const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length;
   const cls=profit>=0?'pos':'neg';
   const top3=getCatAllocation().slice(0,3).reduce((a,b)=>a+b[1],0);
@@ -580,6 +649,7 @@ function renderOverview(){
     <div class="mcard"><p class="lbl">总市值</p><p class="val">${M(total)}</p></div>
     <div class="mcard"><p class="lbl">今日预估</p><p class="val ${tgcls}">${tg}</p></div>
     <div class="mcard"><p class="lbl">持有总收益</p><p class="val ${cls}">${profit>=0?'+':''}${M(profit)}</p></div>
+    <div class="mcard"><p class="lbl">已实现盈亏</p><p class="val ${realized>=0?'pos':'neg'}">${realized>=0?'+':''}${M(realized)}</p></div>
     <div class="mcard"><p class="lbl">总收益率</p><p class="val ${cls}">${pret>=0?'+':''}${pret.toFixed(2)}%</p></div>
     <div class="mcard"><p class="lbl">基金数 / 盈:亏</p><p class="val">${fundsView.length} <span class="pos">${win}</span>:<span class="neg">${lose}</span></p></div>
     <div class="mcard"><p class="lbl">前三大赛道集中度</p><p class="val ${top3>CONFIG.top3Warn?'neg':'pos'}">${top3.toFixed(0)}%</p></div>`;
@@ -689,7 +759,7 @@ function renderAdvice(){
         `按${userProfile.risk}档建议提升至约 ${M2.def}%（约 ${M(total*M2.def/100)} 元），优先配置纯债或"固收 +"混合基金`,
         `防御仓作为组合稳定器，可显著降低整体波动、改善回撤体验`
       ],
-      alt:`若风险偏好偏激进、不愿降低收益弹性，至少保留 <b>5–8% 货币基金 / 短债</b>作为流动性垫与应急仓。`});
+      alt:`若风险偏好偏激进、不愿降低收益弹性，至少保留 <b>5–8% 货币基金 / 短债</b>作为流动性垫与应急仓。 <button class="btn sm" style="margin-top:6px" onclick="switchTab(3)">→ 去「债券」板块做配置规划</button>`});
   }
   if(dups.length||tiny.length){
     const dupStr=dups.map(([k,a])=>`${k} ${a.length} 只`).join('、');
@@ -732,6 +802,92 @@ function renderAdvice(){
   drawDough('pieSug',sugLabels,sugData);
   const lg2=document.getElementById('pieSugLg'); if(lg2) lg2.innerHTML=sugLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${sugData[i]}%</span>`).join('');
 }
+// ---------- 债券板块：债市温度计 + 防御配置建议 ----------
+let bondState={dir:'bear', y10:1.72};
+function loadBond(){ try{const s=localStorage.getItem('ft_bond'); if(s){const b=JSON.parse(s); if(b&&typeof b==='object') bondState={...bondState,...b};}}catch(e){} }
+function saveBond(){ try{localStorage.setItem('ft_bond',JSON.stringify(bondState));}catch(e){} }
+const BOND_DIR={
+  bull:{dur:'适度拉长久期（&gt;3 年）以锁定资本利得。',cr:'利差若收窄可小幅下沉信用博票息，但仍以高等级为主。',alt:'<b>当前判断：</b>看多利率（收益率下行）。存量债基净值受益、新买入可拉长久期放大收益；注意若已处历史低位，下行空间有限，勿过度追涨。'},
+  bear:{dur:'缩短久期（&lt;2 年）以降低净价波动风险。',cr:'偏好利率债 / 高等级信用，回避低评级与长久期信用品种。',alt:'<b>当前判断：</b>看空利率（收益率上行）。存量债基净值承压，新买入宜短久期、控信用；若仅是阶段性回调而非趋势反转，可逢收益率高点分批建仓。'},
+  neutral:{dur:'中等久期（2–3 年）均衡配置，兼顾票息与波动。',cr:'利率债与高等级信用均衡，控制单一主体 / 行业敞口。',alt:'<b>当前判断：</b>利率中性。以票息为主要收益来源，保持组合流动性，等待方向进一步明确再加久期或下沉信用。'}
+};
+function bondThermoBadge(v){ if(v>0&&v<1.7) return ['ts-low','偏低 · 债券偏贵']; if(v>=1.7&&v<=2.2) return ['ts-mid','中性区间']; if(v>2.2) return ['ts-high','偏高 · 票息吸引']; return ['ts-mid','—']; }
+function renderBond(){
+  const bc=document.getElementById('bondContent'); if(!bc) return;
+  if(!_profileLoaded) loadProfile(); loadBond();
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  const catPct=getCatAllocation(); const cats={}; catPct.forEach(([k,v])=>cats[k]=v);
+  const defCur=cats['混合/债']||0;
+  const M2=profileModel(userProfile); const target=M2.def;
+  const gap=Math.max(0,target-defCur); const gapAmt=total*gap/100;
+  const seg=(k,opts)=>`<div class="pf-seg">${opts.map(o=>`<button class="${userProfile[k]===o.v?'on':''}" onclick="setProfile('${k}','${o.v}')">${o.l}</button>`).join('')}</div>`;
+  const d=BOND_DIR[bondState.dir]||BOND_DIR.bear;
+  const ts=bondThermoBadge(bondState.y10);
+  let html=`<div class="card">
+    <h2>债市温度计 <span class="hint">（利率方向判断 → 久期 / 信用建议）</span></h2>
+    <div class="thermo">
+      <div class="yield-box">
+        <div class="lbl">10Y 国债收益率（锚）</div>
+        <div class="yield-input"><input id="y10" type="number" step="0.01" value="${bondState.y10}"> <span class="pct">%</span></div>
+        <button class="btn sm" onclick="bondAutoFetch()">自动获取</button>
+        <div style="margin-top:8px"><span id="tsBadge" class="thermo-status ${ts[0]}">${ts[1]}</span></div>
+        <div class="sub2" style="margin-top:4px">1.7%–2.2% 视为中性；低于偏贵、高于票息更吸引</div>
+      </div>
+      <div class="yield-box">
+        <div class="lbl">你对利率方向的判断</div>
+        <div class="pf-row" style="margin-top:6px"><div class="pf-seg" id="segDir">
+          <button data-v="bull" class="${bondState.dir==='bull'?'on':''}" onclick="setBondDir('bull',this)">看多利率↓</button>
+          <button data-v="bear" class="${bondState.dir==='bear'?'on':''}" onclick="setBondDir('bear',this)">看空利率↑</button>
+          <button data-v="neutral" class="${bondState.dir==='neutral'?'on':''}" onclick="setBondDir('neutral',this)">中性</button>
+        </div></div>
+        <div class="sub2">看多=预期收益率下行（债价涨）；看空=收益率上行（债价跌）</div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="adk medium"><span class="adk-badge">久期建议</span><div><div class="adk-body" id="durText">${d.dur}</div></div></div>
+      <div class="adk medium"><span class="adk-badge">信用偏好</span><div><div class="adk-body" id="creditText">${d.cr}</div></div></div>
+      <div class="adk-alt" id="dirAlt">${d.alt}</div>
+    </div>
+  </div>`;
+  html+=`<div class="card">
+    <h2>防御配置建议 <span class="hint">（读取你的风险画像 → 算出该补多少防御资产）</span></h2>
+    <div class="pf-panel">
+      <div class="pf-row"><span class="pf-lab">风险偏好</span>${seg('risk',[{v:'保守',l:'保守'},{v:'稳健',l:'稳健'},{v:'激进',l:'激进'}])}</div>
+      <div class="pf-row"><span class="pf-lab">投资期限</span>${seg('horizon',[{v:'短期(<1年)',l:'短期'},{v:'中期(1-3年)',l:'中期'},{v:'长期(>3年)',l:'长期'}])}</div>
+      <div class="pf-row"><span class="pf-lab">流动性需求</span>${seg('liquidity',[{v:'高',l:'高'},{v:'中',l:'中'},{v:'低',l:'低'}])}</div>
+      <p class="pf-note">防御目标 = 风险基准（保守25% / 稳健15% / 激进8%）+ 流动性高 +5% + 期限短期 +5%（上限60%）。与「分析」Tab 共用同一份风险画像。</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px">
+      <div class="mcard"><div class="lbl">当前防御占比</div><div class="val ${defCur<target?'neg':'pos'}">${defCur.toFixed(1)}%</div><div class="sub2">组合内混合 / 债 / 货币合计</div></div>
+      <div class="mcard"><div class="lbl">建议防御目标</div><div class="val pos">${target.toFixed(1)}%</div><div class="sub2">${userProfile.risk}档 · ${userProfile.horizon} · 流动性${userProfile.liquidity}</div></div>
+    </div>
+    <div class="cmp-bar"><div class="fill" style="width:${Math.min(100,defCur)}%;background:#27ae60"></div><div class="target" style="left:${Math.min(100,target)}%"></div></div>
+    <div class="cmp-legend"><span><i style="background:#27ae60"></i>当前 ${defCur.toFixed(1)}%</span><span><i style="background:#2f6fed"></i>目标 ${target.toFixed(1)}%</span></div>
+    <p class="hint" style="margin-top:10px">待补金额：<b>${total>0?M(gapAmt):'¥—'}</b>（= 组合当前市值 ${total>0?M(total):'—'} × 缺口 ${gap.toFixed(1)}%）。</p>
+    <div style="margin-top:12px">
+      <div class="adk high"><span class="adk-badge">买什么</span><div><div class="adk-title">按「核心—卫星」搭防御层</div><ul>
+        <li><b>利率债基金（纯债）</b>：作为核心，久期匹配温度计判断，波动最小；</li>
+        <li><b>高等级信用债基金</b>：票息略高，承担有限信用风险；</li>
+        <li><b>固收+（≤20% 股票）</b>：攻守兼备，但波动大于纯债，不宜超防御仓的 1/3。</li>
+      </ul></div></div>
+      <div class="adk low"><span class="adk-badge">分批计划</span><div><div class="adk-title">3 个月梯次建仓（避免一次性买在时点高点）</div><ul>
+        <li><b>第 1 个月</b>：暂停权益类定投，先建核心利率债 1/3；</li>
+        <li><b>第 2 个月</b>：补高等级信用债，防御升至约 ${(target/2).toFixed(0)}%；</li>
+        <li><b>第 3 个月</b>：补齐至目标 ${target.toFixed(0)}%，完成再平衡。</li>
+      </ul><div class="adk-alt"><b>替代方案：</b>若担心利率上行，可改用「周定投」平滑成本，而非月内一次性买入。</div></div></div>
+    </div>
+  </div>`;
+  html+=`<div class="card roadmap"><div class="rh"><h2 style="margin:0">债基持仓</h2><span class="pill">未来接入</span></div>
+    <p class="hint">等你实际买入债基后，这里会自动接上——记录净值、久期、信用暴露、与权益侧对称的盈亏视图。当前防御占比 ${defCur.toFixed(1)}%，暂无数据。</p>
+    <div style="border:1px dashed #dcdfe4;border-radius:10px;padding:18px;text-align:center;color:#9aa0aa;font-size:12.5px">买入债基后，此卡片亮起 → 跟踪每只债基的净值 / 久期 / 信用等级 / 再平衡提醒</div>
+  </div>`;
+  bc.innerHTML=html;
+  const y10=document.getElementById('y10');
+  if(y10) y10.addEventListener('input',function(){ bondState.y10=parseFloat(this.value)||0; saveBond(); const v=bondState.y10; const b=document.getElementById('tsBadge'); const t=bondThermoBadge(v); b.className='thermo-status '+t[0]; b.textContent=t[1]; });
+}
+function setBondDir(v,el){ bondState.dir=v; saveBond(); const d=BOND_DIR[v]||BOND_DIR.bear; document.querySelectorAll('#segDir button').forEach(b=>b.classList.remove('on')); if(el) el.classList.add('on'); const dt=document.getElementById('durText'),ct=document.getElementById('creditText'),da=document.getElementById('dirAlt'); if(dt)dt.innerHTML=d.dur; if(ct)ct.innerHTML=d.cr; if(da)da.innerHTML=d.alt; }
+function bondAutoFetch(){ alert('自动获取 10Y 国债收益率需接入免 CORS 的公开源，当前未接入；请手动填入（数据源待补充）。'); }
+
 
 
 // ---------- 交易流水 + 时间轴 ----------
@@ -744,6 +900,7 @@ function renderTrade(){
     const isSplit=t.type==='split';
     tb.innerHTML+=`<tr>
       <td><input data-fld="ht-name-${i}" value="${esc(t.name)}" oninput="trades[${i}].name=this.value;compute();silentSave()"></td>
+      <td><select data-fld="ht-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
       <td><input data-fld="ht-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
       <td><select data-fld="ht-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
       <td class="num"><input data-fld="ht-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()" title="${isSplit?'拆分倍数(如2=1拆2)':'金额(元)'}"></td>
@@ -795,36 +952,50 @@ function renderTimelines(){
 
 // ---------- 计算 ----------
 function buildFundsView(){
-  const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);
-  fundsView=names.map(name=>{
-    const tr=trades.filter(t=>t.name===name), snap=snaps.find(s=>s.name===name), cat=snap?.cat||guessCat(name);
+  // 复合键 (账户||基金名)：同一基金可在多个账户分别持有
+  const keys=[...new Set([
+    ...snaps.map(s=>accKey(accOf(s),s.name)),
+    ...trades.map(t=>accKey(accOf(t),t.name))
+  ])].map(k=>{ const i=k.indexOf('||'); return {acc:k.slice(0,i), name:k.slice(i+2)}; }).filter(x=>x.name);
+  const all=keys.map(({acc,name})=>{
+    const tr=trades.filter(t=>accOf(t)===acc && t.name===name);
+    const snap=snaps.find(s=>accOf(s)===acc && s.name===name);
+    const cat=snap?snap.cat:(tr[0]?guessCat(tr[0].name):guessCat(name));
+    let f;
     if(tr.length){
-      let shares=0,cost=0,firstDate=null;
+      let shares=0,cost=0,firstDate=null,realized=0;
       const sortedTr=[...tr].sort((a,b)=>a.date.localeCompare(b.date));
       sortedTr.forEach(t=>{
         const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0, sh=nav>0?amt/nav:0;
         if(ty==='buy'){ shares+=sh; cost+=amt+fee; }
-        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); cost-=cost*(sellSh/shares); shares-=sellSh; } cost-=fee; }
-        else if(ty==='dividend'){ cost=Math.max(0,cost-amt); }            // 现金分红：降成本、份额不变
-        else if(ty==='reinvest'){ if(nav>0) shares+=amt/nav; cost+=amt; } // 红利再投：增份额、加成本（无申购费）
-        else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }      // 份额拆分：份额×比例、成本不变（自动降成本单价）
+        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } cost-=fee; }
+        else if(ty==='dividend'){ cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
+        else if(ty==='reinvest'){ if(nav>0) shares+=amt/nav; cost+=amt; }        // 红利再投：增份额、加成本（无申购费）
+        else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }             // 份额拆分：份额×比例、成本不变
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||t.date<firstDate) firstDate=t.date;
       });
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
       if(shares===0 && snap){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
-        return {name,cat,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(nav?c0/nav:null)),trades:tr};
+        f={name,cat,account:acc,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(nav?c0/nav:null)),trades:tr,realized:0};
+      } else {
+        const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:0);
+        const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
+        f={name,cat,account:acc,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized};
       }
-      const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:0);
-      const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
-      return {name,cat,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr};
+    } else {
+      const mv=snap?snap.mv:0, ret=snap?snap.ret:0, cost=mv/(1+ret/100), profit=mv-cost, nav=navCache[name]?navCache[name].nav:null;
+      const ss=snap&&snap.shares!=null?snap.shares:null;
+      const cpx=snap&&snap.costPx!=null?snap.costPx:((nav&&mv)?cost/mv*nav:null);
+      f={name,cat,account:acc,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
     }
-    const mv=snap?snap.mv:0, ret=snap?snap.ret:0, cost=mv/(1+ret/100), profit=mv-cost, nav=navCache[name]?navCache[name].nav:null;
-    const ss=snap&&snap.shares!=null?snap.shares:null;
-    const cpx=snap&&snap.costPx!=null?snap.costPx:((nav&&mv)?cost/mv*nav:null);
-    return {name,cat,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr};
+    return f;
   });
+  _allHoldings=all;
+  const accF = curAccount==='全部'? null:curAccount;
+  const grpF = curGroup==='全部'? null:curGroup;
+  fundsView = all.filter(f=> (accF==null||f.account===accF) && (grpF==null||f.cat===grpF));
 }
 function guessCat(name){
   if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康/.test(name)) return '医药';
@@ -893,10 +1064,11 @@ function compute(){ buildFundsView(); render(); silentSave(); }
 function render(){
   captureFocus();
   if(currentView==='home'){
-    renderOverview(); renderHomeList(); renderCatFilter();
-    if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); } renderAdvice();
+    renderOverview(); renderAccFilter(); renderHomeList(); renderCatFilter();
+    if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
     if(activeTab===2){ renderTrade(); renderTimelines(); }
-  } else if(currentView==='detail'){ renderDetailLive(detailName?fundsView.find(x=>x.name===detailName):null); }
+    if(activeTab===3){ renderBond(); }
+  } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
   restoreFocus();
 }
 
@@ -908,13 +1080,15 @@ function route(){
 function showHome(){ currentView='home'; detailName=null; document.getElementById('homeView').style.display='block'; document.getElementById('detailView').style.display='none'; render(); }
 function showDetail(name){
   currentView='detail'; detailName=name;
+  detailAcc = pendingAcc || (_allHoldings.find(x=>x.name===name)?.account) || '支付宝'; pendingAcc=null;
   document.getElementById('homeView').style.display='none'; document.getElementById('detailView').style.display='block';
-  const f=fundsView.find(x=>x.name===name), c=document.getElementById('detailContent');
+  const f=findFund(name,detailAcc), c=document.getElementById('detailContent');
   if(!f){ c.innerHTML=`<div class="card"><h2>未找到「${esc(name)}」</h2><p class="hint">可能已删除或数据未加载。<a href="#/" class="fundlink">返回首页</a></p></div>`; return; }
   enterDetail(f);
 }
 
 function enterDetail(f){
+  detailAcc=f.account||'支付宝';
   const a=ANALYSIS[f.name], c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
     +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span id="idxTimeD" class="idx-status"></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
@@ -941,7 +1115,7 @@ function renderDetailLive(arg){
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=ANALYSIS[f.name];
   return `<div class="card detail-head">
-    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
+    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'支付宝'}</span> &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
     <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">删除该基金</button></div></div>
     <div class="cards4">
       <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">${M(f.mv)}</p></div>
@@ -995,8 +1169,9 @@ function liveSection(f){
   if(tr.length) h+=`<p class="hint" style="margin:0 0 8px">已记流水：收益按流水精确计算（快照仅作参考）；卖出按比例扣减成本，避免收益率失真。</p>`;
   if(tr.length){
     const types=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','拆分']];
-    h+=`<div class="table-scroll"><table class="am-t"><thead><tr><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead><tbody>`;
+    h+=`<div class="table-scroll"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead><tbody>`;
     trades.forEach((t,i)=>{ if(t.name===f.name){ h+=`<tr>
+      <td><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
       <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
       <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
       <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
@@ -1033,8 +1208,8 @@ function liveSection(f){
 
 // ---------- 新增 / 删除 ----------
 function addSnapRow(){ snaps.push({name:'新基金',cat:'',mv:0,ret:0}); compute(); }
-function addTradeRow(){ trades.push({name:'',date:'',type:'buy',amount:0,nav:''}); renderTrade(); }
-function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',type:'buy',amount:0,nav:''}); compute(); }
+function addTradeRow(){ trades.push({name:'',date:'',type:'buy',amount:0,nav:'',account:'支付宝'}); renderTrade(); }
+function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name)}); compute(); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
   if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
@@ -1413,9 +1588,10 @@ function drawSpark(code, obj){
   }).join(' ');
   const up=vals[n-1]>=vals[0];
   const color=up?'#c0392b':'#27ae60';
-  const title=obj.kind==='hk'?'港股近30日日线':'A股分时（5分钟）';
-  const svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="26" preserveAspectRatio="none" title="'+title+'">'+
-    '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+  const title=obj.kind==='hk'?'港股近30日日线（非盘中）':'A股分时（5分钟）';
+  const cap=obj.kind==='hk'?'<span class="idx-sparkcap">近30日</span>':'';
+  const svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="30" preserveAspectRatio="none" title="'+title+'">'+
+    '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>'+cap;
   nodes.forEach(el=>{ el.className='idx-spark'; el.innerHTML=svg; });
 }
 // ---------- 东方财富移动端：基金档案 + 前十大持仓（CORS *，file:// 可直调） ----------
@@ -1520,7 +1696,7 @@ async function refresh(){
   }
   toast(got===0?'刷新失败：已用缓存/手动净值':'已刷新 '+got+' 只 · '+lk);
   fetchIndices();
-  if(currentView==='detail' && detailName){ const f=fundsView.find(x=>x.name===detailName); if(f) renderIntraday(f); }
+  if(currentView==='detail' && detailName){ const f=findFund(detailName,detailAcc); if(f) renderIntraday(f); }
 }
 
 // ---------- 导入导出 ----------
@@ -1545,8 +1721,8 @@ function parseCSV(text){
   if(!lines.length) return 0;
   const split=l=>l.split(l.includes('\t')?/\t+/:/[,，]/).map(s=>s.trim().replace(/^"|"$/g,''));
   const head=split(lines[0]);
-  const col={name:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1};
-  const kw={ name:['名称','基金','代码','标的'], date:['日期','时间','买入日','成交日'], type:['方向','类型','买卖','操作'], amount:['金额','份额金额','成交金额','资金','金额(元)','金额元'], nav:['净值','单价','成交净值','单位净值'], fee:['费用','手续费','佣金','申购费','赎回费'] };
+  const col={name:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1};
+  const kw={ name:['名称','基金','代码','标的'], date:['日期','时间','买入日','成交日'], type:['方向','类型','买卖','操作'], amount:['金额','份额金额','成交金额','资金','金额(元)','金额元'], nav:['净值','单价','成交净值','单位净值'], fee:['费用','手续费','佣金','申购费','赎回费'], account:['账户','账号','平台','来源'] };
   const find=(arr)=>{ for(let i=0;i<head.length;i++){ if(arr.some(k=>head[i].includes(k))) return i; } return -1; };
   Object.keys(kw).forEach(k=>col[k]=find(kw[k]));
   const guessType=(s)=>{ const v=String(s||'').toLowerCase(); if(/买|申购|定投/.test(v)) return 'buy'; if(/卖|赎/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; if(/拆/.test(v)) return 'split'; return 'buy'; };
@@ -1563,8 +1739,9 @@ function parseCSV(text){
     const amount=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
     const nav=col.nav>=0?parseFloat(String(c[col.nav]).replace(/[^\d.\-]/g,''))||0:0;
     const fee=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
+    const account=col.account>=0?(ACCOUNTS.includes(c[col.account])?c[col.account]:'支付宝'):'支付宝';
     if(!(amount||nav)) continue;
-    added.push({name,date,type,amount,nav,fee});
+    added.push({name,date,type,amount,nav,fee,account});
   }
   if(!added.length) return 0;
   trades=trades.concat(added); return added.length;

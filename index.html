@@ -101,6 +101,8 @@
   .roadmap { opacity: .72; }
   .roadmap .rh { display: flex; align-items: center; gap: 8px; }
   .pill { font-size: 11px; padding: 1px 8px; border-radius: 4px; background: #eef1f6; color: #8a8f99; }
+  .adv-toggle { cursor: pointer; color: #2f6fed; font-size: 12.5px; font-weight: 600; margin-top: 14px; user-select: none; }
+  .adv-toggle:hover { text-decoration: underline; }
   .loading { font-size: 12px; color: #8a8f99; }
   .chart-box { position: relative; height: 230px; }
 
@@ -824,8 +826,21 @@ function renderBond(){
   const d=BOND_DIR[bondState.dir]||BOND_DIR.bear;
   const ts=bondThermoBadge(bondState.y10);
   let html=`<div class="card">
-    <h2>债市温度计 <span class="hint">（利率方向判断 → 久期 / 信用建议）</span></h2>
-    <div class="thermo">
+    <h2>债市温度计 <span class="hint">（不用懂债券也能用）</span></h2>
+    <p class="hint" style="margin:-4px 0 12px">你对利率环境的判断，决定该买长久期还是短久期、偏利率债还是信用债。拿不准就选「中性」。</p>
+    <div class="pf-row" style="justify-content:center"><div class="pf-seg" id="segDir">
+      <button data-v="bull" class="${bondState.dir==='bull'?'on':''}" onclick="setBondDir('bull',this)">看多利率↓</button>
+      <button data-v="bear" class="${bondState.dir==='bear'?'on':''}" onclick="setBondDir('bear',this)">看空利率↑</button>
+      <button data-v="neutral" class="${bondState.dir==='neutral'?'on':''}" onclick="setBondDir('neutral',this)">中性</button>
+    </div></div>
+    <div class="sub2" style="text-align:center;margin-top:6px">看多=预期收益率下行（债价涨）；看空=收益率上行（债价跌）</div>
+    <div style="margin-top:14px">
+      <div class="adk medium"><span class="adk-badge">久期建议</span><div><div class="adk-body" id="durText">${d.dur}</div></div></div>
+      <div class="adk medium"><span class="adk-badge">信用偏好</span><div><div class="adk-body" id="creditText">${d.cr}</div></div></div>
+      <div class="adk-alt" id="dirAlt">${d.alt}</div>
+    </div>
+    <div class="adv-toggle" onclick="toggleBondAdv()">${bondState.adv?'▾':'▸'} 高级（可选）：10Y 国债收益率</div>
+    <div id="bondAdv" style="display:${bondState.adv?'block':'none'};margin-top:8px">
       <div class="yield-box">
         <div class="lbl">10Y 国债收益率（锚）</div>
         <div class="yield-input"><input id="y10" type="number" step="0.01" value="${bondState.y10}"> <span class="pct">%</span></div>
@@ -833,20 +848,6 @@ function renderBond(){
         <div style="margin-top:8px"><span id="tsBadge" class="thermo-status ${ts[0]}">${ts[1]}</span></div>
         <div class="sub2" style="margin-top:4px">1.7%–2.2% 视为中性；低于偏贵、高于票息更吸引</div>
       </div>
-      <div class="yield-box">
-        <div class="lbl">你对利率方向的判断</div>
-        <div class="pf-row" style="margin-top:6px"><div class="pf-seg" id="segDir">
-          <button data-v="bull" class="${bondState.dir==='bull'?'on':''}" onclick="setBondDir('bull',this)">看多利率↓</button>
-          <button data-v="bear" class="${bondState.dir==='bear'?'on':''}" onclick="setBondDir('bear',this)">看空利率↑</button>
-          <button data-v="neutral" class="${bondState.dir==='neutral'?'on':''}" onclick="setBondDir('neutral',this)">中性</button>
-        </div></div>
-        <div class="sub2">看多=预期收益率下行（债价涨）；看空=收益率上行（债价跌）</div>
-      </div>
-    </div>
-    <div style="margin-top:14px">
-      <div class="adk medium"><span class="adk-badge">久期建议</span><div><div class="adk-body" id="durText">${d.dur}</div></div></div>
-      <div class="adk medium"><span class="adk-badge">信用偏好</span><div><div class="adk-body" id="creditText">${d.cr}</div></div></div>
-      <div class="adk-alt" id="dirAlt">${d.alt}</div>
     </div>
   </div>`;
   html+=`<div class="card">
@@ -1470,7 +1471,11 @@ const INDEX_LIST=[
   {code:'sh000300', name:'沪深300'},
   {code:'sh000688', name:'科创50'},
   {code:'hkHSI', name:'恒生指数'},
+  {code:'usDJI', name:'道琼斯'},
   {code:'usIXIC', name:'纳斯达克'},
+  {code:'usSPX', name:'标普500'},
+  {code:'jpN225', name:'日经225'},
+  {code:'krKS11', name:'韩国KOSPI'},
 ];
 let _idxScript=null;
 function parseQt(raw){
@@ -1505,12 +1510,12 @@ function renderIdxInto(boxId, timeId){
   box.innerHTML=INDEX_LIST.map(it=>{
     const raw=window['v_'+it.code];
     const d=raw?parseQt(raw):null;
-    if(!d || isNaN(d.price)) return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val">—</span></span>`;
+    if(!d || isNaN(d.price)) return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val" data-val="${it.code}">—</span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
     if(d.ts && !anyTs) anyTs=d.ts;
     const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
     const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
     const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
-    return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
+    return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
   }).join('');
   const te=document.getElementById(timeId);
   if(te){
@@ -1523,13 +1528,16 @@ function renderIdxInto(boxId, timeId){
 }
 // ---------- 指数迷你走势 Sparkline（按市场分级，不画假图） ----------
 // A股：新浪 5 分钟真实分时；港股：腾讯日线近 30 日（诚实标注）；美股：无免费源，降级显示
-function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^us/.test(code)) return 'us'; return 'a'; }
+function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^(us|jp|kr)/.test(code)) return 'foreign'; return 'a'; }
+// 外围指数（美股/日股/韩股）腾讯无源，统一用东方财富日线 secid
+const FOREIGN_SECID={ usDJI:'100.DJI', usIXIC:'100.NDX', usSPX:'100.SPX', jpN225:'100.N225', krKS11:'100.KS11' };
+function isForeign(code){ return Object.prototype.hasOwnProperty.call(FOREIGN_SECID, code); }
 const _idxSparkCache={};   // code -> { series:[{t,v}], kind, label }
 const _idxSparkBusy={};    // code -> true 防止重复拉取
 function fetchIdxSparks(){
   INDEX_LIST.forEach(it=>{
     const mk=marketOf(it.code);
-    if(mk==='us'){ degradeSpark(it.code); return; }
+    if(mk==='foreign'){ fetchForeignIdx(it.code); return; }
     if(_idxSparkCache[it.code]){ drawSpark(it.code, _idxSparkCache[it.code]); return; }
     if(_idxSparkBusy[it.code]) return;
     _idxSparkBusy[it.code]=true;
@@ -1567,6 +1575,41 @@ function fetchHKSpark(code){
       degradeSpark(code);
     }).catch(()=>degradeSpark(code));
 }
+// 外围指数：腾讯无源，改用东方财富日线取「价+涨跌+近30日走势」（优雅降级）
+function fetchForeignIdx(code){
+  if(_idxSparkCache[code]){ applyForeign(code, _idxSparkCache[code]); return; }
+  if(_idxSparkBusy[code]) return;
+  _idxSparkBusy[code]=true;
+  const secid=FOREIGN_SECID[code];
+  if(!secid){ degradeSpark(code); return; }
+  fetch('https://push2his.eastmoney.com/api/qt/stock/kline?secid='+secid+'&fields1=f1&fields2=f51,f53&klt=101&fqt=0&end=20500101&lmt=40',{headers:{'Referer':'https://quote.eastmoney.com/'}})
+    .then(r=>r.json()).then(j=>{
+      const kl=j&&j.data&&j.data.klines;
+      if(Array.isArray(kl)&&kl.length>=2){
+        const closes=kl.map(s=>parseFloat((s.split(',')[1]))).filter(v=>!isNaN(v));
+        if(closes.length>=2){
+          const last=closes[closes.length-1], prev=closes[closes.length-2];
+          const pct=(last-prev)/prev*100;
+          const obj={series:closes.slice(-30).map(v=>({t:'',v})), kind:'foreign', label:'近30日', price:last, pct};
+          _idxSparkCache[code]=obj; applyForeign(code, obj); return;
+        }
+      }
+      degradeSpark(code);
+    }).catch(()=>degradeSpark(code));
+}
+function applyForeign(code, obj){
+  // 仅当腾讯快照未提供价（外围指数缺腾讯源）时，用日线最新收盘补价/涨跌
+  document.querySelectorAll('[data-val="'+code+'"]').forEach(el=>{
+    if((el.textContent||'').trim()==='—'){
+      const cls=obj.pct>0?'pos':obj.pct<0?'neg':'zero';
+      const arrow=obj.pct>0?'▲':obj.pct<0?'▼':'';
+      el.className='idx-val '+cls;
+      el.innerHTML=obj.price.toFixed(2)+' <span class="idx-pct">'+arrow+Math.abs(obj.pct).toFixed(2)+'%</span>';
+      el.dataset.filled='1';
+    }
+  });
+  drawSpark(code, obj);
+}
 function degradeSpark(code){
   document.querySelectorAll('[data-spark="'+code+'"]').forEach(el=>{
     el.className='idx-nospark';
@@ -1579,7 +1622,7 @@ function drawSpark(code, obj){
   const vals=obj.series.map(x=>x.v);
   const min=Math.min.apply(null, vals), max=Math.max.apply(null, vals);
   const span=(max-min)||1;
-  const W=100, H=26, pad=2;
+  const W=100, H=30, pad=2;
   const n=obj.series.length;
   const pts=obj.series.map((x,i)=>{
     const xc=pad+(W-2*pad)*(n>1? i/(n-1):0);
@@ -1588,8 +1631,9 @@ function drawSpark(code, obj){
   }).join(' ');
   const up=vals[n-1]>=vals[0];
   const color=up?'#c0392b':'#27ae60';
-  const title=obj.kind==='hk'?'港股近30日日线（非盘中）':'A股分时（5分钟）';
-  const cap=obj.kind==='hk'?'<span class="idx-sparkcap">近30日</span>':'';
+  const isDaily=obj.kind!=='a';
+  const title=isDaily?'近30日日线（东方财富，非盘中）':'A股分时（5分钟）';
+  const cap=isDaily?'<span class="idx-sparkcap">近30日</span>':'';
   const svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="30" preserveAspectRatio="none" title="'+title+'">'+
     '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>'+cap;
   nodes.forEach(el=>{ el.className='idx-spark'; el.innerHTML=svg; });

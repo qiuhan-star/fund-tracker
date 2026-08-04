@@ -846,13 +846,13 @@ function saveBond(){ try{localStorage.setItem('ft_bond',JSON.stringify(bondState
 
 // 静态资料（已核实，截至 2026-08-04）；买入日 / 金额可在工具内编辑
 const BOND_FUNDS=[
-  {code:'019445',name:'华富恒盛纯债E',company:'华富',acc:'支付宝',amt:10000,y1:2.47,since:8.88,risk:'中低',lock:0,mix:false},
-  {code:'007330',name:'摩根瑞益纯债C',company:'摩根',acc:'支付宝',amt:10000,y1:2.25,since:18.50,risk:'中低',lock:0,mix:false},
-  {code:'011505',name:'上银丰益混合C',company:'上银',acc:'支付宝',amt:4000,y1:29.58,since:50.30,risk:'中',lock:0,mix:true},
-  {code:'016211',name:'摩根瑞享纯债C',company:'摩根',acc:'小号',amt:50000,y1:3.04,since:13.68,risk:'中低',lock:0,mix:false},
-  {code:'018665',name:'南方宁元债券A',company:'南方',acc:'小号',amt:50000,y1:3.02,since:9.91,risk:'中低',lock:0,mix:false},
-  {code:'016426',name:'国泰信瑞纯债',company:'国泰',acc:'小号',amt:50000,y1:5.32,since:14.40,risk:'中低',lock:0,mix:false},
-  {code:'012279',name:'嘉实稳和6个月持有纯债A',company:'嘉实',acc:'小号',amt:1.65,y1:1.63,since:12.29,risk:'中低',lock:6,mix:false},
+  {code:'019445',name:'华富恒盛纯债E',company:'华富',acc:'支付宝',amt:10000,y1:2.47,since:8.88,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
+  {code:'007330',name:'摩根瑞益纯债C',company:'摩根',acc:'支付宝',amt:10000,y1:2.25,since:18.50,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
+  {code:'011505',name:'上银丰益混合C',company:'上银',acc:'支付宝',amt:4000,y1:29.58,since:50.30,risk:'中',dur:'—',credit:'—',lock:0,mix:true},
+  {code:'016211',name:'摩根瑞享纯债C',company:'摩根',acc:'小号',amt:50000,y1:3.04,since:13.68,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
+  {code:'018665',name:'南方宁元债券A',company:'南方',acc:'小号',amt:50000,y1:3.02,since:9.91,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
+  {code:'016426',name:'国泰信瑞纯债',company:'国泰',acc:'小号',amt:50000,y1:5.32,since:14.40,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
+  {code:'012279',name:'嘉实稳和6个月持有纯债A',company:'嘉实',acc:'小号',amt:1.65,y1:1.63,since:12.29,risk:'中低',dur:'中短债',credit:'高等级',lock:6,mix:false},
 ];
 const BOND_DEF_DATES={'019445':'2026-07-25','007330':'2026-07-30','011505':'2026-06-15','016211':'2026-07-28','018665':'2026-07-10','016426':'2026-07-31','012279':'2026-07-20'};
 function pad2(n){return n<10?'0'+n:''+n;}
@@ -864,16 +864,16 @@ function bondAmt(f){ return (bondState.amts&&bondState.amts[f.code]!=null)?bondS
 function bondDate(f){ return (bondState.dates&&bondState.dates[f.code])?bondState.dates[f.code]:(BOND_DEF_DATES[f.code]||''); }
 function bondStatus(f,today){
   const pd=bondDate(f);
-  if(!pd) return {txt:'未填买入日',cls:'st-none',sub:'点表格「买入日」填写'};
-  const p=new Date(pd); if(isNaN(p)) return {txt:'日期格式有误',cls:'st-none',sub:''};
+  if(!pd) return {txt:'未填买入日',cls:'st-none',sub:'点表格「买入日」填写',barPct:null,barCls:''};
+  const p=new Date(pd); if(isNaN(p)) return {txt:'日期格式有误',cls:'st-none',sub:'',barPct:null,barCls:''};
   const held=daysBetween(p,today);
   if(f.lock>0){
     const unlock=addMonths(p,f.lock);
-    if(today<unlock){ const left=daysBetween(today,unlock); return {txt:'🔒 持有期内不可卖',cls:'st-lock',sub:'约 '+fmtDate(unlock)+' 解锁（剩 '+left+' 天）'}; }
-    return {txt:'✅ 持有期满·可赎回',cls:'st-ok',sub:fmtDate(unlock)+' 起可赎'};
+    if(today<unlock){ const left=daysBetween(today,unlock); const total=daysBetween(p,unlock); const pct=Math.max(0,Math.min(100,Math.round(held/total*100))); return {txt:'🔒 持有期内不可卖',cls:'st-lock',sub:'约 '+fmtDate(unlock)+' 解锁（剩 '+left+' 天）',barPct:pct,barCls:'blue'}; }
+    return {txt:'✅ 持有期满·可赎回',cls:'st-ok',sub:fmtDate(unlock)+' 起可赎',barPct:100,barCls:'green'};
   }
-  if(held<7){ const free=addDays(p,7); const left=daysBetween(today,free); return {txt:'⚠️ 7天内赎回收1.5%',cls:'st-warn',sub:'约 '+fmtDate(free)+' 免赎回费（剩 '+left+' 天）'}; }
-  return {txt:'✅ 可卖·免赎回费',cls:'st-ok',sub:'已持有 '+held+' 天'};
+  if(held<7){ const free=addDays(p,7); const left=daysBetween(today,free); const pct=Math.max(0,Math.min(100,Math.round(held/7*100))); return {txt:'⚠️ 7天内赎回收1.5%',cls:'st-warn',sub:'约 '+fmtDate(free)+' 免赎回费（剩 '+left+' 天）',barPct:pct,barCls:'amber'}; }
+  return {txt:'✅ 可卖·免赎回费',cls:'st-ok',sub:'已持有 '+held+' 天',barPct:100,barCls:'green'};
 }
 function setBondDate(code,v){ if(!bondState.dates) bondState.dates={}; bondState.dates[code]=v; saveBond(); renderBond(); }
 function setBondAmt(code,v){ const n=parseFloat(v); if(isNaN(n)) return; if(!bondState.amts) bondState.amts={}; bondState.amts[code]=n; saveBond(); renderBond(); }
@@ -890,14 +890,17 @@ function renderBond(){
   let rows=BOND_FUNDS.map(f=>{
     const st=bondStatus(f,today);
     const tag=f.mix?'<span class="tag-mix">含股票</span>':'';
-    const lockTxt=f.lock>0?'<span class="tag-lock">'+f.lock+'个月锁定期</span>':'';
+    const lockTxt=f.lock>0?'<span class="tag-lock">'+f.lock+'个月锁</span>':'';
+    const durTxt=(f.dur&&f.dur!=='—')?'<span class="tag-dur">'+f.dur+'</span>':'';
+    const creTxt=(f.credit&&f.credit!=='—')?'<span class="tag-credit">'+f.credit+'</span>':'';
+    const bar=(st.barPct!=null)?('<div class="cmp-bar"><div class="fill bar-'+st.barCls+'" style="width:'+st.barPct+'%"></div></div>'):'';
     return '<tr>'
       +'<td><b>'+f.code+'</b><br><span class="nm">'+f.name+'</span></td>'
       +'<td>'+f.acc+'</td>'
       +'<td><input class="amt-in" type="number" value="'+bondAmt(f)+'" data-code="'+f.code+'" onchange="setBondAmt(this.dataset.code,this.value)" style="width:84px"></td>'
-      +'<td>'+f.risk+tag+lockTxt+'</td>'
+      +'<td>'+f.risk+durTxt+creTxt+tag+lockTxt+'</td>'
       +'<td><input class="date-in" type="date" value="'+bondDate(f)+'" data-code="'+f.code+'" onchange="setBondDate(this.dataset.code,this.value)"></td>'
-      +'<td class="'+st.cls+'">'+st.txt+'<br><span class="sub2">'+st.sub+'</span></td>'
+      +'<td class="'+st.cls+'">'+st.txt+'<br><span class="sub2">'+st.sub+'</span>'+bar+'</td>'
     +'</tr>';
   }).join('');
 
@@ -906,10 +909,13 @@ function renderBond(){
   let cmp=BOND_FUNDS.map(f=>{
     const yc=f.y1===best?'cmp-best':(f.y1===worst?'cmp-worst':'');
     const mc=f.mix?'<span class="tag-mix">混合</span>':'';
+    const cre=f.mix?'含股票':f.credit;
     return '<tr>'
       +'<td><b>'+f.code+'</b> '+f.name+mc+'</td>'
       +'<td class="'+yc+'">'+f.y1.toFixed(2)+'%</td>'
       +'<td>'+f.since.toFixed(2)+'%</td>'
+      +'<td>'+(f.dur==='—'?'—':f.dur)+'</td>'
+      +'<td>'+cre+'</td>'
       +'<td>'+f.risk+'</td>'
       +'<td>'+f.company+'</td>'
     +'</tr>';
@@ -923,12 +929,12 @@ function renderBond(){
     return '<div class="conv-no">· <b>'+c+'</b>：'+fs[0].code+' 账户内仅 1 只，无同公司互转对象</div>';
   }).join('');
 
-  bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:13px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid #eef0f3;padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:#8a909a;font-weight:600;white-space:nowrap}.bond-tbl .nm{color:#9aa0aa;font-size:11.5px}.tag-mix{display:inline-block;background:#fff3e0;color:#c77700;border:1px solid #ffd9a0;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-lock{display:inline-block;background:#eef2ff;color:#3a5bd9;border:1px solid #c7d2fe;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:#9aa0aa}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.conv-ok{background:#eafaf0;border:1px solid #bfe9cd;color:#1f7a45;padding:8px 10px;border-radius:8px;margin:4px 0}.conv-no{color:#6b7280;padding:4px 2px}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:13px;color:#3a3f47}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12.5px}.mcard.hl{background:#f3f7ff;border-color:#c7d2fe}.tbl-wrap{overflow-x:auto}</style>'
+  bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:13px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid #eef0f3;padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:#8a909a;font-weight:600;white-space:nowrap}.bond-tbl .nm{color:#9aa0aa;font-size:11.5px}.tag-mix{display:inline-block;background:#fff3e0;color:#c77700;border:1px solid #ffd9a0;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-lock{display:inline-block;background:#eef2ff;color:#3a5bd9;border:1px solid #c7d2fe;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:#9aa0aa}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.conv-ok{background:#eafaf0;border:1px solid #bfe9cd;color:#1f7a45;padding:8px 10px;border-radius:8px;margin:4px 0}.conv-no{color:#6b7280;padding:4px 2px}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:13px;color:#3a3f47}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12.5px}.mcard.hl{background:#f3f7ff;border-color:#c7d2fe}.tbl-wrap{overflow-x:auto}.tag-dur{display:inline-block;background:#eef6ff;color:#3a6ea5;border:1px solid #cfe2f5;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-credit{display:inline-block;background:#f0f2f5;color:#5a6270;border:1px solid #e2e5ea;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.cmp-bar{height:6px;background:#eef1f6;border-radius:3px;margin-top:5px;overflow:hidden}.cmp-bar .fill{height:100%;border-radius:3px}.bar-green{background:#1f9d55}.bar-amber{background:#e0962a}.bar-blue{background:#3a5bd9}</style>'
     +'<div class="card"><h2>持仓总览 <span class="hint">（按账户）</span></h2>'
     +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'+accCards+'</div>'
     +'<p class="hint" style="margin-top:10px">金额、买入日均可点开直接改，自动重算卖出时点与锁定期。</p></div>'
-    +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/风险</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
-    +'<div class="card"><h2>几只比一比 <span class="hint">（近1年 · 成立以来，截至 2026-08-04）</span></h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>近1年</th><th>成立以来</th><th>风险</th><th>公司</th></tr></thead><tbody>'+cmp+'</tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。注意 <b>011505 是混合基金（含股票）</b>，波动远大于纯债，不能与纯债直接比收益。</p></div>'
+    +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+    +'<div class="card"><h2>几只比一比 <span class="hint">（近1年 · 成立以来，截至 2026-08-04）</span></h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>近1年</th><th>成立以来</th><th>久期</th><th>信用</th><th>风险</th><th>公司</th></tr></thead><tbody>'+cmp+'</tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。注意 <b>011505 是混合基金（含股票）</b>，波动远大于纯债，不能与纯债直接比收益。</p></div>'
     +'<div class="card"><h2>可转换提示</h2><p class="hint" style="margin-bottom:8px">基金转换（把 A 基金份额转成同公司 B 基金）通常只限<b>同一基金公司</b>内，且转入基金需开放转换。</p>'+conv+'</div>'
     +'<div class="card"><h2>债基规则速记 <span class="hint">（小白必看）</span></h2><ul class="rules">'
     +'<li><b>赎回费：</b>多数债基持有 <b>＜7 天</b>赎回收 <b>1.5%</b> 惩罚费；满 7 天通常免赎回费（具体看基金合同）。</li>'

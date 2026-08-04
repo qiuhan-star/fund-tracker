@@ -43,23 +43,18 @@
   .legend span { display: flex; align-items: center; gap: 5px; }
   .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
   .tl { width: 100%; }
-  details summary { cursor: pointer; font-size: 13px; color: #2f6fed; }
+  details.card > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: #1f2329; list-style: none; }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary::before { content: "▸ "; color: #8a8f99; }
+  details.card[open] > summary::before { content: "▾ "; }
   .loading { font-size: 12px; color: #8a8f99; }
   .chart-box { position: relative; height: 240px; }
 
-  /* ============ 顶部总控 + Tabs ============ */
+  /* ============ 顶部总控 ============ */
   .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
   .topbar .sub { margin-top: 4px; }
   #opToggle { flex: 0 0 auto; }
   #opBar.collapsed { display: none; }
-  .tabs { display: flex; gap: 6px; margin: 0 0 16px; flex-wrap: wrap; }
-  .tab { border: 1px solid #d0d3d9; background: #fff; border-radius: 10px; padding: 9px 16px; font-size: 14px; cursor: pointer; font-family: inherit; color: #5a6270; }
-  .tab:hover { background: #f5f6f8; }
-  .tab.active { background: #1f2329; color: #fff; border-color: #1f2329; }
-  .tabpanel { display: none; }
-  .tabpanel.active { display: block; }
-
-  /* 板块2：统一持仓 视图/排序 工具条 */
   .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
   .sec-tools { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .seg { display: inline-flex; border: 1px solid #d0d3d9; border-radius: 8px; overflow: hidden; }
@@ -68,27 +63,70 @@
   .seg button + button { border-left: 1px solid #d0d3d9; }
   .seg button.on { background: #2f6fed; color: #fff; }
 
-  /* 持仓卡片视图（手机默认） */
-  .hold-cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  .hold-card { background: #fff; border: 1px solid #ebedf0; border-radius: 12px; padding: 14px 16px; }
-  .hc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .hc-top .fundlink { font-weight: 600; font-size: 14px; }
-  .hc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; }
-  .hc-grid > div { display: flex; flex-direction: column; }
-  .hc-grid .l { font-size: 11px; color: #8a8f99; }
-  .hc-grid b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .hc-grid input { font-size: 14px; }
-  .hc-actions { display: flex; gap: 8px; margin-top: 12px; }
-
   /* 实时净值高亮（红涨绿跌） */
   @keyframes flashUp { 0% { background: #fdeaea; } 100% { background: transparent; } }
   @keyframes flashDown { 0% { background: #eafaf0; } 100% { background: transparent; } }
   .flash.pos { animation: flashUp 1.8s ease-out; }
   .flash.neg { animation: flashDown 1.8s ease-out; }
 
-  @media (max-width: 680px){ .cards4{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;} }
+  /* ============ 首页持仓列表（干练、可点）============ */
+  .hl-row { display: flex; align-items: center; gap: 12px; padding: 14px 6px; border-bottom: 1px solid #f0f1f3; cursor: pointer; }
+  .hl-row:last-child { border-bottom: none; }
+  .hl-row:hover { background: #fafbfc; }
+  .hl-row:active { background: #eef1f6; }
+  .hl-main { flex: 1 1 auto; min-width: 0; }
+  .hl-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hl-cat { font-size: 11px; color: #8a8f99; margin-top: 4px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .hl-day { font-size: 11px; font-variant-numeric: tabular-nums; }
+  .hl-num { flex: 0 0 auto; text-align: right; }
+  .hl-mv { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .hl-ret { font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .hl-arrow { flex: 0 0 auto; font-size: 22px; color: #c5c9d0; margin-left: 2px; line-height: 1; }
 
-  /* ================= 📱 手机端深度适配 ================= */
+  /* ============ 详情页 ============ */
+  .back-link { display: inline-block; margin-bottom: 14px; color: #2f6fed; text-decoration: none; font-size: 14px; font-weight: 500; }
+  .back-link:hover { color: #1f4fb0; }
+  .detail-head .dh-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .detail-head .dh-top .btn { flex: 0 0 auto; }
+  .am-inline .am-chart, .am-chart { width: 100%; }
+  .am-kpis { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 10px; margin: 6px 0 4px; }
+  .am-kpi { background: #f7f8fa; border-radius: 10px; padding: 12px; }
+  .am-kpi .l { font-size: 12px; color: #8a8f99; margin: 0 0 5px; }
+  .am-kpi .v { font-size: 19px; font-weight: 700; margin: 0; font-variant-numeric: tabular-nums; }
+  .am-note { background: #fffdf5; border-left: 3px solid #e0a800; padding: 9px 13px; border-radius: 0 8px 8px 0; font-size: 12.5px; margin: 10px 0; line-height: 1.7; }
+  .am-sev { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  .am-sev.h { background: #fdeaea; color: #c0392b; } .am-sev.m { background: #fef3e0; color: #b8760a; } .am-sev.l { background: #eafaf0; color: #0f6e56; }
+  .am-src { font-size: 12px; color: #8a8f99; line-height: 1.8; }
+  .am-disc { background: #f7f8fa; border: 1px solid #ebedf0; border-radius: 10px; padding: 13px 15px; font-size: 12px; color: #6a7079; line-height: 1.8; margin-top: 8px; }
+  .am-tldr { background: linear-gradient(135deg,#2f6fed,#1f4fb0); color: #fff; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
+  .am-tldr h4 { margin: 0 0 8px; font-size: 14px; font-weight: 700; }
+  .am-tldr ul { margin: 0; padding-left: 18px; }
+  .am-tldr li { margin: 6px 0; font-size: 13px; line-height: 1.6; }
+  h4.am-h { font-size: 15px; margin: 18px 0 10px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  h4.am-h .n { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; background: #2f6fed; color: #fff; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .am-toggle { display: flex; gap: 8px; margin-bottom: 10px; }
+  .am-toggle button { border: 1px solid #d0d3d9; background: #fff; border-radius: 8px; padding: 5px 14px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .am-toggle button.on { background: #2f6fed; color: #fff; border-color: #2f6fed; }
+  .am-empty { padding: 32px 20px; text-align: center; color: #8a8f99; font-size: 14px; line-height: 2; }
+  table.am-t { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.am-t th, table.am-t td { padding: 7px 8px; text-align: left; border-bottom: 1px solid #f0f1f3; }
+  table.am-t th { color: #8a8f99; font-weight: 500; font-size: 11px; }
+  .am-inline .pos { color: #c0392b; } .am-inline .neg { color: #27ae60; } .am-inline .zero { color: #8a8f99; }
+  .am-tag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 11px; background: #eef1f6; color: #5a6270; }
+  .am-tag.st { background: #fdeaea; color: #c0392b; } .am-tag.eq { background: #eaf2fd; color: #2f6fed; } .am-tag.pcb { background: #fef3e0; color: #b8760a; } .am-tag.ch { background: #eafaf0; color: #0f6e56; }
+  .am-foot { margin-top: 14px; font-size: 12px; }
+  .am-foot a { color: #2f6fed; }
+
+  /* 成本 vs 现价 对比条 */
+  .cmp-bar { margin-top: 8px; }
+  .cb-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .cb-l { width: 48px; color: #8a8f99; flex: 0 0 auto; }
+  .cb-track { flex: 1 1 auto; height: 14px; background: #f0f1f3; border-radius: 7px; overflow: hidden; }
+  .cb-fill { height: 100%; background: #2f6fed; border-radius: 7px; }
+  .cb-fill.cur { background: #c0392b; }
+  .cb-v { width: 92px; text-align: right; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 680px){ .cards4{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;} }
   @media (max-width: 768px) {
     .wrap { padding: 14px 12px 24px; }
     h1 { font-size: 18px; }
@@ -101,243 +139,128 @@
     .chart-box { height: 210px !important; }
     .card { padding: 14px; margin-bottom: 14px; }
     .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table-scroll table { min-width: 860px; }
-    td input, td select { font-size: 16px !important; padding: 9px 6px !important; }
-    #lock input { font-size: 16px; }
-    .toolbar { flex-wrap: wrap; gap: 6px; }
+    .table-scroll table { min-width: 640px; }
+    td input, td select, .hl-num .hl-mv { font-size: 15px; }
     .toolbar .btn { padding: 10px 10px; font-size: 13px; flex: 1 1 auto; min-height: 42px; }
     .advice { font-size: 13px; padding: 9px 12px; }
-    .tab { flex: 1 1 auto; text-align: center; font-size: 13px; padding: 9px 8px; }
     .sec-head h2 { font-size: 14px; }
+    .hl-name { font-size: 15px; }
   }
 
-  /* ---------- 打印 / 导出 PDF 优化 ---------- */
+  /* ---------- 打印 / 导出 PDF ---------- */
   @media print {
     body { background:#fff; }
     .wrap { max-width:none; padding:0; }
-    .toolbar, .del, details, #opToggle, #opBar, .seg, .tabs, .hc-actions { display:none !important; }
+    .toolbar, .del, #opToggle, #opBar, .seg, .back-link, .detail-head button, summary { display:none !important; }
     .card { box-shadow:none; border:1px solid #ddd; break-inside:avoid; }
     .hint { display:none !important; }
     td input, td select { border:none !important; background:transparent !important; -webkit-appearance:none; appearance:none; padding:0; color:#1f2329; }
     .mcard { border:1px solid #eee; }
     .sub { margin-bottom:8px; }
     #updated { display:none; }
-    .tabpanel { display:block !important; }
+    #detailView, #homeView { display:block !important; }
   }
-
-  /* ================= 单只分析弹窗 ================= */
-  .fundlink { color:#2f6fed; cursor:pointer; text-decoration:none; border-bottom:1px dashed #9bbcf2; }
-  .fundlink:hover { color:#1f4fb0; }
-  .btn.am { padding:4px 10px; font-size:12px; line-height:1; }
-  .modal-mask { position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:9998; display:none; align-items:flex-start; justify-content:center; padding:28px 12px; overflow:auto; overscroll-behavior:contain; }
-  .modal-mask.show { display:flex; }
-  .modal { background:#fff; border-radius:16px; width:100%; max-width:940px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.25); }
-  .modal-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #ebedf0; position:sticky; top:0; background:#fff; z-index:2; }
-  .modal-head h3 { margin:0; font-size:16px; font-weight:600; }
-  .modal-close { border:none; background:#f2f3f5; width:32px; height:32px; border-radius:9px; font-size:18px; cursor:pointer; color:#5a6270; line-height:1; }
-  .modal-close:hover { background:#e7e9ee; }
-  .modal-body { padding:18px 20px 26px; overflow:auto; }
-  .am-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:10px; margin:6px 0 4px; }
-  .am-kpi { background:#f7f8fa; border-radius:10px; padding:12px; }
-  .am-kpi .l { font-size:12px; color:#8a8f99; margin:0 0 5px; }
-  .am-kpi .v { font-size:19px; font-weight:700; margin:0; }
-  .am-chart { width:100%; height:340px; }
-  .am-note { background:#fffdf5; border-left:3px solid #e0a800; padding:9px 13px; border-radius:0 8px 8px 0; font-size:12.5px; margin:10px 0; line-height:1.7; }
-  .am-sev { display:inline-block; padding:1px 8px; border-radius:6px; font-size:11px; font-weight:600; }
-  .am-sev.h { background:#fdeaea; color:#c0392b; } .am-sev.m { background:#fef3e0; color:#b8760a; } .am-sev.l { background:#eafaf0; color:#0f6e56; }
-  .am-src { font-size:12px; color:#8a8f99; line-height:1.8; }
-  .am-disc { background:#f7f8fa; border:1px solid #ebedf0; border-radius:10px; padding:13px 15px; font-size:12px; color:#6a7079; line-height:1.8; margin-top:8px; }
-  .am-tldr { background:linear-gradient(135deg,#2f6fed,#1f4fb0); color:#fff; border-radius:12px; padding:16px 18px; margin-bottom:16px; }
-  .am-tldr h4 { margin:0 0 8px; font-size:14px; font-weight:700; }
-  .am-tldr ul { margin:0; padding-left:18px; }
-  .am-tldr li { margin:6px 0; font-size:13px; line-height:1.6; }
-  h4.am-h { font-size:15px; margin:18px 0 10px; font-weight:600; display:flex; align-items:center; gap:8px; }
-  h4.am-h .n { display:inline-block; width:22px; height:22px; line-height:22px; text-align:center; background:#2f6fed; color:#fff; border-radius:6px; font-size:12px; font-weight:700; }
-  .am-toggle { display:flex; gap:8px; margin-bottom:10px; }
-  .am-toggle button { border:1px solid #d0d3d9; background:#fff; border-radius:8px; padding:5px 14px; font-size:12px; cursor:pointer; font-family:inherit; }
-  .am-toggle button.on { background:#2f6fed; color:#fff; border-color:#2f6fed; }
-  .am-empty { padding:48px 20px; text-align:center; color:#8a8f99; font-size:14px; line-height:2; }
-  table.am-t { width:100%; border-collapse:collapse; font-size:12.5px; }
-  table.am-t th, table.am-t td { padding:7px 8px; text-align:left; border-bottom:1px solid #f0f1f3; }
-  table.am-t th { color:#8a8f99; font-weight:500; font-size:11px; }
-  .modal-body .pos { color:#c0392b; } .modal-body .neg { color:#27ae60; } .modal-body .zero { color:#8a8f99; }
-  .am-tag { display:inline-block; padding:1px 8px; border-radius:6px; font-size:11px; background:#eef1f6; color:#5a6270; }
-  .am-tag.st { background:#fdeaea; color:#c0392b; } .am-tag.eq { background:#eaf2fd; color:#2f6fed; } .am-tag.pcb { background:#fef3e0; color:#b8760a; } .am-tag.ch { background:#eafaf0; color:#0f6e56; }
-  .am-foot { margin-top:14px; font-size:12px; }
-  .am-foot a { color:#2f6fed; }
-  @media(max-width:680px){ .modal-body .am-chart { height:300px; } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <!-- ============ 板块1：顶部总控 ============ -->
-  <div class="topbar">
-    <div>
-      <h1>我的基金追踪器</h1>
-      <p class="sub">记交易流水 · 看实时动态 · 单只复盘 · 总体优化 &nbsp;|&nbsp; <span id="updated" class="loading">数据未刷新</span></p>
+
+  <!-- ================= 首页 Dashboard ================= -->
+  <div id="homeView">
+    <div class="topbar">
+      <div>
+        <h1>我的基金追踪器</h1>
+        <p class="sub">记交易流水 · 看实时动态 · 单只复盘 · 总体优化 &nbsp;|&nbsp; <span id="updated" class="loading">数据未刷新</span></p>
+      </div>
+      <button id="opToggle" class="btn" onclick="toggleOps()">⚙ 操作台 ▾</button>
     </div>
-    <button id="opToggle" class="btn" onclick="toggleOps()">⚙ 操作台 ▾</button>
-  </div>
 
-  <div class="card" id="opBar">
-    <div class="toolbar">
-      <button class="btn primary" onclick="refresh()">↻ 刷新最新净值</button>
-      <button class="btn" onclick="addSnapRow()">+ 加一只基金</button>
-      <button class="btn" onclick="addTradeRow()">+ 记一笔交易</button>
-      <button class="btn" onclick="saveLocal()">保存</button>
-      <button class="btn" onclick="exportJSON()">导出</button>
-      <button class="btn" onclick="importJSON()">导入</button>
-      <button class="btn" onclick="window.print()">导出PDF</button>
-      <button class="btn" onclick="clearAll()">清空示例</button>
+    <div class="card" id="opBar">
+      <div class="toolbar">
+        <button class="btn primary" onclick="refresh()">↻ 刷新最新净值</button>
+        <button class="btn" onclick="addSnapRow()">+ 加一只基金</button>
+        <button class="btn" onclick="addTradeRow()">+ 记一笔交易</button>
+        <button class="btn" onclick="saveLocal()">保存</button>
+        <button class="btn" onclick="exportJSON()">导出</button>
+        <button class="btn" onclick="importJSON()">导入</button>
+        <button class="btn" onclick="window.print()">导出PDF</button>
+        <button class="btn" onclick="clearAll()">清空示例</button>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="cards4" id="overview"></div>
-  </div>
+    <div class="card">
+      <div class="cards4" id="overview"></div>
+    </div>
 
-  <!-- ============ Tabs ============ -->
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('t1')">持仓实时净值</button>
-    <button class="tab" onclick="switchTab('t2')">资产分析&amp;建议</button>
-    <button class="tab" onclick="switchTab('t3')">交易复盘</button>
-  </div>
-
-  <!-- ============ 板块2：持仓实时净值（统一表/卡）============ -->
-  <div id="t1" class="tabpanel active">
     <div class="card">
       <div class="sec-head">
-        <h2>持仓实时净值 <span class="tag">快照 + 明细合并</span></h2>
-        <div class="sec-tools">
-          <div class="seg">
-            <span class="lab">视图</span>
-            <button id="vTable" class="on" onclick="setView('table')">表格</button>
-            <button id="vCard" onclick="setView('card')">卡片</button>
-          </div>
-          <div class="seg">
-            <span class="lab">排序</span>
-            <button id="sMv" class="on" onclick="setSort('mv')">市值</button>
-            <button id="sRet" onclick="setSort('ret')">收益率</button>
-            <button id="sDay" onclick="setSort('day')">当日涨跌</button>
-            <button id="sName" onclick="setSort('name')">名称</button>
-          </div>
+        <h2>我的持仓 <span class="tag">点任一行看详情</span></h2>
+        <div class="seg">
+          <span class="lab">排序</span>
+          <button id="sMv" class="on" onclick="setSort('mv')">市值</button>
+          <button id="sRet" onclick="setSort('ret')">收益率</button>
+          <button id="sDay" onclick="setSort('day')">当日</button>
+          <button id="sName" onclick="setSort('name')">名称</button>
         </div>
       </div>
-      <p class="hint">把基金 App 里的「市值」和「持有收益率」抄进表格即可；填了交易流水（交易复盘页）的基金会自动精确计算。<b>刷新后最新净值列会按红涨绿跌高亮</b>。「当日涨跌」需先点刷新拉到净值才有数据。</p>
-      <div class="table-scroll" id="holdTableWrap">
-        <table id="holdTable">
-          <thead><tr>
-            <th style="width:22%">基金名称</th><th style="width:10%">类别</th>
-            <th class="num">当前市值(元)</th><th class="num">持有收益率(%)</th><th style="width:12%">最新净值</th>
-            <th class="num">成本(元)</th><th class="num">收益(元)</th><th class="num">收益率</th>
-            <th>信号</th><th style="width:52px">分析</th><th></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="hold-cards" id="holdCards"></div>
+      <div id="homeList"></div>
+      <p class="hint">点任意一行进入该基金的详情页（实时估值、成本 vs 现价、交易流水、十大重仓与复盘）。</p>
     </div>
-  </div>
 
-  <!-- ============ 板块4：组合分析与调仓建议 ============ -->
-  <div id="t2" class="tabpanel">
-    <div class="grid2">
-      <div class="card">
-        <h2>资产配置</h2>
-        <div class="chart-box"><canvas id="pie" role="img" aria-label="资产配置饼图"></canvas></div>
-        <div class="legend" id="pieLegend"></div>
+    <details class="card" id="analysisDetails" ontoggle="if(this.open){renderPie();renderBar();}">
+      <summary>组合分析 & 调仓建议（点开）</summary>
+      <div class="grid2" style="margin-top:14px">
+        <div>
+          <h2>资产配置</h2>
+          <div class="chart-box"><canvas id="pie" role="img" aria-label="资产配置饼图"></canvas></div>
+          <div class="legend" id="pieLegend"></div>
+        </div>
+        <div>
+          <h2>盈亏分布</h2>
+          <div class="chart-box"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div>
+        </div>
       </div>
-      <div class="card">
-        <h2>盈亏分布</h2>
-        <div class="chart-box"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div>
-      </div>
-    </div>
-    <div class="card">
-      <h2>优化建议 + 止盈止损信号 <span class="tag">自动生成</span></h2>
+      <h2 style="margin-top:6px">优化建议 + 止盈止损信号 <span class="tag">自动生成</span></h2>
       <div id="advice"></div>
-    </div>
-  </div>
+    </details>
 
-  <!-- ============ 板块3：交易流水与单只复盘 ============ -->
-  <div id="t3" class="tabpanel">
-    <details id="tradeDetails">
-      <summary>交易流水录入（默认折叠 · 点开记买卖点）</summary>
-      <div class="card" style="margin-top:12px">
-        <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，覆盖上面的快照收益率，并在下方画出买卖点时间轴。</p>
+    <details class="card" id="tradeDetails" ontoggle="if(this.open){renderTrade();renderTimelines();}">
+      <summary>交易流水录入（默认折叠）</summary>
+      <div style="margin-top:14px">
+        <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，并画出买卖点时间轴。</p>
         <div class="table-scroll">
         <table id="tradeTable">
-          <thead><tr><th style="width:30%">基金名称</th><th>日期</th><th>方向</th><th class="num">金额(元)</th><th class="num">当时净值</th><th></th></tr></thead>
+          <thead><tr><th style="width:24%">基金名称</th><th>日期</th><th>方向</th><th class="num">金额(元)</th><th class="num">当时净值</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
         </div>
       </div>
-    </details>
-    <div class="card">
-      <h2>单只买卖点时间轴</h2>
-      <div id="timelines"></div>
-    </div>
-  </div>
-
-  <!-- ============ 已记录持仓档案（长期存档）============ -->
-  <div class="card">
-    <h2>已记录持仓明细 · 富国全球科技互联网股票(QDII)C（022184）<span class="tag">截图时点 2026-07-31</span></h2>
-    <p class="hint">以下为 2026-08-04 从你的 App 截图录入的持仓快照与十大重仓，作为长期存档。净值以天天基金/富国官网每日披露为准核对。</p>
-    <table>
-      <thead><tr><th>项目</th><th class="num">数值</th><th>备注</th></tr></thead>
-      <tbody>
-        <tr><td>持有市值</td><td class="num">7,145.42 元</td><td>—</td></tr>
-        <tr><td>持有份额</td><td class="num">1,362.20 份</td><td>—</td></tr>
-        <tr><td>持仓成本价</td><td class="num">5.7787</td><td>≈ 阶段高位（2026-06 存储情绪顶部附近）</td></tr>
-        <tr><td>基金净值</td><td class="num">5.2455</td><td>07-31；公开 07-28 为 4.9891</td></tr>
-        <tr><td>持有收益</td><td class="num neg">−726.26 元（−9.23%）</td><td>回本需再涨约 +10.2%</td></tr>
-        <tr><td>昨日收益 / 日涨幅</td><td class="num pos">+323.93 元 / +4.75%</td><td>技术性反弹</td></tr>
-        <tr><td>反推投入本金</td><td class="num">≈ 7,871.7 元</td><td>市值 + 浮亏</td></tr>
-      </tbody>
-    </table>
-    <h2 style="margin-top:18px">十大重仓（合计 47.46%）</h2>
-    <div class="table-scroll">
-    <table>
-      <thead><tr><th>持仓</th><th>属性</th><th class="num">占比</th><th class="num">当日涨跌</th><th>较上季</th></tr></thead>
-      <tbody>
-        <tr><td>ASMPT</td><td><span class="tag">半导体设备</span></td><td class="num">5.62%</td><td class="num neg">−0.66%</td><td>较上季 −0.67%</td></tr>
-        <tr><td>兆易创新</td><td><span class="tag">芯片</span></td><td class="num">5.51%</td><td class="num neg">−10.00%</td><td>新增</td></tr>
-        <tr><td>Sandisk 闪迪</td><td><span class="tag">存储</span></td><td class="num">5.04%</td><td class="num pos">+7.15%</td><td>新增</td></tr>
-        <tr><td>生益科技</td><td><span class="tag">PCB</span></td><td class="num">4.70%</td><td class="num neg">−3.42%</td><td>新增</td></tr>
-        <tr><td>海力士 SK Hynix</td><td><span class="tag">存储</span></td><td class="num">4.62%</td><td class="num">—</td><td>+0.51%</td></tr>
-        <tr><td>三星电子</td><td><span class="tag">存储</span></td><td class="num">4.58%</td><td class="num">—</td><td>+1.25%</td></tr>
-        <tr><td>铠侠 Kioxia</td><td><span class="tag">存储</span></td><td class="num">4.58%</td><td class="num">—</td><td>新增</td></tr>
-        <tr><td>美光 Micron</td><td><span class="tag">存储</span></td><td class="num">4.31%</td><td class="num pos">+0.87%</td><td>新增</td></tr>
-        <tr><td>希捷 Seagate</td><td><span class="tag">存储</span></td><td class="num">4.28%</td><td class="num neg">−2.63%</td><td>新增</td></tr>
-        <tr><td>西部数据 WD</td><td><span class="tag">存储</span></td><td class="num">4.22%</td><td class="num neg">−1.66%</td><td>新增</td></tr>
-      </tbody>
-    </table>
-    </div>
-    <div class="note" style="margin-top:12px">核心结论：名为"全球科技互联网"，实为"全球存储+半导体设备"基金——十大里 7 只是存储（合计 31.63%，占前十 66.7%），Q2 经理赵年珅由"算力+互联网"大举调仓到存储。<a href="javascript:void(0)" class="fundlink" onclick="openAnalysis('富国全球科技互联网股票(QDII)C')">点此查看完整分析 →</a></div>
-  </div>
-
-  <div class="card">
-    <details>
-      <summary>怎么用？以后该给我（或填这里）什么数据？</summary>
-      <div style="margin-top:12px;font-size:13px;line-height:1.8;color:#3a3f47">
-        <p><b>方式一（最快，匹配你现在的截图）：</b>在「持仓实时净值」表里，把基金 App 里的 <b>基金名称 / 当前市值 / 持有收益率</b> 抄过来。每天打开点「刷新」就能看动态。</p>
-        <p><b>方式二（推荐，能做单只复盘）：</b>在「交易复盘」页的「交易流水」里，<b>每买卖一次记一笔</b>——日期、买/卖、金额、当时净值（App 里都能看到）。这样我能帮你复盘「这只买点好不好、该不该补/减」。</p>
-        <p><b>和我的配合：</b>你可以直接把截图丢给我，我转成上面的数据；或者把导出的 JSON 发我，我帮你分析、给调仓方案。净值我工具会自动从天天基金拉，拉不到你手填一行即可。</p>
-        <p><b>数据怎么保证第二天还在？</b>每次改表或刷新，数据会自动写进浏览器的 localStorage；用<b>本机同一个浏览器</b>打开同一文件，第二天数据都在。但 WorkBuddy 预览面板里填的是临时沙箱，关掉就没；清缓存或换浏览器也会丢。<b>最稳妥两种方式：</b>① 点「保存」会同时下载一份 <code>fund-data-日期.json</code> 存档，第二天用「导入」恢复；② 直接把数据发给我，我把真实数据写死进这个 HTML 文件，文件自带数据，永远不丢。</p>
-      <p><b>关于「实时」：</b>这是本地文件，你每次双击打开点「刷新」即看到最新（需联网）。若想要每日自动推送，需要部署到云端，后续可以帮你做。</p>
+      <div style="margin-top:14px">
+        <h2>单只买卖点时间轴</h2>
+        <div id="timelines"></div>
       </div>
     </details>
-  </div>
-</div>
 
-<!-- ---------- 单只基金分析弹窗 ---------->
-<div class="modal-mask" id="analysisModal" onclick="if(event.target===this)closeAnalysis()">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="analysisTitle">基金分析</h3>
-      <button class="modal-close" onclick="closeAnalysis()" aria-label="关闭">×</button>
+    <div class="card">
+      <details>
+        <summary>怎么用？以后该给我（或填这里）什么数据？</summary>
+        <div style="margin-top:12px;font-size:13px;line-height:1.8;color:#3a3f47">
+          <p><b>方式一（最快）：</b>在首页点任意持仓行进入该基金详情页，把 App 里的「市值 / 持有收益率」抄进「我的数据」。每天点详情页「↻ 刷新净值」看动态。</p>
+          <p><b>方式二（推荐，能单只复盘）：</b>在基金详情页点「+ 记一笔」记录每次买卖（日期 / 买或卖 / 金额 / 当时净值），自动精确计算并在详情页画出买卖点。</p>
+          <p><b>深度分析：</b>点进「富国全球科技互联网(QDII)C（022184）」详情页已有完整分析（持仓画像、业绩归因、风险体检、调仓框架）；其他基金把截图发我即可生成同样的分析。</p>
+          <p><b>和我的配合 / 数据持久化：</b>改动即时写入本浏览器 localStorage；最稳妥是点首页「保存」下载一份 <code>fund-data-日期.json</code> 存档，或用「导入」恢复；也可把数据发我把真实数据写死进文件。</p>
+          <p><b>关于「实时」：</b>这是本地文件，双击打开点「刷新」即看到最新（需联网）。想要每日自动推送需部署到云端。</p>
+        </div>
+      </details>
     </div>
-    <div class="modal-body" id="analysisBody"></div>
   </div>
+
+  <!-- ================= 单基金详情页 ================= -->
+  <div id="detailView" style="display:none">
+    <a href="#/" class="back-link">← 返回首页</a>
+    <div id="detailContent"></div>
+  </div>
+
 </div>
 
 <script>
@@ -366,196 +289,80 @@ const SAMPLE_SNAP = [
 const SAMPLE_TRADE = [];
 
 let snaps = [], trades = [], navCache = {};
-
 let fundsView = [];
 let flashMap = {};      // 刷新后各基金当日涨跌(%)，用于红涨绿跌高亮
 let todayGain = null;   // 当日预估收益（元），无数据时为 null
 let holdSort = 'mv';
-let holdView = null;    // null=自动（手机卡片/桌面表格）
 
-// ---------- 本地持久化（明文存 localStorage；无需密码。如需保密，部署到 HTTPS 后用 AES 加密另接）----------
+// 路由状态
+let currentView = 'home';
+let detailName = null;
+let detailChartFund = null; // 已为哪只基金渲染过静态分析图表（避免每次输入重绘）
+
+// 输入焦点保护（修输入焦点丢失）
+let _focusFld = null, _focusPos = 0;
+function captureFocus(){
+  const a = document.activeElement;
+  if(a && a.getAttribute && a.getAttribute('data-fld')){ _focusFld = a.getAttribute('data-fld'); _focusPos = a.selectionStart || 0; }
+}
+function restoreFocus(){
+  if(!_focusFld) return;
+  const el = document.querySelector('[data-fld="'+ (window.CSS&&CSS.escape?CSS.escape(_focusFld):_focusFld) +'"]');
+  if(el){ el.focus(); try{ el.setSelectionRange(_focusPos,_focusPos); }catch(e){} }
+  _focusFld = null;
+}
+
+// ---------- 本地持久化（明文存 localStorage；无需密码）----------
 async function silentSave(){
   try{ localStorage.setItem('ft_data', JSON.stringify({snaps,trades,navCache})); }catch(e){ console.error(e); }
 }
 function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({snaps,trades,navCache},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data-'+ts+'.json'; a.click(); document.getElementById('updated').textContent='已保存并下载存档 '+ts; }
 
-function enterApp(){
-  renderHold(); renderTrade(); compute();
-}
-
-// ---------- Tabs / 视图 / 排序 ----------
-function switchTab(id){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
-  const btn=[...document.querySelectorAll('.tab')].find(t=>t.getAttribute('onclick').includes("'"+id+"'"));
-  if(btn) btn.classList.add('active');
-  document.getElementById(id).classList.add('active');
-  if(id==='t2'){ renderPie(); renderBar(); } // 图表在隐藏容器里尺寸为0，显示时重绘
-}
 function toggleOps(){
   const bar=document.getElementById('opBar'), btn=document.getElementById('opToggle');
   const collapsed = bar.classList.toggle('collapsed');
   btn.textContent = collapsed ? '⚙ 操作台 ▸' : '⚙ 操作台 ▾';
 }
-function getHoldView(){ return holdView ? holdView : (window.innerWidth<=768 ? 'card' : 'table'); }
-function setView(v){
-  holdView=v;
-  document.getElementById('vTable').classList.toggle('on', v==='table');
-  document.getElementById('vCard').classList.toggle('on', v==='card');
-  renderHold();
-}
+
 function setSort(s){
   holdSort=s;
-  ['mv','ret','day','name'].forEach(k=>document.getElementById('s'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on', k===s));
-  renderHold();
+  ['mv','ret','day','name'].forEach(k=>{ const e=document.getElementById('s'+k[0].toUpperCase()+k.slice(1)); if(e) e.classList.toggle('on', k===s); });
+  if(currentView==='home') renderHomeList();
 }
 
-// ---------- 渲染统一持仓表 / 卡片 ----------
-function renderHold(){
-  const view = getHoldView();
+// ---------- 渲染：首页持仓列表（干练、可点）----------
+function renderHomeList(){
   const sorted=[...fundsView].sort((a,b)=>{
     if(holdSort==='ret') return b.ret-a.ret;
     if(holdSort==='day') return (flashMap[b.name]||0)-(flashMap[a.name]||0);
     if(holdSort==='name') return a.name.localeCompare(b.name,'zh-CN');
     return b.mv-a.mv;
   });
-  const tb=document.querySelector('#holdTable tbody'); tb.innerHTML='';
-  const cards=document.getElementById('holdCards'); cards.innerHTML='';
-  sorted.forEach(f=>{
-    const fvIdx = fundsView.indexOf(f);
-    const si = snaps.findIndex(s=>s.name===f.name);
-    const snapMode = !(f.trades && f.trades.length && f.trades.every(t=>t.nav));
-    const rcls = f.ret>0?'pos':f.ret<0?'neg':'zero';
-    const pcls = f.profit>0?'pos':f.profit<0?'neg':'zero';
-    const navVal = navCache[f.name]?navCache[f.name].nav:'';
-    const flashCls = flashMap[f.name]!=null ? (flashMap[f.name]>=0?'pos':'neg') : '';
-
-    let sig='', sigbg='', sigfg='';
-    if(f.ret>=CONFIG.takeProfit2){ sig='止盈·卖1/3'; sigbg='#fdf0f0'; sigfg='#c0392b'; }
-    else if(f.ret>=CONFIG.takeProfit1){ sig='止盈区'; sigbg='#fff6e6'; sigfg='#b8760a'; }
-    if(f.ret<=CONFIG.stopLoss){ sig='止损检查'; sigbg='#fdf0f0'; sigfg='#c0392b'; }
-    const sigHtml = sig?`<span style="font-size:11px;padding:1px 7px;border-radius:5px;background:${sigbg};color:${sigfg}">${sig}</span>`:'<span class="zero">—</span>';
-
-    const nameCell = si>=0
-      ? `<input value="${esc(f.name)}" oninput="snaps[${si}].name=this.value;compute();silentSave()">`
-      : `<a href="javascript:void(0)" class="fundlink" onclick="openAnalysis(fundsView[${fvIdx}].name)">${esc(f.name)}</a>`;
-    const catCell = si>=0
-      ? `<input value="${esc(f.cat||'')}" oninput="snaps[${si}].cat=this.value;compute();silentSave()">`
-      : `<span class="tag">${f.cat}</span>`;
-    const mvCell = (snapMode && si>=0)
-      ? `<input class="num" type="number" step="any" inputmode="decimal" value="${f.mv}" oninput="snaps[${si}].mv=+this.value;compute();silentSave()">`
-      : `<span class="num">¥${fmt(f.mv)}</span>`;
-    const retCell = (snapMode && si>=0)
-      ? `<input class="num" type="number" step="any" inputmode="decimal" value="${f.ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()">`
-      : `<span class="num ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</span>`;
-    const navCell = `<input class="num ${flashCls}" style="max-width:88px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${fvIdx}].name]={nav:+this.value,date:'手动'};compute();silentSave()">`;
-
-    tb.innerHTML += `<tr>
-      <td data-label="基金">${nameCell}</td>
-      <td data-label="类别">${catCell}</td>
-      <td class="num" data-label="当前市值">${mvCell}</td>
-      <td class="num" data-label="持有收益率">${retCell}</td>
-      <td data-label="最新净值">${navCell}</td>
-      <td class="num" data-label="成本">¥${fmt(f.cost)}</td>
-      <td class="num ${pcls}" data-label="收益">${f.profit>=0?'+':''}¥${fmt(f.profit)}</td>
-      <td class="num ${rcls}" data-label="收益率">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</td>
-      <td data-label="信号">${sigHtml}</td>
-      <td><button class="btn am" onclick="openAnalysis(fundsView[${fvIdx}].name)">📊</button></td>
-      <td><button class="del" onclick="delFundByIndex(${fvIdx})">✕</button></td>
-    </tr>`;
-
-    cards.innerHTML += `<div class="hold-card">
-      <div class="hc-top">${si>=0?`<input value="${esc(f.name)}" oninput="snaps[${si}].name=this.value;compute();silentSave()">`:`<a href="javascript:void(0)" class="fundlink" onclick="openAnalysis(fundsView[${fvIdx}].name)">${esc(f.name)}</a>`}<span class="tag">${f.cat}</span></div>
-      <div class="hc-grid">
-        <div><span class="l">当前市值</span>${mvCell}</div>
-        <div><span class="l">持有收益率</span>${ (snapMode&&si>=0)? retCell : `<b class="${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</b>` }</div>
-        <div><span class="l">最新净值</span>${navCell}</div>
-        <div><span class="l">成本</span><b>¥${fmt(f.cost)}</b></div>
-        <div><span class="l">收益</span><b class="${pcls}">${f.profit>=0?'+':''}¥${fmt(f.profit)}</b></div>
-        <div><span class="l">收益率</span><b class="${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</b></div>
+  const box=document.getElementById('homeList');
+  if(!sorted.length){ box.innerHTML='<p class="hint">还没有持仓。点上方「+ 加一只基金」开始记录。</p>'; return; }
+  box.innerHTML = sorted.map(f=>{
+    const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
+    const flash = flashMap[f.name]!=null ? (flashMap[f.name]>=0?'flash pos':'flash neg') : '';
+    const day = flashMap[f.name]!=null
+      ? `<span class="hl-day ${flashMap[f.name]>=0?'pos':'neg'}">${flashMap[f.name]>=0?'▲':'▼'}${Math.abs(flashMap[f.name]).toFixed(2)}%</span>`
+      : '';
+    return `<div class="hl-row ${flash}" onclick="goDetail('${encodeURIComponent(f.name)}')">
+      <div class="hl-main">
+        <div class="hl-name">${esc(f.name)}</div>
+        <div class="hl-cat"><span class="tag">${f.cat}</span>${day}</div>
       </div>
-      <div class="hc-actions"><button class="btn am" onclick="openAnalysis(fundsView[${fvIdx}].name)">📊 分析</button><button class="del" onclick="delFundByIndex(${fvIdx})">删除</button></div>
+      <div class="hl-num">
+        <div class="hl-mv">¥${fmt(f.mv)}</div>
+        <div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div>
+      </div>
+      <div class="hl-arrow">›</div>
     </div>`;
-  });
-  document.getElementById('holdTableWrap').style.display = view==='table'?'block':'none';
-  cards.style.display = view==='card'?'block':'none';
+  }).join('');
 }
 
-function renderTrade(){
-  const tb = document.querySelector('#tradeTable tbody'); tb.innerHTML="";
-  trades.forEach((t,i)=>{
-    tb.innerHTML += `<tr>
-      <td><input value="${esc(t.name)}" oninput="trades[${i}].name=this.value;compute();silentSave()"></td>
-      <td><input value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
-      <td><select onchange="trades[${i}].type=this.value;compute();silentSave()"><option ${t.type==='buy'?'selected':''}>buy</option><option ${t.type==='sell'?'selected':''}>sell</option></select></td>
-      <td class="num"><input class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
-      <td class="num"><input class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="买时净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
-      <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
-    </tr>`;
-  });
-}
-function addSnapRow(){ snaps.push({name:'新基金', cat:'', mv:0, ret:0}); switchTab('t1'); renderHold(); }
-function addTradeRow(){ trades.push({name:'', date:'', type:'buy', amount:0, nav:''}); switchTab('t3'); document.getElementById('tradeDetails').open=true; renderTrade(); }
-function delFundByIndex(i){
-  const nm = fundsView[i].name;
-  snaps = snaps.filter(s=>s.name!==nm);
-  trades = trades.filter(t=>t.name!==nm);
-  delete navCache[nm];
-  renderTrade(); compute(); silentSave();
-}
+function goDetail(enc){ location.hash = '#/fund/'+enc; }
 
-// ---------- 计算 ----------
-function compute(){
-  const names = [...new Set([...snaps.map(s=>s.name), ...trades.map(t=>t.name)])].filter(Boolean);
-  fundsView = names.map(name=>{
-    const tr = trades.filter(t=>t.name===name);
-    const snap = snaps.find(s=>s.name===name);
-    const cat = snap?.cat || guessCat(name);
-    if(tr.length && tr.every(t=>t.nav)){
-      let shares=0, cost=0, firstDate=null;
-      tr.forEach(t=>{
-        const sh=t.amount/t.nav;
-        if(t.type==='buy'){ shares+=sh; cost+=t.amount; } else { shares-=sh; cost-=t.amount; }
-        if(!firstDate||t.date<firstDate) firstDate=t.date;
-      });
-      const nav = navCache[name]?navCache[name].nav:(snap?snap.mv/(shares||1):0);
-      const mv = shares*nav;
-      const profit = mv-cost;
-      const ret = cost>0?profit/cost*100:0;
-      const days = firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
-      return {name,cat,shares,cost,mv,profit,ret,days,trades:tr};
-    }
-    const mv = snap?snap.mv:0;
-    const ret = snap?snap.ret:0;
-    const cost = mv/(1+ret/100);
-    const profit = mv-cost;
-    const days = null;
-    return {name,cat,shares:null,cost,mv,profit,ret,days,trades:tr};
-  });
-  renderOverview(); renderHold(); renderTimelines(); renderAdvice(); silentSave();
-  if(document.getElementById('t2').classList.contains('active')){ renderPie(); renderBar(); }
-}
-
-function guessCat(name){
-  if(/芯片|半导体/.test(name)) return '芯片';
-  if(/医疗|医药|生物|健康/.test(name)) return '医药';
-  if(/有色|煤炭|化工|钢铁|资源|稀土/.test(name)) return '周期资源';
-  if(/军工|国防/.test(name)) return '制造';
-  if(/港股|恒生|纳斯达克|日本|全球|QDII|海外|美国|标普|道琼/.test(name)) return 'QDII';
-  if(/金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网/.test(name)) return '科技';
-  if(/混合|债|货币/.test(name)) return '混合/债';
-  if(/指数|ETF|联接/.test(name)) return '宽基/行业';
-  return '其他';
-}
-
-// 投顾阈值（可自行调整）
-const CONFIG = { tinyThreshold:1000, takeProfit1:15, takeProfit2:20, stopLoss:-15, top3Warn:70, singleWarn:20 };
-function getCatAllocation(){
-  const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
-  const total=fundsView.reduce((a,f)=>a+f.mv,0);
-  return Object.entries(cats).map(([k,v])=>[k, total? v/total*100:0]).sort((a,b)=>b[1]-a[1]);
-}
-
+// ---------- 渲染：组合分析（饼/柱/建议）----------
 function renderOverview(){
   const total = fundsView.reduce((a,f)=>a+f.mv,0);
   const cost = fundsView.reduce((a,f)=>a+f.cost,0);
@@ -586,7 +393,6 @@ function renderPie(){
   const tot=data.reduce((a,b)=>a+b,0);
   document.getElementById('pieLegend').innerHTML = labels.map((l,i)=>`<span><i style="background:${colors[i]}"></i>${l} ${tot?(data[i]/tot*100).toFixed(1):'0.0'}%</span>`).join('');
 }
-
 function renderBar(){
   const sorted=[...fundsView].sort((a,b)=>a.ret-b.ret);
   const labels=sorted.map(f=>f.name.length>9?f.name.slice(0,9)+'…':f.name);
@@ -596,32 +402,8 @@ function renderBar(){
   barChart = new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
 }
 
-function renderTimelines(){
-  const box=document.getElementById('timelines'); box.innerHTML="";
-  const withTr=fundsView.filter(f=>f.trades&&f.trades.length);
-  if(!withTr.length){ box.innerHTML='<p class="hint">还没有交易流水。在「交易复盘」页记一笔，这里会画出买卖点时间轴。</p>'; return; }
-  withTr.forEach(f=>{
-    const tr=[...f.trades].sort((a,b)=>a.date.localeCompare(b.date));
-    const dates=tr.map(t=>t.date); const min=dates[0], max=dates[dates.length-1]||min;
-    const W=880,H=48,pad=36;
-    const x=d=> pad + (max===min?W/2-pad:(new Date(d)-new Date(min))/(new Date(max)-new Date(min)))*(W-2*pad);
-    let dots='';
-    tr.forEach(t=>{
-      const cx=x(t.date); const col=t.type==='buy'?'#27ae60':'#c0392b';
-      dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${t.type==='buy'?'买入':'卖出'} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
-      dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':'S'}</text>`;
-    });
-    const labels = (min===max)
-      ? `<text x="${W/2}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="middle">${min}（同日）</text>`
-      : `<text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text>
-         <text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text>`;
-    box.innerHTML+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:500;margin-bottom:2px">${f.name}</div>
-      <svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}${labels}</svg></div>`;
-  });
-}
-
 function renderAdvice(){
-  const box=document.getElementById('advice'); const adv=[];
+  const box=document.getElementById('advice'); if(!box) return; const adv=[];
   const catPct=getCatAllocation();
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const cats={}; catPct.forEach(([k,v])=>cats[k]=v/100*total);
@@ -643,18 +425,297 @@ function renderAdvice(){
   });
 
   fundsView.filter(f=>f.ret<=CONFIG.stopLoss).forEach(f=>adv.push({t:`${f.name} 回撤已达 ${f.ret.toFixed(1)}%（超 ${CONFIG.stopLoss}%），不要盲目补仓——检查行业基本面，若非长期看好，停止定投。`, c:'danger'}));
-
   fundsView.filter(f=>f.ret>=CONFIG.takeProfit2).forEach(f=>adv.push({t:`${f.name} 收益率 ${f.ret.toFixed(1)}% 已达强止盈线（${CONFIG.takeProfit2}%），建议分批卖出 1/3 落袋。`, c:'good'}));
   fundsView.filter(f=>f.ret>=CONFIG.takeProfit1 && f.ret<CONFIG.takeProfit2).forEach(f=>adv.push({t:`${f.name} 收益率 ${f.ret.toFixed(1)}% 进入止盈区（${CONFIG.takeProfit1}%），可设反弹到 8-10% 分批减仓。`, c:'good'}));
-
   fundsView.filter(f=>f.ret<-10 && f.ret>CONFIG.stopLoss).forEach(f=>adv.push({t:`${f.name} 接近止损线（${f.ret.toFixed(1)}%），检查行业基本面，若非长期看好，停止定投/减仓。`, c:'danger'}));
 
   if(!adv.length) adv.push({t:'当前配置较为均衡，继续观察。', c:'good'});
   box.innerHTML=adv.map(a=>`<div class="advice ${a.c}">${a.t}</div>`).join('');
 }
 
-function esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
-function fmt(n){ return (n||0).toLocaleString('zh-CN',{maximumFractionDigits:0}); }
+// ---------- 渲染：交易流水 + 时间轴 ----------
+function renderTrade(){
+  captureFocus();
+  const tb=document.querySelector('#tradeTable tbody'); if(!tb){ restoreFocus(); return; }
+  tb.innerHTML="";
+  trades.forEach((t,i)=>{
+    tb.innerHTML += `<tr>
+      <td><input data-fld="ht-name-${i}" value="${esc(t.name)}" oninput="trades[${i}].name=this.value;compute();silentSave()"></td>
+      <td><input data-fld="ht-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
+      <td><select data-fld="ht-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()"><option ${t.type==='buy'?'selected':''}>buy</option><option ${t.type==='sell'?'selected':''}>sell</option></select></td>
+      <td class="num"><input data-fld="ht-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
+      <td class="num"><input data-fld="ht-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="买时净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
+      <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
+    </tr>`;
+  });
+  restoreFocus();
+}
+
+function miniTimeline(f){
+  const tr=(f.trades||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(!tr.length) return '<p class="hint">暂无交易记录。</p>';
+  const dates=tr.map(t=>t.date); const min=dates[0], max=dates[dates.length-1]||min;
+  const W=820,H=46,pad=36;
+  const x=d=> pad + (max===min?W/2-pad:(new Date(d)-new Date(min))/(new Date(max)-new Date(min)))*(W-2*pad);
+  let dots='';
+  tr.forEach(t=>{
+    const cx=x(t.date); const col=t.type==='buy'?'#27ae60':'#c0392b';
+    dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${t.type==='buy'?'买入':'卖出'} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
+    dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':'S'}</text>`;
+  });
+  const labels = (min===max)
+    ? `<text x="${W/2}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="middle">${min}</text>`
+    : `<text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text>
+       <text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text>`;
+  return `<svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}${labels}</svg>`;
+}
+
+function renderTimelines(){
+  const box=document.getElementById('timelines'); if(!box) return; box.innerHTML="";
+  const withTr=fundsView.filter(f=>f.trades&&f.trades.length);
+  if(!withTr.length){ box.innerHTML='<p class="hint">还没有交易流水。在上方记一笔，这里会画出买卖点时间轴。</p>'; return; }
+  withTr.forEach(f=>{
+    const tr=[...f.trades].sort((a,b)=>a.date.localeCompare(b.date));
+    const dates=tr.map(t=>t.date); const min=dates[0], max=dates[dates.length-1]||min;
+    const W=880,H=48,pad=36;
+    const x=d=> pad + (max===min?W/2-pad:(new Date(d)-new Date(min))/(new Date(max)-new Date(min)))*(W-2*pad);
+    let dots='';
+    tr.forEach(t=>{
+      const cx=x(t.date); const col=t.type==='buy'?'#27ae60':'#c0392b';
+      dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${t.type==='buy'?'买入':'卖出'} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
+      dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':'S'}</text>`;
+    });
+    const labels = (min===max)
+      ? `<text x="${W/2}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="middle">${min}（同日）</text>`
+      : `<text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text>
+         <text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text>`;
+    box.innerHTML+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:500;margin-bottom:2px">${f.name}</div>
+      <svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}${labels}</svg></div>`;
+  });
+}
+
+// ---------- 计算 ----------
+function buildFundsView(){
+  const names = [...new Set([...snaps.map(s=>s.name), ...trades.map(t=>t.name)])].filter(Boolean);
+  fundsView = names.map(name=>{
+    const tr = trades.filter(t=>t.name===name);
+    const snap = snaps.find(s=>s.name===name);
+    const cat = snap?.cat || guessCat(name);
+    if(tr.length && tr.every(t=>t.nav)){
+      let shares=0, cost=0, firstDate=null;
+      tr.forEach(t=>{
+        const sh=t.amount/t.nav;
+        if(t.type==='buy'){ shares+=sh; cost+=t.amount; } else { shares-=sh; cost-=t.amount; }
+        if(!firstDate||t.date<firstDate) firstDate=t.date;
+      });
+      const nav = navCache[name]?navCache[name].nav:(snap?snap.mv/(shares||1):0);
+      const mv = shares*nav;
+      const profit = mv-cost;
+      const ret = cost>0?profit/cost*100:0;
+      const days = firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
+      return {name,cat,shares,cost,mv,profit,ret,days,trades:tr};
+    }
+    const mv = snap?snap.mv:0;
+    const ret = snap?snap.ret:0;
+    const cost = mv/(1+ret/100);
+    const profit = mv-cost;
+    const days = null;
+    return {name,cat,shares:null,cost,mv,profit,ret,days,trades:tr};
+  });
+}
+
+function guessCat(name){
+  if(/芯片|半导体/.test(name)) return '芯片';
+  if(/医疗|医药|生物|健康/.test(name)) return '医药';
+  if(/有色|煤炭|化工|钢铁|资源|稀土/.test(name)) return '周期资源';
+  if(/军工|国防/.test(name)) return '制造';
+  if(/港股|恒生|纳斯达克|日本|全球|QDII|海外|美国|标普|道琼/.test(name)) return 'QDII';
+  if(/金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网/.test(name)) return '科技';
+  if(/混合|债|货币/.test(name)) return '混合/债';
+  if(/指数|ETF|联接/.test(name)) return '宽基/行业';
+  return '其他';
+}
+
+// 投顾阈值（可自行调整）
+const CONFIG = { tinyThreshold:1000, takeProfit1:15, takeProfit2:20, stopLoss:-15, top3Warn:70, singleWarn:20 };
+function getCatAllocation(){
+  const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  return Object.entries(cats).map(([k,v])=>[k, total? v/total*100:0]).sort((a,b)=>b[1]-a[1]);
+}
+
+function compute(){
+  buildFundsView();
+  render();
+  silentSave();
+}
+
+// ---------- 渲染调度（根据当前视图）----------
+function render(){
+  captureFocus();
+  if(currentView==='home'){
+    renderOverview(); renderHomeList();
+    const ad=document.getElementById('analysisDetails'); if(ad&&ad.open){ renderPie(); renderBar(); }
+    renderAdvice();
+    const td=document.getElementById('tradeDetails'); if(td&&td.open){ renderTrade(); renderTimelines(); }
+  } else if(currentView==='detail'){
+    renderDetailLive(detailName ? fundsView.find(x=>x.name===detailName) : null);
+  }
+  restoreFocus();
+}
+
+// ---------- 路由 ----------
+function route(){
+  const m = location.hash.match(/^#\/fund\/(.+)$/);
+  if(m){ showDetail(decodeURIComponent(m[1])); }
+  else { showHome(); }
+}
+function showHome(){
+  currentView='home'; detailName=null;
+  document.getElementById('homeView').style.display='block';
+  document.getElementById('detailView').style.display='none';
+  render();
+}
+function showDetail(name){
+  currentView='detail'; detailName=name;
+  document.getElementById('homeView').style.display='none';
+  document.getElementById('detailView').style.display='block';
+  const f = fundsView.find(x=>x.name===name);
+  const c = document.getElementById('detailContent');
+  if(!f){
+    c.innerHTML = `<div class="card"><h2>未找到「${esc(name)}」</h2><p class="hint">可能已删除或数据未加载。<a href="#/" class="fundlink">返回首页</a></p></div>`;
+    return;
+  }
+  enterDetail(f);
+}
+
+function enterDetail(f){
+  const a = ANALYSIS[f.name];
+  const c = document.getElementById('detailContent');
+  c.innerHTML = headerHtml(f) + `<div id="detailStatic"></div>` + `<div id="detailLive"></div>`;
+  const st = document.getElementById('detailStatic');
+  if(a){
+    st.innerHTML = `<div class="card"><div class="am-inline">${a.body}</div></div>`;
+    try{ a.charts(); detailChartFund = f.name; }catch(e){ console.error(e); }
+  } else {
+    st.innerHTML = genericDetail(f);
+  }
+  renderDetailLive(f);
+}
+function renderDetailLive(arg){
+  const f = (typeof arg==='string') ? fundsView.find(x=>x.name===arg) : arg;
+  if(!f) return;
+  const live=document.getElementById('detailLive'); if(!live) return;
+  captureFocus();
+  live.innerHTML = liveSection(f);
+  updateDetailHeader(f);
+  restoreFocus();
+}
+function headerHtml(f){
+  const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
+  const pcls=f.profit>0?'pos':f.profit<0?'neg':'zero';
+  const a=ANALYSIS[f.name];
+  return `<div class="card detail-head">
+    <div class="dh-top">
+      <div>
+        <h1 style="margin:0;font-size:20px">${esc(f.name)}</h1>
+        <p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="refresh()">↻ 刷新净值</button>
+        <button class="btn" onclick="delFundByIndex(${fundsView.indexOf(f)})">删除该基金</button>
+      </div>
+    </div>
+    <div class="cards4">
+      <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">¥${fmt(f.mv)}</p></div>
+      <div class="mcard"><p class="lbl">持有收益率</p><p class="val ${rcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</p></div>
+      <div class="mcard"><p class="lbl">成本</p><p class="val" id="dhCost">¥${fmt(f.cost)}</p></div>
+      <div class="mcard"><p class="lbl">收益</p><p class="val ${pcls}" id="dhProfit">${f.profit>=0?'+':''}¥${fmt(f.profit)}</p></div>
+    </div>
+  </div>`;
+}
+function updateDetailHeader(f){
+  const set=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+  set('dhMv','¥'+fmt(f.mv));
+  set('dhRet',(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'); const e=document.getElementById('dhRet'); if(e)e.className='val '+(f.ret>0?'pos':f.ret<0?'neg':'zero');
+  set('dhCost','¥'+fmt(f.cost));
+  set('dhProfit',(f.profit>=0?'+':'')+'¥'+fmt(f.profit)); const e2=document.getElementById('dhProfit'); if(e2)e2.className='val '+(f.profit>0?'pos':f.profit<0?'neg':'zero');
+}
+function genericDetail(f){
+  const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
+  const pcls=f.profit>0?'pos':f.profit<0?'neg':'zero';
+  const mx=Math.max(f.cost,f.mv,1);
+  const costPct=(f.cost/mx*100).toFixed(1), mvPct=(f.mv/mx*100).toFixed(1);
+  let h=`<div class="card"><h2>基金基础数据</h2>
+    <table class="am-t"><tbody>
+    <tr><th>类别</th><td>${f.cat}</td><th>持有份额</th><td>${f.shares!=null?fmt(f.shares):'—'}</td></tr>
+    <tr><th>当前市值</th><td>¥${fmt(f.mv)}</td><th>成本</th><td>¥${fmt(f.cost)}</td></tr>
+    <tr><th>持有收益</th><td class="${pcls}">${f.profit>=0?'+':''}¥${fmt(f.profit)}</td><th>收益率</th><td class="${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</td></tr>
+    <tr><th>持有天数</th><td>${f.days!=null?f.days+' 天':'—'}</td><th>最新净值</th><td>${navCache[f.name]?navCache[f.name].nav:'自动/未填'}</td></tr>
+    </tbody></table>
+    <h4 class="am-h"><span class="n">★</span>成本 vs 现价（收益对比）</h4>
+    <div class="cmp-bar">
+      <div class="cb-row"><span class="cb-l">成本</span><div class="cb-track"><div class="cb-fill" style="width:${costPct}%"></div></div><span class="cb-v">¥${fmt(f.cost)}</span></div>
+      <div class="cb-row"><span class="cb-l">当前</span><div class="cb-track"><div class="cb-fill cur" style="width:${mvPct}%"></div></div><span class="cb-v">¥${fmt(f.mv)}</span></div>
+    </div>
+    <div class="am-note">说明：本对比基于你的持仓成本与当前市值，不含历史净值走势。若要每日净值走势曲线，需接入历史 NAV 数据（可后续补充）。</div>
+  </div>`;
+  h += `<div class="card"><h2>十大重仓</h2><div class="am-empty">📊 该基金暂无深度持仓分析。<br>把它的持仓截图发给我，我就能生成和「富国全球科技互联网(QDII)C（022184）」一样的分析并自动接进来。</div></div>`;
+  h += `<div class="card"><h2>个人复盘 & 调仓笔记</h2><div class="am-note">暂无。可在首页「组合分析」看整体建议，或把你的判断发我整理进来。</div></div>`;
+  return h;
+}
+function liveSection(f){
+  const si=snaps.findIndex(s=>s.name===f.name);
+  const idx=fundsView.indexOf(f);
+  let h=`<div class="card"><h2>我的数据（可直接改，自动保存）</h2>
+   <p class="hint">把基金 App 里的市值、收益率抄进来；填了交易流水会自动精确计算。改动即时存本地。</p>
+   <div class="table-scroll"><table><tbody>`;
+  if(si>=0){
+    h+=`<tr><td style="width:34%">基金名称</td><td><input data-fld="s-name-${si}" value="${esc(snaps[si].name)}" oninput="snaps[${si}].name=this.value;compute();silentSave()"></td></tr>`;
+    h+=`<tr><td>类别</td><td><input data-fld="s-cat-${si}" value="${esc(snaps[si].cat||'')}" oninput="snaps[${si}].cat=this.value;compute();silentSave()"></td></tr>`;
+    h+=`<tr><td>当前市值(元)</td><td><input data-fld="s-mv-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].mv}" oninput="snaps[${si}].mv=+this.value;compute();silentSave()"></td></tr>`;
+    h+=`<tr><td>持有收益率(%)</td><td><input data-fld="s-ret-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()"></td></tr>`;
+  } else {
+    h+=`<tr><td colspan="2" class="hint">该基金暂无快照（纯交易流水模式）。可在首页「+ 加一只基金」补一条快照，或下方直接记交易。</td></tr>`;
+  }
+  const navVal=navCache[f.name]?navCache[f.name].nav:'';
+  h+=`<tr><td>最新净值（刷新自动/可手填）</td><td><input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={nav:+this.value,date:'手动'};compute();silentSave()"></td></tr>`;
+  h+=`</tbody></table></div></div>`;
+
+  const tr=trades.filter(t=>t.name===f.name);
+  h+=`<div class="card"><div class="sec-head"><h2>交易流水（${tr.length} 笔）</h2><button class="btn" onclick="addTradeFor('${encodeURIComponent(f.name)}')">+ 记一笔</button></div>`;
+  if(tr.length){
+    h+=`<div class="table-scroll"><table class="am-t"><thead><tr><th>日期</th><th>方向</th><th class="num">金额(元)</th><th class="num">当时净值</th><th></th></tr></thead><tbody>`;
+    trades.forEach((t,i)=>{ if(t.name===f.name){ h+=`<tr>
+      <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
+      <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()"><option ${t.type==='buy'?'selected':''}>buy</option><option ${t.type==='sell'?'selected':''}>sell</option></select></td>
+      <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
+      <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="买时净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
+      <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
+    </tr>`; } });
+    h+=`</tbody></table></div>`;
+    h+=`<div style="margin-top:14px"><div style="font-size:14px;font-weight:600;margin:0 0 8px">买卖点</div>${miniTimeline(f)}</div>`;
+  } else {
+    h+=`<p class="hint">还没有交易流水。点「+ 记一笔」记录买卖。</p>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+
+// ---------- 新增 / 删除 ----------
+function addSnapRow(){ snaps.push({name:'新基金', cat:'', mv:0, ret:0}); compute(); }
+function addTradeRow(){ trades.push({name:'', date:'', type:'buy', amount:0, nav:''}); const td=document.getElementById('tradeDetails'); if(td) td.open=true; renderTrade(); }
+function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name, date:'', type:'buy', amount:0, nav:''}); compute(); }
+function delFundByIndex(i){
+  const nm = fundsView[i] && fundsView[i].name;
+  if(!nm) return;
+  const isCurrent = (currentView==='detail' && detailName===nm);
+  if(isCurrent) location.hash='#/';
+  snaps = snaps.filter(s=>s.name!==nm);
+  trades = trades.filter(t=>t.name!==nm);
+  delete navCache[nm];
+  renderTrade(); compute(); silentSave();
+}
 
 // ---------- 自动拉净值（天天基金 JSONP）----------
 function fetchNav(name){
@@ -690,7 +751,6 @@ async function refresh(){
     const r=await fetchNav(nm);
     if(r) navCache[nm]=r;
   }));
-  // 计算当日涨跌（红涨绿跌高亮用）
   flashMap={};
   Object.keys(navCache).forEach(n=>{
     const p=prev[n], cur=navCache[n].nav;
@@ -699,12 +759,11 @@ async function refresh(){
       if(Math.abs(chg)>0.0001) flashMap[n]=+chg.toFixed(2);
     }
   });
-  compute(); // 重算并渲染（含高亮）
-  // 重新核算今日预估收益（需新 fundsView）
+  compute();
   todayGain=0; let anyG=false;
   fundsView.forEach(f=>{ if(flashMap[f.name]!=null){ const chg=flashMap[f.name]/100; const oldMV=f.mv/(1+chg); todayGain+=(f.mv-oldMV); anyG=true; } });
   todayGain = anyG ? todayGain : null;
-  if(document.getElementById('t1').classList.contains('active')) renderOverview();
+  if(currentView==='home') renderOverview();
   document.getElementById('updated').textContent='已刷新 · '+new Date().toLocaleString('zh-CN')+' （拉到 '+Object.keys(navCache).length+'/'+names.length+' 只）';
 }
 
@@ -715,12 +774,12 @@ function exportJSON(){
 }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
-  inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); snaps=d.snaps||snaps; trades=d.trades||trades; navCache=d.navCache||navCache; renderHold(); renderTrade(); compute(); saveLocal(); }catch(e){alert('解析失败');} }; r.readAsText(f); };
+  inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); snaps=d.snaps||snaps; trades=d.trades||trades; navCache=d.navCache||navCache; renderTrade(); compute(); saveLocal(); }catch(e){alert('解析失败');} }; r.readAsText(f); };
   inp.click();
 }
-function clearAll(){ if(confirm('清空示例数据？此操作不可撤销（已保存的本地数据会被覆盖）。')){ snaps=[]; trades=[]; navCache={}; localStorage.removeItem('ft_data'); renderHold(); renderTrade(); compute(); } }
+function clearAll(){ if(confirm('清空示例数据？此操作不可撤销（已保存的本地数据会被覆盖）。')){ snaps=[]; trades=[]; navCache={}; localStorage.removeItem('ft_data'); renderTrade(); compute(); } }
 
-// ---------- 单只基金深度分析（点基金名/📊弹出）----------
+// ---------- 单只基金深度分析（数据对象，详情页内联渲染）----------
 const HOLD022 = [
   {n:'ASMPT', a:'eq', p:5.62, d:'-0.66%', c:'较上季 -0.67%'},
   {n:'兆易创新', a:'ch', p:5.51, d:'-10.00%', c:'新增'},
@@ -848,18 +907,9 @@ function amShowHold(mode){
   document.getElementById('amBtnChart').className = mode==='chart'?'on':'';
   document.getElementById('amBtnTable').className = mode==='table'?'on':'';
 }
-function openAnalysis(name){
-  const a = ANALYSIS[name];
-  document.getElementById('analysisTitle').textContent = name + (a?(' · '+a.code):'');
-  const body = document.getElementById('analysisBody');
-  if(a){ body.innerHTML = a.body; }
-  else { body.innerHTML = '<div class="am-empty">📊 该基金暂无深度分析。<br><br>把它的持仓截图发给我，我就能生成同样的分析界面并自动接进来。</div>'; }
-  document.getElementById('analysisModal').classList.add('show');
-  document.body.style.overflow = 'hidden';
-  if(a){ try{ a.charts(); }catch(e){ console.error(e); } }
-}
-function closeAnalysis(){ document.getElementById('analysisModal').classList.remove('show'); document.body.style.overflow = ''; }
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeAnalysis(); });
+
+function esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+function fmt(n){ return (n||0).toLocaleString('zh-CN',{maximumFractionDigits:0}); }
 
 // ---------- 启动：直接载入（已去除密码）----------
 (function init(){
@@ -870,8 +920,9 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeAnal
   } else {
     snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={};
   }
-  // 旧的加密仓库(ft_vault)保留不动；如需恢复，重新接入密码逻辑并用原密码解锁即可。
-  enterApp();
+  buildFundsView();
+  window.addEventListener('hashchange', route);
+  route();
 })();
 </script>
 </body>

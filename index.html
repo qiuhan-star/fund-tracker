@@ -880,12 +880,14 @@ function enterDetail(f){
   const a=ANALYSIS[f.name], c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
     +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span id="idxTimeD" class="hint" style="font-size:11px"></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
+    +`<div id="detailIntraday"></div>`
     +`<div id="detailStatic"></div>`+`<div id="detailLive"></div>`;
   renderIndices();
   const st=document.getElementById('detailStatic');
   if(a){ st.innerHTML=`<div class="card"><div class="am-inline">${a.body}</div></div>`; try{ a.charts(); detailChartFund=f.name; }catch(e){console.error(e);} }
   else { st.innerHTML=genericDetail(f); }
   renderDetailLive(f);
+  renderIntraday(f);
 }
 function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
@@ -1059,7 +1061,7 @@ function fetchSinaEstimate(code){
         const data=d&&d.result&&d.result.data; if(!data){ resolve(null); return; }
         const official=parseFloat(data.worth); const nw=data.networth;
         let gsz=null, gszzl=null, gztime=null;
-        if(Array.isArray(nw)&&nw.length){ const p=nw[nw.length-1]; gsz=parseFloat(p.pre_nav); gszzl=parseFloat(p.growthrate); gztime=p.time||null; }
+        if(Array.isArray(nw)&&nw.length){ const p=nw[nw.length-1]; gsz=parseFloat(p.pre_nav); gszzl=parseFloat(p.growthrate); gztime=(p.min_time&&data.worth_date)?(data.worth_date+' '+p.min_time):null; }
         if(isNaN(gsz)){ gsz=official; gszzl=parseFloat(data.worth_rate)*100; }
         resolve({ nav:isNaN(gsz)?null:gsz, date:data.worth_date||'', gsz:isNaN(gsz)?null:gsz, gszzl:isNaN(gszzl)?null:gszzl, gztime, official:isNaN(official)?null:official });
       }catch(e){ resolve(null); }
@@ -1067,6 +1069,74 @@ function fetchSinaEstimate(code){
     s.onerror=()=>{ clearTimeout(timer); window[cb]=null; resolve(null); };
     s.src='https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic?symbol='+encodeURIComponent(code)+'&callback='+cb;
     document.body.appendChild(s);
+  });
+}
+// 新浪盘中估值分时序列（networth 数组）：每只点含 min_time/pre_date/pre_nav(A股)/pre_nav2(QDII)。
+// JSONP 跨域免 CORS，A股+QDII 通用；仅交易时段有数据（收盘后 networth=null）。
+const intradayCache={}; // name -> {series:[{time,value}], refNav, ts}
+function fetchSinaIntraday(code){
+  return new Promise(resolve=>{
+    const cb='sni_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    const timer=setTimeout(()=>{ window[cb]=null; resolve(null); },6000);
+    window[cb]=d=>{
+      clearTimeout(timer); window[cb]=null; s.remove();
+      try{
+        const data=d&&d.result&&d.result.data; if(!data){ resolve(null); return; }
+        const nw=data.networth;
+        if(!Array.isArray(nw)||!nw.length){ resolve(null); return; }
+        const series=[], seen=new Set();
+        for(const p of nw){
+          const v=parseFloat(p.pre_nav), v2=parseFloat(p.pre_nav2);
+          const value=isNaN(v)?(isNaN(v2)?null:v2):v;
+          if(value==null) continue;
+          const time=p.min_time||null, date=p.pre_date||null;
+          if(!time||!date) continue;
+          const key=date+' '+time; if(seen.has(key)) continue; seen.add(key);
+          series.push({time:String(time).slice(0,5), value});
+        }
+        if(!series.length){ resolve(null); return; }
+        series.sort((a,b)=>a.time.localeCompare(b.time));
+        resolve({ series, worth:parseFloat(data.worth), worthDate:data.worth_date||'' });
+      }catch(e){ resolve(null); }
+    };
+    s.onerror=()=>{ clearTimeout(timer); window[cb]=null; resolve(null); };
+    s.src='https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic?symbol='+encodeURIComponent(code)+'&callback='+cb;
+    document.body.appendChild(s);
+  });
+}
+// 详情页：盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）
+async function renderIntraday(f){
+  const box=document.getElementById('detailIntraday'); if(!box) return;
+  const mkt=isMarketOpen(new Date());
+  if(!mkt){
+    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">盘中估值分时仅在交易时段（9:30–15:00）提供；收盘后请以官方净值为准。次日开市会自动重新拉取。</p></div>`;
+    return;
+  }
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2><span id="intradayTime" class="hint" style="font-size:11px"></span></div><div id="intradayChart" style="width:100%;height:200px"></div><p class="hint" id="intradayNote" style="margin:6px 0 0">正在拉取盘中估值…</p></div>`;
+  const code=await resolveCode(f.name);
+  if(!code){ const n=document.getElementById('intradayNote'); if(n) n.textContent='未匹配到基金代码，无法拉取盘中估值。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
+  let data=intradayCache[f.name];
+  if(!data || Date.now()-data.ts>60000){
+    const raw=await fetchSinaIntraday(code);
+    if(!raw||!raw.series||!raw.series.length){ const n=document.getElementById('intradayNote'); if(n) n.textContent='该基金新浪暂未提供盘中估值（可能为非交易时段或代码未覆盖）。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
+    const nc=navCache[f.name]||{};
+    const refNav=(nc.official!=null&&!isNaN(nc.official))?nc.official:raw.series[0].value;
+    data={ series:raw.series, refNav, ts:Date.now() };
+    intradayCache[f.name]=data;
+  }
+  const ref=data.refNav||data.series[0].value;
+  const labels=data.series.map(p=>p.time);
+  const pcts=data.series.map(p=> ref? +(((p.value-ref)/ref)*100).toFixed(3) : 0);
+  const last=pcts[pcts.length-1], up=last>=0, line=up?'#c0392b':'#27ae60';
+  const note=document.getElementById('intradayNote'); if(note) note.textContent=`参考净值 ${mask4(ref)} · 最新估算 ${mask4(data.series[data.series.length-1].value)}（盘中估值，仅供参考）`;
+  const te=document.getElementById('intradayTime'); if(te) te.textContent='更新于 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  amChart('intradayChart',{
+    grid:{left:48,right:16,top:18,bottom:24},
+    tooltip:{trigger:'axis',formatter:function(ps){const p=ps[0];const v=data.series[p.dataIndex].value;return p.axisValue+'<br/>估算 '+v.toFixed(4)+'<br/>涨跌 '+p.data.toFixed(2)+'%';}},
+    xAxis:{type:'category',data:labels,boundaryGap:false,axisLabel:{fontSize:9,interval:Math.floor(labels.length/6)},axisLine:{lineStyle:{color:'#ddd'}},axisTick:{show:false}},
+    yAxis:{type:'value',axisLabel:{fontSize:9,formatter:'{value}%'},splitLine:{lineStyle:{color:'rgba(0,0,0,.05)'}},scale:true},
+    series:[{type:'line',data:pcts,showSymbol:false,smooth:false,lineStyle:{color:line,width:2},areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:line+'33'},{offset:1,color:line+'00'}])},markLine:{silent:true,symbol:'none',lineStyle:{color:'#999',type:'dashed'},data:[{yAxis:0}]}}]
   });
 }
 // 批量刷新净值：FundMNFInfo 一次拿全部 → QDII 新浪兜底 → 缺失单只 fundgz 兜底
@@ -1157,6 +1227,7 @@ function renderIdxInto(boxId, timeId){
 }
 async function refresh(){
   const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';
+  Object.keys(intradayCache).forEach(k=>delete intradayCache[k]);
   const prev={}; Object.keys(navCache).forEach(k=>prev[k]=navCache[k].nav);
   const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);
   await fetchNavBatch(names);

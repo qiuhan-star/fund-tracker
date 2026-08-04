@@ -85,8 +85,8 @@
       "cat": "混合",
       "mv": 3999.99,
       "ret": 0.0,
-      "shares": 2647.95,
-      "costPx": 1.5106
+      "shares": 2644.28,
+      "costPx": 1.5127
     },
     {
       "name": "嘉实全球产业升级股票发起式(QDII)C",
@@ -169,6 +169,23 @@
       "costPx": 2.2293
     }
   ],
-  "trades": [],
+  "trades": [
+    {
+      "name": "上银丰益混合C",
+      "date": "2026-08-03",
+      "type": "buy",
+      "amount": 4000,
+      "nav": 1.5127,
+      "fee": 0
+    },
+    {
+      "name": "摩根日本精选股票(QDII)C",
+      "date": "2026-08-03",
+      "type": "buy",
+      "amount": 500,
+      "nav": 2.1673,
+      "fee": 0
+    }
+  ],
   "navCache": {}
 }

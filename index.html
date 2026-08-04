@@ -168,6 +168,9 @@
   .idx-val { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .idx-pct { font-size: 11px; margin-left: 4px; font-weight: 500; }
   .idx-status { font-size: 11px; color: #8a8f99; display: inline-flex; align-items: center; gap: 3px; }
+  /* 指数迷你走势 Sparkline（A股真分时 / 港股近30日日线 / 美股降级不画假图） */
+  .idx-spark { display: block; margin-top: 5px; line-height: 0; }
+  .idx-nospark { display: block; margin-top: 6px; font-size: 10px; color: #b3b7bf; letter-spacing: .3px; min-height: 14px; }
   /* 主题 / 板块热力（统一规格网格，不表示面积） */
   .theme-heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
   .th-cell { border: 1px solid #ebedf0; border-radius: 10px; padding: 10px 12px; background: #fafbfc; }
@@ -440,7 +443,7 @@ const SAMPLE_SNAP = [
   {name:'招商中证煤炭等权指数(LOF)E', code:'016347', cat:'周期资源', mv:5096.44, ret:1.93, shares:2306.50, costPx:2.1678},
   {name:'广发工程机械ETF联接C', code:'020904', cat:'制造', mv:4953.03, ret:-0.94, shares:3558.72, costPx:1.4050},
   {name:'嘉实中证细分化工产业主题ETF发起联接C', code:'013528', cat:'周期资源', mv:4072.85, ret:-1.02, shares:4255.41, costPx:0.9670},
-  {name:'上银丰益混合C', code:'011505', cat:'混合', mv:3999.99, ret:0.00, shares:2647.95, costPx:1.5106},
+  {name:'上银丰益混合C', code:'011505', cat:'混合', mv:3999.99, ret:0.00, shares:2644.28, costPx:1.5127},
   {name:'嘉实全球产业升级股票发起式(QDII)C', code:'017731', cat:'QDII', mv:3921.21, ret:-1.80, shares:1073.01, costPx:3.6573},
   {name:'招商国证生物医药指数(LOF)C', code:'012417', cat:'医药', mv:3744.31, ret:-0.55, shares:9367.80, costPx:0.4019},
   {name:'易方达科创芯片ETF联接C', code:'020671', cat:'芯片', mv:3376.77, ret:-6.11, shares:1006.76, costPx:3.5724},
@@ -452,7 +455,10 @@ const SAMPLE_SNAP = [
   {name:'天弘中证计算机ETF联接C', code:'001630', cat:'科技', mv:397.97, ret:-0.51, shares:494.07, costPx:0.8096},
   {name:'南方纳斯达克100指数发起(QDII)C', code:'016453', cat:'QDII', mv:10.01, ret:1.70, shares:4.49, costPx:2.2293}
 ];
-const SAMPLE_TRADE = [];
+const SAMPLE_TRADE = [
+  {name:'上银丰益混合C', date:'2026-08-03', type:'buy', amount:4000, nav:1.5127, fee:0},
+  {name:'摩根日本精选股票(QDII)C', date:'2026-08-03', type:'buy', amount:500, nav:2.1673, fee:0}
+];
 
 let snaps=[], trades=[], navCache={};
 let fundsView=[];
@@ -1316,6 +1322,7 @@ function fetchIndices(){
 function renderIndices(){
   renderIdxInto('idxList','idxTime');
   renderIdxInto('idxListD','idxTimeD');
+  fetchIdxSparks();
 }
 function renderIdxInto(boxId, timeId){
   const box=document.getElementById(boxId); if(!box) return;
@@ -1328,7 +1335,7 @@ function renderIdxInto(boxId, timeId){
     const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
     const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
     const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
-    return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span></span>`;
+    return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span><span class="idx-nospark" data-spark="${it.code}"></span></span>`;
   }).join('');
   const te=document.getElementById(timeId);
   if(te){
@@ -1338,6 +1345,78 @@ function renderIdxInto(boxId, timeId){
       te.innerHTML = open ? ('🔴 交易中 '+hhmm) : ('🟢 已收盘 '+anyTs);
     } else te.textContent='';
   }
+}
+// ---------- 指数迷你走势 Sparkline（按市场分级，不画假图） ----------
+// A股：新浪 5 分钟真实分时；港股：腾讯日线近 30 日（诚实标注）；美股：无免费源，降级显示
+function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^us/.test(code)) return 'us'; return 'a'; }
+const _idxSparkCache={};   // code -> { series:[{t,v}], kind, label }
+const _idxSparkBusy={};    // code -> true 防止重复拉取
+function fetchIdxSparks(){
+  INDEX_LIST.forEach(it=>{
+    const mk=marketOf(it.code);
+    if(mk==='us'){ degradeSpark(it.code); return; }
+    if(_idxSparkCache[it.code]){ drawSpark(it.code, _idxSparkCache[it.code]); return; }
+    if(_idxSparkBusy[it.code]) return;
+    _idxSparkBusy[it.code]=true;
+    if(mk==='a') fetchAShareSpark(it.code);
+    else if(mk==='hk') fetchHKSpark(it.code);
+  });
+}
+function fetchAShareSpark(code){
+  const cb='__spk_'+code;
+  try{ delete window[cb]; }catch(e){}
+  const s=document.createElement('script');
+  s.src='https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20'+cb+'=/CN_MarketDataService.getKLineData?symbol='+code+'&scale=5&ma=no&datalen=120';
+  s.onload=()=>{
+    let arr=window[cb];
+    try{ if(typeof arr==='string') arr=JSON.parse(arr); }catch(e){ arr=null; }
+    if(Array.isArray(arr) && arr.length){
+      const series=arr.map(x=>({t:x.day, v:parseFloat(x.close)})).filter(x=>!isNaN(x.v));
+      if(series.length){ const obj={series, kind:'a', label:'分时'}; _idxSparkCache[code]=obj; drawSpark(code, obj); return; }
+    }
+    degradeSpark(code);
+  };
+  s.onerror=()=>degradeSpark(code);
+  document.body.appendChild(s);
+}
+function fetchHKSpark(code){
+  const realCode=code;
+  fetch('https://web.ifzq.gtimg.cn/other/klineweb/klineWeb/weekTrends?app=web&p=1&code='+realCode+'&type=qfq')
+    .then(r=>r.json()).then(j=>{
+      const node=j&&j.data&&j.data[realCode];
+      let arr=node&&(node.qfqday||node.day||node.kline);
+      if(Array.isArray(arr) && arr.length){
+        arr=arr.slice(-30).map(x=>({t:x[0], v:parseFloat(x[2])})).filter(x=>!isNaN(x.v));
+        if(arr.length){ const obj={series:arr, kind:'hk', label:'近30日'}; _idxSparkCache[code]=obj; drawSpark(code, obj); return; }
+      }
+      degradeSpark(code);
+    }).catch(()=>degradeSpark(code));
+}
+function degradeSpark(code){
+  document.querySelectorAll('[data-spark="'+code+'"]').forEach(el=>{
+    el.className='idx-nospark';
+    el.textContent='— 无分时';
+  });
+}
+function drawSpark(code, obj){
+  const nodes=document.querySelectorAll('[data-spark="'+code+'"]');
+  if(!nodes.length) return;
+  const vals=obj.series.map(x=>x.v);
+  const min=Math.min.apply(null, vals), max=Math.max.apply(null, vals);
+  const span=(max-min)||1;
+  const W=100, H=26, pad=2;
+  const n=obj.series.length;
+  const pts=obj.series.map((x,i)=>{
+    const xc=pad+(W-2*pad)*(n>1? i/(n-1):0);
+    const yc=(H-pad)-(H-2*pad)*((x.v-min)/span);
+    return xc.toFixed(1)+','+yc.toFixed(1);
+  }).join(' ');
+  const up=vals[n-1]>=vals[0];
+  const color=up?'#c0392b':'#27ae60';
+  const title=obj.kind==='hk'?'港股近30日日线':'A股分时（5分钟）';
+  const svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="26" preserveAspectRatio="none" title="'+title+'">'+
+    '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+  nodes.forEach(el=>{ el.className='idx-spark'; el.innerHTML=svg; });
 }
 // ---------- 东方财富移动端：基金档案 + 前十大持仓（CORS *，file:// 可直调） ----------
 function todayEstDev(f){

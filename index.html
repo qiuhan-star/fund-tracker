@@ -130,7 +130,7 @@
   /* 数据隐蔽模式 */
   #eyeBtn { font-size: 15px; line-height: 1; padding: 6px 10px; }
   /* 板块集中度 warn */
-  .cb-fill.warn { background: #e24b4b; }
+  .cb-fill.warn { box-shadow: 0 0 0 2px #e24b4b inset; }
   /* 预警高亮（止盈/止损） */
   .hl-row.alert-tp { background: #fff8e1; box-shadow: inset 3px 0 0 #e0a800; }
   .hl-row.alert-tp:hover { background: #fff3cc; }
@@ -151,16 +151,25 @@
   .idx-name { font-size: 12px; color: #6b7280; }
   .idx-val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .idx-pct { font-size: 11px; margin-left: 4px; font-weight: 500; }
-  /* 主题 / 板块热力 */
-  .theme-heat { display: flex; flex-wrap: wrap; gap: 8px; }
-  .th-cell { flex: 1 1 120px; min-width: 116px; border: 1px solid #ebedf0; border-radius: 10px; padding: 10px 12px; background: rgba(47,111,237, calc(.05 + var(--int,0) * .14)); transition: background .25s; }
-  .th-cell.th-total { flex: 0 0 auto; background: #f7f8fa; border-style: dashed; }
+  /* 主题 / 板块热力（统一规格网格，不表示面积） */
+  .theme-heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
+  .th-cell { border: 1px solid #ebedf0; border-radius: 10px; padding: 10px 12px; background: #fafbfc; }
+  .th-cell.pos { background: rgba(192,57,43,.06); border-color: rgba(192,57,43,.28); }
+  .th-cell.neg { background: rgba(39,174,96,.06); border-color: rgba(39,174,96,.28); }
   .th-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 4px; }
   .th-cat { font-size: 13.5px; font-weight: 600; color: #1f2329; }
   .th-n { font-size: 11px; color: #8a8f99; flex: 0 0 auto; }
   .th-pct { font-size: 15px; font-weight: 700; color: #1f2329; font-variant-numeric: tabular-nums; }
   .th-ret { font-size: 12.5px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .th-ret.pos { color: #c0392b; } .th-ret.neg { color: #27ae60; } .th-ret.zero { color: #8a8f99; }
+  /* 板块卡：折叠开关 + 合计行 */
+  .sec-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .mini-toggle { font-size: 12px; color: #5a6270; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .mini-toggle input { width: auto; margin: 0; }
+  /* 条形图按盈亏着色 */
+  .cb-fill.pos { background: #c0392b; } .cb-fill.neg { background: #27ae60; } .cb-fill.zero { background: #9aa0a8; }
+  .cb-ret { font-size: 11px; margin-left: 6px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cb-ret.pos { color: #c0392b; } .cb-ret.neg { color: #27ae60; } .cb-ret.zero { color: #8a8f99; }
   /* 空状态引导 */
   .empty-state { text-align: center; padding: 40px 16px; }
   .empty-state .es-emoji { font-size: 42px; }
@@ -339,14 +348,21 @@
         </div>
       </div>
       <div class="card">
-        <h2>板块配置穿透 <span class="tag">按市值</span></h2>
+        <div class="sec-head">
+          <h2>板块配置 / 主题热力 <span class="tag">按持仓</span></h2>
+          <div class="seg">
+            <button id="sv0" class="on" onclick="setSectorView(0)">📊 占比排位</button>
+            <button id="sv1" onclick="setSectorView(1)">🧩 盈亏瓦片</button>
+          </div>
+        </div>
+        <p class="hint" id="sectorHint">同一份「按分类聚合」数据两种看法：<b>占比排位</b>看谁占大头，<b>盈亏瓦片</b>看哪类在赚/亏（红涨绿跌=该类加权收益率）。瓦片为统一规格网格，<b>不代表面积大小</b>。</p>
         <div id="sectorBars"></div>
         <div id="sectorWarn"></div>
-      </div>
-      <div class="card">
-        <h2>主题 / 板块热力 <span class="tag">按持仓</span></h2>
-        <p class="hint">把你的基金按分类标签聚合成"热力瓦片"：面积越大=占比越高，<span class="pos">红涨</span>/<span class="neg">绿跌</span>=该类加权收益率。一眼看清钱压在哪、哪类在赚/亏。</p>
-        <div class="theme-heat" id="themeHeat"></div>
+        <div class="theme-heat" id="themeHeat" style="display:none"></div>
+        <div class="sec-foot">
+          <label class="mini-toggle"><input type="checkbox" id="collapseMicro" onchange="collapseMicro=this.checked; renderSector(); renderThemeHeat();"> 折叠 &lt;2% 微量持仓</label>
+          <span class="hint" id="sectorTotal"></span>
+        </div>
       </div>
       <div class="card">
         <h2>累计收益 / 总资产曲线 <span class="tag">随记录变真实</span></h2>
@@ -800,24 +816,38 @@ function getCatAllocation(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   return Object.entries(cats).map(([k,v])=>[k,total?v/total*100:0]).sort((a,b)=>b[1]-a[1]);
 }
+let collapseMicro=false, sectorView=0;
 function renderThemeHeat(){
   const box=document.getElementById('themeHeat'); if(!box) return;
   if(!fundsView.length){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const map={};
   fundsView.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0,n:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); m.n++; });
-  const rows=Object.entries(map).map(([k,m])=>({cat:k, mv:m.mv, pct:total?m.mv/total*100:0, wret:m.mv?m.retW/m.mv:0, n:m.n})).sort((a,b)=>b.mv-a.mv);
-  const maxPct=rows.length?rows[0].pct:1;
+  let rows=Object.entries(map).map(([k,m])=>({cat:k, mv:m.mv, pct:total?m.mv/total*100:0, wret:m.mv?m.retW/m.mv:0, n:m.n})).sort((a,b)=>b.mv-a.mv);
+  rows=rows.filter(r=> r.pct>0 && (!collapseMicro || r.pct>=2));
   box.innerHTML=rows.map(r=>{
     const cls=r.wret>0?'pos':r.wret<0?'neg':'zero';
     const arrow=r.wret>0?'▲':r.wret<0?'▼':'';
-    const intensity=maxPct?Math.min(1,r.pct/maxPct):0;
-    return `<div class="th-cell" style="--int:${intensity.toFixed(2)}">
+    return `<div class="th-cell ${cls}">
       <div class="th-top"><span class="th-cat">${r.cat}</span><span class="th-n">${r.n}只</span></div>
       <div class="th-pct">${r.pct.toFixed(1)}%</div>
       <div class="th-ret ${cls}">${arrow}${Math.abs(r.wret).toFixed(2)}%</div>
     </div>`;
-  }).join('') + `<div class="th-cell th-total"><div class="th-top"><span class="th-cat">合计</span></div><div class="th-pct">100%</div><div class="th-ret">${fundsView.length}只</div></div>`;
+  }).join('');
+  renderSectorTotal();
+}
+function setSectorView(i){
+  sectorView=i;
+  const bars=document.getElementById('sectorBars'), heat=document.getElementById('themeHeat'), warn=document.getElementById('sectorWarn');
+  const isBars=i===0;
+  if(bars) bars.style.display=isBars?'block':'none';
+  if(heat) heat.style.display=isBars?'none':'grid';
+  if(warn) warn.style.display=isBars?'block':'none';
+  ['sv0','sv1'].forEach((id,k)=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on',k===i); });
+}
+function renderSectorTotal(){
+  const te=document.getElementById('sectorTotal'); if(!te) return;
+  te.textContent=`共 ${fundsView.length} 只标的 · 合计 100%`;
 }
 function compute(){ buildFundsView(); render(); silentSave(); }
 
@@ -848,7 +878,10 @@ function showDetail(name){
 
 function enterDetail(f){
   const a=ANALYSIS[f.name], c=document.getElementById('detailContent');
-  c.innerHTML=headerHtml(f)+`<div id="detailStatic"></div>`+`<div id="detailLive"></div>`;
+  c.innerHTML=headerHtml(f)
+    +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span id="idxTimeD" class="hint" style="font-size:11px"></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
+    +`<div id="detailStatic"></div>`+`<div id="detailLive"></div>`;
+  renderIndices();
   const st=document.getElementById('detailStatic');
   if(a){ st.innerHTML=`<div class="card"><div class="am-inline">${a.body}</div></div>`; try{ a.charts(); detailChartFund=f.name; }catch(e){console.error(e);} }
   else { st.innerHTML=genericDetail(f); }
@@ -1077,16 +1110,20 @@ const INDEX_LIST=[
   {code:'sz399006', name:'创业板指'},
   {code:'sh000300', name:'沪深300'},
   {code:'sh000688', name:'科创50'},
+  {code:'hkHSI', name:'恒生指数'},
+  {code:'usIXIC', name:'纳斯达克'},
 ];
 let _idxScript=null;
 function parseQt(raw){
   if(!raw) return null;
   const p=raw.split('~');
-  const ti=p.findIndex(x=>/^\d{14}$/.test(x));
+  // 时间戳：A股为14位数字；港股/美股为 "YYYY/MM/DD HH:MM:SS" 或 "YYYY-MM-DD HH:MM:SS"
+  const ti=p.findIndex(x=>/^\d{14}$/.test(x) || /^\d{4}[-/]\d{2}[-/]\d{2}[ ]\d{2}:\d{2}:\d{2}$/.test(x));
   const price=parseFloat(p[3]);
   const chg=ti>=0?parseFloat(p[ti+1]):null;
   const pct=ti>=0?parseFloat(p[ti+2]):null;
-  const ts=ti>=0?p[ti]:null;
+  let ts=null;
+  if(ti>=0){ const t=p[ti]; if(/^\d{14}$/.test(t)) ts=t.slice(8,10)+':'+t.slice(10,12); else { const m=t.match(/(\d{1,2}):(\d{2})/); if(m) ts=m[1].padStart(2,'0')+':'+m[2]; } }
   return {price, chg, pct, ts};
 }
 function fetchIndices(){
@@ -1099,7 +1136,11 @@ function fetchIndices(){
   _idxScript=s; document.body.appendChild(s);
 }
 function renderIndices(){
-  const box=document.getElementById('idxList'); if(!box) return;
+  renderIdxInto('idxList','idxTime');
+  renderIdxInto('idxListD','idxTimeD');
+}
+function renderIdxInto(boxId, timeId){
+  const box=document.getElementById(boxId); if(!box) return;
   let anyTs=null;
   box.innerHTML=INDEX_LIST.map(it=>{
     const raw=window['v_'+it.code];
@@ -1111,8 +1152,8 @@ function renderIndices(){
     const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
     return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span></span>`;
   }).join('');
-  const te=document.getElementById('idxTime');
-  if(te){ if(anyTs&&/^\d{14}$/.test(anyTs)){ te.textContent='行情 '+anyTs.slice(8,10)+':'+anyTs.slice(10,12); } else te.textContent=''; }
+  const te=document.getElementById(timeId);
+  if(te){ te.textContent = anyTs ? ('行情 '+anyTs) : ''; }
 }
 async function refresh(){
   const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';
@@ -1290,7 +1331,20 @@ function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alert
 function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; const v=prompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur); if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ alert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }
 function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
 function bkCalc(enc,val){ const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return; const res=document.getElementById('bkRes'); if(!res) return; const nav=f.nav||(f.shares?f.mv/f.shares:0); const curCost=f.costPx||(f.shares?f.cost/f.shares:0); const need=nav>0?(curCost-nav)/nav*100:0; const add=+val||0; if(add<=0||nav<=0){ res.className='advice'; res.innerHTML='输入补仓金额查看预测。'; return; } const newShares=f.shares+add/nav, newCost=f.cost+add, newCostPx=newShares>0?newCost/newShares:0, newNeed=nav>0?(newCostPx-nav)/nav*100:0; res.className='advice'; res.innerHTML=`<b>补仓 ${M(add)}</b> 后：成本降至 <b>${M(newCostPx)}</b>/份，需再涨 <b class="${newNeed>0?'neg':'pos'}">${newNeed>=0?'+':''}${newNeed.toFixed(2)}%</b> 回本（当前需 ${need>=0?'+':''}${need.toFixed(2)}%）。`; }
-function renderSector(){ const catPct=getCatAllocation(); const box=document.getElementById('sectorBars'); if(!box) return; const maxPct=catPct.length?catPct[0][1]:0; box.innerHTML=catPct.map(([k,p])=>`<div class="cb-row"><span class="cb-l">${k}</span><div class="cb-track"><div class="cb-fill${p>45?' warn':''}" style="width:${Math.min(100,p)}%"></div></div><span class="cb-v ${p>45?'neg':''}">${p.toFixed(1)}%</span></div>`).join(''); const w=document.getElementById('sectorWarn'); if(maxPct>45){ w.innerHTML=`<div class="advice danger">⚠️ 单一板块「${catPct[0][0]}」占比 <b>${maxPct.toFixed(1)}%</b>，集中度过高，回撤时会同涨同跌、缺乏对冲。</div>`; } else w.innerHTML=''; }
+function renderSector(){
+  const catPct=getCatAllocation();
+  const map={}; fundsView.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); });
+  const wretOf=k=> map[k]&&map[k].mv? map[k].retW/map[k].mv : 0;
+  const box=document.getElementById('sectorBars'); if(!box) return;
+  const rows=catPct.filter(([k,p])=> p>0 && (!collapseMicro || p>=2));
+  const maxPct=rows.length?rows[0][1]:0;
+  box.innerHTML=rows.map(([k,p])=>{ const w=wretOf(k), cls=w>0?'pos':w<0?'neg':'zero';
+    return `<div class="cb-row"><span class="cb-l">${k}</span><div class="cb-track"><div class="cb-fill ${cls}${p>45?' warn':''}" style="width:${Math.min(100,p)}%"></div></div><span class="cb-v ${p>45?'neg':''}">${p.toFixed(1)}%<span class="cb-ret ${cls}">${w>=0?'+':''}${w.toFixed(1)}%</span></span></div>`;
+  }).join('');
+  const w=document.getElementById('sectorWarn');
+  if(maxPct>45){ w.innerHTML=`<div class="advice danger">⚠️ 单一板块「${rows[0][0]}」占比 <b>${maxPct.toFixed(1)}%</b>，集中度过高，回撤时会同涨同跌、缺乏对冲。</div>`; } else w.innerHTML='';
+  renderSectorTotal();
+}
 let growthChart=null;
 function renderGrowth(){
   const box=document.getElementById('growth'), info=document.getElementById('growthInfo'); if(!box) return;

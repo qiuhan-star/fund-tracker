@@ -805,7 +805,7 @@ function renderAdvice(){
   const lg2=document.getElementById('pieSugLg'); if(lg2) lg2.innerHTML=sugLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${sugData[i]}%</span>`).join('');
 }
 // ---------- 债券板块：债市温度计 + 防御配置建议 ----------
-let bondState={dir:'bear', y10:1.72};
+let bondState={dir:'bear', y10:1.72, adv:false};
 function loadBond(){ try{const s=localStorage.getItem('ft_bond'); if(s){const b=JSON.parse(s); if(b&&typeof b==='object') bondState={...bondState,...b};}}catch(e){} }
 function saveBond(){ try{localStorage.setItem('ft_bond',JSON.stringify(bondState));}catch(e){} }
 const BOND_DIR={
@@ -888,6 +888,7 @@ function renderBond(){
 }
 function setBondDir(v,el){ bondState.dir=v; saveBond(); const d=BOND_DIR[v]||BOND_DIR.bear; document.querySelectorAll('#segDir button').forEach(b=>b.classList.remove('on')); if(el) el.classList.add('on'); const dt=document.getElementById('durText'),ct=document.getElementById('creditText'),da=document.getElementById('dirAlt'); if(dt)dt.innerHTML=d.dur; if(ct)ct.innerHTML=d.cr; if(da)da.innerHTML=d.alt; }
 function bondAutoFetch(){ alert('自动获取 10Y 国债收益率需接入免 CORS 的公开源，当前未接入；请手动填入（数据源待补充）。'); }
+function toggleBondAdv(){ bondState.adv=!bondState.adv; saveBond(); const el=document.getElementById('bondAdv'); const tg=document.querySelector('.adv-toggle'); if(el) el.style.display=bondState.adv?'block':'none'; if(tg) tg.innerHTML=(bondState.adv?'▾':'▸')+' 高级（可选）：10Y 国债收益率'; }
 
 
 

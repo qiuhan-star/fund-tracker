@@ -146,11 +146,13 @@
   /* 赛道筛选 chips */
   .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .idx-card .sec-head { margin-bottom: 8px; }
-  .idx-list { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
-  .idx-chip { display: flex; flex-direction: column; gap: 2px; white-space: nowrap; }
+  .idx-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 10px; }
+  .idx-chip { display: flex; flex-direction: column; gap: 2px; background: #fafbfc; border: 1px solid #ebedf0; border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
+  .idx-chip:hover { background: #f0f4fa; border-color: #c9d3e0; }
   .idx-name { font-size: 12px; color: #6b7280; }
-  .idx-val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .idx-val { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .idx-pct { font-size: 11px; margin-left: 4px; font-weight: 500; }
+  .idx-status { font-size: 11px; color: #8a8f99; display: inline-flex; align-items: center; gap: 3px; }
   /* 主题 / 板块热力（统一规格网格，不表示面积） */
   .theme-heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
   .th-cell { border: 1px solid #ebedf0; border-radius: 10px; padding: 10px 12px; background: #fafbfc; }
@@ -306,7 +308,7 @@
     <div class="card idx-card">
       <div class="sec-head">
         <h2 style="margin:0;font-size:14px">大盘实时 <span class="tag">腾讯财经</span></h2>
-        <span id="idxTime" class="hint" style="font-size:11px"></span>
+        <span id="idxTime" class="idx-status"></span>
       </div>
       <div class="idx-list" id="idxList"><span class="hint">加载中…</span></div>
     </div>
@@ -879,7 +881,7 @@ function showDetail(name){
 function enterDetail(f){
   const a=ANALYSIS[f.name], c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
-    +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span id="idxTimeD" class="hint" style="font-size:11px"></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
+    +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span id="idxTimeD" class="idx-status"></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
     +`<div id="detailIntraday"></div>`
     +`<div id="detailStatic"></div>`+`<div id="detailLive"></div>`;
   renderIndices();
@@ -1105,32 +1107,48 @@ function fetchSinaIntraday(code){
     document.body.appendChild(s);
   });
 }
-// 详情页：盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）
+// 盘中分时按自然日持久化（localStorage），收盘后仍可回看当日曲线
+function _intradayKey(d){ d=d||new Date(); const p=n=>('0'+n).slice(-2); return 'ft_intraday_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function _isToday(ts){ if(!ts) return false; const a=new Date(ts), b=new Date(); return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate(); }
+function saveIntraday(name, series, refNav){ try{ const k=_intradayKey(); const store=JSON.parse(localStorage.getItem(k)||'{}'); store[name]={series, refNav, ts:Date.now()}; localStorage.setItem(k, JSON.stringify(store)); }catch(e){} }
+function loadIntraday(name){ try{ const store=JSON.parse(localStorage.getItem(_intradayKey())||'{}'); return store[name]||null; }catch(e){ return null; } }
+// 详情页：盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）；交易时段实时、收盘后回看当日
 async function renderIntraday(f){
   const box=document.getElementById('detailIntraday'); if(!box) return;
   const mkt=isMarketOpen(new Date());
-  if(!mkt){
-    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">盘中估值分时仅在交易时段（9:30–15:00）提供；收盘后请以官方净值为准。次日开市会自动重新拉取。</p></div>`;
+  if(mkt){
+    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2><span id="intradayTime" class="hint" style="font-size:11px"></span></div><div id="intradayChart" style="width:100%;height:200px"></div><p class="hint" id="intradayNote" style="margin:6px 0 0">正在拉取盘中估值…</p></div>`;
+    const code=await resolveCode(f.name);
+    if(!code){ const n=document.getElementById('intradayNote'); if(n) n.textContent='未匹配到基金代码，无法拉取盘中估值。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
+    let data=intradayCache[f.name];
+    if(!data || Date.now()-data.ts>60000){
+      const raw=await fetchSinaIntraday(code);
+      if(!raw||!raw.series||!raw.series.length){ const n=document.getElementById('intradayNote'); if(n) n.textContent='该基金新浪暂未提供盘中估值（可能为非交易时段或代码未覆盖）。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
+      const nc=navCache[f.name]||{};
+      const refNav=(nc.official!=null&&!isNaN(nc.official))?nc.official:raw.series[0].value;
+      data={ series:raw.series, refNav, ts:Date.now() };
+      intradayCache[f.name]=data; saveIntraday(f.name, raw.series, refNav);
+    }
+    drawIntraday(f, data, true);
     return;
   }
-  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2><span id="intradayTime" class="hint" style="font-size:11px"></span></div><div id="intradayChart" style="width:100%;height:200px"></div><p class="hint" id="intradayNote" style="margin:6px 0 0">正在拉取盘中估值…</p></div>`;
-  const code=await resolveCode(f.name);
-  if(!code){ const n=document.getElementById('intradayNote'); if(n) n.textContent='未匹配到基金代码，无法拉取盘中估值。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
-  let data=intradayCache[f.name];
-  if(!data || Date.now()-data.ts>60000){
-    const raw=await fetchSinaIntraday(code);
-    if(!raw||!raw.series||!raw.series.length){ const n=document.getElementById('intradayNote'); if(n) n.textContent='该基金新浪暂未提供盘中估值（可能为非交易时段或代码未覆盖）。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
-    const nc=navCache[f.name]||{};
-    const refNav=(nc.official!=null&&!isNaN(nc.official))?nc.official:raw.series[0].value;
-    data={ series:raw.series, refNav, ts:Date.now() };
-    intradayCache[f.name]=data;
+  // 收盘后：回看当日已记录的盘中分时（localStorage 按日存，次日自动失效）
+  const saved=loadIntraday(f.name), mem=intradayCache[f.name];
+  const data = saved || (mem && _isToday(mem.ts) ? mem : null);
+  if(!data || !data.series || !data.series.length){
+    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">当日暂无盘中估值记录（交易时段未打开本页 / 新浪未提供）。交易时段打开会自动记录当日分时，收盘后仍可在此回看。</p></div>`;
+    return;
   }
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">当日盘中估值分时 <span class="tag">新浪·已收盘</span></h2><span class="hint" style="font-size:11px">收盘回看</span></div><div id="intradayChart" style="width:100%;height:200px"></div><p class="hint" id="intradayNote" style="margin:6px 0 0"></p></div>`;
+  drawIntraday(f, data, false);
+}
+function drawIntraday(f, data, live){
   const ref=data.refNav||data.series[0].value;
   const labels=data.series.map(p=>p.time);
   const pcts=data.series.map(p=> ref? +(((p.value-ref)/ref)*100).toFixed(3) : 0);
   const last=pcts[pcts.length-1], up=last>=0, line=up?'#c0392b':'#27ae60';
-  const note=document.getElementById('intradayNote'); if(note) note.textContent=`参考净值 ${mask4(ref)} · 最新估算 ${mask4(data.series[data.series.length-1].value)}（盘中估值，仅供参考）`;
-  const te=document.getElementById('intradayTime'); if(te) te.textContent='更新于 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  const note=document.getElementById('intradayNote'); if(note) note.textContent=`参考净值 ${mask4(ref)} · 最新估算 ${mask4(data.series[data.series.length-1].value)}（${live?'盘中估值，仅供参考':'收盘回看'}）`;
+  const te=document.getElementById('intradayTime'); if(te) te.textContent= live ? ('更新于 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})) : '当日曲线';
   amChart('intradayChart',{
     grid:{left:48,right:16,top:18,bottom:24},
     tooltip:{trigger:'axis',formatter:function(ps){const p=ps[0];const v=data.series[p.dataIndex].value;return p.axisValue+'<br/>估算 '+v.toFixed(4)+'<br/>涨跌 '+p.data.toFixed(2)+'%';}},
@@ -1223,7 +1241,13 @@ function renderIdxInto(boxId, timeId){
     return `<span class="idx-chip"><span class="idx-name">${it.name}</span><span class="idx-val ${cls}">${d.price.toFixed(2)} <span class="idx-pct">${pctTxt}</span></span></span>`;
   }).join('');
   const te=document.getElementById(timeId);
-  if(te){ te.textContent = anyTs ? ('行情 '+anyTs) : ''; }
+  if(te){
+    if(anyTs){
+      const now=new Date(), open=isMarketOpen(now);
+      const hhmm=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+      te.innerHTML = open ? ('🔴 交易中 '+hhmm) : ('🟢 已收盘 '+anyTs);
+    } else te.textContent='';
+  }
 }
 async function refresh(){
   const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';
@@ -1249,6 +1273,7 @@ async function refresh(){
   }
   toast(got===0?'刷新失败：已用缓存/手动净值':'已刷新 '+got+' 只 · '+lk);
   fetchIndices();
+  if(currentView==='detail' && detailName){ const f=fundsView.find(x=>x.name===detailName); if(f) renderIntraday(f); }
 }
 
 // ---------- 导入导出 ----------

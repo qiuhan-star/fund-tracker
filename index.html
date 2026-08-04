@@ -58,8 +58,9 @@
   .tab-panel.active { display: block; }
 
   /* ===== 持仓列表 ===== */
-  .hl-row { display: flex; align-items: center; gap: 12px; padding: 12px 6px; border-bottom: 1px solid #f0f1f3; cursor: pointer; }
-  .hl-row:last-child { border-bottom: none; }
+  .hl-item { border-bottom: 1px solid #f0f1f3; }
+  .hl-item:last-child { border-bottom: none; }
+  .hl-row { display: flex; align-items: center; gap: 12px; padding: 12px 6px; cursor: pointer; }
   .hl-row:hover { background: #fafbfc; }
   .hl-row:active { background: #eef1f6; }
   .hl-main { flex: 1 1 auto; min-width: 0; }
@@ -69,7 +70,15 @@
   .hl-num { flex: 0 0 auto; text-align: right; }
   .hl-mv { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .hl-ret { font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 2px; }
-  .hl-arrow { flex: 0 0 auto; font-size: 22px; color: #c5c9d0; margin-left: 2px; line-height: 1; }
+  .hl-chev { flex: 0 0 auto; font-size: 16px; color: #c5c9d0; margin-left: 2px; line-height: 1; transition: transform .2s ease; }
+  .hl-row.open .hl-chev { transform: rotate(180deg); }
+  .hl-brief { display: none; padding: 4px 10px 14px; background: #fafbfc; }
+  .brief-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin-bottom: 12px; }
+  .brief-item { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; }
+  .brief-item .k { color: #8a8f99; }
+  .brief-item .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .hl-detail-btn { display: inline-flex; align-items: center; gap: 2px; border: 1px solid #1677ff; color: #1677ff; background: #fff; border-radius: 14px; padding: 5px 14px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 500; }
+  .hl-detail-btn:hover { background: #1677ff; color: #fff; }
 
   /* 赛道筛选 chips */
   .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -358,16 +367,42 @@ function renderHomeList(){
   });
   const box=document.getElementById('homeList');
   if(!list.length){ box.innerHTML='<p class="hint">该赛道暂无持仓，或切换筛选查看全部。</p>'; return; }
-  box.innerHTML=list.map(f=>{
+  box.innerHTML=list.map((f,i)=>{
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
+    const pcls=f.profit>0?'pos':f.profit<0?'neg':'zero';
+    const tcls=flashMap[f.name]!=null?(flashMap[f.name]>=0?'pos':'neg'):'zero';
     const flash=flashMap[f.name]!=null?(flashMap[f.name]>=0?'flash pos':'flash neg'):'';
     const day=flashMap[f.name]!=null?`<span class="hl-day ${flashMap[f.name]>=0?'pos':'neg'}">${flashMap[f.name]>=0?'▲':'▼'}${Math.abs(flashMap[f.name]).toFixed(2)}%</span>`:'';
-    return `<div class="hl-row ${flash}" onclick="goDetail('${encodeURIComponent(f.name)}')">
-      <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-cat"><span class="tag">${f.cat}</span>${day}</div></div>
-      <div class="hl-num"><div class="hl-mv">¥${fmt(f.mv)}</div><div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
-      <div class="hl-arrow">›</div>
+    const today=flashMap[f.name]!=null?(flashMap[f.name]>=0?'+':'−')+'¥'+fmt(Math.abs(f.mv*flashMap[f.name]/100)):'—';
+    const brief=[
+      ['市值', '¥'+fmt(f.mv)],
+      ['持有收益', (f.profit>=0?'+':'−')+'¥'+fmt(Math.abs(f.profit)), pcls],
+      ['收益率', (f.ret>=0?'+':'')+f.ret.toFixed(2)+'%', rcls],
+      ['成本', '¥'+fmt(f.cost)],
+      f.shares!=null?['份额', fmt(f.shares)]:null,
+      f.days!=null?['持有天数', f.days+' 天']:null,
+      ['今日预估', today, tcls]
+    ].filter(Boolean);
+    return `<div class="hl-item">
+      <div class="hl-row ${flash}" onclick="toggleHold(${i})">
+        <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-cat"><span class="tag">${f.cat}</span>${day}</div></div>
+        <div class="hl-num"><div class="hl-mv">¥${fmt(f.mv)}</div><div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
+        <div class="hl-chev">▾</div>
+      </div>
+      <div class="hl-brief" id="brief-${i}">
+        <div class="brief-grid">${brief.map(([k,v,c])=>`<div class="brief-item"><span class="k">${k}</span><span class="v ${c||''}">${v}</span></div>`).join('')}</div>
+        <button class="hl-detail-btn" onclick="goDetail('${encodeURIComponent(f.name)}')">查看完整详情 ›</button>
+      </div>
     </div>`;
   }).join('');
+}
+function toggleHold(i){
+  const el=document.getElementById('brief-'+i);
+  if(!el) return;
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  const row=el.previousElementSibling;
+  if(row) row.classList.toggle('open',!open);
 }
 
 function goDetail(enc){ location.hash='#/fund/'+enc; }

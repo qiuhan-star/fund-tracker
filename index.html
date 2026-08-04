@@ -113,6 +113,18 @@
   .mini-btn { font-size: 11px; border: 1px solid #d7dbe2; background: #fff; color: #5b6068; border-radius: 6px; padding: 1px 8px; cursor: pointer; line-height: 1.6; }
   .mini-btn.on { background: #2f6bed; border-color: #2f6bed; color: #fff; }
   .nav-edit { cursor: pointer; border-bottom: 1px dashed #c8ccd4; }
+  .profile-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 18px; margin-top: 8px; }
+  .pf-item { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; padding: 3px 0; border-bottom: 1px dashed #eef0f3; }
+  .pf-k { color: #8a909a; }
+  .pf-v { color: #2b2f36; font-weight: 600; text-align: right; }
+  .hk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+  .hk-table th, .hk-table td { padding: 5px 6px; border-bottom: 1px solid #f0f2f5; text-align: right; white-space: nowrap; }
+  .hk-table th { color: #8a909a; font-weight: 600; }
+  .hk-table td.hk-rank { color: #b6bac2; text-align: center; }
+  .hk-table td.hk-name { text-align: left; font-weight: 600; }
+  .hk-table td.hk-sec { text-align: left; color: #6b7280; }
+  .hk-table td.hk-chg.pos { color: #c0392b; }
+  .hk-table td.hk-chg.neg { color: #27ae60; }
   .nav-edit:hover { border-bottom-color: #2f6bd6; color: #2f6bd6; }
   .hl-num { flex: 0 0 auto; text-align: right; }
   .hl-mv { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -360,10 +372,10 @@
             <button id="sv1" onclick="setSectorView(1)">🧩 盈亏瓦片</button>
           </div>
         </div>
-        <p class="hint" id="sectorHint">同一份「按分类聚合」数据两种看法：<b>占比排位</b>看谁占大头，<b>盈亏瓦片</b>看哪类在赚/亏（红涨绿跌=该类加权收益率）。瓦片为统一规格网格，<b>不代表面积大小</b>。</p>
+        <p class="hint" id="sectorHint">同一份「按分类聚合」数据两种看法：<b>占比排位</b>看谁占大头（条形按收益率红涨绿跌着色）；<b>盈亏瓦片</b>升级为面积图 Treemap——<b>方块面积 = 市值占比</b>，红涨绿跌=该类加权收益率，一眼看清仓位集中度。</p>
         <div id="sectorBars"></div>
         <div id="sectorWarn"></div>
-        <div class="theme-heat" id="themeHeat" style="display:none"></div>
+        <div id="sectorTree" style="display:none;width:100%;height:320px"></div>
         <div class="sec-foot">
           <label class="mini-toggle"><input type="checkbox" id="collapseMicro" onchange="collapseMicro=this.checked; renderSector(); renderThemeHeat();"> 折叠 &lt;2% 微量持仓</label>
           <span class="hint" id="sectorTotal"></span>
@@ -823,32 +835,47 @@ function getCatAllocation(){
 }
 let collapseMicro=false, sectorView=0;
 function renderThemeHeat(){
-  const box=document.getElementById('themeHeat'); if(!box) return;
+  if(sectorView===1) renderSectorTree();
+  renderSectorTotal();
+}
+function renderSectorTree(){
+  const box=document.getElementById('sectorTree'); if(!box) return;
   if(!fundsView.length){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
+  if(typeof echarts==='undefined'){ box.innerHTML='<p class="hint">图表库（ECharts）未加载，无法渲染面积图；请联网后刷新。</p>'; return; }
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const map={};
   fundsView.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0,n:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); m.n++; });
   let rows=Object.entries(map).map(([k,m])=>({cat:k, mv:m.mv, pct:total?m.mv/total*100:0, wret:m.mv?m.retW/m.mv:0, n:m.n})).sort((a,b)=>b.mv-a.mv);
   rows=rows.filter(r=> r.pct>0 && (!collapseMicro || r.pct>=2));
-  box.innerHTML=rows.map(r=>{
-    const cls=r.wret>0?'pos':r.wret<0?'neg':'zero';
-    const arrow=r.wret>0?'▲':r.wret<0?'▼':'';
-    return `<div class="th-cell ${cls}">
-      <div class="th-top"><span class="th-cat">${r.cat}</span><span class="th-n">${r.n}只</span></div>
-      <div class="th-pct">${r.pct.toFixed(1)}%</div>
-      <div class="th-ret ${cls}">${arrow}${Math.abs(r.wret).toFixed(2)}%</div>
-    </div>`;
-  }).join('');
-  renderSectorTotal();
+  if(!rows.length){ box.innerHTML='<p class="hint">暂无持仓（或微量已全部折叠）。</p>'; return; }
+  // 红涨绿跌（A股惯例）：方块面积=市值占比，颜色按该类加权收益率着色
+  const C={ up:['rgba(192,57,43,0.16)','rgba(192,57,43,0.55)'], down:['rgba(39,174,96,0.16)','rgba(39,174,96,0.55)'], zero:['rgba(120,120,120,0.10)','rgba(150,150,150,0.45)'] };
+  const data=rows.map(r=>{ const c=r.wret>0?C.up:r.wret<0?C.down:C.zero; return {
+    name:r.cat, value:r.mv, pct:r.pct, ret:r.wret, n:r.n,
+    itemStyle:{color:c[0], borderColor:c[1], borderWidth:1}
+  };});
+  const opt={
+    tooltip:{ confine:true, formatter:p=>`<b>${p.name}</b><br>市值占比 ${p.data.pct.toFixed(1)}%<br>加权收益 ${p.data.ret>=0?'+':''}${p.data.ret.toFixed(2)}%<br>${p.data.n} 只标的` },
+    series:[{ type:'treemap', roam:false, nodeClick:false,
+      left:0, top:0, right:0, bottom:0, breadcrumb:{show:false},
+      itemStyle:{ borderColor:'#ffffff', borderWidth:2, gapWidth:2 },
+      label:{ show:true, color:'#1f2329', fontSize:12, lineHeight:15,
+        formatter:p=>`${p.data.name}  ${p.data.pct.toFixed(1)}%  ${p.data.ret>=0?'+':''}${p.data.ret.toFixed(1)}%` },
+      data:data }]
+  };
+  let chart=echarts.getInstanceByDom(box);
+  if(!chart) chart=echarts.init(box);
+  chart.setOption(opt, true); chart.resize();
 }
 function setSectorView(i){
   sectorView=i;
-  const bars=document.getElementById('sectorBars'), heat=document.getElementById('themeHeat'), warn=document.getElementById('sectorWarn');
+  const bars=document.getElementById('sectorBars'), tree=document.getElementById('sectorTree'), warn=document.getElementById('sectorWarn');
   const isBars=i===0;
   if(bars) bars.style.display=isBars?'block':'none';
-  if(heat) heat.style.display=isBars?'none':'grid';
+  if(tree) tree.style.display=isBars?'none':'block';
   if(warn) warn.style.display=isBars?'block':'none';
   ['sv0','sv1'].forEach((id,k)=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on',k===i); });
+  if(isBars) renderSector(); else renderSectorTree();
 }
 function renderSectorTotal(){
   const te=document.getElementById('sectorTotal'); if(!te) return;
@@ -887,6 +914,8 @@ function enterDetail(f){
     +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span id="idxTimeD" class="idx-status"></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
     +`<div id="detailIntraday"></div>`
     +`<div id="detailHistory"></div>`
+    +`<div id="detailProfile"></div>`
+    +`<div id="detailHoldings"></div>`
     +`<div id="detailStatic"></div>`+`<div id="detailLive"></div>`;
   renderIndices();
   const st=document.getElementById('detailStatic');
@@ -895,6 +924,8 @@ function enterDetail(f){
   renderDetailLive(f);
   renderIntraday(f);
   renderNavHistory(f);
+  renderFundProfile(f);
+  renderFundHoldings(f);
 }
 function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
@@ -1152,7 +1183,13 @@ function drawIntraday(f, data, live){
   const labels=data.series.map(p=>p.time);
   const pcts=data.series.map(p=> ref? +(((p.value-ref)/ref)*100).toFixed(3) : 0);
   const last=pcts[pcts.length-1], up=last>=0, line=up?'#c0392b':'#27ae60';
-  const note=document.getElementById('intradayNote'); if(note) note.textContent=`参考净值 ${mask4(ref)} · 最新估算 ${mask4(data.series[data.series.length-1].value)}（${live?'盘中估值，仅供参考':'收盘回看'}）`;
+  const note=document.getElementById('intradayNote');
+  if(note){
+    let html=`参考净值 ${mask4(ref)} · 最新估算 ${mask4(data.series[data.series.length-1].value)}（${live?'盘中估值，仅供参考':'收盘回看'}）`;
+    const dev=todayEstDev(f);
+    if(dev && Math.abs(dev.dev)>0.005){ const c=dev.dev>0?'pos':'neg'; html+=` · 估算偏差 <b class="${c}">${dev.dev>0?'+':''}${dev.dev.toFixed(2)}%</b>`; }
+    note.innerHTML=html;
+  }
   const te=document.getElementById('intradayTime'); if(te) te.textContent= live ? ('更新于 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})) : '当日曲线';
   amChart('intradayChart',{
     grid:{left:48,right:16,top:18,bottom:24},
@@ -1301,6 +1338,84 @@ function renderIdxInto(boxId, timeId){
       te.innerHTML = open ? ('🔴 交易中 '+hhmm) : ('🟢 已收盘 '+anyTs);
     } else te.textContent='';
   }
+}
+// ---------- 东方财富移动端：基金档案 + 前十大持仓（CORS *，file:// 可直调） ----------
+function todayEstDev(f){
+  try{
+    const nc=navCache[f.name]||{};
+    const off=nc.official!=null&&!isNaN(nc.official)? nc.official : nc.nav;
+    if(off==null) return null;
+    const saved=loadIntraday(f.name);
+    const series=(saved&&saved.series)?saved.series:(intradayCache[f.name]&&intradayCache[f.name].series);
+    if(!series||!series.length) return null;
+    const est=series[series.length-1].value;
+    if(isNaN(est)) return null;
+    const dev=(est-off)/off*100;
+    return {dev, est, off};
+  }catch(e){ return null; }
+}
+async function fetchFundBaseInfo(code){
+  try{
+    const url='https://fundmobapi.eastmoney.com/FundMNewApi/FundMNBaseInfo?FCODE='+encodeURIComponent(code)+'&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=rtf1';
+    const r=await fetch(url,{headers:{'Referer':'https://fundmobapi.eastmoney.com/'}});
+    const j=await r.json();
+    return (j&&j.Datas)?j.Datas:null;
+  }catch(e){ return null; }
+}
+function _scaleText(v){
+  if(v==null||isNaN(v)) return '—';
+  const n=+v;
+  if(n>=1e8) return (n/1e8).toFixed(2)+' 亿元';
+  if(n>=1e4) return (n/1e4).toFixed(2)+' 万元';
+  return n.toFixed(0)+' 元';
+}
+function _retText(v){ if(v==null||v===''||isNaN(+v)) return '—'; const n=+v; return (n>0?'+':'')+n.toFixed(2)+'%'; }
+async function renderFundProfile(f){
+  const box=document.getElementById('detailProfile'); if(!box) return;
+  const code=await resolveCode(f.name);
+  if(!code){ box.innerHTML=''; return; }
+  const d=await fetchFundBaseInfo(code);
+  if(!d){ box.innerHTML='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">基金档案 <span class="tag">天天基金</span></h2></div><p class="hint" style="margin:8px 0 0">档案接口暂未返回（可能被拦截/离线）。</p></div>'; return; }
+  const risk={1:'低风险',2:'中低风险',3:'中风险',4:'中高风险',5:'高风险'}[d.RISKLEVEL]||(d.RISKLEVEL?('R'+d.RISKLEVEL):'—');
+  const rows=[
+    ['基金经理', d.JJJL||'—'],
+    ['基金公司', d.JJGS||'—'],
+    ['基金类型', d.FTYPE||'—'],
+    ['风险等级', risk],
+    ['基金规模', _scaleText(d.TOTALSCALE)],
+    ['成立日期', d.ESTABDATE?(''+d.ESTABDATE).slice(0,10):'—'],
+    ['管理费/托管', (d.MGREXP!=null?d.MGREXP:'—')+' / '+(d.TRUSTEXP!=null?d.TRUSTEXP:'—')],
+    ['申购/赎回', (d.SGZT||'—')+' / '+(d.SHZT||'—')],
+    ['费率', d.SOURCERATE||'—'],
+    ['近1/3/5年', _retText(d.SYL_1N)+' / '+_retText(d.SYL_3N)+' / '+_retText(d.SYL_5N)],
+    ['夏普(1年)', d.SHARP1!=null?(+d.SHARP1).toFixed(2):'—'],
+    ['波动率(1年)', d.STDDEV1!=null?(+d.STDDEV1).toFixed(2)+'%':'—'],
+    ['最大回撤(1年)', d.MAXRETRA1!=null?(+d.MAXRETRA1).toFixed(2)+'%':'—']
+  ];
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">基金档案 <span class="tag">天天基金</span></h2></div><div class="profile-grid">`+rows.map(r=>`<div class="pf-item"><span class="pf-k">${r[0]}</span><span class="pf-v">${r[1]}</span></div>`).join('')+`</div></div>`;
+}
+async function fetchFundHoldings(code){
+  try{
+    const url='https://fundmobapi.eastmoney.com/FundMNewApi/FundMNInverstPosition?FCODE='+encodeURIComponent(code)+'&deviceid=Wap&plat=WAP&product=EFund&version=2.0.0';
+    const r=await fetch(url,{headers:{'Referer':'https://fundmobapi.eastmoney.com/'}});
+    const j=await r.json();
+    return (j&&j.Datas&&j.Datas.fundStocks)?j.Datas.fundStocks:null;
+  }catch(e){ return null; }
+}
+async function renderFundHoldings(f){
+  const box=document.getElementById('detailHoldings'); if(!box) return;
+  const code=await resolveCode(f.name);
+  if(!code){ box.innerHTML=''; return; }
+  const stocks=await fetchFundHoldings(code);
+  if(!stocks||!stocks.length){ box.innerHTML='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2></div><p class="hint" style="margin:8px 0 0">暂无持仓数据（QDII/新基金可能为空）。</p></div>'; return; }
+  const total=stocks.reduce((s,x)=>s+(+x.JZBL||0),0);
+  const rows=stocks.map((x,i)=>{
+    const pct=+x.JZBL||0;
+    const chg=(x.PCTNVCHG!=null&&x.PCTNVCHG!=='')?(+x.PCTNVCHG).toFixed(2)+'%':'—';
+    const tagCls=x.PCTNVCHGTYPE==='增持'?'pos':x.PCTNVCHGTYPE==='减持'?'neg':'';
+    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${x.GPJC||x.GPDM||'—'}</td><td class="hk-sec">${x.INDEXNAME||'—'}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg ${tagCls}">${(x.PCTNVCHGTYPE||'—')+' '+chg}</td></tr>`;
+  }).join('');
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}%</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>行业</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 async function refresh(){
   const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';

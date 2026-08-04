@@ -139,10 +139,13 @@
   .tab-panel.active { display: block; }
 
   /* ===== 持仓列表 ===== */
-  .hl-row { display: flex; align-items: center; gap: 12px; padding: 13px 6px; border-bottom: 1px solid var(--border-2); cursor: pointer; }
-  .hl-row:last-child { border-bottom: none; }
-  .hl-row:hover { background: var(--surface-3); }
-  .hl-row:active { background: var(--border-3); }
+  .hl { border-bottom: 1px solid var(--border-2); cursor: pointer; }
+  .hl:last-child { border-bottom: none; }
+  .hl.open { background: var(--surface-2); }
+  .hl-head { display: flex; align-items: center; gap: 12px; padding: 13px 6px; }
+  .hl:hover { background: var(--surface-3); }
+  .hl.open:hover { background: var(--surface-2); }
+  .hl-head:active { background: var(--border-3); }
   .hl-main { flex: 1 1 auto; min-width: 0; }
   .hl-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hl-sub { font-size: 11.5px; color: var(--text-3); margin-top: 5px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
@@ -190,10 +193,38 @@
   /* 板块集中度 warn */
   .cb-fill.warn { box-shadow: 0 0 0 2px var(--danger) inset; }
   /* 预警高亮（止盈/止损） */
-  .hl-row.alert-tp { background: var(--warn-bg); box-shadow: inset 3px 0 0 var(--warn); }
-  .hl-row.alert-tp:hover { background: var(--warn-bg); }
-  .hl-row.alert-sl { background: var(--up-bg); box-shadow: inset 3px 0 0 var(--danger); }
-  .hl-row.alert-sl:hover { background: var(--up-bg); }
+  .hl.alert-tp { background: var(--warn-bg); box-shadow: inset 3px 0 0 var(--warn); }
+  .hl.alert-tp:hover { background: var(--warn-bg); }
+  .hl.alert-sl { background: var(--up-bg); box-shadow: inset 3px 0 0 var(--danger); }
+  .hl.alert-sl:hover { background: var(--up-bg); }
+  /* 持仓手风琴展开 */
+  .hl-body { display: none; padding: 4px 14px 16px; border-top: 1px dashed var(--border-3); }
+  .hl.open .hl-body { display: block; }
+  .hl.open .hl-arrow { transform: rotate(90deg); color: var(--accent-text); }
+  .hl-summary { font-size: 12.5px; color: var(--text-2); line-height: 1.65; margin: 10px 0; padding: 10px 12px; background: var(--surface-3); border-radius: 10px; }
+  .hl-rtitle { font-size: 12px; font-weight: 600; color: var(--text-3); margin: 8px 0 6px; }
+  .hl-rtrade { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); padding:5px 0; border-bottom:1px dashed var(--border-3); font-variant-numeric: tabular-nums; }
+  .hl-rtrade:last-child { border-bottom:none; }
+  .hl-rtrade .num { margin-left:auto; font-weight:600; color:var(--text); }
+  .hl-acts { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  /* 交易锁定行 */
+  tr.tr-locked td { color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .pending-nav { color: var(--warn); font-weight:600; }
+  .lk { border:1px solid var(--border-strong); background:var(--surface-2); border-radius:8px; padding:3px 7px; cursor:pointer; font-size:12px; }
+  .lk.lock { color: var(--up); }
+  /* 内联新增交易表单 */
+  .tr-add { background: var(--surface-3); border:1px solid var(--border); border-radius:10px; padding:10px; margin-top:4px; }
+  .tr-add-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; align-items:end; }
+  .tr-add-grid input, .tr-add-grid select { padding:7px 8px; border:1px solid var(--border-strong); border-radius:8px; font-size:13px; font-family:inherit; width:100%; box-sizing:border-box; }
+  /* 交易选择器弹窗 */
+  #tradePicker { display:none; position: fixed; inset:0; z-index:1000; align-items:center; justify-content:center; }
+  .tp-mask { position:absolute; inset:0; background:rgba(0,0,0,.35); }
+  .tp-pop { position:relative; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); width:min(420px,92vw); max-height:80vh; overflow:auto; padding:16px; }
+  .tp-title { font-size:14px; font-weight:600; margin-bottom:10px; }
+  .tp-search { width:100%; padding:8px 10px; border:1px solid var(--border-strong); border-radius:9px; font-size:13px; margin-bottom:10px; box-sizing:border-box; font-family:inherit; }
+  .tp-list { display:flex; flex-direction:column; gap:4px; }
+  .tp-item { text-align:left; padding:9px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface-2); cursor:pointer; font-size:13px; color:var(--text); }
+  .tp-item:hover { border-color:var(--accent-text); background:var(--accent-soft); }
   /* 刷新状态指示 */
   #updated.live { color: #0f8a63; } #updated.closed { color: var(--text-3); }
   /* Toast 轻提示 */
@@ -208,6 +239,13 @@
   /* 大盘指数按市场分组：外层纵向堆叠，每组内仍是网格 */
   #idxList, #idxListD { display: flex; flex-direction: column; gap: 12px; }
   .idx-grp-h { font-size: 11px; font-weight: 600; color: var(--text-2); margin: 0 0 6px 2px; padding-left: 6px; border-left: 3px solid var(--accent); line-height: 1.2; }
+  /* 全球组：默认收起，点击标题才展开并拉取外围指数 */
+  .idx-grp-global.collapsed .idx-grp-body { display: none; }
+  .idx-grp-toggle { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+  .idx-grp-toggle:hover { color: var(--accent); }
+  .idx-caret { display: inline-block; transition: transform .15s ease; font-size: 9px; }
+  .idx-grp-global:not(.collapsed) .idx-caret { transform: rotate(90deg); }
+  .idx-grp-count { font-size: 10px; font-weight: 500; color: var(--text-3); background: var(--surface-2); border-radius: 9px; padding: 0 7px; margin-left: 1px; }
   .idx-chip { display: flex; flex-direction: column; gap: 2px; background: var(--surface-3); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
   .idx-chip:hover { background: var(--surface-2); border-color: var(--border-strong); }
   /* 拉不到数据的指数：淡灰占位卡（不隐藏；不用 opacity 以免文字对比度塌掉，违反 WCAG） */
@@ -391,7 +429,7 @@ input[type="number"] { -moz-appearance: textfield; }
           <div class="drop" id="moreDrop">
             <button onclick="refresh();closeMore()">↻ 刷新净值·行情</button>
             <button onclick="addSnapRow();closeMore()">+ 加一只基金</button>
-            <button onclick="addTradeRow();switchTab(2);closeMore()">+ 记一笔交易</button>
+            <button onclick="addTradeMenu();closeMore()">+ 记一笔交易</button>
             <hr>
             <button onclick="saveLocal();closeMore()">💾 保存下载</button>
             <button onclick="exportJSON();closeMore()">📤 导出 JSON</button>
@@ -426,7 +464,6 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="main-tabs">
       <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
       <button id="mt1" onclick="switchTab(1)">分析</button>
-      <button id="mt2" onclick="switchTab(2)">交易</button>
       <button id="mt3" onclick="switchTab(3)">债券</button>
       <button id="mt4" onclick="switchTab(4)">个股</button>
     </div>
@@ -447,7 +484,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <div class="cat-filter" id="accFilter"></div>
         <div class="cat-filter" id="catFilter"></div>
         <div id="homeList"></div>
-        <p class="hint">点任意一行进入该基金的详情页（实时估值、成本 vs 现价、交易流水、十大重仓与复盘）。</p>
+        <p class="hint">点任意一行<b>展开</b>查看持仓摘要与最近交易；展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、十大重仓与复盘）。</p>
         <p class="privacy"><b>🔒 隐私：</b>所有数据仅保存在你本地浏览器 / 本文件，<b>不会上传任何服务器</b>。</p>
       </div>
     </div>
@@ -491,30 +528,7 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
     </div>
 
-    <!-- Tab 2: 交易 -->
-    <div class="tab-panel" id="tp2">
-      <div class="card">
-        <div class="sec-head">
-          <h2 style="margin:0;font-size:14px">交易流水录入</h2>
-          <div style="display:flex;gap:8px">
-            <button class="btn sm primary" onclick="addTradeRow()">+ 记一笔</button>
-            <button class="btn sm" onclick="refresh()">↻ 刷新净值·行情</button>
-          </div>
-        </div>
-        <p class="hint">每买卖一次记一笔：日期 / 买或卖 / 金额(元) / 当时净值。填了流水的基金会自动精确计算，并画出买卖点时间轴。</p>
-        <div class="table-scroll">
-        <table id="tradeTable">
-          <thead><tr><th style="width:20%">基金名称</th><th>账户</th><th>日期</th><th>时间</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用(元)</th><th></th></tr></thead>
-          <tbody></tbody>
-        </table>
-        </div>
-      </div>
-      <div class="card">
-        <h2>单只买卖点时间轴</h2>
-        <div id="timelines"></div>
-      </div>
-    </div>
-
+    <!-- Tab 2（交易）已并入各基金持仓 / 详情，不再单独成页 -->
     <!-- Tab 3: 债券 -->
     <div class="tab-panel" id="tp3">
       <div id="bondContent"></div>
@@ -534,6 +548,9 @@ input[type="number"] { -moz-appearance: textfield; }
   </div>
 
 </div>
+
+  <!-- 交易选择器弹窗 -->
+  <div id="tradePicker"></div>
 
 <script>
 // ---------- 示例数据 ----------
@@ -603,9 +620,8 @@ document.addEventListener('click', function(e){ if(!e.target.closest('.more-menu
 let activeTab=0;
 function switchTab(i){
   activeTab=i;
-  [0,1,2,3,4].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
+  [0,1,3,4].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
-  if(i===2){ renderTrade(); renderTimelines(); }
   if(i===3){ renderBond(); }
   if(i===4){ renderStocks(); fetchStockQuotes(); }
 }
@@ -660,6 +676,21 @@ function renderAccountSummary(){
 }
 
 // ---------- 持仓列表 ----------
+const TRADE_TYPES=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','拆分']];
+function typeLabel(t){ const m=TRADE_TYPES.find(x=>x[0]===t); return m?m[1]:(t||'买入'); }
+function navFmt(v){ return v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'; }
+let openSet=new Set();
+function toggleHold(key){ key=decodeURIComponent(key); if(openSet.has(key)) openSet.delete(key); else openSet.add(key); renderHomeList(); }
+function blurbFor(f){
+  const days=f.days!=null?f.days+' 天':'—';
+  const cp=f.costPx!=null?('（单价 '+M(f.costPx)+'）'):'';
+  const profitWord=f.profit>=0?'浮盈':'浮亏';
+  const needBack=(f.costPx&&f.nav&&f.nav>0&&f.costPx>f.nav)?(((f.costPx-f.nav)/f.nav*100).toFixed(2)+'%'):null;
+  let s=`当前持有 ${hidden?'••••份':(f.shares!=null?fmt(f.shares)+' 份':'—')}，成本 ${hidden?'••••':M(f.cost)}${cp}。`;
+  s+=`市值 ${hidden?'••••':M(f.mv)}，${profitWord} ${hidden?'••••':M(f.profit)}（${f.ret>=0?'+':''}${f.ret.toFixed(2)}%），持有约 ${days}。`;
+  if(needBack) s+=`距回本还需 +${needBack}。`;
+  return s;
+}
 function renderHomeList(){
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
@@ -678,7 +709,7 @@ function renderHomeList(){
         <div class="es-desc">第一步：载入示例数据快速体验，或从「⋯ 更多」记第一笔交易。</div>
         <div class="es-actions">
           <button class="btn primary" onclick="loadSample()">载入示例数据</button>
-          <button class="btn" onclick="addTradeRow();switchTab(2)">+ 记第一笔交易</button>
+          <button class="btn" onclick="addTradeMenu()">+ 记第一笔交易</button>
         </div>
       </div>`;
     } else {
@@ -686,9 +717,10 @@ function renderHomeList(){
     }
     return;
   }
-  const navFmt=v=>v!=null?(Math.round(v*10000)/10000).toFixed(4):'—';
   const dayFmt=f=> flashMap[f.name]!=null?`<span class="hl-sep">|</span><span class="${flashMap[f.name]>=0?'pos':'neg'}">${flashMap[f.name]>=0?'▲':'▼'}${Math.abs(flashMap[f.name]).toFixed(2)}%</span>`:'';
   box.innerHTML=list.map(f=>{
+    const key=encodeURIComponent(accKey(f.account,f.name));
+    const isOpen=openSet.has(accKey(f.account,f.name));
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
     const flash=flashMap[f.name]!=null?(flashMap[f.name]>=0?'flash pos':'flash neg'):'';
     const al=alerts[f.name]||{}; let alertCls='';
@@ -698,18 +730,35 @@ function renderHomeList(){
     const _nc=navCache[f.name];
     const _mkt=isMarketOpen(new Date());
     const estTag=(_mkt&&_nc&&_nc.gsz!=null)?`<span class="hl-sep">|</span><span class="est ${_nc.gszzl>=0?'pos':'neg'}">估 ${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>`:'';
-    return `<div class="hl-row ${flash}${alertCls}" onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">
+    const head=`<div class="hl-head" onclick="toggleHold('${key}')">
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
         <span class="tag">${f.account||'支付宝'}</span>
-        <span class="nav-edit" ${hidden?'':'onclick="event.stopPropagation();setManualNav(\''+encodeURIComponent(f.name)+'\')"'} title="点击手动填写净值">净值 ${mask4(f.nav)} ${hidden?'':navBadge(_nc)}</span><span class="hl-sep">|</span><span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
+        <span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
       </div></div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       <div class="hl-arrow">›</div>
     </div>`;
+    const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
+    let rec;
+    if(tr.length){
+      rec=`<div class="hl-rtitle">最近交易（共 ${tr.length} 笔）</div>`+
+        tr.slice(0,3).map(t=>`<div class="hl-rtrade"><span class="tag" style="background:${t.type==='sell'?'var(--down-bg)':'var(--up-bg)'};color:${t.type==='sell'?'var(--down)':'var(--up)'}">${typeLabel(t.type)}</span><span>${esc(t.date||'')}</span><span class="num">${M(t.amount)}</span><span>${t.nav!=null&&t.nav!==''?('@'+navFmt(t.nav)):'<span class="pending-nav">净值待填</span>'}</span></div>`).join('');
+      if(tr.length>3) rec+=`<div class="hl-rtrade" style="color:var(--accent-text);cursor:pointer" onclick="event.stopPropagation();goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">查看全部交易 →</div>`;
+    } else {
+      rec=`<div class="hl-rtitle">暂无交易记录</div>`;
+    }
+    const body=`<div class="hl-body">
+      <div class="hl-summary">${blurbFor(f)}</div>
+      ${rec}
+      <div class="hl-acts">
+        <button class="btn sm primary" onclick="event.stopPropagation();goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">📊 进入详情</button>
+        <button class="btn sm" onclick="event.stopPropagation();tpPick('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">＋ 记一笔交易</button>
+      </div>
+    </div>`;
+    return `<div class="hl ${flash}${alertCls}${isOpen?' open':''}">${head}${body}</div>`;
   }).join('');
 }
-
 function goDetail(enc, acc){ pendingAcc=acc||null; location.hash='#/fund/'+enc; }
 
 // ---------- 分析（概览/饼/柱/建议）----------
@@ -1050,6 +1099,8 @@ function renderTimelines(){
 
 // ---------- 计算 ----------
 function buildFundsView(){
+  // 交易默认锁定（旧数据未标记的补 locked=true）
+  trades.forEach(t=>{ if(t.locked===undefined) t.locked=true; });
   // 复合键 (账户||基金名)：同一基金可在多个账户分别持有
   const keys=[...new Set([
     ...snaps.filter(s=>(s.type||'fund')!=='stock').map(s=>accKey(accOf(s),s.name)),
@@ -1065,7 +1116,7 @@ function buildFundsView(){
       const sortedTr=[...tr].sort((a,b)=>a.date.localeCompare(b.date));
       sortedTr.forEach(t=>{
         const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0, sh=nav>0?amt/nav:0;
-        if(ty==='buy'){ shares+=sh; cost+=amt+fee; }
+        if(ty==='buy'){ if(nav>0){ shares+=sh; cost+=amt+fee; } /* T+1 待确认：净值未填则份额/成本待结算后计算 */ }
         else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
         else if(ty==='dividend'){ cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
         else if(ty==='reinvest'){ if(nav>0) shares+=amt/nav; cost+=amt; }        // 红利再投：增份额、加成本（无申购费）
@@ -1164,7 +1215,6 @@ function render(){
   if(currentView==='home'){
     renderOverview(); renderAccFilter(); renderHomeList(); renderCatFilter();
     if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
-    if(activeTab===2){ renderTrade(); renderTimelines(); }
     if(activeTab===3){ renderBond(); }
     if(activeTab===4){ renderStocks(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
@@ -1210,6 +1260,7 @@ function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
+  if(window._autoTrade){ window._autoTrade=false; const d=document.getElementById('nf-date'); if(d){ d.focus(); toast('填写交易信息后点「💾 保存并锁定」（净值可留空，T+1 自动填）'); } }
 }
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=ANALYSIS[f.name];
@@ -1263,23 +1314,51 @@ function liveSection(f){
   const _mkt=isMarketOpen(new Date());
   const estRow=(_mkt&&_nc.gsz!=null)?`<tr><td>盘中估算</td><td>${mask4(_nc.gsz)} <span class="${_nc.gszzl>=0?'pos':'neg'}">${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>${_nc.gztime?` <span class="hint">@${_nc.gztime.slice(11,16)}</span>`:''}</td></tr>`:'';
   h+=`<tr><td>最新净值 ${navBadge(_nc)}</td><td><input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()"></td></tr>${estRow}</tbody></table></div></div>`;
-  const tr=trades.filter(t=>t.name===f.name);
-  h+=`<div class="card"><div class="sec-head"><h2>交易流水（${tr.length} 笔）</h2><button class="btn sm" onclick="addTradeFor('${encodeURIComponent(f.name)}')">+ 记一笔</button></div>`;
-  if(tr.length) h+=`<p class="hint" style="margin:0 0 8px">已记流水：收益按流水精确计算（快照仅作参考）；卖出按比例扣减成本，避免收益率失真。</p>`;
+  const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const tdtoday=new Date().toISOString().slice(0,10);
+  h+=`<div class="card"><div class="sec-head"><h2>本只基金 · 交易流水（${tr.length} 笔）</h2></div>`;
+  h+=`<p class="hint" style="margin:0 0 8px">每笔「保存并锁定」后自动 🔒 防误改；点 🔓 可临时解锁编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
+  h+=`<div class="tr-add"><div class="tr-add-grid">
+    <select id="nf-acc">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(f)===a?'selected':''}>${a}</option>`).join('')}</select>
+    <input id="nf-date" type="date" value="${tdtoday}">
+    <input id="nf-time" type="time" value="15:00">
+    <select id="nf-type">${TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>
+    <input id="nf-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="金额(元)">
+    <input id="nf-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="净值(留空=T+1)">
+    <input id="nf-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="费用(元)">
+    <button class="btn sm primary" onclick="addTradeForForm('${encodeURIComponent(f.name)}')">💾 保存并锁定</button>
+  </div></div>`;
   if(tr.length){
-    const types=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','拆分']];
-    h+=`<div class="table-scroll"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead><tbody>`;
-    trades.forEach((t,i)=>{ if(t.name===f.name){ h+=`<tr>
-      <td><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
-      <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
-      <td><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></td>
-      <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
-      <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
-      <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
-      <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
-      <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td></tr>`; } });
+    h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead><tbody>`;
+    tr.forEach(t=>{
+      const i=trades.indexOf(t);
+      if(t.locked!==false){
+        h+=`<tr class="tr-locked">
+          <td>${esc(accOf(t))}</td>
+          <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
+          <td>${typeLabel(t.type)}</td>
+          <td class="num">${M(t.amount)}</td>
+          <td class="num">${t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class="pending-nav">待填</span>'}</td>
+          <td class="num">${t.fee?M(t.fee):'—'}</td>
+          <td><button class="lk" title="解锁编辑" onclick="unlockTrade(${i})">🔓</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
+        </tr>`;
+      } else {
+        h+=`<tr>
+          <td><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
+          <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
+          <td><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></td>
+          <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${TRADE_TYPES.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
+          <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
+          <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
+          <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
+          <td><button class="lk lock" title="锁定" onclick="lockTrade(${i})">🔒</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
+        </tr>`;
+      }
+    });
     h+=`</tbody></table></div><div style="margin-top:12px"><div style="font-size:14px;font-weight:600;margin:0 0 6px">买卖点</div>${miniTimeline(f)}</div>`;
-  } else { h+=`<p class="hint">还没有交易流水。点「+ 记一笔」记录买卖。</p>`; }
+  } else {
+    h+=`<p class="hint" style="margin-top:8px">还没有交易流水。在上方填写后点「💾 保存并锁定」即可记录第一笔。</p>`;
+  }
 
   const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
   if(f.shares!=null && calcNav){
@@ -1308,8 +1387,39 @@ function liveSection(f){
 
 // ---------- 新增 / 删除 ----------
 function addSnapRow(){ snaps.push({name:'新基金',cat:'',mv:0,ret:0}); compute(); }
-function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:'支付宝'}); renderTrade(); }
-function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',time:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name)}); compute(); }
+function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:'支付宝',locked:true}); }
+function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',time:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name),locked:true}); compute(); }
+function addTradeForForm(enc){
+  const name=decodeURIComponent(enc);
+  const g=id=>document.getElementById(id);
+  const date=g('nf-date').value, time=g('nf-time').value, type=g('nf-type').value, acc=g('nf-acc').value;
+  const navRaw=g('nf-nav').value, amount=+g('nf-amount').value||0, fee=+g('nf-fee').value||0;
+  const nav=(navRaw===''||navRaw==null)?null:+navRaw;
+  if(!date){ toast('请填写交易日期'); return; }
+  if(!amount){ toast('请填写金额'); return; }
+  trades.push({name,account:acc,date,time,type,amount,nav,fee,locked:true});
+  silentSave(); compute();
+  toast('已保存并锁定 · '+typeLabel(type)+' '+M(amount));
+  g('nf-amount').value=''; g('nf-nav').value=''; g('nf-fee').value='';
+}
+function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); } }
+function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); } }
+function delTrade(i){ if(trades[i]&&confirm('确定删除这笔交易？')){ trades.splice(i,1); silentSave(); compute(); } }
+function addTradeMenu(){
+  const list=(_allHoldings.length?_allHoldings:fundsView).slice().sort((a,b)=>b.mv-a.mv);
+  if(!list.length){ toast('还没有基金，先在「⋯ 更多 → 加一只基金」添加'); return; }
+  const box=document.getElementById('tradePicker');
+  box.innerHTML=`<div class="tp-mask" onclick="closeTradePicker(event)"></div><div class="tp-pop">
+    <div class="tp-title">选择要记交易的基金</div>
+    <input id="tpSearch" class="tp-search" placeholder="搜索基金名称…" oninput="tpFilter(this.value)">
+    <div class="tp-list" id="tpList">${list.map(f=>`<button class="tp-item" onclick="tpPick('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">${esc(f.name)} <span class="tag">${f.account||'支付宝'}</span></button>`).join('')}</div>
+    <div style="text-align:right;margin-top:10px"><button class="btn" onclick="closeTradePicker()">取消</button></div>
+  </div>`;
+  box.style.display='flex';
+}
+function closeTradePicker(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; }
+function tpFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#tpList .tp-item').forEach(b=>{ b.style.display=(!q||b.textContent.includes(q))?'':'none'; }); }
+function tpPick(nm,acc){ const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; window._autoTrade=true; goDetail(nm,decodeURIComponent(acc)); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
   if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
@@ -1578,6 +1688,11 @@ const INDEX_LIST=[
   {code:'usDJI', name:'道琼斯'},
   {code:'usIXIC', name:'纳斯达克'},
   {code:'usSPX', name:'标普500'},
+  {code:'jpN225', name:'日经225', grp:'global'},
+  {code:'krKS11', name:'韩国KOSPI', grp:'global'},
+  {code:'ukFTSE', name:'富时100', grp:'global'},
+  {code:'inSENSEX', name:'印度SENSEX', grp:'global'},
+  {code:'vnVNINDEX', name:'越南VNINDEX', grp:'global'},
 ];
 let _idxScript=null;
 function parseQt(raw){
@@ -1593,7 +1708,7 @@ function parseQt(raw){
   return {price, chg, pct, ts};
 }
 function fetchIndices(){
-  const codes=INDEX_LIST.map(x=>x.code).join(',');
+  const codes=INDEX_LIST.filter(x=>!x.grp).map(x=>x.code).join(',');   // 全球组默认不拉取，展开时才取
   if(_idxScript && _idxScript.parentNode) _idxScript.parentNode.removeChild(_idxScript);
   const s=document.createElement('script');
   s.src='https://qt.gtimg.cn/q='+codes;
@@ -1628,10 +1743,14 @@ function renderIdxInto(boxId, timeId){
       if(key==='a') return mk==='a';
       if(key==='hk') return mk==='hk';
       if(key==='us') return mk==='foreign' && /^us/.test(it.code); // 美股 = 外围里以 us 开头
-      return mk==='foreign' && !/^us/.test(it.code); // 全球 = 非美外围
+      return mk==='foreign' && !/^us/.test(it.code); // 全球 = 非美外围（日/韩/英/印/越）
     });
     if(!items.length) return;
-    html+='<div class="idx-grp"><div class="idx-grp-h">'+label+'</div><div class="idx-list">'+items.map(idxChipHtml).join('')+'</div></div>';
+    if(key==='gl'){
+      html+='<div class="idx-grp idx-grp-global collapsed"><div class="idx-grp-h idx-grp-toggle" onclick="toggleGlobalIdx(this)">'+label+' <span class="idx-caret">▸</span><span class="idx-grp-count">'+items.length+'</span></div><div class="idx-list idx-grp-body">'+items.map(idxChipHtml).join('')+'</div></div>';
+    } else {
+      html+='<div class="idx-grp"><div class="idx-grp-h">'+label+'</div><div class="idx-list">'+items.map(idxChipHtml).join('')+'</div></div>';
+    }
   });
   box.innerHTML=html;
   const te=document.getElementById(timeId);
@@ -1641,9 +1760,17 @@ function renderIdxInto(boxId, timeId){
     te.innerHTML = seg(aOpen,'A股/港股 ')+' &nbsp;·&nbsp; '+seg(usOpen,'美股 ');
   }
 }
+function toggleGlobalIdx(headerEl){
+  const grp = headerEl && headerEl.parentElement; if(!grp) return;
+  const collapsed = grp.classList.toggle('collapsed');
+  if(!collapsed) loadGlobalIdx(); // 展开时才拉取外围指数（东方财富日线）
+}
+function loadGlobalIdx(){
+  INDEX_LIST.filter(x=>x.grp==='global').forEach(it=>{ fetchForeignIdx(it.code); });
+}
 // ---------- 指数迷你走势 Sparkline（按市场分级，不画假图） ----------
 // A股：新浪 5 分钟真实分时；港股：腾讯日线近 30 日（诚实标注）；美股：无免费源，降级显示
-function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^us/.test(code)) return 'foreign'; return 'a'; }
+function marketOf(code){ if(/^(sh|sz)/.test(code)) return 'a'; if(/^hk/.test(code)) return 'hk'; if(/^(us|jp|kr|uk|in|vn)/.test(code)) return 'foreign'; return 'a'; }
 // 各市场盘中/收盘判定（北京时）。解决"右上角已收盘"对美/日/韩市场的语义歧义。
 function mktOpenWindow(code){
   const now=new Date(); const day=now.getDay(); const wd=(day!==0 && day!==6);
@@ -1651,15 +1778,21 @@ function mktOpenWindow(code){
   if(/^(sh|sz)/.test(code)){ return wd && ((t>=570&&t<=690)||(t>=780&&t<=900)); }      // A股 09:30–11:30 / 13:00–15:00
   if(/^hk/.test(code)){ return wd && ((t>=570&&t<=720)||(t>=780&&t<=960)); }           // 港股 09:30–12:00 / 13:00–16:00
   if(/^us/.test(code)){ return wd && (t>=1290 || t<=240); }                            // 美股 21:30–次日04:00（夏令近似）
+  if(/^jp/.test(code)){ return wd && ((t>=480&&t<=630)||(t>=690&&t<=840)); }           // 日股 08:00–10:30 / 11:30–14:00
+  if(/^kr/.test(code)){ return wd && (t>=480&&t<=870); }                               // 韩股 08:00–14:30
+  if(/^uk/.test(code)){ return wd && (t>=900&&t<=1410); }                              // 英股 富时100 ≈北京15:00–23:30
+  if(/^in/.test(code)){ return wd && (t>=705&&t<=1080); }                              // 印度 09:15–15:30 ≈北京11:45–18:00
+  if(/^vn/.test(code)){ return wd && (t>=600&&t<=945); }                               // 越南 09:00–14:45 ≈北京10:00–15:45
   return false;
 }
-// 外围指数（美股）腾讯无源，统一用东方财富日线 secid
-const FOREIGN_SECID={ usDJI:'100.DJI', usIXIC:'100.NDX', usSPX:'100.SPX' };
+// 外围指数（美股 + 日/韩/英/印/越）腾讯无实时源，统一用东方财富日线 secid（仅展开「全球」组时拉取）
+const FOREIGN_SECID={ usDJI:'100.DJI', usIXIC:'100.NDX', usSPX:'100.SPX', jpN225:'100.N225', krKS11:'100.KS11', ukFTSE:'100.FTSE', inSENSEX:'100.BSESN', vnVNINDEX:'100.vnindex' };
 function isForeign(code){ return Object.prototype.hasOwnProperty.call(FOREIGN_SECID, code); }
 const _idxSparkCache={};   // code -> { series:[{t,v}], kind, label }
 const _idxSparkBusy={};    // code -> true 防止重复拉取
 function fetchIdxSparks(){
   INDEX_LIST.forEach(it=>{
+    if(it.grp==='global') return; // 全球组默认收起，展开时才拉取
     const mk=marketOf(it.code);
     if(mk==='foreign'){ fetchForeignIdx(it.code); return; }
     if(_idxSparkCache[it.code]){ drawSpark(it.code, _idxSparkCache[it.code]); return; }
@@ -1917,6 +2050,23 @@ async function refresh(){
   const prev={}; Object.keys(navCache).forEach(k=>prev[k]=navCache[k].nav);
   const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);
   await fetchNavBatch(names);
+  // T+1 自动填净值：结算日后首次刷新，把"待确认"交易的净值补上
+  (function(){
+    const today=new Date(); today.setHours(0,0,0,0);
+    let filled=0;
+    trades.forEach(t=>{
+      if(t.nav!=null && t.nav!=='' && !isNaN(+t.nav)) return;          // 已填净值
+      if(t.type && t.type!=='buy' && t.type!=='reinvest') return;      // 仅买入类需净值
+      if(!(t.name in navCache)) return;
+      const nav=navCache[t.name].nav; if(nav==null) return;
+      let settle=new Date(String(t.date).replace(/-/g,'/'));
+      if(isNaN(settle)) return;
+      if(t.time && t.time>= '15:00') settle.setDate(settle.getDate()+1);
+      settle.setHours(0,0,0,0);
+      if(settle<=today){ t.nav=nav; t.navConfirmed=true; filled++; }
+    });
+    if(filled) silentSave();
+  })();
   flashMap={};
   Object.keys(navCache).forEach(n=>{ const p=prev[n],cur=navCache[n].nav; if(p!=null&&cur!=null&&p!==0){ const chg=(cur-p)/p*100; if(Math.abs(chg)>0.0001) flashMap[n]=+chg.toFixed(2); } });
   compute(); todayGain=0; let anyG=false;
@@ -1972,7 +2122,7 @@ function importCSV(){
     r.onload=()=>{ try{ const added=parseCSV(r.result); if(added===0){ toast('未识别到交易行'); return; }
         const sample=added.slice(0,3).map(t=>`${t.name} | ${t.date} | ${t.type} | ${t.amount}${t.nav?' @'+t.nav:''}`).join('\n');
         if(!confirm('即将导入 '+added+' 笔交易，确认吗？\n\n示例：\n'+sample+'\n\n（可在「交易」Tab 查看并删除错误行）')) return;
-        compute(); renderTrade(); silentSave(); toast('已导入 '+added+' 笔交易（CSV）'); switchTab(2); }
+        compute(); renderTrade(); silentSave(); toast('已导入 '+added+' 笔交易（CSV）· 可在各基金详情「交易流水」查看'); }
       catch(e){ alert('CSV 解析失败：'+e.message); } };
     r.readAsText(f,'utf-8'); };
   inp.click();

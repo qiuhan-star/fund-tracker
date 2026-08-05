@@ -40,7 +40,8 @@
 | # | 需求 | 优先级 | 状态 | 备注 |
 | --- | --- | --- | --- | --- |
 | — | （待补充 — 用户将提供新的修改清单） | — | — | — |
-| 19 | 刷新后视图联动补全（状态联动断层） | P3 | ✅ | `refresh()` 末尾补 `renderHomeList()` + `activeTab===1` 时 `renderPie()`；解决刷新后持仓列表/饼图不更新。`flashMap` 现已作用于列表行（▲▼闪）。第 2748 行。无需重写引擎（持仓仅个位数，批量 JSONP 已聚合）。 |
+| 19 | 刷新后视图联动补全（状态联动断层） | P3 | ✅ | `refresh()` 末尾补 `renderHomeList()` + `activeTab===1` 时 `renderPie()`；解决刷新后持仓列表/饼图不更新。`flashMap` 现已作用于列表行（▲▼闪）。无需重写引擎（持仓仅个位数，批量 JSONP 已聚合）。 |
+| 20 | 移除「个股追踪」Tab 及相关代码 | P3 | ✅ | 用户不需要。删 mt4 按钮+tp4 面板+switchTab/render 的 `activeTab===4` 分支+整个「个股追踪」代码块（buildStocksView/fetchStockQuotes/renderStocks/loadStockSample 等，共 153 行）。与基金共用 trades/snaps、以 type:'stock' 区分，移除只去掉 UI，账本数据不动；用户确认无个股数据故无需 purge。`parseQt` 因市场风向 Tab 复用而保留。commit `d7307f0`。 |
 
 ---
 

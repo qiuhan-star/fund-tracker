@@ -3344,7 +3344,8 @@ function drawHist(all, f){
       let li=-1;
       for(let k=0;k<labels.length;k++){ if(labels[k] < ym+'-01') continue; li=k; break; }
       if(li>=0){
-        const lblTxt=(cy!==startYear?(''+(cy%100)+'年'):'')+(cm+1)+'月';
+        // 仅在跨年的首月（1月）显示年份前缀，其余只标「M月」，避免 X 轴重复刷年份
+        const lblTxt=(cm===0 && cy!==startYear?(''+(cy%100)+'年'):'')+(cm+1)+'月';
         monthTicks.push({label:lblTxt, idx:li});
       }
       if(cm===11){ cm=0; cy++; } else cm++;
@@ -4139,11 +4140,16 @@ function canvasLineChart(canvas, cfg){
     // 按月标注：图内细竖线分隔 + 月份标签单独成行（与图留出一小段间距）
     if(cfg.monthTicks && cfg.monthTicks.length){
       ctx.textBaseline='top'; ctx.font='10px -apple-system,system-ui,sans-serif';
+      const rightBound=cssW-padR;
       (cfg.monthTicks||[]).forEach(function(mt){
         const x=xAt(mt.idx);
         ctx.save(); ctx.strokeStyle=th.grid; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke(); ctx.restore();
-        ctx.fillStyle=th.text2; ctx.textAlign='left';
-        ctx.fillText(mt.label, x+3, padT+plotH+26);
+        ctx.fillStyle=th.text2;
+        const tw=ctx.measureText(mt.label).width;
+        let tx=x+3;
+        if(tx+tw > rightBound){ ctx.textAlign='right'; tx=Math.min(x, rightBound); } // 右边界自适应：贴边右对齐，保证完整可见
+        else { ctx.textAlign='left'; }
+        ctx.fillText(mt.label, tx, padT+plotH+26);
       });
       ctx.textAlign='left';
     }

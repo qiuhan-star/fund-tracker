@@ -42,6 +42,10 @@
 | — | （待补充 — 用户将提供新的修改清单） | — | — | — |
 | 19 | 刷新后视图联动补全（状态联动断层） | P3 | ✅ | `refresh()` 末尾补 `renderHomeList()` + `activeTab===1` 时 `renderPie()`；解决刷新后持仓列表/饼图不更新。`flashMap` 现已作用于列表行（▲▼闪）。无需重写引擎（持仓仅个位数，批量 JSONP 已聚合）。 |
 | 20 | 移除「个股追踪」Tab 及相关代码 | P3 | ✅ | 用户不需要。删 mt4 按钮+tp4 面板+switchTab/render 的 `activeTab===4` 分支+整个「个股追踪」代码块（buildStocksView/fetchStockQuotes/renderStocks/loadStockSample 等，共 153 行）。与基金共用 trades/snaps、以 type:'stock' 区分，移除只去掉 UI，账本数据不动；用户确认无个股数据故无需 purge。`parseQt` 因市场风向 Tab 复用而保留。commit `d7307f0`。 |
+| 21 | 盈亏分布柱状图标签溢出/缺失 | P2 | ✅ | 根因是 `.chart-box` 固定 `height:230px`，21 只基金(13px 柱+字号)需 ~378px → Y 轴标签被裁切。修复：`renderBar()` 动态设容器高度 `Math.max(200, sorted.length*18+12)px`（保持 Chart.js 交互，未按用户建议改写 HTML/CSS flex）。 |
+| 22 | 概览「基金数 / 盈:亏」对不上总数 | P2 | ✅ | `win=f.ret>0` / `lose=f.ret<0` 计算时漏掉 `ret===0`（债基/未结算）的"平"档。修复：增 `flat=f.ret===0` 计数，卡片改为 `N 只 · X盈/Y亏/Z平`（如 21 只·5盈/12亏/4平，合计回 21）。 |
+| 23 | 资产配置饼图配色语义冲突（芯片红） | P2 | ✅ | 饼图调色板首色 `#e24b4a`(红) + `CAT_COLORS['芯片']='#e24b4b'`(红)，与"红涨绿跌"撞义。修复：`CAT_COLORS` 与饼图改用**中性分类调色板**（蓝/橙/青/紫/赭/金/石板灰，无红绿）；饼图由 `labels.map(l=>CAT_COLORS[l])` 取色，与对比饼图(当前/建议)一致。 |
+| 24 | ECharts 离线白屏（板块面积图无降级） | P2 | ✅ | 用户离线/国内网络拉不到 ECharts CDN → `renderSectorTree` 原只显示错误文案。修复：先算 `rows` 再分支；`typeof echarts==='undefined'` 时渲染 **CSS 纯静态降级**（横向条按市值占比，颜色按加权收益红涨绿跌），新增 `.tree-fallback/.tf-row/.tf-bar/.tf-cap` 样式。联网时仍走 ECharts treemap。 |
 
 ---
 

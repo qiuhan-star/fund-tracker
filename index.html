@@ -562,10 +562,7 @@ input[type="number"] { -moz-appearance: textfield; }
             <button onclick="importCSV();closeMore()">📥 导入 CSV</button>
             <button onclick="downloadCSVTemplate();closeMore()">📄 下载 CSV 模板</button>
             <button onclick="window.print();closeMore()">🖨 导出 PDF</button>
-            <p class="drop-hint">CSV 格式（首行表头，逗号/中文逗号/制表符均可）：<br>基金名称,日期,方向,金额,净值,费用<br>方向可写：买入/卖出/分红/再投/拆分（或 买/卖）</p>
-            <hr>
-            <button onclick="clearAll();closeMore()" style="color:#c0392b">🗑 清空所有数据</button>
-          </div>
+            <p class="drop-hint">CSV 格式（首行表头，逗号/中文逗号/制表符均可）：<br>基金名称,日期,方向,金额,净值,费用<br>方向可写：买入/卖出/分红/再投/拆分（或 买/卖）</p>          </div>
         </div>
       </div>
     </div>
@@ -3019,7 +3016,6 @@ function parseCSV(text){
   if(!added.length) return 0;
   trades=trades.concat(added); return added.length;
 }
-function clearAll(){ if(confirm('确定要清空所有数据吗？\n\n将删除全部持仓、交易流水与手动净值，且不可恢复（已保存的本地数据也会被覆盖）。\n\n建议先点「💾 保存下载」备份。')){ snaps=[]; trades=[]; navCache={}; localStorage.removeItem('ft_data'); renderTrade(); compute(); toast('已清空所有数据'); } }
 function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); }
 
 

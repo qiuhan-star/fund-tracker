@@ -151,6 +151,7 @@
   .hl-sub { font-size: 11.5px; color: var(--text-3); margin-top: 5px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
   .hl-sep { color: var(--text-3); }
   .est { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .est.confirm { color: var(--text-2); background: var(--surface-3); padding: 0 4px; border-radius: 4px; }
   .nk { font-style: normal; font-size: 11px; line-height: 1; padding: 1px 5px; border-radius: 4px; margin-left: 4px; vertical-align: 1px; font-weight: 600; }
   .nk-est { background: var(--warn-bg); color: #e8820c; }
   .nk-off { background: var(--down-bg); color: #2f9e44; }
@@ -181,6 +182,8 @@
   .tag-芯片 { background: var(--accent-soft); color: var(--accent-text); }
   .tag-医药 { background: var(--up-bg); color: var(--up); }
   .tag-QDII { background: #e6f7f1; color: #0f8a63; }
+  .tag-海外 { background: #e6f0fb; color: #378add; }
+  .tag-attr { background: var(--border-3); color: var(--text-2); }
   .tag-科技 { background: var(--accent-soft); color: #534ab7; }
   .tag-周期资源 { background: var(--warn-bg); color: #a9701a; }
   .tag-制造 { background: var(--accent-soft); color: #2f7fb8; }
@@ -584,27 +587,71 @@ const SAMPLE_SNAP = [
   {name:'华夏有色金属ETF联接D', code:'021534', cat:'周期资源', mv:8230.93, ret:-5.53, shares:4877.01, costPx:1.7866},
   {name:'华富恒盛纯债债券E', code:'019445', cat:'债基', mv:10000.00, ret:0.00, shares:9009.82, costPx:1.1099},
   {name:'摩根瑞益纯债债券C', code:'007330', cat:'债基', mv:10000.00, ret:0.00, shares:8674.53, costPx:1.1528},
-  {name:'富国全球科技互联网股票(QDII)C', code:'022184', cat:'QDII', mv:7117.22, ret:-9.94, shares:1362.20, costPx:5.7787},
+  {name:'富国全球科技互联网股票(QDII)C', code:'022184', cat:'芯片', tags:['QDII','全球'], mv:7117.22, ret:-9.94, shares:1362.20, costPx:5.7787},
   {name:'中欧医疗创新股票C', code:'006229', cat:'医药', mv:6421.27, ret:-2.71, shares:4449.02, costPx:1.4835},
   {name:'广发中证军工ETF联接C', code:'005693', cat:'制造', mv:5377.25, ret:-9.03, shares:4956.90, costPx:1.1925},
   {name:'招商中证煤炭等权指数(LOF)E', code:'016347', cat:'周期资源', mv:5096.44, ret:1.93, shares:2306.50, costPx:2.1678},
   {name:'广发工程机械ETF联接C', code:'020904', cat:'制造', mv:4953.03, ret:-0.94, shares:3558.72, costPx:1.4050},
   {name:'嘉实中证细分化工产业主题ETF发起联接C', code:'013528', cat:'周期资源', mv:4072.85, ret:-1.02, shares:4255.41, costPx:0.9670},
   {name:'上银丰益混合C', code:'011505', cat:'混合', mv:3999.99, ret:0.00, shares:2644.28, costPx:1.5127},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', code:'017731', cat:'QDII', mv:3921.21, ret:-1.80, shares:1073.01, costPx:3.6573},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', code:'017731', cat:'芯片', tags:['QDII','全球'], mv:3921.21, ret:-1.80, shares:1073.01, costPx:3.6573},
   {name:'招商国证生物医药指数(LOF)C', code:'012417', cat:'医药', mv:3744.31, ret:-0.55, shares:9367.80, costPx:0.4019},
   {name:'易方达科创芯片ETF联接C', code:'020671', cat:'芯片', mv:3376.77, ret:-6.11, shares:1006.76, costPx:3.5724},
-  {name:'广发港股创新药ETF联接(QDII)C', code:'019671', cat:'QDII', mv:2961.04, ret:-1.20, shares:2399.55, costPx:1.2490},
-  {name:'华宝中证港股通信息技术ETF发起联接', code:'026755', cat:'QDII', mv:2009.89, ret:-6.33, shares:1794.22, costPx:1.1959},
-  {name:'南方恒生科技ETF发起联接(QDII)C', code:'020989', cat:'QDII', mv:1179.53, ret:2.57, shares:1024.16, costPx:1.1229},
+  {name:'广发港股创新药ETF联接(QDII)C', code:'019671', cat:'医药', tags:['QDII','港股'], mv:2961.04, ret:-1.20, shares:2399.55, costPx:1.2490},
+  {name:'华宝中证港股通信息技术ETF发起联接', code:'026755', cat:'芯片', tags:['QDII','港股'], mv:2009.89, ret:-6.33, shares:1794.22, costPx:1.1959},
+  {name:'南方恒生科技ETF发起联接(QDII)C', code:'020989', cat:'科技', tags:['QDII','港股'], mv:1179.53, ret:2.57, shares:1024.16, costPx:1.1229},
   {name:'华夏中证金融科技主题ETF发起式联接C', code:'023885', cat:'科技', mv:604.49, ret:0.00, shares:678.67, costPx:0.8907},
-  {name:'摩根日本精选股票(QDII)C', code:'019449', cat:'QDII', mv:504.10, ret:0.82, shares:230.70, costPx:2.1673},
+  {name:'摩根日本精选股票(QDII)C', code:'019449', cat:'海外', tags:['QDII','日本'], mv:504.10, ret:0.82, shares:230.70, costPx:2.1673},
   {name:'天弘中证计算机ETF联接C', code:'001630', cat:'科技', mv:397.97, ret:-0.51, shares:494.07, costPx:0.8096},
-  {name:'南方纳斯达克100指数发起(QDII)C', code:'016453', cat:'QDII', mv:10.01, ret:1.70, shares:4.49, costPx:2.2293}
+  {name:'南方纳斯达克100指数发起(QDII)C', code:'016453', cat:'海外', tags:['QDII','美股'], mv:10.01, ret:1.70, shares:4.49, costPx:2.2293}
 ];
 const SAMPLE_TRADE = [
-  {name:'上银丰益混合C', date:'2026-08-03', time:'14:57', type:'buy', amount:4000, nav:1.5127, fee:0},
-  {name:'摩根日本精选股票(QDII)C', date:'2026-08-03', time:'14:24', type:'buy', amount:500, nav:2.1673, fee:0}
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-01-22', time:'00:53', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-01-22', time:'19:16', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-01-27', time:'12:17', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-02-02', time:'14:59', type:'buy', amount:10, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-02-04', time:'14:31', type:'buy', amount:10, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-02-05', time:'14:54', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-02-09', time:'14:24', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-02-11', time:'14:38', type:'buy', amount:50, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-06', time:'14:49', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-10', time:'14:55', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-11', time:'14:58', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-12', time:'14:46', type:'sell', amount:219.61, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-16', time:'14:56', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-19', time:'14:58', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-24', time:'10:07', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-25', time:'14:35', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-03-30', time:'14:56', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-04-01', time:'14:57', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-04-02', time:'14:57', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-04-30', time:'14:54', type:'buy', amount:10, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-05-08', time:'14:28', type:'buy', amount:50, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-05-13', time:'14:36', type:'buy', amount:10, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-05-15', time:'14:49', type:'buy', amount:10, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-05-18', time:'13:57', type:'buy', amount:10, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-05-22', time:'14:58', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-05-26', time:'11:30', type:'convert', amount:87.88, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-05-26', time:'14:47', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-04', time:'14:38', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-17', time:'14:45', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-18', time:'14:49', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-22', time:'14:56', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-23', time:'14:39', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-24', time:'13:09', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-26', time:'13:42', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-06-30', time:'14:55', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-02', time:'13:04', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-04', time:'17:41', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-07', time:'10:04', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-08', time:'14:49', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-09', time:'13:14', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-10', time:'14:46', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-21', time:'13:22', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-22', time:'13:01', type:'buy', amount:100, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-23', time:'14:54', type:'buy', amount:200, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-24', time:'14:35', type:'buy', amount:200, locked:true},
+  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-29', time:'14:39', type:'buy', amount:200, locked:true}
 ];
 
 let snaps=[], trades=[], navCache={};
@@ -634,7 +681,7 @@ function restoreFocus(){
 
 // ---------- 持久化 ----------
 // ===== Schema 版本控制与自动迁移（重构第6项 · 防止旧数据升级白屏崩溃）=====
-const SCHEMA_VERSION = '2.0.0';
+const SCHEMA_VERSION = '2.1.0';
 
 // 语义化版本比较：a<b 返回负数
 function cmpVer(a, b){
@@ -662,6 +709,40 @@ const MIGRATIONS = [
         trades: Array.isArray(d.trades) ? d.trades : [],
         navCache: (d.navCache && typeof d.navCache==='object') ? d.navCache : {}
       };
+    }
+  },
+  {
+    to: '2.1.0',
+    up: function(d){
+      // 第1项三维解耦：旧数据把跨境工具 QDII 误当行业分类，重分类为行业 cat + tags 属性
+      const byCode = {
+        '022184': {cat:'芯片', tags:['QDII','全球']},
+        '017731': {cat:'芯片', tags:['QDII','全球']},
+        '019671': {cat:'医药', tags:['QDII','港股']},
+        '026755': {cat:'芯片', tags:['QDII','港股']},
+        '020989': {cat:'科技', tags:['QDII','港股']},
+        '019449': {cat:'海外', tags:['QDII','日本']},
+        '016453': {cat:'海外', tags:['QDII','美股']}
+      };
+      const byName = {
+        '富国全球科技互联网股票(QDII)C': '022184',
+        '嘉实全球产业升级股票发起式(QDII)C': '017731',
+        '广发港股创新药ETF联接(QDII)C': '019671',
+        '华宝中证港股通信息技术ETF发起联接': '026755',
+        '南方恒生科技ETF发起联接(QDII)C': '020989',
+        '摩根日本精选股票(QDII)C': '019449',
+        '南方纳斯达克100指数发起(QDII)C': '016453'
+      };
+      function remap(s){
+        const code=(s.code||'').toString();
+        const key = byCode[code] ? code : byName[s.name];
+        return byCode[key] || {cat:'海外', tags:['QDII']};
+      }
+      const snaps=(Array.isArray(d.snaps)?d.snaps:[]).map(s=>{
+        if(s && s.cat==='QDII'){ const m=remap(s); return Object.assign({}, s, {cat:m.cat, tags:m.tags}); }
+        return s;
+      });
+      return Object.assign({}, d, { schemaVersion:'2.1.0', updatedAt:new Date().toISOString(), snaps });
     }
   }
 ];
@@ -749,7 +830,7 @@ function renderAccountSummary(){
 }
 
 // ---------- 持仓列表 ----------
-const TRADE_TYPES=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','拆分']];
+const TRADE_TYPES=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','拆分'],['convert','转换转入'],['convert_out','转换转出']];
 function typeLabel(t){ const m=TRADE_TYPES.find(x=>x[0]===t); return m?m[1]:(t||'买入'); }
 function navFmt(v){ return v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'; }
 let openSet=new Set();
@@ -804,11 +885,13 @@ function renderHomeList(){
     const _nc=navCache[f.name];
     const _mkt=isMarketOpen(new Date());
     const estTag=(_mkt&&_nc&&_nc.gsz!=null)?`<span class="hl-sep">|</span><span class="est ${_nc.gszzl>=0?'pos':'neg'}">估 ${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>`:'';
+    const confirmTag=(!_mkt&&_nc&&_nc.date)?`<span class="hl-sep">|</span><span class="est confirm">确 ${_nc.date.slice(5)}</span>`:'';
     const head=`<div class="hl-head" onclick="toggleHold('${key}')">
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
+        ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')}
         <span class="tag">${f.account||'支付宝'}</span>
-        <span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
+        <span>成本 ${M(f.cost)}</span>${estTag||confirmTag}${dayFmt(f)}
       </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       <div class="hl-arrow">›</div>
@@ -881,8 +964,8 @@ let _profileLoaded=false;
 function loadProfile(){ try{const s=localStorage.getItem('ft_profile'); if(s){const p=JSON.parse(s); if(p&&typeof p==='object') userProfile={...userProfile,...p};}}catch(e){} _profileLoaded=true; }
 function saveProfile(){ try{localStorage.setItem('ft_profile',JSON.stringify(userProfile));}catch(e){} }
 function setProfile(k,v){ userProfile[k]=v; saveProfile(); render(); }
-const RISK_CATS=['芯片','周期资源','QDII','科技','制造','医药'];
-const CAT_COLORS={'芯片':'#e24b4b','周期资源':'#ba7517','QDII':'#378add','科技':'#7a4ab7','制造':'#993c1d','医药':'#0f8a63','宽基/行业':'#e0a800','混合/债':TH().down,'其他':'#888780'};
+const RISK_CATS=['芯片','周期资源','海外','科技','制造','医药'];
+const CAT_COLORS={'芯片':'#e24b4b','周期资源':'#ba7517','QDII':'#378add','海外':'#378add','科技':'#7a4ab7','制造':'#993c1d','医药':'#0f8a63','宽基/行业':'#e0a800','混合/债':TH().down,'其他':'#888780'};
 function profileModel(p){
   const base={'保守':{single:10,def:25,qdii:15},'稳健':{single:15,def:15,qdii:20},'激进':{single:25,def:8,qdii:25}}[p.risk]||{single:15,def:15,qdii:20};
   let def=base.def;
@@ -896,7 +979,7 @@ function suggestedAlloc(p){
   cur.forEach(([k,v])=>curMap[k]=v);
   const sug={}; let used=0;
   sug['混合/债']=M.def; used+=M.def;
-  RISK_CATS.forEach(c=>{ if(curMap[c]!=null){ sug[c]=Math.min(curMap[c], c==='QDII'?M.qdii:M.single); used+=sug[c]; } });
+  RISK_CATS.forEach(c=>{ if(curMap[c]!=null){ sug[c]=Math.min(curMap[c], M.single); used+=sug[c]; } });
   cur.forEach(([k,v])=>{ if(k==='混合/债'||k==='宽基/行业'||RISK_CATS.includes(k)) return; sug[k]=Math.min(v,M.single); used+=sug[k]; });
   sug['宽基/行业']=Math.max(0,100-used);
   return sug;
@@ -932,7 +1015,7 @@ function renderAdvice(){
     <div class="cc"><h3>当前配置</h3><div class="chart-box"><canvas id="pieCur"></canvas></div><div class="legend" id="pieCurLg"></div></div>
     <div class="cc"><h3>建议配置（${userProfile.risk}档）</h3><div class="chart-box"><canvas id="pieSug"></canvas></div><div class="legend" id="pieSugLg"></div></div>
   </div>`;
-  html+=`<div class="risk-legend"><span><i style="background:#e24b4b"></i>高风险：芯片/周期资源/QDII/科技等</span><span><i style="background:#e0a800"></i>中风险：宽基/行业</span><span><i style="background:#27ae60"></i>低风险：混合/债</span></div>`;
+  html+=`<div class="risk-legend"><span><i style="background:#e24b4b"></i>高风险：芯片/周期资源/海外/跨境(QDII)/科技等</span><span><i style="background:#e0a800"></i>中风险：宽基/行业</span><span><i style="background:#27ae60"></i>低风险：混合/债</span></div>`;
 
   const top3=catPct.slice(0,3), top3Pct=top3.reduce((a,b)=>a+b[1],0);
   const defCur=cats['混合/债']||0;
@@ -948,7 +1031,7 @@ function renderAdvice(){
       body:`当前前三大赛道「${top3str}」合计 ${top3Pct.toFixed(1)}%，且三者均属高风险成长 / 周期因子，相关性高、易同涨同跌，组合分散度不足，对单一风险因子的暴露过度集中。`,
       actions:[
         `将单一赛道占比压降至 ≤ ${M2.single}%（${userProfile.risk}档建议上限）`,
-        `优先削减周期性最强、回撤最快的「周期资源」类（有色 / 煤炭 / 化工），而非长期逻辑更顺的芯片 / QDII`,
+        `优先削减周期性最强、回撤最快的「周期资源」类（有色 / 煤炭 / 化工），而非长期逻辑更顺的芯片 / 跨境(QDII)`,
         `以"每月减仓约 5%"的节奏分批执行，规避一次性择时`
       ],
       alt:`若暂不方便卖出，可<b>暂停相关定投</b>，把后续新增资金全部导向宽基核心与防御资产，用"时间换空间"逐步稀释集中度，避免择时失误。`});
@@ -961,6 +1044,17 @@ function renderAdvice(){
         `防御仓作为组合稳定器，可显著降低整体波动、改善回撤体验`
       ],
       alt:`若风险偏好偏激进、不愿降低收益弹性，至少保留 <b>5–8% 货币基金 / 短债</b>作为流动性垫与应急仓。 <button class="btn sm" style="margin-top:6px" onclick="switchTab(3)">→ 去「债券」板块做配置规划</button>`});
+  }
+  const qdiiCur=qdiiShare();
+  if(qdiiCur>M2.qdii+2){
+    cards.push({prio: qdiiCur>M2.qdii*1.5?'high':'medium', badge: qdiiCur>M2.qdii*1.5?'高优先级':'中优先级', title:'跨境(QDII)仓位偏高',
+      body:`当前跨境(QDII)基金市值占比约 ${qdiiCur.toFixed(1)}%，高于${userProfile.risk}档建议上限 ${M2.qdii}%；跨境资产受人民币汇率、境外市场时差与税务影响，过度集中会放大单一外部冲击（如美元走弱、海外流动性收紧）。`,
+      actions:[
+        `将跨境总仓位压降至 ≤ ${M2.qdii}%（${userProfile.risk}档建议上限）`,
+        `优先用境内同类赛道（如 A股 芯片 / 医药 / 科技）替代部分重复敞口，降低汇率与跨时区风险`,
+        `保留宽基跨境（如纳斯达克100、恒生科技）作为长期卫星配置，严控单市场集中度`
+      ],
+      alt:`若看好全球科技长逻辑，可保留核心跨境仓，但用「本币对冲」或分散到多个市场（美股 + 港股 + 日本）降低单一货币风险。`});
   }
   if(dups.length||tiny.length){
     const dupStr=dups.map(([k,a])=>`${k} ${a.length} 只`).join('、');
@@ -994,7 +1088,7 @@ function renderAdvice(){
   html+=`<div class="plan"><h3>分阶段调整计划（${userProfile.risk}档 · ${userProfile.horizon}）</h3>
     <div class="pl"><div class="pl-m">第 1 个月</div><div class="pl-c">暂停芯片 / 周期资源新增定投；建立防御仓（起步约 ${Math.max(5,Math.round(M2.def/3))}%），记录当前持仓成本与净值警戒位。</div></div>
     <div class="pl"><div class="pl-m">第 2 个月</div><div class="pl-c">将周期资源压降至 ≤ ${M2.single}%，腾出资金补宽基核心（如沪深300 / 中证A500 等指数）。</div></div>
-    <div class="pl"><div class="pl-m">第 3 个月</div><div class="pl-c">QDII 降至 ≤ ${M2.qdii}%，防御提至 ${M2.def}%，完成一次再平衡；之后${hn}。</div></div>
+    <div class="pl"><div class="pl-m">第 3 个月</div><div class="pl-c">跨境(QDII)仓位 降至 ≤ ${M2.qdii}%，防御提至 ${M2.def}%，完成一次再平衡；之后${hn}。</div></div>
   </div>`;
 
   box.innerHTML=html;
@@ -1185,11 +1279,12 @@ function buildLiquidatedView(){
     if(!tr.length) return;
     let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null;
     tr.forEach(function(t){
-      const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0, sh=nav>0?amt/nav:0;
-      if(ty==='buy'){ totalBuy+=amt+fee; if(nav>0){ shares+=sh; cost+=amt+fee; } }
-      else if(ty==='sell'){ totalSell+=amt; if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
+      const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
+      const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
+      if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ shares+=sh; cost+=amt+fee; } }
+      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
       else if(ty==='dividend'){ div+=amt; cost=Math.max(0,cost-amt); realized+=amt; }
-      else if(ty==='reinvest'){ if(nav>0){ shares+=amt/nav; cost+=amt; } }
+      else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ shares+=rsh; cost+=amt; } }
       else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }
       if(shares<0) shares=0; if(cost<0) cost=0;
       if(ty==='buy'||ty==='reinvest'){ if(!firstBuy||t.date<firstBuy) firstBuy=t.date; }
@@ -1264,11 +1359,12 @@ function buildFundsView(){
       let shares=0,cost=0,firstDate=null,realized=0;
       const sortedTr=[...tr].sort((a,b)=>a.date.localeCompare(b.date));
       sortedTr.forEach(t=>{
-        const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0, sh=nav>0?amt/nav:0;
-        if(ty==='buy'){ if(nav>0){ shares+=sh; cost+=amt+fee; } /* T+1 待确认：净值未填则份额/成本待结算后计算 */ }
-        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
+        const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
+        const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
+        if(ty==='buy'||ty==='convert'){ if(sh>0){ shares+=sh; cost+=amt+fee; } /* 手动份额优先，否则金额÷净值（T+1 待确认） */ }
+        else if(ty==='sell'||ty==='convert_out'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
         else if(ty==='dividend'){ cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
-        else if(ty==='reinvest'){ if(nav>0) shares+=amt/nav; cost+=amt; }        // 红利再投：增份额、加成本（无申购费）
+        else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
         else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }             // 份额拆分：份额×比例、成本不变
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||t.date<firstDate) firstDate=t.date;
@@ -1276,17 +1372,17 @@ function buildFundsView(){
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
       if(shares===0 && snap){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
-        f={name,cat,account:acc,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(nav?c0/nav:null)),trades:tr,realized:0};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(nav?c0/nav:null)),trades:tr,realized:0};
       } else {
         const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:0);
         const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
-        f={name,cat,account:acc,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized};
       }
     } else {
       const mv=snap?snap.mv:0, ret=snap?snap.ret:0, cost=mv/(1+ret/100), profit=mv-cost, nav=navCache[name]?navCache[name].nav:null;
       const ss=snap&&snap.shares!=null?snap.shares:null;
       const cpx=snap&&snap.costPx!=null?snap.costPx:((nav&&mv)?cost/mv*nav:null);
-      f={name,cat,account:acc,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
+      f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
     }
     return f;
   });
@@ -1296,10 +1392,10 @@ function buildFundsView(){
   fundsView = all.filter(f=> (accF==null||f.account===accF) && (grpF==null||f.cat===grpF));
 }
 function guessCat(name){
-  if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康/.test(name)) return '医药';
+  if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康|药/.test(name)) return '医药';
   if(/有色|煤炭|化工|钢铁|资源|稀土/.test(name)) return '周期资源'; if(/军工|国防/.test(name)) return '制造';
-  if(/港股|恒生|纳斯达克|日本|全球|QDII|海外|美国|标普|道琼/.test(name)) return 'QDII';
-  if(/金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网/.test(name)) return '科技';
+  if(/日本|纳斯达克|标普|道琼|美国|全球|海外/.test(name)) return '海外';
+  if(/港股|恒生|QDII|金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网/.test(name)) return '科技';
   if(/混合|债|货币/.test(name)) return '混合/债'; if(/指数|ETF|联接/.test(name)) return '宽基/行业'; return '其他';
 }
 const CONFIG={tinyThreshold:1000,takeProfit1:15,takeProfit2:20,stopLoss:-15,top3Warn:70,singleWarn:20};
@@ -1307,6 +1403,12 @@ function getCatAllocation(){
   const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   return Object.entries(cats).map(([k,v])=>[k,total?v/total*100:0]).sort((a,b)=>b[1]-a[1]);
+}
+function qdiiShare(){
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  if(!total) return 0;
+  const q=fundsView.reduce((a,f)=>a+((f.tags&&f.tags.indexOf('QDII')>=0)?f.mv:0),0);
+  return total?q/total*100:0;
 }
 let collapseMicro=false, sectorView=0;
 function renderThemeHeat(){
@@ -1414,7 +1516,7 @@ function renderDetailLive(arg){
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=ANALYSIS[f.name];
   return `<div class="card detail-head">
-    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'支付宝'}</span> &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
+    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'支付宝'}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
     <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">删除该基金</button></div></div>
     <div class="cards4">
       <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">${M(f.mv)}</p></div>
@@ -1475,10 +1577,11 @@ function liveSection(f){
     <input id="nf-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="金额(元)">
     <input id="nf-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="净值(留空=T+1)">
     <input id="nf-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="费用(元)">
+    <input id="nf-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="确认份额(可选)">
     <button class="btn sm primary" onclick="addTradeForForm('${encodeURIComponent(f.name)}')">💾 保存并锁定</button>
   </div></div>`;
   if(tr.length){
-    h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th></th></tr></thead><tbody>`;
+    h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
     tr.forEach(t=>{
       const i=trades.indexOf(t);
       if(t.locked!==false){
@@ -1489,6 +1592,7 @@ function liveSection(f){
           <td class="num">${M(t.amount)}</td>
           <td class="num">${t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class="pending-nav">待填</span>'}</td>
           <td class="num">${t.fee?M(t.fee):'—'}</td>
+          <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'—'}</td>
           <td><button class="lk" title="解锁编辑" onclick="unlockTrade(${i})">🔓</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
         </tr>`;
       } else {
@@ -1500,6 +1604,7 @@ function liveSection(f){
           <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
           <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
           <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
+          <td class="num"><input data-fld="t-shares-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.shares||''}" placeholder="份额" oninput="trades[${i}].shares=+this.value;compute();silentSave()"></td>
           <td><button class="lk lock" title="锁定" onclick="lockTrade(${i})">🔒</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
         </tr>`;
       }
@@ -1543,13 +1648,14 @@ function addTradeForForm(enc){
   const g=id=>document.getElementById(id);
   const date=g('nf-date').value, time=g('nf-time').value, type=g('nf-type').value, acc=g('nf-acc').value;
   const navRaw=g('nf-nav').value, amount=+g('nf-amount').value||0, fee=+g('nf-fee').value||0;
+  const shRaw=g('nf-shares').value, shares=(shRaw===''||shRaw==null)?null:+shRaw;
   const nav=(navRaw===''||navRaw==null)?null:+navRaw;
   if(!date){ toast('请填写交易日期'); return; }
   if(!amount){ toast('请填写金额'); return; }
-  trades.push({name,account:acc,date,time,type,amount,nav,fee,locked:true});
+  trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
   silentSave(); compute();
   toast('已保存并锁定 · '+typeLabel(type)+' '+M(amount));
-  g('nf-amount').value=''; g('nf-nav').value=''; g('nf-fee').value='';
+  g('nf-amount').value=''; g('nf-nav').value=''; g('nf-fee').value=''; g('nf-shares').value='';
 }
 function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); } }
 function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); } }
@@ -2285,7 +2391,7 @@ async function refresh(){
     let filled=0;
     trades.forEach(t=>{
       if(t.nav!=null && t.nav!=='' && !isNaN(+t.nav)) return;          // 已填净值
-      if(t.type && t.type!=='buy' && t.type!=='reinvest') return;      // 仅买入类需净值
+      if(t.type && !['buy','reinvest','convert'].includes(t.type)) return;      // 仅买入/红利再投/转换转入需净值
       if(!(t.name in navCache)) return;
       const nav=navCache[t.name].nav; if(nav==null) return;
       let settle=new Date(String(t.date).replace(/-/g,'/'));

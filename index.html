@@ -2891,30 +2891,27 @@ function updateDetailHeader(f){
   const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.classList.remove('pos','neg'); e3.classList.add(f.realized>=0?'pos':'neg');}
 }
 function genericDetail(f){
+  const tr=(trades||[]).filter(t=>t.name===f.name);
+  // 交易型基金：基础数据全部由交易流水 FIFO 自动算出，详情页头部 + 下方「交易流水 / 回本计算器 / 止盈止损」
+  // 已完整覆盖，不再重复渲染「基金基础数据」卡片（避免快照手填值与 FIFO 计算值打架），也不画冗余的「成本 vs 现价」单条对比。
+  if(tr.length) return '';
+  // 纯快照基金（无交易流水）才保留可编辑入口，否则「＋ 加一只基金」加进来的基金无法填数；
+  // 已移除「成本 vs 现价」对比条与调试说明，仅保留必要字段。
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
-  const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero';
-  const mx=Math.max(f.cost,f.mv,1), costPct=(f.cost/mx*100).toFixed(1), mvPct=(f.mv/mx*100).toFixed(1);
   const navVal=navCache[f.name]?navCache[f.name].nav:'';
   const _nc=navCache[f.name]||{}, _mkt=isMarketOpen(new Date());
   const estRow=(_mkt&&_nc.gsz!=null)?`<tr><td>盘中估算</td><td>${mask4(_nc.gsz)} <span class="${_nc.gszzl>=0?'pos':'neg'}">${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>${_nc.gztime?` <span class="hint">@${_nc.gztime.slice(11,16)}</span>`:''}</td></tr>`:'';
   const mvIn = si>=0 ? `<input data-fld="s-mv-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].mv}" oninput="snaps[${si}].mv=+this.value;compute();silentSave()">` : M(f.mv);
   const retIn = si>=0 ? `<input data-fld="s-ret-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()">` : (f.ret>=0?'+':'')+f.ret.toFixed(2)+'%';
   const navIn = si>=0 ? `<input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()">` : (navVal?mask4(navVal):'自动/未填');
-  let h=`<div class="card"><h2>基金基础数据（可直接改）</h2><table class="am-t"><tbody>
+  let h=`<div class="card"><h2>基金基础数据</h2><table class="am-t"><tbody>
     <tr><th>类别</th><td>${f.cat}</td><th>持有份额</th><td>${f.shares!=null?fmt(f.shares):'—'}</td></tr>
     <tr><th>当前市值</th><td>${mvIn}</td><th>成本</th><td>${M(f.cost)}</td></tr>
-    <tr><th>持有收益</th><td class="${pcls}">${f.profit>=0?'+':''}${M(f.profit)}</td><th>收益率</th><td>${retIn}</td></tr>
+    <tr><th>持有收益</th><td class="${f.profit>0?'pos':f.profit<0?'neg':''}">${f.profit>=0?'+':''}${M(f.profit)}</td><th>收益率</th><td>${retIn}</td></tr>
     <tr><th>持有天数</th><td>${f.days!=null?f.days+' 天':'—'}</td><th>最新净值 ${navBadge(_nc)}</th><td>${navIn}</td></tr>
     ${estRow}
     </tbody></table>
-    <p class="hint">市值 / 收益率 / 净值：把基金 App 里的数抄进来，改动即时存本地；份额、成本由交易流水自动算。</p>
-    <h4 class="am-h"><span class="n">★</span>成本 vs 现价</h4>
-    <div class="cmp-bar">
-      <div class="cb-row"><span class="cb-l">成本</span><div class="cb-track"><div class="cb-fill" style="width:${costPct}%"></div></div><span class="cb-v">${M(f.cost)}</span></div>
-      <div class="cb-row"><span class="cb-l">当前</span><div class="cb-track"><div class="cb-fill cur" style="width:${mvPct}%"></div></div><span class="cb-v">${M(f.mv)}</span></div>
-    </div>
-    <div class="am-note">说明：本对比基于你的持仓成本与当前市值，不含历史净值走势。若要每日净值走势曲线，需接入历史 NAV 数据（可后续补充）。</div></div>`;
-  h+=`<div class="card"><h2>个人复盘 & 调仓笔记</h2><div class="am-note">暂无。可在「分析」Tab 看整体建议，或把你的判断发我整理进来。</div></div>`;
+    <p class="hint">无交易流水，数值为手动维护；一旦记录交易流水，此处自动隐藏，改由「交易流水」精确计算（FIFO 先进先出）。</p></div>`;
   return h;
 }
 function liveSection(f){

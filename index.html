@@ -205,7 +205,6 @@
   .hk-table th { color: var(--text-3); font-weight: 600; }
   .hk-table td.hk-rank { color: var(--text-3); text-align: center; }
   .hk-table td.hk-name { text-align: left; font-weight: 600; }
-  .hk-table td.hk-sec { text-align: left; color: var(--text-2); }
   .hk-table td.hk-chg.pos { color: var(--up); }
   .hk-table td.hk-chg.neg { color: var(--down); }
   .nav-edit:hover { border-bottom-color: var(--accent-text); color: var(--accent-text); }
@@ -2705,11 +2704,19 @@ async function renderFundHoldings(f){
   const total=stocks.reduce((s,x)=>s+(+x.JZBL||0),0);
   const rows=stocks.map((x,i)=>{
     const pct=+x.JZBL||0;
-    const chg=(x.PCTNVCHG!=null&&x.PCTNVCHG!=='')?(+x.PCTNVCHG).toFixed(2)+'%':'—';
-    const tagCls=x.PCTNVCHGTYPE==='增持'?'pos':x.PCTNVCHGTYPE==='减持'?'neg':'';
-    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${esc(x.GPJC||x.GPDM||'—')}</td><td class="hk-sec">${esc(x.INDEXNAME||'—')}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg ${tagCls}">${esc(x.PCTNVCHGTYPE||'—')+' '+chg}</td></tr>`;
+    const chgVal=(x.PCTNVCHG!=null&&x.PCTNVCHG!=='')?+x.PCTNVCHG:null;
+    const t=x.PCTNVCHGTYPE;
+    let chgCell='—';
+    if(chgVal!=null){
+      const v=Math.abs(chgVal).toFixed(2);
+      if(t==='增持') chgCell=`<span class="pos">+${v}%</span>`;
+      else if(t==='减持') chgCell=`<span class="neg">-${v}%</span>`;
+      else if(t==='新增'||t==='新进') chgCell=`<span class="pos">新进 +${v}%</span>`;
+      else chgCell=`<span class="${chgVal>=0?'pos':'neg'}">${(chgVal>=0?'+':'')+v}%</span>`;
+    } else if(t==='不变'){ chgCell='不变'; }
+    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${esc(x.GPJC||x.GPDM||'—')}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg">${chgCell}</td></tr>`;
   }).join('');
-  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>行业</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 async function refresh(){
   const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';

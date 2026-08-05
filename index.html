@@ -795,6 +795,46 @@ input[type="number"] { -moz-appearance: textfield; }
   window.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️ 亮色':'🌙 暗色'; showBackupReminder();});
   if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){ try{ if((localStorage.getItem('ft_theme')||'system')==='system'){ document.documentElement.setAttribute('data-theme', e.matches?'dark':'light'); } }catch(_){} }); }catch(_){} }
 </script>
+<style>
+  /* ===== 个人复盘 & 调仓笔记（决策复盘日记 · 方案C-lite） ===== */
+  .rv-queue{border:1px solid var(--border,#e6eaf0);border-radius:10px;padding:10px 12px;margin-bottom:14px;background:var(--surface-2,#f6f8fb)}
+  .rv-qh{font-size:12.5px;font-weight:600;margin-bottom:8px}
+  .rv-qh.rv-muted{font-weight:400;color:var(--text-3,#8a93a3)}
+  .rv-qitem{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--text-2,#3c4654);padding:6px 0;border-top:1px dashed var(--border-2,#eef1f6)}
+  .rv-qitem:first-of-type{border-top:none}
+  .rv-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .rv-empty{text-align:center;padding:30px 12px;color:var(--text-3,#8a93a3)}
+  .rv-empty .ico{font-size:30px;opacity:.5}
+  .rv-item{background:var(--surface,#fff);border:1px solid var(--border-2,#eef1f6);border-radius:10px;padding:11px 13px;margin-bottom:10px}
+  .rv-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .rv-date{font-size:13px;font-weight:700;color:var(--text,#1f2733)}
+  .rv-track{font-size:11px;color:var(--accent,#3b6fd4);background:#eaf1fc;padding:2px 8px;border-radius:20px}
+  .rv-done{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+  .rv-done.hit{color:#1f9d55;background:#e7f5ee}
+  .rv-done.miss{color:#d8453a;background:#fbecea}
+  .rv-acts{margin-left:auto;display:flex;gap:6px}
+  .rv-snap{font-size:11px;color:var(--text-3,#8a93a3);background:var(--surface-2,#f6f8fb);border-radius:6px;padding:4px 8px;margin:7px 0;display:inline-block}
+  .rv-tags{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 0}
+  .rv-tags .tag{font-size:11.5px;padding:2px 8px;border-radius:20px;background:#eef1f6;color:#5a6678;border:1px solid #e2e5ea}
+  .rv-body{font-size:13px;line-height:1.65;color:var(--text-2,#3c4654);margin-top:7px;white-space:pre-wrap}
+  .rv-exp{font-size:12px;color:var(--text-2,#3c4654);margin-top:6px}
+  .rv-out{font-size:12px;margin-top:6px;padding:6px 9px;border-radius:7px;line-height:1.55}
+  .rv-out.hit{background:#e7f5ee;color:#1f7a45}
+  .rv-out.miss{background:#fbecea;color:#a83a2c}
+  .rv-ed{background:var(--surface-2,#f6f8fb);border:1px solid var(--border,#e6eaf0);border-radius:12px;padding:14px;margin-bottom:14px}
+  .rv-row{display:flex;gap:10px;flex-wrap:wrap}
+  .rv-f{flex:1;min-width:140px}
+  .rv-f label,.rv-ed>label{font-size:11.5px;color:var(--text-3,#8a93a3);display:block;margin-bottom:4px}
+  .rv-ed input[type=date],.rv-ed input[type=text],.rv-ed textarea{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--border,#e6eaf0);border-radius:8px;background:#fff;color:var(--text,#1f2733);width:100%}
+  .rv-ed textarea{min-height:74px;resize:vertical;line-height:1.6}
+  .rv-of{margin-top:8px;display:flex;flex-direction:column;gap:7px}
+  .rv-of label{font-size:12px;color:var(--text-2,#3c4654);display:inline-flex;gap:5px;align-items:center;margin-right:12px}
+  .rv-of textarea{min-height:46px;font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--border,#e6eaf0);border-radius:7px;resize:vertical;width:100%}
+  .btn.tiny{font-size:11.5px;padding:4px 9px;border-radius:7px}
+  .btn.tiny.danger{color:#d8453a;border-color:#f1c9c2;background:#fdecea}
+  .btn.ghost{background:var(--surface,#fff);color:var(--accent,#3b6fd4);border:1px solid #cfe0fb}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -1894,7 +1934,7 @@ function renderHomeList(){
   if(curAccount && curAccount!=='全部') list=list.filter(f=> (f.account||'我的')===curAccount || (f.acc||'我的')===curAccount);
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   // 动态标题：跟随当前账户
-  const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=curAccount==='全部'?'全部持仓':curAccount+'的持仓';
+  const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=curAccount==='全部'?'全部持仓':(curAccount==='我的'?'我的持仓':curAccount+'的持仓');
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
   // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }
@@ -2805,6 +2845,107 @@ function recordSnapshot(){
   silentSave();
 }
 
+/* ============ 个人复盘 & 调仓笔记（决策复盘日记 · 方案C-lite） ============ */
+const REVIEW_KEY='ft_review';
+let reviewNotes=reviewLoad();
+let reviewCurFund='';
+let reviewEditing=null, reviewDraft=null;
+function reviewLoad(){ try{ const a=JSON.parse(localStorage.getItem(REVIEW_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function reviewSave(){ try{ localStorage.setItem(REVIEW_KEY, JSON.stringify(reviewNotes)); }catch(e){} }
+function reviewToday(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function reviewSnap(fundName){
+  const f=fundsView.find(x=>x.name===fundName);
+  let nav=null; const nc=navCache[fundName]; if(nc&&nc.gsz!=null) nav=+nc.gsz; else if(nc&&nc.nav!=null) nav=+nc.nav;
+  let pnl=null, weight=null;
+  if(f){ pnl=(f.ret!=null? f.ret*100 : null); const tot=fundsView.reduce((a,x)=>a+(x.mv||0),0); weight=tot>0? f.mv/tot*100 : null; }
+  return {nav, pnl, weight};
+}
+function rvEsc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function reviewCardHtml(fund){
+  return '<div class="card" id="reviewCard"><div class="sec-head"><h2 style="margin:0;font-size:14px">📓 个人复盘 &amp; 调仓笔记 <span class="tag">本地保存</span></h2></div><div id="reviewBody">'+reviewInner(fund)+'</div></div>';
+}
+function reviewInner(fund){
+  reviewCurFund=fund||'';
+  const list=reviewNotes.filter(n=>(n.fund||'')===reviewCurFund);
+  const due=list.filter(n=>n.expect&&!n.outcome&&(n.expect.due||'')<=reviewToday());
+  let h='';
+  h+='<div class="rv-queue">';
+  if(due.length){ h+='<div class="rv-qh">⏰ 待回看（'+due.length+'）· 当时写的预期，到点了该回来验收了</div>';
+    due.forEach(n=>{ h+='<div class="rv-qitem"><div><b>'+rvEsc(n.date)+'</b> · 预期：'+rvEsc(n.expect.text)+'（'+n.expect.due+'）</div><button class="btn tiny" onclick="reviewFill('+n.id+')">填回看</button></div>'; });
+  } else { h+='<div class="rv-qh rv-muted">✓ 没有到期的预期，暂无待回看</div>'; }
+  h+='</div>';
+  h+=`<div class="rv-bar"><button class="btn" onclick="reviewNew()">＋ 新建复盘笔记</button><button class="btn ghost" onclick="reviewExportMD()">⬇ MD</button><button class="btn ghost" onclick="reviewExportJSON()">⬇ JSON</button><button class="btn ghost" onclick="document.getElementById('rvImp').click()">⬆ 导入</button><input type="file" id="rvImp" accept="application/json,.json" style="display:none" onchange="reviewImport(this)"></div>`;
+  if(!list.length){ h+='<div class="rv-empty"><div class="ico">📝</div><p style="margin:10px 0 0;font-size:13.5px">暂无复盘笔记，记录下这次买卖的逻辑吧</p></div>'; }
+  else {
+    list.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(n=>{
+      h+='<div class="rv-item">';
+      h+='<div class="rv-top"><span class="rv-date">⏱ '+rvEsc(n.date)+'</span>';
+      if(n.expect&&!n.outcome) h+='<span class="rv-track">跟踪中 · '+rvEsc(n.expect.due)+'</span>';
+      if(n.outcome) h+='<span class="rv-done '+(n.outcome.hit?'hit':'miss')+'">'+(n.outcome.hit?'✓ 已兑现':'✗ 未兑现')+'</span>';
+      h+='<span class="rv-acts"><button class="btn tiny" onclick="reviewEdit('+n.id+')">编辑</button><button class="btn tiny danger" onclick="reviewDel('+n.id+')">删除</button></span></div>';
+      if(n.snap&&(n.snap.nav!=null||n.snap.pnl!=null||n.snap.weight!=null)){
+        h+='<div class="rv-snap">📌 自动快照 · ';
+        if(n.snap.nav!=null) h+='净值 '+n.snap.nav+' ';
+        if(n.snap.pnl!=null) h+='· 持仓盈亏 '+(n.snap.pnl>0?'+':'')+n.snap.pnl.toFixed(2)+'% ';
+        if(n.snap.weight!=null) h+='· 仓位 '+n.snap.weight.toFixed(1)+'%';
+        h+='</div>';
+      }
+      if(n.tags&&n.tags.length) h+='<div class="rv-tags">'+n.tags.map(t=>'<span class="tag">#'+rvEsc(t)+'</span>').join('')+'</div>';
+      h+='<div class="rv-body">'+rvEsc(n.body)+'</div>';
+      if(n.expect) h+='<div class="rv-exp">🎯 预期：'+rvEsc(n.expect.text)+(n.expect.due?('（'+rvEsc(n.expect.due)+'）'):'')+'</div>';
+      if(n.outcome) h+='<div class="rv-out '+(n.outcome.hit?'hit':'miss')+'">'+(n.outcome.hit?'兑现':'未兑现')+'结论：'+rvEsc(n.outcome.note)+'</div>';
+      h+='<div id="rvOf'+n.id+'"></div></div>';
+    });
+  }
+  h+='<div id="rvEditor"></div>';
+  return h;
+}
+function reviewRender(fund){ const b=document.getElementById('reviewBody'); if(b) b.innerHTML=reviewInner(fund); }
+function reviewNew(){ reviewEditing=null; reviewDraft={date:reviewToday(),fund:reviewCurFund,tags:'',body:'',expect:'',due:''}; reviewEditorRender(); }
+function reviewEdit(id){ const n=reviewNotes.find(x=>x.id===id); if(!n) return; reviewEditing=id; reviewDraft={date:n.date,fund:n.fund||'',tags:(n.tags||[]).join(' '),body:n.body,expect:n.expect?n.expect.text:'',due:n.expect?n.expect.due:''}; reviewEditorRender(); }
+function reviewEditorRender(){
+  const e=document.getElementById('rvEditor'); if(!e) return;
+  e.innerHTML='<div class="rv-ed"><div class="rv-row"><div class="rv-f"><label>日期</label><input type="date" id="rvDate" value="'+reviewDraft.date+'"></div><div class="rv-f"><label>关联标的（留空=全局笔记）</label><input type="text" id="rvFund" value="'+rvEsc(reviewDraft.fund)+'" placeholder="如 富国全球科技互联网(QDII)C"></div></div><div class="rv-f" style="margin:8px 0"><label>标签（空格分隔，自动加 #）</label><input type="text" id="rvTags" value="'+rvEsc(reviewDraft.tags)+'" placeholder="止盈 抄底 追高警告"></div><label>复盘笔记</label><textarea id="rvBody" placeholder="记录这次买卖的逻辑、当时的判断、后续计划…">'+rvEsc(reviewDraft.body)+'</textarea><div class="rv-f" style="margin:8px 0"><label>预期（可选）</label><input type="text" id="rvExpect" value="'+rvEsc(reviewDraft.expect)+'" placeholder="我预期__会发生"></div><div class="rv-f" style="margin-bottom:8px"><label>回看日期（可选）</label><input type="date" id="rvDue" value="'+reviewDraft.due+'"></div><div class="rv-acts"><button class="btn" onclick="reviewCommit()">'+(reviewEditing?'保存修改':'添加笔记')+'</button><button class="btn ghost" onclick="reviewCancel()">取消</button></div></div>';
+  const ta=document.getElementById('rvBody'); if(ta) ta.focus();
+}
+function reviewCommit(){
+  const tags=document.getElementById('rvTags').value.split(/\s+/).map(s=>s.replace(/^#/,'').trim()).filter(Boolean);
+  const expectText=document.getElementById('rvExpect').value.trim();
+  const due=document.getElementById('rvDue').value;
+  const fund=document.getElementById('rvFund').value.trim();
+  const body=document.getElementById('rvBody').value.trim();
+  const date=document.getElementById('rvDate').value;
+  const snap=reviewSnap(fund||reviewCurFund);
+  let expect=null;
+  if(expectText&&due) expect={text:expectText,due}; else if(expectText) expect={text:expectText,due:''}; else if(due) expect={text:'',due};
+  if(reviewEditing){ const n=reviewNotes.find(x=>x.id===reviewEditing); n.date=date; n.fund=fund; n.tags=tags; n.body=body; n.expect=expect; n.snap=snap; }
+  else { reviewNotes.unshift({id:Date.now(),date,fund,tags,body,expect,snap,outcome:null}); }
+  reviewEditing=null; reviewDraft=null;
+  reviewSave(); reviewRender(reviewCurFund);
+}
+function reviewCancel(){ reviewEditing=null; reviewDraft=null; const e=document.getElementById('rvEditor'); if(e) e.innerHTML=''; }
+function reviewDel(id){ if(!confirm('确定删除这条复盘笔记？')) return; reviewNotes=reviewNotes.filter(x=>x.id!==id); reviewSave(); reviewRender(reviewCurFund); }
+function reviewFill(id){ const e=document.getElementById('rvOf'+id); if(!e) return; e.innerHTML='<div class="rv-of"><label><input type="radio" name="rvh'+id+'" value="1"> 兑现了</label><label><input type="radio" name="rvh'+id+'" value="0"> 没兑现</label><textarea id="rvOn'+id+'" placeholder="复盘结论：当时判断对在哪/错在哪，下次怎么改"></textarea><button class="btn tiny" onclick="reviewSaveOutcome('+id+')">保存回看</button></div>'; }
+function reviewSaveOutcome(id){ const n=reviewNotes.find(x=>x.id===id); if(!n) return; const hit=document.querySelector('input[name="rvh'+id+'"]:checked'); const note=(document.getElementById('rvOn'+id).value||'').trim(); n.outcome={hit:!!(hit&&hit.value==='1'),note}; reviewSave(); reviewRender(reviewCurFund); }
+function reviewDownload(name,text,type){ const b=new Blob([text],{type:type||'text/plain;charset=utf-8'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(u);},1000); }
+function reviewExportMD(){
+  if(!reviewNotes.length){ alert('还没有笔记可导出'); return; }
+  let md='# 个人复盘 & 调仓笔记\n\n> 导出时间 '+new Date().toLocaleString('zh-CN')+'\n\n';
+  reviewNotes.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(n=>{
+    md+='## '+n.date+' · '+(n.fund||'全局笔记')+'\n';
+    if(n.tags&&n.tags.length) md+='**标签：** '+n.tags.map(t=>'#'+t).join(' ')+'\n\n';
+    if(n.snap&&(n.snap.nav!=null||n.snap.pnl!=null||n.snap.weight!=null)) md+='> 快照：'+(n.snap.nav!=null?'净值 '+n.snap.nav:'')+' '+(n.snap.pnl!=null?'持仓盈亏 '+(n.snap.pnl>0?'+':'')+n.snap.pnl.toFixed(2)+'%':'')+' '+(n.snap.weight!=null?'仓位 '+n.snap.weight.toFixed(1)+'%':'')+'\n\n';
+    md+=n.body+'\n\n';
+    if(n.expect) md+='**预期：** '+n.expect.text+(n.expect.due?('（'+n.expect.due+'）'):'')+'\n\n';
+    if(n.outcome) md+='**回看：** '+(n.outcome.hit?'已兑现':'未兑现')+' — '+n.outcome.note+'\n\n';
+    md+='---\n\n';
+  });
+  reviewDownload('复盘笔记_'+reviewToday()+'.md', md, 'text/markdown;charset=utf-8');
+}
+function reviewExportJSON(){ const p={app:'fund-tracker',type:'review-notes',version:1,exportedAt:new Date().toISOString(),notes:reviewNotes}; reviewDownload('复盘笔记_'+reviewToday()+'.json', JSON.stringify(p,null,2),'application/json'); }
+function reviewImport(input){ const f=input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const d=JSON.parse(r.result); const arr=Array.isArray(d)?d:(d&&d.notes)||[]; if(!Array.isArray(arr)||!arr.length) throw 0; if(confirm('导入将覆盖当前 '+reviewNotes.length+' 条笔记，确定继续？')){ reviewNotes=arr; reviewSave(); reviewRender(reviewCurFund); } }catch(e){ alert('文件格式不对，无法导入（需本 app 导出的 JSON）'); } }; r.readAsText(f); input.value=''; }
+
+
 // ---------- 渲染调度 ----------
 function render(){
   captureFocus();
@@ -3007,6 +3148,7 @@ function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
+  live.innerHTML += reviewCardHtml(f.name);
   try{ live.innerHTML += parallelUniverseCard(f); }catch(e){ console.error(e); }
   try{ parallelUniverseExtras(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
   if(window._autoTrade){ window._autoTrade=false; const d=document.getElementById('nf-date'); if(d){ d.focus(); toast('填写交易信息后点「💾 保存并锁定」（净值可留空，T+1 自动填）'); } }
@@ -3122,26 +3264,63 @@ function liveSection(f){
   const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
   if(f.shares!=null && calcNav){
     const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(calcNav>0&&curCost)?(curCost-calcNav)/calcNav*100:0;
-    h+=`<div class="card"><h2>回本 / 补仓计算器</h2>
-      <p class="hint">当前持仓成本 <b>${M(curCost)}</b>/份，最新净值 <b>${calcNav.toFixed(4)}</b>${f.nav?'':'（按市值/份额推算）'}，需再涨 <b class="${need>0?'neg':'pos'}">${need>=0?'+':''}${need.toFixed(2)}%</b> 回本。</p>
-      <div style="display:flex;gap:8px;align-items:center;margin:8px 0">
-        <span style="font-size:13px">计划补仓</span>
-        <input id="bkAmt" type="number" step="any" inputmode="decimal" placeholder="如 2000" style="width:120px;padding:6px;border:1px solid #d0d3d9;border-radius:8px;font-size:13px" oninput="bkCalc('${encodeURIComponent(f.name)}',this.value)">
-        <span style="font-size:13px;color:var(--text-3)">元</span>
+    h+=`<div class="card"><h2>回本 / 补仓计算器 <span class="tag">实时模拟</span></h2>
+      <p class="hint">基于你的真实持仓成本与最新净值，直观看到离回本还差多少；补仓会拉低均价，下方即时换算。</p>
+      <div class="bk-prog">
+        <div class="bk-prog-head"><span class="lbl">回本进度</span><span class="gap ${need>0?'neg':'pos'}">${need>0?'还差 +':''}${need.toFixed(1)}%</span></div>
+        <div class="bk-bar"><div class="bk-fill" style="width:${Math.min(100,calcNav/curCost*100).toFixed(1)}%"></div><div class="bk-target"></div></div>
+        <div class="bk-scale"><span>当前净值 ${calcNav.toFixed(4)}</span><span>回本价 ${curCost.toFixed(4)}</span></div>
       </div>
-      <div id="bkRes" class="advice">输入补仓金额查看预测。</div>
+      <div class="cards3">
+        <div class="mcard"><div class="lbl">当前成本</div><div class="val">${curCost.toFixed(4)}</div></div>
+        <div class="mcard"><div class="lbl">最新净值</div><div class="val">${calcNav.toFixed(4)}</div></div>
+        <div class="mcard"><div class="lbl">距回本</div><div class="val ${need>0?'neg':'pos'}">${need>=0?'+':''}${need.toFixed(2)}%</div></div>
+      </div>
+      <div class="bk-calc">
+        <div class="bk-calc-title">补仓模拟</div>
+        <div class="bk-input">
+          <span>计划补仓</span>
+          <input id="bkAmt" type="number" step="any" inputmode="decimal" placeholder="如 2000" oninput="bkCalc('${encodeURIComponent(f.name)}',this.value)">
+          <span class="unit">元</span>
+        </div>
+        <div class="bk-compare">
+          <div class="bk-col"><div class="bk-col-title">补仓前</div><div class="bk-line">成本<b>${curCost.toFixed(4)}</b></div><div class="bk-line">需涨<b class="${need>0?'neg':'pos'}">${need>=0?'+':''}${need.toFixed(2)}%</b></div></div>
+          <div class="bk-arrow">→</div>
+          <div class="bk-col after"><div class="bk-col-title">补仓后</div><div class="bk-line">成本<b id="c1cost">—</b></div><div class="bk-line">需涨<b id="c1need" class="neg">—</b></div></div>
+        </div>
+        <div class="bk-extra" id="bkExtra">输入补仓金额查看预测。</div>
+      </div>
     </div>`;
   }
   const al=alerts[f.name]||{};
-  h+=`<div class="card"><h2>止盈 / 止损预警线</h2>
-    <p class="hint">设置后，首页列表里该基金会按当前收益率高亮提醒（刷新后生效）。</p>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-      <label style="font-size:13px">止盈 +<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.tp!=null?al.tp:''}" placeholder="如 20" oninput="setAlert('${encodeURIComponent(f.name)}','tp',this.value)">%</label>
-      <label style="font-size:13px">止损 −<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.sl!=null?al.sl:''}" placeholder="如 15" oninput="setAlert('${encodeURIComponent(f.name)}','sl',this.value)">%</label>
+  const curRet=(f.ret!=null?f.ret:0);
+  h+=`<div class="card"><h2>止盈 / 止损预警线 <span class="tp-badge" id="tpBadge">监控中</span></h2>
+    <p class="hint">设置后，首页列表会按当前收益率高亮提醒（刷新后生效）。下方标尺实时显示你当前处于哪个区间。</p>
+    <div class="tp-status">当前收益率 <b class="${curRet>=0?'pos':'neg'}" id="tpCur">${curRet>=0?'+':''}${curRet.toFixed(1)}%</b> · 距止盈线还有 <b id="tpRemain">—</b></div>
+    <div class="tp-scalewrap" id="tpScalewrap" style="display:none">
+      <div class="tp-end left">止损线<b id="tpSlVal">—</b></div>
+      <div class="tp-end right">止盈线<b id="tpTpVal">—</b></div>
+      <div class="tp-track"><div class="tp-marker" id="tpMarker" data-y="" style="left:50%"></div></div>
+    </div>
+    <div class="tp-targets" id="tpTargets" style="display:none">
+      <div class="tp-target tp">止盈目标净值<b id="tpNav">—</b></div>
+      <div class="tp-target sl">止损净值<b id="slNav">—</b></div>
+    </div>
+    <div class="tp-presets">
+      <p class="pr">止盈快捷设置</p>
+      <span>${[10,15,20,25].map(v=>`<button class="chip${al.tp===v?' on':''}" onclick="tpSet('${encodeURIComponent(f.name)}','tp',${v},this)">+${v}%</button>`).join('')}</span>
+      <p class="pr" style="margin-top:10px">止损快捷设置</p>
+      <span>${[10,15,20].map(v=>`<button class="chip${al.sl===-v?' on':''}" onclick="tpSet('${encodeURIComponent(f.name)}','sl',${v},this)">-${v}%</button>`).join('')}</span>
+      <div class="tp-edit">
+        <label>止盈 +<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.tp!=null?al.tp:''}" placeholder="如 20" oninput="tpInput('${encodeURIComponent(f.name)}','tp',this.value)">%</label>
+        <label>止损 −<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.sl!=null?al.sl:''}" placeholder="如 15" oninput="tpInput('${encodeURIComponent(f.name)}','sl',this.value)">%</label>
+      </div>
     </div>
   </div>`;
 
-  h+=`</div>`; return h;
+  h+=`</div>`;
+  setTimeout(function(){ try{ tpRedraw(encodeURIComponent(f.name)); }catch(e){ console.error(e); } },0);
+  return h;
 }
 
 // ---------- 新增 / 删除 ----------
@@ -4399,7 +4578,31 @@ function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked'
 function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alerts));}catch(e){} }
 function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; const v=prompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur); if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ alert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }
 function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
-function bkCalc(enc,val){ const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return; const res=document.getElementById('bkRes'); if(!res) return; const nav=f.nav||(f.shares?f.mv/f.shares:0); const curCost=f.costPx||(f.shares?f.cost/f.shares:0); const need=nav>0?(curCost-nav)/nav*100:0; const add=+val||0; if(add<=0||nav<=0){ res.className='advice'; res.innerHTML='输入补仓金额查看预测。'; return; } const newShares=f.shares+add/nav, newCost=f.cost+add, newCostPx=newShares>0?newCost/newShares:0, newNeed=nav>0?(newCostPx-nav)/nav*100:0; res.className='advice'; res.innerHTML=`<b>补仓 ${M(add)}</b> 后：成本降至 <b>${M(newCostPx)}</b>/份，需再涨 <b class="${newNeed>0?'neg':'pos'}">${newNeed>=0?'+':''}${newNeed.toFixed(2)}%</b> 回本（当前需 ${need>=0?'+':''}${need.toFixed(2)}%）。`; }
+function bkCalc(enc,val){ const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return; const c1=document.getElementById('c1cost'), c1n=document.getElementById('c1need'), ex=document.getElementById('bkExtra'); if(!c1) return; const nav=f.nav||(f.shares?f.mv/f.shares:0); const curCost=f.costPx||(f.shares?f.cost/f.shares:0); const add=+val||0; if(add<=0||nav<=0||!f.shares){ c1.textContent='—'; if(c1n) c1n.textContent='—'; if(ex) ex.innerHTML='输入补仓金额查看预测。'; return; } const totCost=(f.cost!=null?f.cost:curCost*f.shares)+add, newShares=f.shares+add/nav, newCostPx=newShares>0?totCost/newShares:0, newNeed=nav>0?(newCostPx-nav)/nav*100:0; c1.textContent=newCostPx.toFixed(4); if(c1n){ c1n.textContent=(newNeed>=0?'+':'')+newNeed.toFixed(2)+'%'; c1n.className=newNeed>0?'neg':'pos'; } if(ex) ex.innerHTML=`补仓 <b>¥${M(add)}</b> → 新增份额 <b>+${fmt(add/nav)}</b> 份，总成本升至 <b>¥${M(totCost)}</b>，均价从 ${curCost.toFixed(4)} 降到 <b>${newCostPx.toFixed(4)}</b>。`; }
+function tpSet(enc,field,val,el){ setAlert(enc,field,String(val)); if(el&&el.parentElement){ el.parentElement.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); el.classList.add('on'); } tpRedraw(enc); }
+function tpInput(enc,field,val){ setAlert(enc,field,val); tpRedraw(enc); }
+function tpRedraw(enc){
+  const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return;
+  const al=alerts[f.name]||{}, tp=al.tp, sl=al.sl;
+  const wrap=document.getElementById('tpScalewrap'), tg=document.getElementById('tpTargets');
+  if(tp==null && sl==null){ if(wrap) wrap.style.display='none'; if(tg) tg.style.display='none'; const rem=document.getElementById('tpRemain'); if(rem) rem.textContent='—'; return; }
+  if(wrap) wrap.style.display='block'; if(tg) tg.style.display='grid';
+  const lo=(sl!=null? -sl : (tp!=null? tp-30 : -15));
+  const hi=(tp!=null? tp : (sl!=null? -sl+30 : 15));
+  const cur=f.ret||0;
+  let pos=(cur-lo)/(hi-lo)*100; pos=Math.max(0,Math.min(100,pos));
+  const mk=document.getElementById('tpMarker'); if(mk){ mk.style.left=pos+'%'; mk.setAttribute('data-y',(cur>=0?'+':'')+cur.toFixed(1)+'%'); }
+  const slEl=document.getElementById('tpSlVal'); if(slEl) slEl.textContent=(sl!=null?('-'+Math.abs(sl)+'%'):'—');
+  const tpEl=document.getElementById('tpTpVal'); if(tpEl) tpEl.textContent=(tp!=null?('+'+tp+'%'):'—');
+  const rem=document.getElementById('tpRemain'); if(rem) rem.textContent=(tp!=null?((tp-cur).toFixed(1)+'%'):'—');
+  const costPx=f.costPx||(f.shares?f.cost/f.shares:0);
+  const tpNav=document.getElementById('tpNav'); if(tpNav) tpNav.textContent=(tp!=null&&costPx)?('¥'+(costPx*(1+tp/100)).toFixed(3)):'—';
+  const slNav=document.getElementById('slNav'); if(slNav) slNav.textContent=(sl!=null&&costPx)?('¥'+(costPx*(1+sl/100)).toFixed(3)):'—';
+  const badge=document.getElementById('tpBadge');
+  if(badge){ if(tp!=null && cur>=tp){ badge.textContent='已达止盈'; badge.style.background='var(--down-bg)'; badge.style.color='var(--down)'; }
+    else if(sl!=null && cur<=-sl){ badge.textContent='已触止损'; badge.style.background='var(--up-bg)'; badge.style.color='var(--up)'; }
+    else { badge.textContent='监控中'; badge.style.background='var(--warn-bg)'; badge.style.color='var(--warn)'; } }
+}
 function renderSector(){
   const catPct=getCatAllocation();
   const map={}; fundsView.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); });

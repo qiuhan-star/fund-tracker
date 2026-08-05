@@ -1785,9 +1785,14 @@ function buildFundsView(){
         f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized};
       }
     } else {
-      const mv=snap?snap.mv:0, ret=snap?snap.ret:0, cost=mv/(1+ret/100), profit=mv-cost, nav=navCache[name]?navCache[name].nav:null;
+      // 纯快照基金：金额 = 份额 × 最新官方净值（navCache 联网刷新即重算）；离线/无净值时回退快照
+      const liveNav=navCache[name]?navCache[name].nav:null;
       const ss=snap&&snap.shares!=null?snap.shares:null;
-      const cpx=snap&&snap.costPx!=null?snap.costPx:((nav&&mv)?cost/mv*nav:null);
+      const cpx=snap&&snap.costPx!=null?snap.costPx:null;
+      const cost=(ss&&cpx)?ss*cpx:(snap&&snap.ret!=null&&snap.mv)?snap.mv/(1+snap.ret/100):0;
+      const mv=(ss&&liveNav!=null)?ss*liveNav:(snap?snap.mv:0);
+      const profit=mv-cost, ret=cost>0?profit/cost*100:(snap?snap.ret:0);
+      const nav=liveNav!=null?liveNav:(snap?snap.nav||null:null);
       f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
     }
     f.currency=(snap&&snap.currency)||'CNY'; return f;
@@ -3253,6 +3258,8 @@ function recordGrowth(){
   prefetchHoldings();
   fetchIndices();
   try{ document.getElementById('updated').textContent=lastUpdatedLabel(); }catch(e){}
+  // 打开即自动拉取最新净值，避免一直显示上次手动刷新（昨天）的净值
+  refresh().catch(function(e){ console.error('auto refresh failed', e); });
 })();
 </script>
   <!-- 大盘走势放大弹窗 -->

@@ -3271,54 +3271,35 @@ function drawHist(all, f){
   const vals=data.map(p=>p.nav);
   const last=vals[vals.length-1], first=vals[0], up=last>=first, line=up?TH().up:TH().down;
   const note=document.getElementById('histNote'); if(note) note.textContent=`区间 ${labels[0]} ~ ${labels[labels.length-1]} · ${data.length} 个交易日 · 单位净值 ${first.toFixed(4)} → ${last.toFixed(4)}（区间 ${up?'+':''}${(((last-first)/first)*100).toFixed(2)}%）`;
-  // 交易点叠加 + 密集月份聚合（买入≥3笔的月份合并为蓝环，图下方汇总）
-  const DENSE=3;
+  // 交易点叠加：每一笔交易都画成一个独立圆点（不再聚合）
+  const myTr=(f?trades.filter(t=>t.name===f.name && ['buy','sell','convert','convert_out'].indexOf(t.type)>=0):[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
   const markers=[];
-  const monthMap={};
-  const myTr=f?trades.filter(t=>t.name===f.name && ['buy','sell','convert','convert_out'].indexOf(t.type)>=0):[];
-  const trInfo=[];
+  let buyN=0,sellN=0,convN=0;
   myTr.forEach(t=>{
     let li=-1;
     for(let k=0;k<labels.length;k++){ if(labels[k]<=t.date) li=k; else break; }
     if(li<0) return;
-    const dm=t.date?new Date(t.date.replace(/-/g,'/')):null;
-    let key=null;
-    if(dm&&!isNaN(dm.getTime())){ key=dm.getFullYear()+'-'+dm.getMonth(); (monthMap[key]=monthMap[key]||{buys:[],sells:[]}); if(t.type==='sell') monthMap[key].sells.push({li:li,t:t}); else monthMap[key].buys.push({li:li,t:t}); }
-    trInfo.push({li:li,key:key,t:t});
-  });
-  const denseSet={};
-  Object.keys(monthMap).forEach(k=>{ if(monthMap[k].buys.length>=DENSE) denseSet[k]=true; });
-  trInfo.forEach(function(o){
-    if(o.key && denseSet[o.key] && o.t.type!=='sell' && o.t.type!=='convert' && o.t.type!=='convert_out') return;
     let color='#2563eb';
-    if(o.t.type==='sell'){ color='#ea580c'; }
-    else if(o.t.type==='convert'||o.t.type==='convert_out'){ color='#7c3aed'; }
-    markers.push({idx:o.li, y:vals[o.li], color:color, symbol:'dot', meta:{date:o.t.date,type:o.t.type,amount:o.t.amount,nav:o.t.nav,shares:o.t.shares}});
+    if(t.type==='sell'){ color='#ea580c'; sellN++; }
+    else if(t.type==='convert'||t.type==='convert_out'){ color='#7c3aed'; convN++; }
+    else { buyN++; }
+    markers.push({idx:li, y:vals[li], color:color, symbol:'dot', meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares}});
   });
-  const months=Object.keys(monthMap).sort(function(a,b){ const pa=a.split('-'),pb=b.split('-'); return (+pa[0]*12+ +pa[1]) - (+pb[0]*12+ +pb[1]); });
-  const spans=[];
-  months.forEach(k=>{
-    if(!denseSet[k]) return;
-    const pp=k.split('-'); const Y=+pp[0],M=+pp[1];
-    const last=spans.length?spans[spans.length-1]:null;
-    if(last && ((last.Y===Y && last.M+1===M) || (last.M===11 && M===0 && last.Y+1===Y))){ last.Y2=Y; last.M2=M; last.buys=last.buys.concat(monthMap[k].buys); last.sells=last.sells.concat(monthMap[k].sells); }
-    else spans.push({Y:Y,M:M,Y2:Y,M2:M,buys:monthMap[k].buys.slice(),sells:monthMap[k].sells.slice()});
-  });
-  let aggHTML='';
-  spans.forEach(function(s){
-    let amt=0,sh=0,navSum=0;
-    s.buys.forEach(function(b){ const t=b.t; amt+=(+t.amount||0); sh+=(+t.shares||0); navSum+=(+t.nav||0); });
-    const avg= sh>0 ? amt/sh : (s.buys.length? navSum/s.buys.length : null);
-    let lo=s.buys[0].t.date, hi=s.buys[0].t.date; s.buys.forEach(b=>{ if(b.t.date<lo)lo=b.t.date; if(b.t.date>hi)hi=b.t.date; });
-    const md=new Date((new Date(lo.replace(/-/g,'/')).getTime()+new Date(hi.replace(/-/g,'/')).getTime())/2);
-    const midDate=md.getFullYear()+'-'+('0'+(md.getMonth()+1)).slice(-2)+'-'+('0'+md.getDate()).slice(-2);
-    let li=-1; for(let k=0;k<labels.length;k++){ if(labels[k]<=midDate) li=k; else break; }
-    if(li<0) li=s.buys[0].li;
-    const label=(s.Y===s.Y2&&s.M===s.M2)?(s.Y+'年'+(s.M+1)+'月'):(s.Y+'年'+(s.M+1)+'月~'+(s.Y2!==s.Y?s.Y2+'年':'')+(s.M2+1)+'月');
-    markers.push({idx:li, y:vals[li], color:'#2563eb', symbol:'cluster', meta:{cluster:true,label:label,buys:s.buys.length,avgCost:avg,sells:s.sells.length}});
-    aggHTML+='<span style="margin-right:10px">'+label+'：累计买入 <b>'+s.buys.length+'</b> 次'+(avg!=null?' · 均价¥'+avg.toFixed(4):'')+(s.sells.length?' · 卖出'+s.sells.length+'次':'')+'</span>';
-  });
-  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML=aggHTML?('<span style="color:var(--warn)">密集区间：</span>'+aggHTML):''; }
+  // 月份标注：从第一笔交易所在月到最后一笔交易所在月，逐月画分隔线 + 标签（图下方）
+  const monthTicks=[];
+  if(myTr.length){
+    let cy=new Date(myTr[0].date.replace(/-/g,'/')).getFullYear(), cm=new Date(myTr[0].date.replace(/-/g,'/')).getMonth();
+    const ey=new Date(myTr[myTr.length-1].date.replace(/-/g,'/')).getFullYear(), em=new Date(myTr[myTr.length-1].date.replace(/-/g,'/')).getMonth();
+    while(cy<ey || (cy===ey && cm<=em)){
+      const ym=cy+'-'+('0'+(cm+1)).slice(-2);
+      let li=-1;
+      for(let k=0;k<labels.length;k++){ if(labels[k] < ym+'-01') continue; li=k; break; }
+      if(li<0) li=labels.length-1;
+      monthTicks.push({label:ym, idx:li});
+      if(cm===11){ cm=0; cy++; } else cm++;
+    }
+  }
+  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = myTr.length ? ('<span style="color:var(--warn)">交易笔数：</span>共 <b>'+myTr.length+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 按月标注于图下方') : ''; }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
     labels:labels, vals:vals, line:line, area:false, padL:52, padR:16, padT:18, padB:46,

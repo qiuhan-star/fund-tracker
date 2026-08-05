@@ -1482,7 +1482,7 @@ function renderCatFilter(){
 function editTags(code){
   if(!code) return;
   const cur=(userTags[code]||[]).join(',');
-  const v=prompt('编辑标签（逗号分隔，如：234,哈哈哈）', cur);
+  const v=prompt('编辑标签（多个标签用逗号分隔，如：半导体,定投）', cur);
   if(v===null) return;
   const arr=v.split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean);
   if(arr.length) userTags[code]=arr; else delete userTags[code];

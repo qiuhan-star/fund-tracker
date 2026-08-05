@@ -550,15 +550,16 @@
   .more-menu .drop button:hover { background: var(--bg); }
   .more-menu .drop hr { border: none; border-top: 1px solid var(--border-2); margin: 4px 0; }
   .more-menu .drop .drop-hint { font-size: 11px; color: var(--text-3); line-height: 1.55; padding: 6px 14px 4px; margin: 0; }
-  .col-set .drop { min-width: 168px; padding:6px 0; }
-  .col-set .drop label { display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:13px; cursor:pointer; color:var(--text); user-select:none; }
-  .col-set .drop label:hover { background:var(--bg); }
-  .col-set .drop .col-cb { display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; transition:opacity .12s; }
-  .col-set .drop .col-cb:not(.on) { opacity:.5; }
-  .col-set .drop .col-cb input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
-  .col-set .drop .col-name { flex:1; }
-  .col-set .drop .col-grip { color:var(--text-3); font-size:13px; opacity:.55; cursor:grab; letter-spacing:-2px; }
-  .col-set .drop .col-grip:active { cursor:grabbing; }
+  .col-toggle { border:1px solid var(--border-strong); background:var(--surface); color:var(--text-2); border-radius:7px; font-size:11.5px; padding:3px 9px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .col-toggle:hover { color:var(--accent); border-color:var(--accent); }
+  .col-pop { position:absolute; z-index:30; background:var(--surface); border:1px solid var(--border); border-radius:9px; box-shadow:0 6px 20px rgba(0,0,0,.12); padding:6px; display:none; min-width:172px; top:100%; right:0; margin-top:5px; }
+  .col-pop.show { display:block; }
+  .col-pop .ttl { font-size:11px; color:var(--text-3); padding:3px 7px 5px; }
+  .col-pop label { display:flex; align-items:center; gap:8px; padding:6px 7px; font-size:12.5px; cursor:pointer; border-radius:6px; }
+  .col-pop label:hover { background:var(--bg); }
+  .col-pop input { accent-color:var(--accent); }
+  .col-pop .hint { font-size:10.5px; color:var(--text-3); padding:5px 7px 2px; line-height:1.5; }
+  .dense-table thead th.th-col { cursor:default; }
 
   @keyframes flashUp { 0% { background: var(--up-bg); } 100% { background: transparent; } }
   @keyframes flashDown { 0% { background: var(--down-bg); } 100% { background: transparent; } }
@@ -900,12 +901,7 @@ input[type="number"] { -moz-appearance: textfield; }
               <option value="">默认</option>
             </select>
           </div>
-          <div class="more-menu col-set">
-            <button class="btn sm" onclick="toggleColSet(event)">⚙️ 列</button>
-            <div class="drop" id="colSetDrop">
-              <div id="colSetList"></div>
-            </div>
-          </div>
+
         </div>
         </div>
         <div class="filter-row"><span class="filter-lab">分类</span><div class="cat-filter" id="catFilter"></div></div>
@@ -1704,6 +1700,7 @@ function setSort(s){
   if(s==='ret'&&!colVis.ret){ colVis.ret=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='tdy'&&!colVis.tdy){ colVis.tdy=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
+  try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); }catch(e){}
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // 列头点击排序：三段循环 降序↓ → 升序↑ → 默认(多级降序)
@@ -1712,6 +1709,7 @@ function toggleSortHeader(key){
   else if(holdSortDir==='desc'){ holdSortDir='asc'; }
   else { holdSort=''; holdSortDir=''; }
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
+  try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); }catch(e){}
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
@@ -1723,15 +1721,13 @@ let colOrder=COL_KEYS.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)) colOrder.push(k); }); } } }catch(e){}
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); }catch(e){} }
 function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
-function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
+function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }
 function renderColSet(){
-  const box=document.getElementById('colSetList'); if(!box) return;
-  box.innerHTML=colOrder.map(k=>{
-    const on=colVis[k];
-    return `<label class="col-cb${on?' on':''}"><input type="checkbox" data-col="${k}" ${on?'checked':''} onchange="toggleCol('${k}',this.checked)">`
-      +`<span class="col-name">${COL_DEFS[k]}</span><span class="col-grip" title="在表格里直接拖动列头即可换顺序">⠿</span></label>`;
-  }).join('');
+  const box=document.getElementById('colPop'); if(!box) return;
+  box.innerHTML='<div class="ttl">显示哪些列</div>'+COL_KEYS.map(k=>
+    `<label><input type="checkbox" data-col="${k}" ${colVis[k]?'checked':''} onchange="toggleCol('${k}',this.checked)"><span class="col-name">${COL_DEFS[k]}</span></label>`
+  ).join('')+'<div class="hint">顺序：直接拖动表头</div>';
 }
 // 拖动列头换列顺序：轻点列头=排序，按住拖动列头=换列（HTML5 原生 DnD 自动区分 click / drag，二者不冲突）
 let _colDragKey=null;
@@ -1763,7 +1759,7 @@ function colDragEnd(e){
   _colDragKey=null;
   document.querySelectorAll('.dense-table th').forEach(t=>t.classList.remove('col-dragging','col-dragover'));
 }
-document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
+document.addEventListener('click', function(e){ if(!e.target.closest('.col-toggle') && !e.target.closest('.col-pop')){ const p=document.getElementById('colPop'); if(p) p.classList.remove('show'); } });
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 标签筛选（你打的标签 + 自动「观察」，可多选叠加）----------
@@ -1981,6 +1977,7 @@ function renderHomeList(){
   // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
   const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
   box.innerHTML=renderHomeDense(list)+obsHtml;
+  syncColSetChecks();
 
   fillWatchQuotes();
 }
@@ -2044,6 +2041,7 @@ function renderHomeDense(list){
     const tip = c.key==='name' ? '' : ` title="点击排序 · 拖动列头换列"`;
     return `<th class="${cls}" onclick="toggleSortHeader('${c.key}')"${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
   }).join('');
+  headHtml += `<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>`;
   return `<table class="dense-table">
     <thead><tr>${headHtml}</tr></thead>
     <tbody>${rows}</tbody>
@@ -4669,6 +4667,9 @@ function recordGrowth(){
   hidden=localStorage.getItem('ft_hidden')==='1';
   document.body.classList.toggle('masked',hidden);
   document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁');
+  // 恢复上次排序（默认=多级：当日收益→估算→官方→持仓金额→净值→持有收益）
+  try{ const _s=JSON.parse(localStorage.getItem('ft_sort')||'null'); if(_s&&typeof _s.key==='string'){ holdSort=_s.key; holdSortDir=_s.dir||'desc'; } }catch(e){}
+  try{ const _ss=document.getElementById('sortSelect'); if(_ss) _ss.value=holdSort; }catch(e){}
   buildFundsView();
   renderColSet();
   recordSnapshot();

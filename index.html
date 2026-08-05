@@ -2447,10 +2447,35 @@ function addBondWatch(){
   const el=document.getElementById('bwInput'); if(!el) return;
   const v=(el.value||'').trim(); if(!v){ alert('请输入基金代码或名称'); return; }
   if(bondWatch.some(x=>x.code===v)){ alert('已在自选池'); return; }
-  const isCode=/^\d{6}$/.test(v);
-  const f={code:v, name:isCode?('（'+v+'）待补全'):v, acc:'—', type:'待分类', dur:'—', credit:'—', y1:null, since:null, risk:'—', lock:0, mix:false, company:'待定', isWatch:true};
+  if(/^\d{6}$/.test(v)){ fetchBondInfo(v); el.value=''; return; }
+  const f={code:v, name:v, acc:'—', type:'待分类', dur:'—', credit:'—', y1:null, since:null, risk:'—', lock:0, mix:false, company:'待定', isWatch:true};
   bondWatch.push(f); saveBondWatch(); el.value=''; renderBond();
 }
+function fetchBondInfo(code){
+  const s=document.createElement('script');
+  const mk=function(){ return {code:code, name:'（'+code+'）待补全', acc:'—', type:'待分类', dur:'—', credit:'—', y1:null, since:null, risk:'—', lock:0, mix:false, company:'待定', isWatch:true}; };
+  const timer=setTimeout(function(){ appendWatch(mk()); toast('自动拉取失败（接口未返回/被拦截/离线），已转为手动补全'); },10000);
+  s.onload=function(){
+    clearTimeout(timer);
+    try{
+      const nm=window.fS_name||'';
+      const tn=window.Data_fundTypeName||'';
+      const y1=parseFloat(window.syl_1n); const since=parseFloat(window.syl_fromstart);
+      let mix=false, type='待分类', dur='—';
+      if(/混合/.test(tn)){ mix=true; type='混合'; } else if(/债/.test(tn)){ type='纯债'; }
+      const dm=tn.match(/(超长债|长债|中长债|中短债|短债)/); if(dm) dur=dm[1];
+      const co=(typeof window.fund_company==='string'&&window.fund_company)?window.fund_company:'待定';
+      const f={code:code, name:nm||('（'+code+'）待补全'), acc:'—', type:type, dur:dur, credit:'—', y1:isNaN(y1)?null:y1, since:isNaN(since)?null:since, risk:'—', lock:0, mix:mix, company:co, isWatch:true};
+      appendWatch(f);
+      toast(nm?('已拉取 '+nm+'：近1年 '+(isNaN(y1)?'—':y1.toFixed(2)+'%')+' / 成立以来 '+(isNaN(since)?'—':since.toFixed(2)+'%')+'，久期/信用/风险请手动补全'):'已建卡，名称未获取到，请手动补全');
+    }catch(e){ appendWatch(mk()); toast('自动拉取异常，已转为手动补全'); }
+    s.remove();
+  };
+  s.onerror=function(){ clearTimeout(timer); appendWatch(mk()); toast('自动拉取失败（网络/被拦截），已转为手动补全'); };
+  s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
+  document.body.appendChild(s);
+}
+function appendWatch(f){ if(bondWatch.some(x=>x.code===f.code)){ toast('已在自选池'); return; } bondWatch.push(f); saveBondWatch(); renderBond(); }
 function delBondWatch(code){ bondWatch=bondWatch.filter(x=>x.code!==code); saveBondWatch(); renderBond(); }
 function setWatchField(code,field,val){
   const f=bondWatch.find(x=>x.code===code); if(!f) return;
@@ -2530,7 +2555,7 @@ function renderBond(){
     +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'+accCards+'</div>'
     +'<p class="hint" style="margin-top:10px">金额、买入日均可点开直接改，自动重算卖出时点与锁定期。</p></div>'
     +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
-    +'<div class="card"><h2>自选池 <span class="hint">（没买，纯围观研究）</span></h2><div class="addbar"><input id="bwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addBondWatch()">加自选</button><span class="hint">添加后在下表补全资料（应用内暂不支持自动拉取；有 App 截图可发我，我读图帮你填）</span></div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>类型</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th></th></tr></thead><tbody>'+bwRows+'</tbody></table></div></div>'
+    +'<div class="card"><h2>自选池 <span class="hint">（没买，纯围观研究）</span></h2><div class="addbar"><input id="bwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addBondWatch()">加自选</button><span class="hint">输 6 位代码自动拉名称/近1年/成立以来/类型；名称或拉取失败则手动补全（久期/信用/风险接口没有，需手填）</span></div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>类型</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th></th></tr></thead><tbody>'+bwRows+'</tbody></table></div></div>'
     +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
     +'<div class="card"><h2>同质化预警 <span class="hint">（你最怕的：不知不觉全买成同一类）</span></h2>'+warnHtml+'</div>'
     +'<div class="card"><h2>决策建议 <span class="hint">（基于持仓 + 自选）</span></h2>'+sugHtml+'</div>'

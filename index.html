@@ -802,7 +802,7 @@ input[type="number"] { -moz-appearance: textfield; }
 <script>
 // ---------- 示例数据 ----------
 const SAMPLE_SNAP = [
-  {name:'汇添富中证芯片产业指数增强发起式C', code:'014194', cat:'芯片', mv:15507.63, ret:-14.06, shares:8739.65, costPx:2.0647},
+  {name:'汇添富中证芯片产业指数增强发起式C', code:'014194', cat:'芯片', mv:15507.63, ret:-14.06, shares:9167.03, costPx:2.0647},
   {name:'华夏有色金属ETF联接D', code:'021534', cat:'周期资源', mv:8230.93, ret:-5.53, shares:4877.01, costPx:1.7866},
   {name:'华富恒盛纯债债券E', code:'019445', cat:'债基', mv:10001.8, ret:0.00, shares:9009.82, costPx:1.1099},
   {name:'摩根瑞益纯债债券C', code:'007330', cat:'债基', mv:10000.0, ret:0.00, shares:8674.53, costPx:1.1528},
@@ -871,6 +871,52 @@ const SAMPLE_TRADE = [
   {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-23', time:'14:54', type:'buy', amount:200, shares:48.8639, nav:4.0930, locked:true},
   {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-24', time:'14:35', type:'buy', amount:200, shares:49.9139, nav:4.0069, locked:true},
   {name:'嘉实全球产业升级股票发起式(QDII)C', account:'支付宝', date:'2026-07-29', time:'14:39', type:'buy', amount:200, shares:54.4929, nav:3.6702, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-01-29', time:'14:59', type:'buy', amount:200.0, shares:141.08, nav:1.4176, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-02-02', time:'14:50', type:'buy', amount:100.0, shares:73.04, nav:1.3691, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-02-04', time:'14:38', type:'buy', amount:50.0, shares:36.41, nav:1.3733, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-02-05', time:'14:58', type:'buy', amount:10.0, shares:7.38, nav:1.3546, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-02-09', time:'14:16', type:'buy', amount:200.0, shares:143.51, nav:1.3936, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-02-11', time:'14:34', type:'buy', amount:100.0, shares:72.2, nav:1.385, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-03', time:'12:44', type:'buy', amount:100.0, shares:74.4, nav:1.3441, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-05', time:'14:56', type:'buy', amount:300.0, shares:219.67, nav:1.3657, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-06', time:'14:57', type:'buy', amount:100.0, shares:73.64, nav:1.3579, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-09', time:'14:59', type:'buy', amount:100.0, shares:75.83, nav:1.3187, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-10', time:'14:47', type:'buy', amount:500.0, shares:369.71, nav:1.3524, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-11', time:'14:31', type:'buy', amount:50.0, shares:37.65, nav:1.3281, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-12', time:'14:42', type:'buy', amount:50.0, shares:38.33, nav:1.3045, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-13', time:'14:58', type:'buy', amount:50.0, shares:38.81, nav:1.2882, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-16', time:'14:52', type:'buy', amount:1000.0, shares:764.47, nav:1.3081, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-18', time:'14:42', type:'buy', amount:50.0, shares:38.24, nav:1.3077, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-19', time:'14:57', type:'convert', amount:254.56, shares:199.58, nav:1.2755, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-03-25', time:'14:33', type:'convert', amount:501.53, shares:397.63, nav:1.2613, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-04-14', time:'11:11', type:'sell', amount:1278.55, shares:933.86, nav:1.3691, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-04-16', time:'14:30', type:'buy', amount:100.0, shares:72.52, nav:1.379, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-04-20', time:'14:36', type:'buy', amount:100.0, shares:71.5, nav:1.3986, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-04-21', time:'14:59', type:'buy', amount:100.0, shares:72.64, nav:1.3766, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-04-29', time:'14:03', type:'buy', amount:100.0, shares:66.68, nav:1.4997, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-06', time:'14:44', type:'buy', amount:10.0, shares:6.05, nav:1.6531, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-06', time:'14:44', type:'buy', amount:1000.0, shares:604.92, nav:1.6531, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-08', time:'14:27', type:'buy', amount:50.0, shares:30.78, nav:1.6244, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-13', time:'14:31', type:'buy', amount:50.0, shares:28.13, nav:1.7773, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-15', time:'14:54', type:'buy', amount:1000.0, shares:578.1, nav:1.7298, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-18', time:'13:56', type:'buy', amount:50.0, shares:28.65, nav:1.7455, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-19', time:'14:51', type:'buy', amount:50.0, shares:27.23, nav:1.8361, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-20', time:'14:52', type:'buy', amount:1000.0, shares:519.26, nav:1.9258, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-22', time:'14:59', type:'buy', amount:250.0, shares:131.71, nav:1.8981, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-05-26', time:'14:44', type:'buy', amount:3000.0, shares:1498.5, nav:2.002, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-06-05', time:'15:00', type:'buy', amount:200.0, shares:113.03, nav:1.7695, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-06-17', time:'14:55', type:'buy', amount:1000.0, shares:493.12, nav:2.0279, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-06-23', time:'14:57', type:'buy', amount:1000.0, shares:466.37, nav:2.1442, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-06-29', time:'14:59', type:'buy', amount:1000.0, shares:405.17, nav:2.4681, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-01', time:'14:41', type:'sell', amount:5898.66, shares:2359.56, nav:2.4999, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-02', time:'14:39', type:'sell', amount:3575.52, shares:1573.04, nav:2.273, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-07', time:'14:55', type:'convert', amount:3696.97, shares:1634.89, nav:2.2613, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-15', time:'14:53', type:'buy', amount:1000.0, shares:462.13, nav:2.1639, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-16', time:'14:47', type:'convert', amount:1303.71, shares:633.45, nav:2.0581, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-17', time:'14:48', type:'convert', amount:2227.1, shares:1157.18, nav:1.9246, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-22', time:'14:55', type:'buy', amount:1800.0, shares:836.86, nav:2.1509, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-29', time:'14:37', type:'buy', amount:1500.0, shares:798.21, nav:1.8792, locked:true},
+  {name:'汇添富中证芯片产业指数增强发起式C', account:'支付宝', date:'2026-07-31', time:'14:49', type:'buy', amount:900.0, shares:494.83, nav:1.8188, locked:true},
   {name:'广发工程机械ETF联接C', account:'支付宝', date:'2026-08-03', time:'14:50:01', type:'buy', amount:5000, shares:3558.72, nav:1.4050, fee:0, locked:true},
   {name:'上银丰益混合C', account:'支付宝', date:'2026-08-03', time:'14:57:17', type:'buy', amount:4000, shares:2644.28, nav:1.5127, fee:0, locked:true}
 ];
@@ -1020,6 +1066,34 @@ function migrate(raw){
   if(!data.navCache || typeof data.navCache!=='object') data.navCache = {};
   if(!Array.isArray(data.daily_snapshots)) data.daily_snapshots = [];
   return data;
+}
+
+// ---------- 数据容灾：导入/同步前自动备份 + 损坏自恢复 ----------
+const BK=['ft_backup_1','ft_backup_2','ft_backup_3']; // _1=最新；环形保留最近 3 份
+function _sig(arr,keys){ return (arr||[]).map(o=>keys.map(k=>o[k]).join(':')).sort().join('|'); }
+function isSampleData(obj){ try{ const a=_sig(SAMPLE_SNAP,['name','amount'])+'##'+_sig(SAMPLE_TRADE,['name','date','amount']); const b=_sig(obj.snaps,['name','amount'])+'##'+_sig(obj.trades,['name','date','amount']); return a===b; }catch(e){ return false; } }
+function backupData(){
+  try{
+    const cur=localStorage.getItem('ft_data');
+    if(!cur) return;
+    let obj=null; try{ obj=JSON.parse(cur); }catch(e){}
+    if(obj && isSampleData(obj)) return; // 当前即示例数据，无需备份
+    const b1=localStorage.getItem(BK[0]), b2=localStorage.getItem(BK[1]);
+    if(b2) localStorage.setItem(BK[2], b2);
+    if(b1) localStorage.setItem(BK[1], b1);
+    localStorage.setItem(BK[0], cur);
+  }catch(e){ console.error('备份失败', e); }
+}
+function findValidBackup(){
+  for(const k of BK){
+    const raw=localStorage.getItem(k);
+    if(!raw) continue;
+    try{ const d=JSON.parse(raw); if(d && (Array.isArray(d.snaps)||Array.isArray(d.trades))) return raw; }catch(e){}
+  }
+  return null;
+}
+function backupMeta(raw){
+  try{ const d=JSON.parse(raw); return d.updatedAt?String(d.updatedAt).replace('T',' ').slice(0,16):'(未知时间)'; }catch(e){ return '(未知时间)'; }
 }
 
 let _quotaWarned=false;
@@ -3313,14 +3387,28 @@ function recordGrowth(){
 // ---------- 启动 ----------
 (function init(){
   const saved=localStorage.getItem('ft_data');
+  let loaded=false;
   if(saved){
     try{
       const migrated=migrate(JSON.parse(saved));
       snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=migrated.daily_snapshots||[];
       try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){} // 升级后立即回写，下次即为新模式
-    }catch(e){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
+      loaded=true;
+    }catch(e){ /* 损坏，下面尝试从历史备份恢复 */ }
   }
-  else { snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
+  if(!loaded){
+    const bk=findValidBackup();
+    if(bk && confirm('本地数据为空或已损坏，但检测到历史备份（'+backupMeta(bk)+'）。\n\n点「确定」从备份恢复；点「取消」载入示例数据。')){
+      try{
+        const migrated=migrate(JSON.parse(bk));
+        snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=migrated.daily_snapshots||[];
+        try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){}
+        loaded=true;
+        setTimeout(function(){ toast('已从历史备份恢复数据'); },400);
+      }catch(e){}
+    }
+  }
+  if(!loaded){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
   try{ const a=localStorage.getItem('ft_alerts'); alerts=a?JSON.parse(a):{}; }catch(e){ alerts={}; }
   try{ const g=localStorage.getItem('ft_growth'); growthSeries=g?JSON.parse(g):[]; }catch(e){ growthSeries=[]; }
   hidden=localStorage.getItem('ft_hidden')==='1';

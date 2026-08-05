@@ -1619,7 +1619,7 @@ function renderHomeList(){
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
         ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')}
-        <span class="tag">${f.account||'我的'}</span>${currentScope==='all'?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
+        ${f.account&&f.account!=='我的'?`<span class="tag">${f.account}</span>`:''}${currentScope==='all'?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
         <span>成本 ${M(f.cost)}</span>${estTag||confirmTag}${dayFmt(f)}
       </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
@@ -1673,7 +1673,7 @@ function renderHomeDense(list){
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}</div><div class="dt-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}
-        <span class="tag">${f.account||'我的'}</span>${ownerTag}
+        ${f.account&&f.account!=='我的'?`<span class="tag">${f.account}</span>`:''}${ownerTag}
         ${code?`<span>#${code}</span>`:''}
         ${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
       </div></td>`;

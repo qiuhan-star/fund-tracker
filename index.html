@@ -803,11 +803,6 @@ input[type="number"] { -moz-appearance: textfield; }
               <option value="">默认</option>
             </select>
           </div>
-          <div class="seg">
-            <span class="lab">视图</span>
-            <button id="vCard" onclick="setHomeView('card')">卡片</button>
-            <button id="vDense" class="on" onclick="setHomeView('dense')">紧凑</button>
-          </div>
           <div class="more-menu col-set">
             <button class="btn sm" onclick="toggleColSet(event)">⚙️ 列</button>
             <div class="drop" id="colSetDrop">
@@ -1673,17 +1668,6 @@ function colDragEnd(e){
   document.querySelectorAll('.dense-table th').forEach(t=>t.classList.remove('col-dragging','col-dragover'));
 }
 document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
-function setHomeView(v){
-  homeView=v;
-  try{ localStorage.setItem('ft_homeview', v); }catch(e){}
-  syncHomeViewUI();
-  if(currentView==='home'&&activeTab===0) renderHomeList();
-}
-function syncHomeViewUI(){
-  const c=document.getElementById('vCard'), d=document.getElementById('vDense');
-  if(c)c.classList.toggle('on', homeView==='card');
-  if(d)d.classList.toggle('on', homeView==='dense');
-}
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 标签筛选（你打的标签 + 自动「观察」，可多选叠加）----------
@@ -1823,7 +1807,6 @@ function buildObsHtml(){
     +`</div>`;
 }
 function renderHomeList(){
-  syncHomeViewUI();
   syncColSetChecks();
   renderCatFilter();
   renderTagFilter();
@@ -1871,54 +1854,8 @@ function renderHomeList(){
   }
   // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
   const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
-  if(homeView==='dense'){
-    box.innerHTML=renderHomeDense(list)+obsHtml;
-  } else {
-    box.innerHTML=list.map(f=>{
-    const key=encodeURIComponent(accKey(f.account,f.name));
-    const code=syncCode(f.name);
-    const isOpen=openSet.has(accKey(f.account,f.name));
-    const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
-    const flash=flashMap[f.name]!=null?(flashMap[f.name]>=0?'flash pos':'flash neg'):'';
-    const al=alerts[f.name]||{}; let alertCls='';
-    if(al.tp!=null && f.ret>=al.tp) alertCls=' alert-tp';
-    else if(al.sl!=null && f.ret<=-al.sl) alertCls=' alert-sl';
-    const sharesFmt=f.shares!=null&&f.shares>0?(hidden?'••••份':fmt(f.shares)+' 份'):'';
-    const _nc=navCache[f.name];
-    const _mkt=isMarketOpen(new Date());
-    // 估算涨跌(预估)始终显示；当日确认涨跌交由 dayFmt 渲染（收盘后/盘中均显示最后确认值）
-    const estTag=(_mkt&&_nc&&_nc.gsz!=null)?`<span class="hl-sep">|</span><span class="est ${_nc.gszzl>=0?'pos':'neg'}">估 ${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>`:'';
-    const head=`<div class="hl-head" onclick="toggleHold('${key}')">
-      <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
-        <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>
-        ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')}
-        ${f.account&&f.account!=='我的'?`<span class="tag">${f.account}</span>`:''}${currentScope==='all' && accOwner(f.account)!==f.account?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
-        <span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
-      </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
-      <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
-      <div class="hl-arrow">›</div>
-    </div>`;
-    const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
-    let rec;
-    if(tr.length){
-      rec=`<div class="hl-rtitle">最近交易（共 ${tr.length} 笔）</div>`+
-        tr.slice(0,3).map(t=>`<div class="hl-rtrade"><span class="tag" style="background:${t.type==='sell'?'var(--down-bg)':'var(--up-bg)'};color:${t.type==='sell'?'var(--down)':'var(--up)'}">${typeLabel(t.type)}</span><span>${esc(t.date||'')}</span><span class="num">${M(t.amount)}</span><span>${t.nav!=null&&t.nav!==''?('@'+navFmt(t.nav)):'<span class="pending-nav">净值待填</span>'}</span></div>`).join('');
-      if(tr.length>3) rec+=`<div class="hl-rtrade" style="color:var(--accent-text);cursor:pointer" onclick="event.stopPropagation();goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">查看全部交易 →</div>`;
-    } else {
-      rec=`<div class="hl-rtitle">暂无交易记录</div>`;
-    }
-    const body=`<div class="hl-body">
-      <div class="hl-summary">${blurbFor(f)}</div>
-      ${rec}
-      <div class="hl-acts">
-        <button class="btn sm primary" onclick="event.stopPropagation();goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">📊 进入详情</button>
-        <button class="btn sm" onclick="event.stopPropagation();tpPick('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">＋ 记一笔交易</button>
-      </div>
-    </div>`;
-    return `<div class="hl ${flash}${alertCls}${isOpen?' open':''}">${head}${body}</div>`;
-    }).join('')+obsHtml;
-    list.forEach(f=>{ const c=syncCode(f.name); if(c&&holdingsCache[c]) paintHomeHold(c, holdingsCache[c]); });
-  }
+  box.innerHTML=renderHomeDense(list)+obsHtml;
+
   fillWatchQuotes();
 }
 function renderHomeDense(list){

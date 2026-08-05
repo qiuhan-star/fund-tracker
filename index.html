@@ -603,16 +603,7 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
 
     <!-- 大盘实时（腾讯财经，独立备用源） -->
-    <!-- 主 Tab 导航 -->
-    <div class="main-tabs">
-      <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
-      <button id="mt1" onclick="switchTab(1)">分析</button>
-      <button id="mt2" onclick="switchTab(2)">清仓</button>
-      <button id="mt3" onclick="switchTab(3)">债券</button>
-      <button id="mt5" onclick="switchTab(5)">🏛️ 市场风向</button>
-    </div>
-
-    <!-- 资产口径切换（个人 / 代管 / 全量） -->
+    <!-- 资产口径切换（个人 / 代管 / 全量）· 置于最顶，作为整页数据口径上下文（先看是谁的钱，再看数据） -->
     <div class="scope-bar" id="scopeBar">
       <span class="scope-lab">资产口径</span>
       <div class="scope-seg">
@@ -628,6 +619,15 @@ input[type="number"] { -moz-appearance: textfield; }
       <span class="scope-lab">数据源</span>
       <span class="scope-hint">大盘指数：腾讯财经实时 · 板块资金 / 热门基金：示例数据（待接真实接口）</span>
       <span id="marketRefresh" class="scope-hint" style="margin-left:auto">最近刷新：—</span>
+    </div>
+
+    <!-- 主 Tab 导航 -->
+    <div class="main-tabs">
+      <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
+      <button id="mt1" onclick="switchTab(1)">分析</button>
+      <button id="mt2" onclick="switchTab(2)">清仓</button>
+      <button id="mt3" onclick="switchTab(3)">债券</button>
+      <button id="mt5" onclick="switchTab(5)">🏛️ 市场风向</button>
     </div>
 
     <!-- Tab 0: 持仓 -->

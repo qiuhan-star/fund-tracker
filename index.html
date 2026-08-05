@@ -2531,13 +2531,15 @@ function renderBond(){
   if(!bwRows) bwRows='<tr><td colspan="10" class="sub2" style="color:#9aa0aa">暂无自选，用上方输入框加一只（手动补全资料，应用内暂不支持自动拉取）。</td></tr>';
 
   let warnHtml='';
-  const byType={}; scopedBonds.forEach(f=>{const t=bondTypeOf(f); (byType[t]=byType[t]||[]).push(f);});
-  Object.keys(byType).forEach(t=>{ if(byType[t].length>=3){ warnHtml+='<div class="alert red"><span class="ttl">⚠️ 同一类型集中：</span>'+byType[t].length+' 只都是「'+t+'」('+byType[t].map(f=>f.code).join('、')+')。利率/信用暴露高度相似，利率上行时同跌，建议搭配其他类型分散。</div>'; }});
-  const byCo={}; scopedBonds.forEach(f=>{(byCo[f.company]=byCo[f.company]||[]).push(f);});
-  Object.keys(byCo).forEach(c=>{ if(byCo[c].length>=2){ warnHtml+='<div class="alert amber"><span class="ttl">🔁 同一公司集中：</span>'+byCo[c].length+' 只来自「'+c+'」('+byCo[c].map(f=>f.code).join('、')+')。同公司转换免赎回费方便，但公司风控/信用事件会一损俱损，建议跨公司分散。</div>'; }});
-  const byDC={}; scopedBonds.forEach(f=>{const k=(f.dur==='—'?'—':f.dur)+'/'+(f.credit==='—'?'—':f.credit); (byDC[k]=byDC[k]||[]).push(f);});
-  Object.keys(byDC).forEach(k=>{ if(byDC[k].length>=3){ warnHtml+='<div class="alert amber"><span class="ttl">📉 久期/信用相近：</span>'+byDC[k].length+' 只都是「'+k+'」('+byDC[k].map(f=>f.code).join('、')+')，对利率环境变化同涨同跌，分散效果有限。</div>'; }});
-  if(!warnHtml) warnHtml='<div class="alert ok">✅ 持仓暂未检测到明显同质化集中。</div>';
+  const allB=scopedBonds.concat(wsBonds);
+  const codeTag=function(f){ return f.isWatch?('自选'+f.code):f.code; };
+  const byType={}; allB.forEach(f=>{const t=bondTypeOf(f); (byType[t]=byType[t]||[]).push(f);});
+  Object.keys(byType).forEach(t=>{ if(byType[t].length>=3){ warnHtml+='<div class="alert red"><span class="ttl">⚠️ 同一类型集中：</span>'+byType[t].length+' 只都是「'+t+'」('+byType[t].map(codeTag).join('、')+')。利率/信用暴露高度相似，利率上行时同跌，建议搭配其他类型分散。</div>'; }});
+  const byCo={}; allB.forEach(f=>{(byCo[f.company]=byCo[f.company]||[]).push(f);});
+  Object.keys(byCo).forEach(c=>{ if(byCo[c].length>=2){ warnHtml+='<div class="alert amber"><span class="ttl">🔁 同一公司集中：</span>'+byCo[c].length+' 只来自「'+c+'」('+byCo[c].map(codeTag).join('、')+')。同公司转换免赎回费方便，但公司风控/信用事件会一损俱损，建议跨公司分散。</div>'; }});
+  const byDC={}; allB.forEach(f=>{const k=(f.dur==='—'?'—':f.dur)+'/'+(f.credit==='—'?'—':f.credit); (byDC[k]=byDC[k]||[]).push(f);});
+  Object.keys(byDC).forEach(k=>{ if(byDC[k].length>=3){ warnHtml+='<div class="alert amber"><span class="ttl">📉 久期/信用相近：</span>'+byDC[k].length+' 只都是「'+k+'」('+byDC[k].map(codeTag).join('、')+')，对利率环境变化同涨同跌，分散效果有限。</div>'; }});
+  if(!warnHtml) warnHtml='<div class="alert ok">✅ 持仓/自选暂未检测到明显同质化集中。</div>';
 
   let sugHtml='';
   const byCo2={}; scopedBonds.forEach(f=>{(byCo2[f.company]=byCo2[f.company]||[]).push(f);});
@@ -2557,7 +2559,7 @@ function renderBond(){
     +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
     +'<div class="card"><h2>自选池 <span class="hint">（没买，纯围观研究）</span></h2><div class="addbar"><input id="bwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addBondWatch()">加自选</button><span class="hint">输 6 位代码自动拉名称/近1年/成立以来/类型；名称或拉取失败则手动补全（久期/信用/风险接口没有，需手填）</span></div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>类型</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th></th></tr></thead><tbody>'+bwRows+'</tbody></table></div></div>'
     +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
-    +'<div class="card"><h2>同质化预警 <span class="hint">（你最怕的：不知不觉全买成同一类）</span></h2>'+warnHtml+'</div>'
+    +'<div class="card"><h2>同质化预警 <span class="hint">（持仓 + 自选，防不知不觉买成同一类）</span></h2>'+warnHtml+'</div>'
     +'<div class="card"><h2>决策建议 <span class="hint">（基于持仓 + 自选）</span></h2>'+sugHtml+'</div>'
     +'<div class="card"><h2>债基规则速记 <span class="hint">（小白必看）</span></h2><ul class="rules">'
     +'<li><b>赎回费：</b>多数债基持有 <b>＜7 天</b>赎回收 <b>1.5%</b> 惩罚费；满 7 天通常免赎回费（具体看基金合同）。</li>'

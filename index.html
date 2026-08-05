@@ -664,6 +664,7 @@ input[type="number"] { -moz-appearance: textfield; }
             <div class="drop" id="colSetDrop">
               <label><input type="checkbox" data-col="nav" onchange="toggleCol('nav',this.checked)"> 单位净值</label>
               <label><input type="checkbox" data-col="est" onchange="toggleCol('est',this.checked)"> 估算涨跌</label>
+              <label><input type="checkbox" data-col="day" onchange="toggleCol('day',this.checked)"> 当日涨跌</label>
               <label><input type="checkbox" data-col="mv" onchange="toggleCol('mv',this.checked)"> 持仓金额</label>
               <label><input type="checkbox" data-col="ret" onchange="toggleCol('ret',this.checked)"> 持有收益</label>
             </div>
@@ -1370,15 +1371,16 @@ function renderWatch(){
 
 function setSort(s){
   holdSort=s;
+  if(s==='day'&&!colVis.day){ colVis.day=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   ['mv','ret','day','name'].forEach(k=>{ const e=document.getElementById('s'+k[0].toUpperCase()+k.slice(1)); if(e)e.classList.toggle('on',k===s); });
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,mv:true,ret:true};
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,mv:o.mv!==false,ret:o.ret!==false}; } }catch(e){}
+let colVis={nav:true,est:true,day:false,mv:true,ret:true};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day===true,mv:o.mv!==false,ret:o.ret!==false}; } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderHomeList(); }
 function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
-function syncColSetChecks(){ ['nav','est','mv','ret'].forEach(k=>{ const cb=document.querySelector('#colSetDrop input[data-col="'+k+'"]'); if(cb) cb.checked=colVis[k]; }); }
+function syncColSetChecks(){ ['nav','est','day','mv','ret'].forEach(k=>{ const cb=document.querySelector('#colSetDrop input[data-col="'+k+'"]'); if(cb) cb.checked=colVis[k]; }); }
 document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
 function setHomeView(v){
   homeView=v;
@@ -1564,6 +1566,7 @@ function renderHomeDense(list){
   const cols=[{key:'name',label:'基金 / 标签'}];
   if(colVis.nav) cols.push({key:'nav',label:'单位净值'});
   if(colVis.est) cols.push({key:'est',label:'估算涨跌'});
+  if(colVis.day) cols.push({key:'day',label:'当日涨跌'});
   if(colVis.mv)  cols.push({key:'mv',label:'持仓金额'});
   if(colVis.ret) cols.push({key:'ret',label:'持有收益'});
   const rows=list.map(f=>{
@@ -1589,8 +1592,17 @@ function renderHomeDense(list){
       </div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
+      else if(c.key==='day'){
+        const dp=flashMap[f.name];
+        if(dp!=null && f.mv!=null){
+          const amt=f.mv-f.mv/(1+dp/100);
+          tds+=`<td class="${dp>=0?'pos':'neg'}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">${amt>=0?'+':''}${M(amt)}</div></td>`;
+        } else {
+          tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
+        }
+      }
       else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
-      else if(c.key==='ret') tds+=`<td class="${rcls}"><div class="dt-big">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div><div class="dt-sub2">${M(profit)}</div></td>`;
+      else if(c.key==='ret') tds+=`<td class="${rcls}"><div class="dt-big">${profit>=0?'+':''}${M(profit)}</div><div class="dt-sub2">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
     });
     return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">${tds}</tr>`;
   }).join('');
@@ -3563,7 +3575,7 @@ function toast(msg){
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
 }
 function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function M(n){ return hidden ? '••••' : '¥'+fmt(n); }
+function M(n){ if(hidden) return '••••'; const s=fmt(Math.abs(n||0)); return (n||0)<0?'-¥'+s:'¥'+s; }
 function mask4(v){ return hidden ? '••••' : (v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'); }
 function isMarketOpen(d){ const day=d.getDay(); if(day===0||day===6) return false; const t=d.getHours()*60+d.getMinutes(); return t>=570 && t<=900; }
 // 交易时段状态灯：A股(沪深) 三态 —— 🟢交易中 / 🟡午休或盘前 / ⚪收盘或周末

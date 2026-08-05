@@ -2334,6 +2334,7 @@ function atGo(nm,acc){ closeAllTrades(); goDetail(nm,acc); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
   if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
+  backupData();
   snaps=snaps.filter(s=>s.name!==nm); trades=trades.filter(t=>t.name!==nm); delete navCache[nm];
   renderTrade(); compute(); silentSave();
 }

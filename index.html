@@ -1010,7 +1010,7 @@ const ACCOUNT_META={
   '微信债券':{isPersonal:true, owner:'本人'},
   '小号':{isPersonal:false, owner:'妈妈'},
   // 旧名兼容（存量 localStorage 数据归一化前的兜底；2026-08-05 改名：支付宝→我的 / 微信→微信债券）
-  '我的':{isPersonal:true, owner:'本人'},
+  '支付宝':{isPersonal:true, owner:'本人'},
   '微信':{isPersonal:true, owner:'本人'}
 };
 function accIsPersonal(acc){ const m=ACCOUNT_META[acc]; return m? (m.isPersonal!==false) : true; }
@@ -3461,7 +3461,7 @@ function parseCSV(text){
     const amount=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
     const nav=col.nav>=0?parseFloat(String(c[col.nav]).replace(/[^\d.\-]/g,''))||0:0;
     const fee=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
-    let accRaw=col.account>=0?c[col.account]:''; if(accRaw==='我的') accRaw='我的'; else if(accRaw==='微信') accRaw='微信债券';
+    let accRaw=col.account>=0?c[col.account]:''; if(accRaw==='支付宝') accRaw='我的'; else if(accRaw==='微信') accRaw='微信债券';
     const account=accRaw?(ACCOUNTS.includes(accRaw)?accRaw:'我的'):'我的';
     if(!(amount||nav)) continue;
     added.push({name,date,type,amount,nav,fee,account});

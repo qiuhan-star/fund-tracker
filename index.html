@@ -1094,7 +1094,7 @@ const SAMPLE_TRADE = [
 ];
 
 let snaps=[], trades=[], navCache={}, dailySnapshots=[];
-let fundsView=[], _allHoldings=[];
+let fundsView=[], _allHoldings=[], _allRaw=[];
 const BUILTIN_ACCOUNTS=['我的','小号','微信债券'];
 // 账户归属：isPersonal=false 表示代管（如帮家人理财），不计入个人总资产 / 个人仓位
 const ACCOUNT_META={
@@ -1151,7 +1151,7 @@ function setScopeAcc(acc){
 function cntSpan(n){ return (n>0)? ' <span class="acc-cnt">'+n+'</span>' : ''; }
 function renderScopeBar(){
   const seg=document.getElementById('scopeSeg'); if(!seg) return;
-  const cntOf=a=> (a==='all')? _allHoldings.length : _allHoldings.filter(f=>f.account===a).length;
+  const cntOf=a=> (a==='all')? _allRaw.length : _allRaw.filter(f=>f.account===a).length;
   let html='';
   ['我的','小号','微信债券'].forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a))+'</button>'; });
   CUSTOM_ACCOUNTS.forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a))+'<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span></button>'; });
@@ -2574,14 +2574,14 @@ function buildFundsView(){
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
   all.forEach(f=>{ if(catOverride[f.name]) f.cat=catOverride[f.name]; });
-  _allHoldings = all.filter(f=> scopeMatches(f.account));
-  // 债基并入统一总账（方案A·视图合并）：把 BOND_FUNDS 折叠成 cat='债基' 持仓并入，自动进总资产/每日快照/仓位饼图/账户汇总/分析页。与基金去重避免双计。
   const _fundNames = new Set(all.map(f=>f.name));
-  const _bondHold = BOND_FUNDS.filter(f=> scopeMatches(f.acc) && !_fundNames.has(f.name)).map(f=>{
+  const _bondHold = BOND_FUNDS.filter(f=> !_fundNames.has(f.name)).map(f=>{
     const _amt = bondAmt(f);
     return { name:f.name, cat:'债基', account:f.acc, tags:undefined, shares:0, cost:_amt, mv:_amt, profit:0, ret:0, days:null, nav:null, costPx:1, trades:[], realized:0, currency:'CNY', isBond:true, code:f.code };
   });
-  _allHoldings = _allHoldings.concat(_bondHold);
+  _allRaw = all.concat(_bondHold);  // 未过滤全量（所有账户 + 债基），供账户切换栏统计真实总数，不随当前账户口径变化
+  // 债基并入统一总账（方案A·视图合并）：把 BOND_FUNDS 折叠成 cat='债基' 持仓并入，自动进总资产/每日快照/仓位饼图/账户汇总/分析页。与基金去重避免双计。
+  _allHoldings = all.filter(f=> scopeMatches(f.account)).concat(_bondHold.filter(f=> scopeMatches(f.acc)));
   // 保留显式选择的账户：即使暂无持仓也展示空状态，避免「切了跟没切一样」的错觉（自定义账户添加后即可在此记账）
   const accF = curAccount==='全部'? null:curAccount;
   fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF));

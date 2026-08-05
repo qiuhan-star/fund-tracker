@@ -3614,7 +3614,7 @@ function importCSV(){
     r.onload=()=>{ try{ const added=parseCSV(r.result); if(added===0){ toast('未识别到交易行'); return; }
         const sample=added.slice(0,3).map(t=>`${t.name} | ${t.date} | ${t.type} | ${t.amount}${t.nav?' @'+t.nav:''}`).join('\n');
         if(!confirm('即将导入 '+added+' 笔交易，确认吗？\n\n示例：\n'+sample+'\n\n（可在「交易」Tab 查看并删除错误行）')) return;
-        compute(); renderTrade(); silentSave(); toast('已导入 '+added+' 笔交易（CSV）· 可在各基金详情「交易流水」查看'); }
+        compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('csv import refresh failed', e); }); toast('已导入 '+added+' 笔交易（CSV）· 正在拉取净值…'); }
       catch(e){ alert('CSV 解析失败：'+e.message); } };
     r.readAsText(f,'utf-8'); };
   inp.click();

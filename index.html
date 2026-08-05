@@ -870,8 +870,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
     <!-- 主 Tab 导航 -->
     <div class="main-tabs">
-      <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
-      <button id="mt3" onclick="switchTab(3)">债券</button>
+      <button id="mt0" class="on" onclick="switchTab(0)">💼 资产</button>
       <button id="mt1" onclick="switchTab(1)">分析</button>
       <button id="mt2" onclick="switchTab(2)">清仓</button>
       <button id="mt5" onclick="switchTab(5)">🏛️ 市场风向</button>
@@ -906,9 +905,11 @@ input[type="number"] { -moz-appearance: textfield; }
         </div>
         <div class="filter-row"><span class="filter-lab">分类</span><div class="cat-filter" id="catFilter"></div></div>
         <div class="filter-row"><span class="filter-lab">标签</span><div class="cat-filter" id="tagFilter"></div></div>
+        <div class="filter-row"><span class="filter-lab">分组</span><div class="cat-filter" id="groupByFilter"></div></div>
         <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" aria-label="搜索基金" oninput="setHoldSearch(this.value)"></div>
         <div id="homeList"></div>
       </div>
+      <div id="bondContent"></div>
     </div>
 
     <!-- Tab 1: 分析 -->
@@ -971,10 +972,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
     <div class="tab-panel" id="tp2"></div>
     <!-- Tab 2（交易）已并入各基金持仓 / 详情，不再单独成页 -->
-    <!-- Tab 3: 债券 -->
-    <div class="tab-panel" id="tp3">
-      <div id="bondContent"></div>
-    </div>
+    <!-- Tab 3 已并入「资产」Tab：债券富内容（债基研究与决策工作台）整体移至资产页底部 #bondContent -->
 
     <!-- Tab 5: 市场风向（独立空间：大盘看盘 + 板块资金 + 关注榜） -->
     <div class="tab-panel" id="tp5">
@@ -1279,7 +1277,7 @@ function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'我的'; }
 let flashMap={}, todayGain=null;
-let holdSort='', holdSortDir='desc', holdCatFilter='全部', holdSearch='';
+let holdSort='', holdSortDir='desc', holdCatFilter='全部', holdSearch='', holdGroupBy='none';
 let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
 let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){}
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){}
@@ -1475,14 +1473,14 @@ function calcXIRR(){ const box=document.getElementById('xirrOut'); if(!box) retu
 
 function switchTab(i){
   activeTab=i;
-  [0,1,2,3,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
+  [0,1,2,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
   // 资产口径栏仅对账户相关数据生效；市场风向为公共市场数据，切换为"数据源/刷新状态"栏
   const sb=document.getElementById('scopeBar'), ms=document.getElementById('marketStatus');
   if(sb) sb.style.display = (i===5)?'none':'flex';
   if(ms) ms.style.display = (i===5)?'flex':'none';
+  if(i===0){ renderHomeList(); renderBond(); }
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); }
   if(i===2){ renderLiquidated(); }
-  if(i===3){ renderBond(); }
   if(i===5){ loadMarketData(); renderWatch(); refreshWatchQuotes(); }
 }
 
@@ -1839,6 +1837,13 @@ function filterCat(c){
   renderCatFilter();
   if(activeTab===0) renderHomeList();
 }
+// ---------- 分组（Group-By）：不分组 / 资产大类 / 市场区域 / 账户 ----------
+function renderGroupBy(){
+  const opts=[['none','不分组'],['asset','资产大类'],['market','市场区域'],['account','账户']];
+  const box=document.getElementById('groupByFilter'); if(!box) return;
+  box.innerHTML=opts.map(o=>`<button class="cat-chip${o[0]===holdGroupBy?' on':''}" onclick="filterGroupBy('${o[0]}')">${o[1]}</button>`).join('');
+}
+function filterGroupBy(g){ holdGroupBy=g; renderGroupBy(); if(activeTab===0) renderHomeList(); }
 
 // ---------- 账户筛选 + 按账户汇总 ----------
 function renderAccFilter(){
@@ -1851,6 +1856,7 @@ function filterAccount(a){
   curAccount=a;
   renderAccFilter(); renderOverview(); renderHomeList(); renderCatFilter();
   if(activeTab===1) renderAccountSummary();
+  if(activeTab===0) renderBond();
 }
 function renderAccountSummary(){
   const box=document.getElementById('accSummary'); if(!box) return;
@@ -1924,6 +1930,7 @@ function renderHomeList(){
   syncColSetChecks();
   renderCatFilter();
   renderTagFilter();
+  renderGroupBy();
   var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
   let list=[...fundsView];
   // 最终防线：确保列表严格匹配当前账户（防御上游 fundsView 意外混入）
@@ -1976,12 +1983,12 @@ function renderHomeList(){
   }
   // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
   const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
-  box.innerHTML=renderHomeDense(list)+obsHtml;
+  box.innerHTML=(holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list))+obsHtml;
   syncColSetChecks();
 
   fillWatchQuotes();
 }
-function renderHomeDense(list){
+function renderHomeDense(list, showHead){
   const cols=[{key:'name',label:'基金 / 标签'}];
   colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   const rows=list.map(f=>{
@@ -2043,14 +2050,37 @@ function renderHomeDense(list){
   }).join('');
   headHtml += `<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>`;
   return `<table class="dense-table">
-    <thead><tr>${headHtml}</tr></thead>
+    ${(showHead===false)?'':'<thead><tr>'+headHtml+'</tr></thead>'}
     <tbody>${rows}</tbody>
   </table>`;
+}
+// ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------
+function groupSortKey(dim,k){
+  if(dim==='asset'){ const o=['股票','债券','商品·黄金','货币·理财','混合']; const i=o.indexOf(k); return i<0?99:i; }
+  if(dim==='market'){ return k==='国内'?0:1; }
+  return 0; // 账户：保持原顺序
+}
+function grpLabel(dim,k){
+  if(dim==='asset') return k;
+  if(dim==='market') return k==='海外'?'🌏 海外':'🏠 国内';
+  return k;
+}
+function renderGrouped(list){
+  const dim=(holdGroupBy==='asset')?'asset':(holdGroupBy==='market')?'market':'account';
+  const groups={};
+  list.forEach(f=>{ const k=(f[dim]||(dim==='account'?'我的':'其他')); (groups[k]=groups[k]||[]).push(f); });
+  const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));
+  return order.map((k,idx)=>{
+    const sub=groups[k];
+    const mvSum=sub.reduce((a,f)=>a+(f.mv||0),0);
+    const head=`<div class="grp-head"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div>`;
+    return head + renderHomeDense(sub, idx===0);
+  }).join('');
 }
 
 function goDetail(enc, acc){
   const f=findFund(decodeURIComponent(enc), acc);
-  if(f && f.isBond){ switchTab(3); return; } // 债基无交易/净值详情，直接进「债券」Tab 看深度分析
+  if(f && f.isBond){ openBondDrawer(f.code); return; } // 债基无交易/净值详情，点开抽屉看深度信息
   pendingAcc=acc||null; location.hash='#/fund/'+enc;
 }
 
@@ -2278,7 +2308,7 @@ function renderAdvice(){
         `按${userProfile.risk}档建议提升至约 ${M2.def}%（约 ${M(total*M2.def/100)} 元），优先配置纯债或"固收 +"混合基金`,
         `防御仓作为组合稳定器，可显著降低整体波动、改善回撤体验`
       ],
-      alt:`若风险偏好偏激进、不愿降低收益弹性，至少保留 <b>5–8% 货币基金 / 短债</b>作为流动性垫与应急仓。 <button class="btn sm" style="margin-top:6px" onclick="switchTab(3)">→ 去「债券」板块做配置规划</button>`});
+      alt:`若风险偏好偏激进、不愿降低收益弹性，至少保留 <b>5–8% 货币基金 / 短债</b>作为流动性垫与应急仓。 <button class="btn sm" style="margin-top:6px" onclick="switchTab(0)">→ 去「资产」页做债券配置规划</button>`});
   }
   const qdiiCur=qdiiShare();
   if(qdiiCur>M2.qdii+2){
@@ -2490,6 +2520,7 @@ function renderBond(){
   const today=new Date(); today.setHours(0,0,0,0);
   const scopedBonds=BOND_FUNDS.filter(f=>scopeMatches(f.acc));
   const wsBonds=bondWatch.filter(bondWsInScope);
+  if(scopedBonds.length===0 && wsBonds.length===0){ bc.innerHTML=''; return; }
   const accs=ACCOUNTS.filter(a=>scopeMatches(a));
   let accCards=accs.map(a=>{ const fs=scopedBonds.filter(f=>f.acc===a); const sum=fs.reduce((s,f)=>s+bondAmt(f),0); return '<div class="mcard"><div class="lbl">'+a+'</div><div class="val">'+M(sum)+'</div><div class="sub2">'+fs.length+' 只债基</div></div>'; }).join('');
   const totalAll=scopedBonds.reduce((s,f)=>s+bondAmt(f),0);
@@ -2503,7 +2534,7 @@ function renderBond(){
     const creTxt=(f.credit&&f.credit!=='—')?'<span class="tag-credit">'+f.credit+'</span>':'';
     const bar=(st.barPct!=null)?('<div class="cmp-bar"><div class="fill bar-'+st.barCls+'" style="width:'+st.barPct+'%"></div></div>'):'';
     const ownerTag = (currentScope==='all' && accOwner(f.acc)!==f.acc) ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
-    return '<tr>'
+    return '<tr style="cursor:pointer" onclick="openBondDrawer(\''+f.code+'\')" title="点开看买入日 / 持有天数 / 赎回费阶梯">'
       +'<td><b>'+f.code+'</b><br><span class="nm">'+f.name+'</span></td>'
       +'<td>'+f.acc+ownerTag+'</td>'
       +'<td><input class="amt-in" type="number" value="'+bondAmt(f)+'" data-code="'+f.code+'" onchange="setBondAmt(this.dataset.code,this.value)" style="width:84px"></td>'
@@ -2557,7 +2588,7 @@ function renderBond(){
     +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'+accCards+'</div>'
     +'<p class="hint" style="margin-top:10px">金额、买入日均可点开直接改，自动重算卖出时点与锁定期。</p></div>'
     +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
-    +'<div class="card"><h2>自选池 <span class="hint">（没买，纯围观研究）</span></h2><div class="addbar"><input id="bwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addBondWatch()">加自选</button><span class="hint">输 6 位代码自动拉名称/近1年/成立以来/类型；名称或拉取失败则手动补全（久期/信用/风险接口没有，需手填）</span></div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>类型</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th></th></tr></thead><tbody>'+bwRows+'</tbody></table></div></div>'
+    +'<details class="card" open><summary class="bd-sum"><h2 style="margin:0;font-size:14px">自选池</h2> <span class="hint">（没买，纯围观研究·点标题展开/收起）</span></summary><div class="addbar"><input id="bwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addBondWatch()">加自选</button><span class="hint">输 6 位代码自动拉名称/近1年/成立以来/类型；名称或拉取失败则手动补全（久期/信用/风险接口没有，需手填）</span></div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>类型</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th></th></tr></thead><tbody>'+bwRows+'</tbody></table></div></details>'
     +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
     +'<div class="card"><h2>同质化预警 <span class="hint">（持仓 + 自选，防不知不觉买成同一类）</span></h2>'+warnHtml+'</div>'
     +'<div class="card"><h2>决策建议 <span class="hint">（基于持仓 + 自选）</span></h2>'+sugHtml+'</div>'
@@ -2595,6 +2626,38 @@ function renderBondCmp(){
   +'</tr>'; }).join('');
 }
 function setBondCmp(f,el){ bondCmpFilter=f; document.querySelectorAll('#bondCmpSeg button').forEach(b=>b.classList.remove('on')); if(el)el.classList.add('on'); renderBondCmp(); }
+// ---------- 债基抽屉（Plan C：点债基行 / 资产列表债基行 → 抽屉看深度信息）----------
+function openBondDrawer(code){
+  loadBond();
+  let b=BOND_FUNDS.find(x=>x.code===code); const isWatch=!b; if(!b) b=bondWatch.find(x=>x.code===code);
+  const d=document.getElementById('bondDrawer'); if(!d||!b) return;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const pd=bondDate(b), p=new Date(pd);
+  const held=pd?daysBetween(p,today):null;
+  const st=bondStatus(b,today);
+  const feeLadder=b.lock>0
+    ? '🔒 持有期 '+b.lock+' 个月，期内不可赎回'
+    : '&lt;7 天：1.5% 惩罚费 · 7 天–1 年：0.5% · &gt;1 年：免赎回费';
+  const note=(bondState.notes&&bondState.notes[code])||'';
+  const ownerTag=(currentScope==='all'&&b.acc&&accOwner(b.acc)!==b.acc)?('<span class="tag-owner">'+accOwner(b.acc)+'</span>'):'';
+  d.querySelector('.bd-name').innerHTML=escHtml(b.name)+' <span class="bd-code">'+escHtml(b.code)+'</span>';
+  d.querySelector('.bd-sub').innerHTML=(b.company||'—')+(b.acc?(' · '+b.acc):'')+ownerTag;
+  d.querySelector('.bd-body').innerHTML=
+    '<div class="bd-grid">'
+    +'<div class="bd-cell"><div class="bd-k">买入日</div><div class="bd-v">'+(pd||'—')+'</div></div>'
+    +'<div class="bd-cell"><div class="bd-k">持有天数</div><div class="bd-v">'+(held!=null?held+' 天':'—')+'</div></div>'
+    +'<div class="bd-cell"><div class="bd-k">金额</div><div class="bd-v">'+M(bondAmt(b))+'</div></div>'
+    +'<div class="bd-cell"><div class="bd-k">类型/久期/信用</div><div class="bd-v">'+(b.mix?'混合':(b.type||'纯债'))+' · '+(b.dur||'—')+' · '+(b.credit||'—')+'</div></div>'
+    +'<div class="bd-cell"><div class="bd-k">风险/锁</div><div class="bd-v">'+(b.risk||'—')+' · '+(b.lock>0?b.lock+'个月锁':'无锁')+'</div></div>'
+    +'<div class="bd-cell"><div class="bd-k">近1年/成立以来</div><div class="bd-v">'+(b.y1!=null?b.y1.toFixed(2)+'%':'—')+' / '+(b.since!=null?b.since.toFixed(2)+'%':'—')+'</div></div>'
+    +'</div>'
+    +'<div class="bd-sec"><div class="bd-k">赎回费阶梯</div><div class="bd-v">'+feeLadder+'</div></div>'
+    +'<div class="bd-sec"><div class="bd-k">卖出状态</div><div class="bd-v '+(st.cls||'')+'">'+st.txt+(st.sub?('<br><span class="sub2">'+st.sub+'</span>'):'')+'</div></div>'
+    +'<div class="bd-sec"><div class="bd-k">备注</div><textarea class="bd-note" id="bdNote" placeholder="记点什么（如：这只是在小号代管、目标收益 3% 就卖…）" oninput="setBondNote(\''+escJs(code)+'\',this.value)">'+escHtml(note)+'</textarea></div>';
+  d.classList.add('open');
+}
+function closeBondDrawer(){ const d=document.getElementById('bondDrawer'); if(d) d.classList.remove('open'); }
+function setBondNote(code,v){ if(!bondState.notes) bondState.notes={}; bondState.notes[code]=v; saveBond(); }
 
 
 // ---------- 交易流水 + 时间轴 ----------
@@ -2797,7 +2860,7 @@ function buildFundsView(){
       const nav=liveNav!=null?liveNav:(snap?snap.nav||null:null);
       f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
     }
-    f.currency=(snap&&snap.currency)||'CNY'; return f;
+    f.asset=guessAsset(name); f.market=guessMarket(name); f.currency=(snap&&snap.currency)||'CNY'; return f;
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
   all.forEach(f=>{ if(catOverride[f.name]) f.cat=catOverride[f.name]; });
@@ -2807,7 +2870,7 @@ function buildFundsView(){
   const _fundNames = new Set(all.map(f=> _normBondName(f.name)));
   const _bondHold = BOND_FUNDS.filter(f=> !_fundNames.has(_normBondName(f.name))).map(f=>{
     const _amt = bondAmt(f);
-    return { name:f.name, cat:'债基', account:f.acc, tags:undefined, shares:0, cost:_amt, mv:_amt, profit:0, ret:0, days:null, nav:null, costPx:1, trades:[], realized:0, currency:'CNY', isBond:true, code:f.code };
+    return { name:f.name, cat:'债基', account:f.acc, asset:'债券', market:guessMarket(f.name), tags:undefined, shares:0, cost:_amt, mv:_amt, profit:0, ret:0, days:null, nav:null, costPx:1, trades:[], realized:0, currency:'CNY', isBond:true, code:f.code };
   });
   _allRaw = all.concat(_bondHold);  // 未过滤全量（所有账户 + 债基），供账户切换栏统计真实总数，不随当前账户口径变化
   // 债基并入统一总账（方案A·视图合并）：把 BOND_FUNDS 折叠成 cat='债基' 持仓并入，自动进总资产/每日快照/仓位饼图/账户汇总/分析页。与基金去重避免双计。
@@ -2824,6 +2887,20 @@ function guessCat(name){
   if(/港股|恒生|QDII|金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网|智能/.test(name)) return '科技';
   if(/混合|灵活配置/.test(name)) return '混合';
   return '其他';
+}
+// ---------- 资产大类 / 市场区域（与「主题分类 cat」解耦，供 Group-By 维度）----------
+// 资产大类：股票 / 债券 / 商品·黄金 / 货币·理财 / 混合（五档）
+function guessAsset(name){
+  if(/混合|灵活配置/.test(name)) return '混合';
+  if(/债券|纯债|信用债|利率债|中短债|可转债|债基/.test(name)) return '债券';
+  if(/黄金|金ETF|上海金/.test(name)) return '商品·黄金';
+  if(/货币|余额宝|现金管理|活期宝|理财宝/.test(name)) return '货币·理财';
+  return '股票';
+}
+// 市场区域：海外 / 国内（海外=QDII/港美股等跨市场）
+function guessMarket(name){
+  if(/海外|全球|纳斯达克|标普|道琼|美国|日本|港股|恒生|QDII|德国|英国|印度|亚太|欧洲/.test(name)) return '海外';
+  return '国内';
 }
 const CONFIG={tinyThreshold:1000,takeProfit1:15,takeProfit2:20,stopLoss:-15,top3Warn:70,singleWarn:20};
 function getCatAllocation(){
@@ -3038,7 +3115,7 @@ function render(){
     updateScopeUI();
     renderOverview(); renderAccFilter(); renderHomeList(); renderCatFilter();
     if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
-    if(activeTab===3){ renderBond(); }
+    if(activeTab===0){ renderBond(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
   restoreFocus();
 }
@@ -4865,9 +4942,43 @@ function recordGrowth(){
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('change',function(e){ if(e.target && e.target.id==='smAutoRefresh'){ try{ localStorage.setItem('ft_autorefresh', e.target.checked?'1':'0'); }catch(_){} } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=document.getElementById('settingsMask'); if(m&&m.classList.contains('show')) closeSettings(); } });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var bd=document.getElementById('bondDrawer'); if(bd&&bd.classList.contains('open')) closeBondDrawer(); } });
   try{ if((localStorage.getItem('ft_autorefresh')||'1')!=='0'){ setInterval(function(){ try{ if(document.visibilityState==='visible' && typeof refresh==='function') refresh(); }catch(_){} }, 180000); } }catch(_){}
 })();
 </script>
+
+<div id="bondDrawer" class="bond-drawer">
+  <div class="bd-backdrop" onclick="closeBondDrawer()"></div>
+  <div class="bd-panel">
+    <div class="bd-head"><div><div class="bd-name"></div><div class="bd-sub"></div></div><button class="btn ghost" onclick="closeBondDrawer()">✕ 关闭 (Esc)</button></div>
+    <div class="bd-body"></div>
+  </div>
+</div>
+<style id="assetRedesign">
+.grp-head{ display:flex; align-items:center; gap:10px; margin:14px 2px 6px; padding:6px 10px; background:var(--surface-3); border:1px solid var(--border-3); border-radius:8px; }
+.grp-head:first-child{ margin-top:4px; }
+.grp-name{ font-weight:700; font-size:13px; color:var(--text); }
+.grp-meta{ margin-left:auto; font-size:12px; color:var(--text-3); }
+.bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }
+.bond-drawer.open{ display:block; }
+.bd-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
+.bd-panel{ position:absolute; top:0; right:0; height:100%; width:min(420px,92vw); background:var(--surface); border-left:1px solid var(--border-strong); box-shadow:-8px 0 30px rgba(0,0,0,.18); display:flex; flex-direction:column; animation:bdIn .18s ease; }
+@keyframes bdIn{ from{ transform:translateX(20px); opacity:.4 } to{ transform:none; opacity:1 } }
+.bd-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border-3); }
+.bd-name{ font-size:15px; font-weight:700; }
+.bd-code{ font-weight:400; font-size:12px; color:var(--text-3); margin-left:4px; }
+.bd-sub{ font-size:12px; color:var(--text-3); margin-top:2px; }
+.bd-body{ padding:14px 16px; overflow:auto; flex:1; }
+.bd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.bd-cell{ background:var(--surface-2); border:1px solid var(--border-3); border-radius:8px; padding:8px 10px; }
+.bd-k{ font-size:11px; color:var(--text-3); margin-bottom:3px; }
+.bd-v{ font-size:13px; color:var(--text); line-height:1.4; }
+.bd-sec{ margin-top:12px; }
+.bd-note{ width:100%; min-height:64px; margin-top:6px; border:1px solid var(--border-strong); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; background:var(--surface-2); color:var(--text); resize:vertical; }
+.bd-sum{ cursor:pointer; padding:0; list-style:none; outline:none; }
+.bd-sum::-webkit-details-marker{ display:none; }
+.bond-tbl tbody tr[style*="cursor"]:hover{ background:var(--accent-soft); }
+</style>
 
 </body>
 </html>

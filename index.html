@@ -495,8 +495,15 @@
   .more-menu .drop button:hover { background: var(--bg); }
   .more-menu .drop hr { border: none; border-top: 1px solid var(--border-2); margin: 4px 0; }
   .more-menu .drop .drop-hint { font-size: 11px; color: var(--text-3); line-height: 1.55; padding: 6px 14px 4px; margin: 0; }
-  .col-chips { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .col-chips .cat-chip { padding: 3px 10px; font-size: 11.5px; }
+  .col-set .drop { min-width: 168px; padding:6px 0; }
+  .col-set .drop label { display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:13px; cursor:pointer; color:var(--text); user-select:none; }
+  .col-set .drop label:hover { background:var(--bg); }
+  .col-set .drop .col-cb { display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; transition:opacity .12s; }
+  .col-set .drop .col-cb:not(.on) { opacity:.5; }
+  .col-set .drop .col-cb input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+  .col-set .drop .col-name { flex:1; }
+  .col-set .drop .col-grip { color:var(--text-3); font-size:13px; opacity:.55; cursor:grab; letter-spacing:-2px; }
+  .col-set .drop .col-grip:active { cursor:grabbing; }
 
   @keyframes flashUp { 0% { background: var(--up-bg); } 100% { background: transparent; } }
   @keyframes flashDown { 0% { background: var(--down-bg); } 100% { background: transparent; } }
@@ -798,9 +805,11 @@ input[type="number"] { -moz-appearance: textfield; }
               <option value="">默认</option>
             </select>
           </div>
-          <div class="sort-seg">
-            <span class="lab">列</span>
-            <div class="col-chips" id="colChips"></div>
+          <div class="more-menu col-set">
+            <button class="btn sm" onclick="toggleColSet(event)">⚙️ 列</button>
+            <div class="drop" id="colSetDrop">
+              <div id="colSetList"></div>
+            </div>
           </div>
         </div>
         </div>
@@ -1618,11 +1627,16 @@ const COL_KEYS=['nav','est','day','mv','ret','tdy'];
 let colOrder=COL_KEYS.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)) colOrder.push(k); }); } } }catch(e){}
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); }catch(e){} }
-function toggleCol(k,on){ const v=(on===undefined)?!colVis[k]:!!on; colVis[k]=v; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
+function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
+function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }
 function renderColSet(){
-  const box=document.getElementById('colChips'); if(!box) return;
-  box.innerHTML=colOrder.map(k=>`<button type="button" class="cat-chip${colVis[k]?' on':''}" onclick="toggleCol('${k}')">${COL_DEFS[k]}</button>`).join('');
+  const box=document.getElementById('colSetList'); if(!box) return;
+  box.innerHTML=colOrder.map(k=>{
+    const on=colVis[k];
+    return `<label class="col-cb${on?' on':''}"><input type="checkbox" data-col="${k}" ${on?'checked':''} onchange="toggleCol('${k}',this.checked)">`
+      +`<span class="col-name">${COL_DEFS[k]}</span><span class="col-grip" title="在表格里直接拖动列头即可换顺序">⠿</span></label>`;
+  }).join('');
 }
 // 拖动列头换列顺序：轻点列头=排序，按住拖动列头=换列（HTML5 原生 DnD 自动区分 click / drag，二者不冲突）
 let _colDragKey=null;
@@ -1654,6 +1668,7 @@ function colDragEnd(e){
   _colDragKey=null;
   document.querySelectorAll('.dense-table th').forEach(t=>t.classList.remove('col-dragging','col-dragover'));
 }
+document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 标签筛选（你打的标签 + 自动「观察」，可多选叠加）----------

@@ -275,6 +275,7 @@
   .dense-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
   .dense-table th { padding: 9px 8px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 11.5px; }
   .dense-table th:first-child { text-align: left; }
+  .dense-table th.sort-on { color: var(--accent); }
   .dense-table td { padding: 9px 8px; border-bottom: 1px solid var(--border-3); text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }
   .dense-table td:first-child { text-align: left; }
   .dense-table tbody tr { cursor: pointer; }
@@ -694,6 +695,8 @@ input[type="number"] { -moz-appearance: textfield; }
             <button id="sMv" class="on" onclick="setSort('mv')">市值</button>
             <button id="sRet" onclick="setSort('ret')">收益率</button>
             <button id="sDay" onclick="setSort('day')">官方</button>
+            <button id="sNav" onclick="setSort('nav')">净值</button>
+            <button id="sEst" onclick="setSort('est')">估算</button>
             <button id="sName" onclick="setSort('name')">名称</button>
           </div>
           <div class="seg">
@@ -1500,9 +1503,12 @@ function renderWatch(){
 }
 
 function setSort(s){
-  holdSort=s;
+  if(holdSort===s){ holdSortDir = holdSortDir==='desc'?'asc':'desc'; }
+  else { holdSort=s; holdSortDir = (s==='name')?'asc':'desc'; }
   if(s==='day'&&!colVis.day){ colVis.day=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
-  ['mv','ret','day','name'].forEach(k=>{ const e=document.getElementById('s'+k[0].toUpperCase()+k.slice(1)); if(e)e.classList.toggle('on',k===s); });
+  if(s==='est'&&!colVis.est){ colVis.est=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
+  if(s==='nav'&&!colVis.nav){ colVis.nav=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
+  ['mv','ret','day','name','nav','est'].forEach(k=>{ const e=document.getElementById('s'+k[0].toUpperCase()+k.slice(1)); if(e)e.classList.toggle('on',k===s); });
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐（紧凑表 ⚙️ 列设置）----------

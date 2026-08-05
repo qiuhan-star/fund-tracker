@@ -1539,6 +1539,7 @@ function renderGroupTabs(){
     const b=document.createElement('button');
     b.className='cat-chip'+(t===curGroup?' on':'');
     b.textContent=t; b.onclick=function(){ setGroup(t); };
+    if(t==='观察') b.title='小仓位（市值≤700）自动归入；也可在基金行点 ✎ 手动加「观察」标签归入';
     box.appendChild(b);
   });
 }
@@ -1628,7 +1629,10 @@ function renderHomeList(){
     const ws=watchSets();
     list=list.filter(f=> ws.names[f.name] || (syncCode(f.name)&&ws.codes[syncCode(f.name)]));
   }
-  if(curGroup==='观察'){ list=list.filter(f=> (f.mv||0) <= GROUP_OBS_MV); }
+  // 观察：小仓位(市值≤700)自动归入；或在基金行点 ✎ 手动加「观察」标签也归入。持有视图排除已归观察的（两者互斥）
+  const _isObs=f=> (f.mv||0) <= GROUP_OBS_MV || (f.tags||[]).indexOf('观察')>=0;
+  if(curGroup==='观察'){ list=list.filter(_isObs); }
+  else if(curGroup==='持有'){ list=list.filter(f=> !_isObs(f)); }
   // 观察中（自选但未持仓）区块 —— 仅自选视图
   let obsHtml='';
   if(holdWatchOnly){

@@ -208,18 +208,10 @@
   .hk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
   .hk-table th, .hk-table td { padding: 5px 6px; border-bottom: 1px solid var(--border-2); text-align: right; white-space: nowrap; }
   .hk-table th { color: var(--text-3); font-weight: 600; }
-  /* 表头与数据列对齐一致（修复「名称/序号」错位：默认 th 右对齐，但数据列名称左、序号居中） */
-  .hk-table th:nth-child(1){ text-align:center; }
-  .hk-table th:nth-child(2){ text-align:left; }
-  .hk-table th:nth-child(3), .hk-table th:nth-child(4){ text-align:right; font-variant-numeric: tabular-nums; }
   .hk-table td.hk-rank { color: var(--text-3); text-align: center; }
-  .hk-table td.hk-name { text-align: left; font-weight: 600; white-space: normal; }
-  .hk-table td.hk-pct, .hk-table td.hk-chg { font-variant-numeric: tabular-nums; }
+  .hk-table td.hk-name { text-align: left; font-weight: 600; }
   .hk-table td.hk-chg.pos { color: var(--up); }
   .hk-table td.hk-chg.neg { color: var(--down); }
-  /* 名称 + 股票代码(市场标识) + 长名截断 */
-  .hk-nm { font-weight: 600; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hk-code { font-size: 10.5px; color: var(--text-3); margin-top: 2px; line-height: 1.2; }
   .nav-edit:hover { border-bottom-color: var(--accent-text); color: var(--accent-text); }
   .hl-num { flex: 0 0 auto; text-align: right; }
   .hl-mv { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -2877,7 +2869,7 @@ async function renderFundHoldings(f){
       else if(t==='新增'||t==='新进') chgCell=`<span class="pos">新进</span>`;
       else chgCell=`<span class="${chgVal>=0?'pos':'neg'}">${(chgVal>=0?'+':'')+v}%</span>`;
     } else if(t==='不变'){ chgCell='不变'; }
-    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name"><div class="hk-nm">${esc(x.GPJC||x.GPDM||'—')}</div>${ (x.GPJC&&x.GPDM)?'<div class="hk-code">'+esc(x.GPDM)+'</div>':'' }</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg">${chgCell}</td></tr>`;
+    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${esc(x.GPJC||x.GPDM||'—')}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg">${chgCell}</td></tr>`;
   }).join('');
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }

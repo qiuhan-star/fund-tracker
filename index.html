@@ -292,6 +292,11 @@
   .float-menu .fm-opt { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; color: var(--text); font-family: inherit; }
   .float-menu .fm-opt:hover { background: var(--border-3); }
   .float-menu .fm-opt.on { color: var(--accent-on); font-weight: 600; }
+  .float-menu .fm-sep { height: 1px; background: var(--border-3); margin: 5px 4px; }
+  .float-menu .fm-input { display: block; width: calc(100% - 16px); margin: 2px 8px; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 13px; font-family: inherit; background: var(--bg); color: var(--text); box-sizing: border-box; outline: none; }
+  .float-menu .fm-input:focus { border-color: var(--accent); }
+  .float-menu .fm-save { display: block; width: calc(100% - 16px); margin: 2px 8px 4px; padding: 6px 8px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-on); font-family: inherit; }
+  .float-menu .fm-save:hover { filter: brightness(1.06); }
   /* 首页持仓列表：基金内"重仓"小条（前三大） */
   .hl-hold { display:none; margin-top:6px; font-size:11px; color:var(--text-3); align-items:center; flex-wrap:wrap; gap:6px; }
   .hh-label { font-weight:600; margin-right:2px; }
@@ -1630,11 +1635,17 @@ function closeMenus(){ document.querySelectorAll('.float-menu').forEach(m=>m.rem
 function catMenu(name, ev){
   closeMenus();
   const cur=catOverride[name]||((fundsView.find(f=>f.name===name)||{}).cat)||'';
+  const customVal=(cur && CAT_LIST.indexOf(cur)<0)?cur:'';
   const m=document.createElement('div'); m.className='float-menu';
   m.innerHTML='<div class="fm-title">修改分类（系统按名称自动判定，可手动覆盖）</div>'
     + CAT_LIST.map(c=>`<button class="fm-opt${c===cur?' on':''}" onclick="setCatOverride('${esc(name)}','${c}')">${c}</button>`).join('')
-    + `<button class="fm-opt" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`;
+    + `<button class="fm-opt" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`
+    + '<div class="fm-sep"></div>'
+    + '<div style="font-size:11px;color:var(--text-3);padding:2px 8px 4px;">或自己输入分类名：</div>'
+    + '<input class="fm-input" id="catCustom" placeholder="如：半导体、红利、黄金…" value="'+esc(customVal)+'">'
+    + '<button class="fm-save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button>';
   document.body.appendChild(m);
+  const inp=m.querySelector('#catCustom'); if(inp){ inp.focus(); inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); applyCatCustom(name); } }); }
   const r=(ev&&ev.currentTarget?ev.currentTarget:ev&&ev.target?ev.target:document.body).getBoundingClientRect();
   m.style.left=Math.min(r.left, window.innerWidth-180)+'px'; m.style.top=(r.bottom+4)+'px';
   setTimeout(function(){ document.addEventListener('click', function h(e){ if(!m.contains(e.target)){ m.remove(); document.removeEventListener('click',h); } }); },0);
@@ -1644,6 +1655,12 @@ function setCatOverride(name, cat){
   try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
   closeMenus();
   if(typeof compute==='function') compute();
+}
+function applyCatCustom(name){
+  const inp=document.getElementById('catCustom'); if(!inp) return;
+  const v=inp.value.trim();
+  if(!v) return; // 空不保存
+  setCatOverride(name, v);
 }
 function filterCat(c){
   holdCatFilter=c;
@@ -3721,17 +3738,19 @@ function syncOnline(){
 function importCSV(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.csv,.txt,.tsv';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const r=new FileReader();
-    r.onload=()=>{ try{ const added=parseCSV(r.result); if(added===0){ toast('未识别到交易行'); return; }
-        const sample=added.slice(0,3).map(t=>`${t.name} | ${t.date} | ${t.type} | ${t.amount}${t.nav?' @'+t.nav:''}`).join('\n');
-        if(!confirm('即将导入 '+added+' 笔交易，确认吗？\n\n示例：\n'+sample+'\n\n（可在「交易」Tab 查看并删除错误行）')) return;
-        compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('csv import refresh failed', e); }); toast('已导入 '+added+' 笔交易（CSV）· 正在拉取净值…'); }
+    r.onload=()=>{ try{ const res=parseCSV(r.result); const added=res.count; if(added===0&&res.dup===0){ toast('未识别到交易行'); return; }
+        if(added===0&&res.dup>0){ toast('全部 '+res.dup+' 笔均已存在，无需重复导入'); return; }
+        const sample=res.rows.slice(0,3).map(t=>`${t.name} | ${t.date} | ${t.type} | ${t.amount}${t.nav?' @'+t.nav:''}`).join('\n');
+        const skipNote=res.dup?('（已自动跳过重复 '+res.dup+' 笔）'):'';
+        if(!confirm('即将导入 '+added+' 笔交易'+skipNote+'，确认吗？\n\n示例：\n'+sample+'\n\n（可在「交易」Tab 查看并删除错误行）')) return;
+        compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('csv import refresh failed', e); }); toast('已导入 '+added+' 笔交易（CSV）· 正在拉取净值…'+(res.dup?(' · 跳过重复 '+res.dup+' 笔'):'')); }
       catch(e){ alert('CSV 解析失败：'+e.message); } };
     r.readAsText(f,'utf-8'); };
   inp.click();
 }
 function parseCSV(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());
-  if(!lines.length) return 0;
+  if(!lines.length) return {count:0, dup:0, rows:[]};
   const split=l=>l.split(l.includes('\t')?/\t+/:/[,，]/).map(s=>s.trim().replace(/^"|"$/g,''));
   const head=split(lines[0]);
   const col={name:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1};
@@ -3771,8 +3790,15 @@ function parseCSV(text){
     if(!(amount||nav)) continue;
     added.push({name,date,type,amount,nav,fee,account});
   }
-  if(!added.length) return 0;
-  trades=trades.concat(added); return added.length;
+  if(!added.length) return {count:0, dup:0, rows:[]};
+  // 去重：同名+同日+同金额+同净值+同账户 已存在则跳过，支持安全重导（不必先删）
+  const normNum=v=>(v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):'';
+  const keyOf=t=>(t.name||'')+'|'+(t.date||'')+'|'+normNum(t.amount)+'|'+normNum(t.nav)+'|'+((t.account)||'');
+  const seen=new Set(trades.map(keyOf));
+  let dup=0; const fresh=[];
+  for(const t of added){ const k=keyOf(t); if(seen.has(k)){ dup++; } else { seen.add(k); fresh.push(t); } }
+  trades=trades.concat(fresh);
+  return {count:fresh.length, dup, rows:fresh};
 }
 function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
 

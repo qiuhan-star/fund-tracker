@@ -633,9 +633,8 @@ input[type="number"] { -moz-appearance: textfield; }
           </div>
         </div>
         </div>
-        <div class="cat-filter" id="accFilter"></div>
         <div class="cat-filter" id="catFilter"></div>
-        <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)" value="${holdSearch}"></div>
+        <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)"></div>
         <div id="homeList"></div>
         <p class="hint">「紧凑」表格点任意一行直接进入详情；「卡片」视图点行可<b>展开</b>查看持仓摘要与最近交易。展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、前十大持仓与复盘笔记）。</p>
         <p class="privacy"><b>🔒 隐私：</b>所有数据仅保存在你本地浏览器 / 本文件，<b>不会上传任何服务器</b>。</p>
@@ -1270,6 +1269,7 @@ function blurbFor(f){
 }
 function renderHomeList(){
   syncHomeViewUI();
+  var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }

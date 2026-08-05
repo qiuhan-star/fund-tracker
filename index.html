@@ -1073,7 +1073,8 @@ function filterCat(c){
 // ---------- 账户筛选 + 按账户汇总 ----------
 function renderAccFilter(){
   const box=document.getElementById('accFilter'); if(!box) return;
-  const accs=['全部', ...ACCOUNTS, ...new Set(_allHoldings.map(f=>f.account))].filter((v,i,a)=>a.indexOf(v)===i);
+  // 级联过滤：只显示当前资金口径下实际存在的账户（_allHoldings 已按 scopeMatches 过滤）
+  const accs=['全部', ...new Set(_allHoldings.map(f=>f.account))].filter((v,i,a)=>a.indexOf(v)===i);
   box.innerHTML=accs.map(c=>`<button class="cat-chip${c===curAccount?' on':''}" onclick="filterAccount('${esc(c)}')">${c}</button>`).join('');
 }
 function filterAccount(a){

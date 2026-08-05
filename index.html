@@ -655,13 +655,14 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
 
     <!-- 大盘实时（腾讯财经，独立备用源） -->
-    <!-- 资产口径切换（个人 / 代管 / 全量）· 置于最顶，作为整页数据口径上下文（先看是谁的钱，再看数据） -->
+    <!-- 资金口径切换（我的 / 小号 / 微信债券 / 全量）· 置于最顶，作为整页数据口径上下文（先看是谁的钱，再看数据） -->
     <div class="scope-bar" id="scopeBar">
-      <span class="scope-lab">资产口径</span>
+      <span class="scope-lab">资金口径</span>
       <div class="scope-seg">
-        <button id="sc-personal" class="on" onclick="setScope('personal')">个人资产</button>
-        <button id="sc-managed" onclick="setScope('managed')">代管(妈妈)</button>
-        <button id="sc-all" onclick="setScope('all')">全量</button>
+        <button id="sc-我的" class="on" onclick="setScopeAcc('我的')">我的</button>
+        <button id="sc-小号" onclick="setScopeAcc('小号')">小号</button>
+        <button id="sc-微信债券" onclick="setScopeAcc('微信债券')">微信债券</button>
+        <button id="sc-all" onclick="setScopeAcc('all')">全量</button>
       </div>
       <span id="scopeHint" class="scope-hint"></span>
     </div>
@@ -1016,27 +1017,45 @@ const ACCOUNT_META={
 };
 function accIsPersonal(acc){ const m=ACCOUNT_META[acc]; return m? (m.isPersonal!==false) : true; }
 function accOwner(acc){ const m=ACCOUNT_META[acc]; return m? m.owner : '本人'; }
-// 视图口径：personal=仅个人 / managed=仅代管(妈妈) / all=全量（个人+代管）
-let currentScope='personal';
-try{ const _s=localStorage.getItem('ft_scope'); if(_s==='personal'||_s==='managed'||_s==='all') currentScope=_s; }catch(e){}
+// 资金口径（账户级）：我的 / 小号 / 微信债券 / all(全量)；兼容旧值 personal→我的、managed→小号
+let scopeAcc='我的';
+try{ const _s=localStorage.getItem('ft_scope');
+  if(_s==='personal') scopeAcc='我的';
+  else if(_s==='managed') scopeAcc='小号';
+  else if(_s==='all') scopeAcc='all';
+  else if(_s==='我的'||_s==='小号'||_s==='微信债券') scopeAcc=_s;
+}catch(e){}
+let currentScope = scopeAcc==='all'?'all':(scopeAcc==='小号'?'managed':'personal');
 function scopeMatches(acc){
   const personal=accIsPersonal(acc);
   if(currentScope==='personal') return personal;
   if(currentScope==='managed') return !personal;
   return true; // all
 }
-function setScope(s){
+function setScope(s){ // 兼容旧调用（设置弹窗）→ 同步到账户口径
+  scopeAcc = s==='all'?'all':(s==='managed'?'小号':'我的');
   currentScope=s;
-  try{ localStorage.setItem('ft_scope', s); }catch(e){}
+  curAccount = scopeAcc==='all'?'全部':scopeAcc;
+  try{ localStorage.setItem('ft_scope', scopeAcc==='all'?'all':scopeAcc); }catch(e){}
   updateScopeUI();
-  compute(); // 重建 fundsView/_allHoldings 并按新口径过滤
+  compute();
+}
+// 资金口径（账户级）：我的 / 小号 / 微信债券 / all
+function setScopeAcc(acc){
+  scopeAcc=acc;
+  currentScope = acc==='all'?'all':(acc==='小号'?'managed':'personal');
+  curAccount = acc==='all'?'全部':acc;
+  try{ localStorage.setItem('ft_scope', acc==='all'?'all':acc); }catch(e){}
+  updateScopeUI();
+  compute(); // 重建 _allHoldings(scope) + fundsView(curAccount)
 }
 function updateScopeUI(){
-  ['personal','managed','all'].forEach(k=>{ const e=document.getElementById('sc-'+k); if(e) e.classList.toggle('on', k===currentScope); });
+  ['我的','小号','微信债券','all'].forEach(k=>{ const e=document.getElementById('sc-'+k); if(e) e.classList.toggle('on', k===scopeAcc); });
   const e=document.getElementById('scopeHint');
-  if(e) e.textContent = currentScope==='personal' ? '仅统计你本人的资产（不含代管）'
-                  : currentScope==='managed' ? '仅统计代管资产（妈妈的）'
-                  : '个人 + 代管：全部经手资金';
+  if(e) e.textContent = scopeAcc==='我的' ? '仅统计「我的」账户'
+                  : scopeAcc==='小号' ? '仅统计「小号」账户（妈妈的代管资产）'
+                  : scopeAcc==='微信债券' ? '仅统计「微信债券」账户'
+                  : '全部账户：我的 + 小号 + 微信债券';
 }
 let curAccount='全部', curGroup='汇总', pendingAcc=null;
 const GROUP_OBS_MV=700;
@@ -1765,7 +1784,7 @@ function suggestedAlloc(p){
   sug['宽基/行业']=Math.max(0,100-used);
   return sug;
 }
-let cmpCurChart=null, cmpSugChart=null;
+let cmpCurChart=null, cmpSugChart=null, cmpBarChart=null;
 function drawDough(id,labels,data){
   const cv=document.getElementById(id); if(!cv) return;
   if(id==='pieCur'&&cmpCurChart) cmpCurChart.destroy();
@@ -1804,10 +1823,7 @@ function renderAdvice(){
     const dc=flat?'cmp-flat':(up?'cmp-up':'cmp-down'), arrow=flat?'—':(up?'▲':'▼');
     return `<tr><td class="dl"><i class="sw" style="background:${CAT_COLORS[l]||'#9aa0a6'}"></i>${l}</td><td>${c.toFixed(1)}%</td><td>${s.toFixed(1)}%</td><td class="${dc}">${arrow} ${up?'+':''}${d.toFixed(1)}%</td></tr>`;
   }).join('');
-  html+=`<div class="cmp">
-    <div class="cc"><h3>当前配置</h3><div class="chart-box"><canvas id="pieCur"></canvas></div><div class="legend" id="pieCurLg"></div></div>
-    <div class="cc"><h3>建议配置（${userProfile.risk}档）</h3><div class="chart-box"><canvas id="pieSug"></canvas></div><div class="legend" id="pieSugLg"></div></div>
-  </div>`;
+  html+=`<div class="cmp-bar-wrap" style="height:${Math.max(240,uLabels.length*30)}px;margin:6px 0"><canvas id="cmpBar"></canvas></div>`;
   html+=`<div class="cmp-diff"><table><thead><tr><th class="dl">板块</th><th>当前</th><th>建议</th><th>变动</th></tr></thead><tbody>${diffRows}</tbody></table><div class="cmp-diff-note">▲ 需增持 / 调高权重　▼ 需减仓 / 压降（红=加、绿=减、灰=持平）</div></div>`;
   html+=`<div class="risk-legend"><span><i style="background:#e24b4b"></i>高风险：芯片/周期资源/海外/跨境(QDII)/科技等</span><span><i style="background:#e0a800"></i>中风险：宽基/行业</span><span><i style="background:#27ae60"></i>低风险：债基 / 混合</span></div>`;
 
@@ -1886,10 +1902,16 @@ function renderAdvice(){
   </div>`;
 
   box.innerHTML=html;
-  drawDough('pieCur',uLabels,uCur);
-  const lg1=document.getElementById('pieCurLg'); if(lg1) lg1.innerHTML=uLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${uCur[i]}%</span>`).join('');
-  drawDough('pieSug',uLabels,uSug);
-  const lg2=document.getElementById('pieSugLg'); if(lg2) lg2.innerHTML=uLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${uSug[i]}%</span>`).join('');
+  const cb=document.getElementById('cmpBar');
+  if(cb){
+    if(cmpBarChart) cmpBarChart.destroy();
+    cmpBarChart=new Chart(cb,{type:'bar',data:{labels:uLabels,datasets:[
+      {label:'当前',data:uCur,backgroundColor:'#5b6fd6'},
+      {label:'建议',data:uSug,backgroundColor:'#27ae60'}
+    ]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}},
+      plugins:{legend:{display:true,position:'top'},tooltip:{callbacks:{afterBody:(its)=>{const i=its[0].dataIndex;const d=+(uSug[i]-uCur[i]).toFixed(1);return '变动 '+(d>0?'+':'')+d+'%';}}}}}});
+  }
 }
 // ---------- 债券板块：我的债基（不看 10Y、不看温度计） ----------
 let bondState={dates:{},amts:{}};
@@ -3800,7 +3822,7 @@ function recordGrowth(){
         <div class="sm-row"><div class="sm-rt">强调色 (Accent)<div class="sm-rd">用于按钮、开关与高亮</div></div>
           <div class="sm-sw" id="smSwatches"></div></div>
         <div class="sm-row"><div class="sm-rt">默认资产口径<div class="sm-rd">打开应用时的初始口径</div></div>
-          <div class="sm-seg" id="smScopeSeg"><button data-s="personal">个人资产</button><button data-s="managed">代管(妈妈)</button><button data-s="all">全量</button></div></div>
+          <div class="sm-seg" id="smScopeSeg"><button data-s="我的">我的</button><button data-s="小号">小号</button><button data-s="微信债券">微信债券</button><button data-s="all">全量</button></div></div>
         <div class="sm-row"><div class="sm-rt">自动刷新净值<div class="sm-rd">每 3 分钟后台刷新一次行情</div></div>
           <label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div>
       </div>
@@ -3852,7 +3874,7 @@ function recordGrowth(){
       sw.dataset.built='1';
     }
     try{ var ac=JSON.parse(localStorage.getItem('ft_accent')||'null'); if(ac){ Array.prototype.forEach.call(sw.children,function(x){ x.classList.toggle('on', SM_ACCENTS[+x.getAttribute('data-i')].a===ac.a); }); } else if(sw.firstChild){ sw.firstChild.classList.add('on'); } }catch(e){}
-    var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-s')||'')===currentScope); }); }
+    var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-s')||'')===scopeAcc); }); }
     var ar=document.getElementById('smAutoRefresh'); if(ar){ try{ ar.checked = localStorage.getItem('ft_autorefresh')!=='0'; }catch(e){ ar.checked=true; } }
     var cs=document.getElementById('smCacheSize'); if(cs){ try{ var keys=['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh']; var bytes=0; keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) bytes+=v.length; }); cs.textContent='约 '+(bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB'); }catch(e){ cs.textContent='—'; } }
     var ver=document.getElementById('smVersion'); if(ver) ver.textContent='v'+SCHEMA_VERSION;
@@ -3860,7 +3882,7 @@ function recordGrowth(){
   window.clearCache=function(){ if(!confirm('清除本地缓存（净值快照与备份）？\n持仓与交易台账保留，仅清掉可重新拉取的净值缓存以释放空间。')) return; try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
   window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ ['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} location.reload(); };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); } });
-  document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScope(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
+  document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('change',function(e){ if(e.target && e.target.id==='smAutoRefresh'){ try{ localStorage.setItem('ft_autorefresh', e.target.checked?'1':'0'); }catch(_){} } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=document.getElementById('settingsMask'); if(m&&m.classList.contains('show')) closeSettings(); } });
   try{ if((localStorage.getItem('ft_autorefresh')||'1')!=='0'){ setInterval(function(){ try{ if(document.visibilityState==='visible' && typeof refresh==='function') refresh(); }catch(_){} }, 180000); } }catch(_){}

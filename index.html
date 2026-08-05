@@ -2699,13 +2699,11 @@ function enterDetail(f){
   detailAcc=f.account||'我的';
   const a=ANALYSIS[f.name], c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
-    +`<div class="card idx-card"><div class="sec-head"><h2 style="margin:0;font-size:14px">实时大盘 <span class="tag">腾讯财经</span></h2><span class="idx-head-right"><button id="idxSparkToggleD" class="idx-toggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button><span id="idxTimeD" class="idx-status"></span></span></div><div class="idx-list" id="idxListD"><span class="hint">加载中…</span></div></div>`
     +`<div id="detailIntraday"></div>`
     +`<div id="detailHistory"></div>`
     +`<div id="detailProfile"></div>`
     +`<div id="detailHoldings"></div>`
-    +`<div id="detailStatic"></div>`+`<div id="detailLive"></div>`;
-  renderIndices();
+    +`<div id="detailStatic"></div>`    +`<div id="detailLive"></div>`;
   const st=document.getElementById('detailStatic');
   if(a){ st.innerHTML=`<div class="card"><div class="am-inline">${a.body}</div></div>`; try{ a.charts(); detailChartFund=f.name; }catch(e){console.error(e);} }
   else { st.innerHTML=genericDetail(f); }

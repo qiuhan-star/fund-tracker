@@ -153,6 +153,11 @@
   .adv-toggle:hover { text-decoration: underline; }
   .loading { font-size: 12px; color: var(--text-3); }
   .chart-box { position: relative; height: 230px; }
+  .tree-fallback { display: flex; flex-direction: column; gap: 6px; padding: 4px 2px; }
+  .tf-row { position: relative; display: flex; align-items: center; min-height: 22px; }
+  .tf-bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; max-width: 100%; }
+  .tf-cap { position: relative; z-index: 1; font-size: 11.5px; padding-left: 6px; line-height: 1.3; }
+  .tf-cap b { font-weight: 600; }
 
   /* ===== 顶部栏 ===== */
   .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
@@ -558,7 +563,7 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
 
     <!-- 资产口径切换（个人 / 代管 / 全量） -->
-    <div class="scope-bar">
+    <div class="scope-bar" id="scopeBar">
       <span class="scope-lab">资产口径</span>
       <div class="scope-seg">
         <button id="sc-personal" class="on" onclick="setScope('personal')">个人资产</button>
@@ -566,6 +571,13 @@ input[type="number"] { -moz-appearance: textfield; }
         <button id="sc-all" onclick="setScope('all')">全量</button>
       </div>
       <span id="scopeHint" class="scope-hint"></span>
+    </div>
+
+    <!-- 市场风向 Tab 专用：数据源 / 刷新状态栏（公共市场数据，与"谁的账户"无关） -->
+    <div class="scope-bar" id="marketStatus" style="display:none">
+      <span class="scope-lab">数据源</span>
+      <span class="scope-hint">大盘指数：腾讯财经实时 · 板块资金 / 热门基金：示例数据（待接真实接口）</span>
+      <span id="marketRefresh" class="scope-hint" style="margin-left:auto">最近刷新：—</span>
     </div>
 
     <!-- Tab 0: 持仓 -->
@@ -964,6 +976,10 @@ let activeTab=0;
 function switchTab(i){
   activeTab=i;
   [0,1,2,3,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
+  // 资产口径栏仅对账户相关数据生效；市场风向为公共市场数据，切换为"数据源/刷新状态"栏
+  const sb=document.getElementById('scopeBar'), ms=document.getElementById('marketStatus');
+  if(sb) sb.style.display = (i===5)?'none':'flex';
+  if(ms) ms.style.display = (i===5)?'flex':'none';
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderBond(); }
@@ -1003,6 +1019,8 @@ function loadMarketData(){
   try{ fetchIndices(); }catch(e){}
   renderFlows(MARKET_FLOW);
   loadFundRank('top');
+  const mr=document.getElementById('marketRefresh');
+  if(mr){ const t=new Date(); mr.textContent='最近刷新：'+t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); }
 }
 function renderFlows(data){
   const inList=document.getElementById('inflow-list'), outList=document.getElementById('outflow-list');
@@ -1228,7 +1246,7 @@ function renderOverview(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0), cost=fundsView.reduce((a,f)=>a+f.cost,0);
   const profit=total-cost, pret=cost>0?profit/cost*100:0;
   const realized=fundsView.reduce((a,f)=>a+(f.realized||0),0);
-  const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length;
+  const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length, flat=fundsView.filter(f=>f.ret===0).length;
   const cls=profit>=0?'pos':'neg';
   const top3=getCatAllocation().slice(0,3).reduce((a,b)=>a+b[1],0);
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
@@ -1239,7 +1257,7 @@ function renderOverview(){
     <div class="mcard"><p class="lbl">持有总收益</p><p class="val ${cls}">${profit>=0?'+':''}${M(profit)}</p></div>
     <div class="mcard"><p class="lbl">已实现盈亏</p><p class="val ${realized>=0?'pos':'neg'}">${realized>=0?'+':''}${M(realized)}</p></div>
     <div class="mcard"><p class="lbl">总收益率</p><p class="val ${cls}">${pret>=0?'+':''}${pret.toFixed(2)}%</p></div>
-    <div class="mcard"><p class="lbl">基金数 / 盈:亏</p><p class="val">${fundsView.length} <span class="pos">${win}</span>:<span class="neg">${lose}</span></p></div>
+    <div class="mcard"><p class="lbl">基金数 / 盈:亏</p><p class="val">${fundsView.length} 只 · <span class="pos">${win}盈</span>/<span class="neg">${lose}亏</span>${flat?`/<span class="zero">${flat}平</span>`:''}</p></div>
     <div class="mcard"><p class="lbl">前三大赛道集中度</p><p class="val ${top3>CONFIG.top3Warn?'neg':'pos'}">${top3.toFixed(0)}%</p></div>
     <div class="mcard"><p class="lbl">资产走势</p>${snapshotSpark()||'<p class="val zero">—</p>'}<p class="sub2">${dailySnapshots.length} 个记录日</p></div>`;
 }
@@ -1248,7 +1266,7 @@ let pieChart=null, barChart=null;
 function renderPie(){
   const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
   const labels=Object.keys(cats), data=Object.values(cats);
-  const colors=['#e24b4a','#ba7517','#378add','#0f6e56','#993c1d','#534ab7','#888780','#ef9f27','#3b6d11'];
+  const colors=labels.map(l=>CAT_COLORS[l]||'#9aa0a6');
   if(pieChart) pieChart.destroy();
   pieChart=new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'58%',onClick:(evt,elements)=>{ if(!elements||!elements.length) return; const i=elements[0].index; if(labels[i]!=null) drillToCat(labels[i]); }}});
   const tot=data.reduce((a,b)=>a+b,0);
@@ -1260,6 +1278,8 @@ function renderBar(){
   const labels=sorted.map(f=>f.name.length>9?f.name.slice(0,9)+'…':f.name);
   const data=sorted.map(f=>+f.ret.toFixed(2));
   const colors=sorted.map(f=>f.ret>=0?TH().up:TH().down);
+  const box=document.getElementById('bar').parentElement;
+  box.style.height=Math.max(200, sorted.length*18+12)+'px';
   if(barChart) barChart.destroy();
   barChart=new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:TH().grid}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
 }
@@ -1271,7 +1291,7 @@ function loadProfile(){ try{const s=localStorage.getItem('ft_profile'); if(s){co
 function saveProfile(){ try{localStorage.setItem('ft_profile',JSON.stringify(userProfile));}catch(e){} }
 function setProfile(k,v){ userProfile[k]=v; saveProfile(); render(); }
 const RISK_CATS=['芯片','周期资源','海外','科技','制造','医药'];
-const CAT_COLORS={'芯片':'#e24b4b','周期资源':'#ba7517','QDII':'#378add','海外':'#378add','科技':'#7a4ab7','制造':'#993c1d','医药':'#0f8a63','宽基/行业':'#e0a800','混合/债':TH().down,'其他':'#888780'};
+const CAT_COLORS={'芯片':'#5b6fd6','周期资源':'#e0913a','QDII':'#3aa0a0','海外':'#3aa0a0','科技':'#8a5cd0','制造':'#c0653a','医药':'#3f9e7a','宽基/行业':'#d4a017','混合/债':'#7a8290','其他':'#9aa0a6'};
 function profileModel(p){
   const base={'保守':{single:10,def:25,qdii:15},'稳健':{single:15,def:15,qdii:20},'激进':{single:25,def:8,qdii:25}}[p.risk]||{single:15,def:15,qdii:20};
   let def=base.def;
@@ -1728,13 +1748,21 @@ function renderThemeHeat(){
 function renderSectorTree(){
   const box=document.getElementById('sectorTree'); if(!box) return;
   if(!fundsView.length){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
-  if(typeof echarts==='undefined'){ box.innerHTML='<p class="hint">图表库（ECharts）未加载，无法渲染面积图；请联网后刷新。</p>'; return; }
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const map={};
   fundsView.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0,n:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); m.n++; });
   let rows=Object.entries(map).map(([k,m])=>({cat:k, mv:m.mv, pct:total?m.mv/total*100:0, wret:m.mv?m.retW/m.mv:0, n:m.n})).sort((a,b)=>b.mv-a.mv);
   rows=rows.filter(r=> r.pct>0 && (!collapseMicro || r.pct>=2));
   if(!rows.length){ box.innerHTML='<p class="hint">暂无持仓（或微量已全部折叠）。</p>'; return; }
+  if(typeof echarts==='undefined'){
+    // CSS 纯静态降级：横向条按市值占比，颜色按加权收益（红涨绿跌）
+    box.innerHTML='<div class="tree-fallback">'+rows.map(r=>{
+      const cc=r.wret>0?TH().up:r.wret<0?TH().down:'#999';
+      const bg=r.wret>0?'rgba(192,57,43,0.14)':r.wret<0?'rgba(39,174,96,0.14)':'rgba(120,120,120,0.10)';
+      return `<div class="tf-row" title="${esc(r.cat)}｜占比 ${r.pct.toFixed(1)}%｜加权收益 ${r.wret>=0?'+':''}${r.wret.toFixed(2)}%｜${r.n} 只"><div class="tf-bar" style="width:${Math.max(6,r.pct)}%;background:${bg};border-left:3px solid ${cc}"></div><div class="tf-cap"><b>${esc(r.cat)}</b> ${r.pct.toFixed(1)}% · ${r.wret>=0?'+':''}${r.wret.toFixed(1)}% · ${r.n}只</div></div>`;
+    }).join('')+'</div>';
+    return;
+  }
   // 红涨绿跌（A股惯例）：方块面积=市值占比，颜色按该类加权收益率着色
   const C={ up:['rgba(192,57,43,0.16)','rgba(192,57,43,0.55)'], down:['rgba(39,174,96,0.16)','rgba(39,174,96,0.55)'], zero:['rgba(120,120,120,0.10)','rgba(150,150,150,0.45)'] };
   const data=rows.map(r=>{ const c=r.wret>0?C.up:r.wret<0?C.down:C.zero; return {

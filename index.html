@@ -197,7 +197,7 @@
   .hh-chip b { color:var(--text); margin-left:3px; font-weight:600; }
 
   /* 数据隐蔽模式 */
-  #eyeBtn { font-size: 15px; line-height: 1; padding: 6px 10px; }
+  .eye-inline { background:none; border:none; cursor:pointer; font-size:13px; margin-left:5px; padding:0 2px; vertical-align:middle; line-height:1; color:var(--text-2); }
   /* 板块集中度 warn */
   .cb-fill.warn { box-shadow: 0 0 0 2px var(--danger) inset; }
   /* 预警高亮（止盈/止损） */
@@ -446,7 +446,6 @@ input[type="number"] { -moz-appearance: textfield; }
         <p class="sub"><span id="updated" class="loading">数据未刷新</span></p>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start">
-        <button class="btn sm" id="eyeBtn" onclick="toggleHidden()" title="隐藏/显示金额">👁</button>
         <button class="btn sm" id="themeBtn" onclick="toggleTheme()" title="切换亮色 / 暗色">🌓 主题</button>
         <div class="more-menu">
           <button class="btn sm" onclick="toggleMore(event)">⋯ 更多</button>
@@ -930,7 +929,7 @@ function renderOverview(){
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'zero':(todayGain>=0?'pos':'neg');
   document.getElementById('overview').innerHTML=`
-    <div class="mcard"><p class="lbl">总市值</p><p class="val">${M(total)}</p></div>
+    <div class="mcard"><p class="lbl">总市值 <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></p><p class="val">${M(total)}</p></div>
     <div class="mcard"><p class="lbl">今日预估</p><p class="val ${tgcls}">${tg}</p></div>
     <div class="mcard"><p class="lbl">持有总收益</p><p class="val ${cls}">${profit>=0?'+':''}${M(profit)}</p></div>
     <div class="mcard"><p class="lbl">已实现盈亏</p><p class="val ${realized>=0?'pos':'neg'}">${realized>=0?'+':''}${M(realized)}</p></div>
@@ -1277,15 +1276,15 @@ function buildLiquidatedView(){
     const acc=ref.acc, name=ref.name;
     const tr=trades.filter(function(t){ return accOf(t)===acc && t.name===name; }).slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
     if(!tr.length) return;
-    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null;
+    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null, lots=[];
     tr.forEach(function(t){
       const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
       const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
-      if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ shares+=sh; cost+=amt+fee; } }
-      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
-      else if(ty==='dividend'){ div+=amt; cost=Math.max(0,cost-amt); realized+=amt; }
-      else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ shares+=rsh; cost+=amt; } }
-      else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }
+      if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } }
+      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }
+      else if(ty==='dividend'){ div+=amt; if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }
+      else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }
+      else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }
       if(shares<0) shares=0; if(cost<0) cost=0;
       if(ty==='buy'||ty==='reinvest'){ if(!firstBuy||t.date<firstBuy) firstBuy=t.date; }
       if(ty==='sell'){ if(!lastSell||t.date>lastSell) lastSell=t.date; if(!firstBuy) firstBuy=t.date; }
@@ -1356,16 +1355,16 @@ function buildFundsView(){
     const cat=snap?snap.cat:(tr[0]?guessCat(tr[0].name):guessCat(name));
     let f;
     if(tr.length){
-      let shares=0,cost=0,firstDate=null,realized=0;
+      let shares=0,cost=0,firstDate=null,realized=0,lots=[];  // lots：严格 FIFO 批次 {sh,cp}
       const sortedTr=[...tr].sort((a,b)=>a.date.localeCompare(b.date));
       sortedTr.forEach(t=>{
         const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
         const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
-        if(ty==='buy'||ty==='convert'){ if(sh>0){ shares+=sh; cost+=amt+fee; } /* 手动份额优先，否则金额÷净值（T+1 待确认） */ }
-        else if(ty==='sell'||ty==='convert_out'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(nav-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
-        else if(ty==='dividend'){ cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
-        else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
-        else if(ty==='split'){ const r=+amt||1; if(r>0) shares*=r; }             // 份额拆分：份额×比例、成本不变
+        if(ty==='buy'||ty==='convert'){ if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } /* 手动份额优先，否则金额÷净值（T+1 待确认） */ }
+        else if(ty==='sell'||ty==='convert_out'){ if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }
+        else if(ty==='dividend'){ if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
+        else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
+        else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }             // 份额拆分：份额×比例、成本不变
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||t.date<firstDate) firstDate=t.date;
       });
@@ -2539,12 +2538,12 @@ function buildStocksView(){
     const name=(snap&&snap.name)||(tr[0]&&tr[0].name)||code;
     let f;
     if(tr.length){
-      let shares=0,cost=0,firstDate=null,realized=0;
+      let shares=0,cost=0,firstDate=null,realized=0,lots=[];
       [...tr].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(t=>{
         const ty=t.ttype||'buy', sh=+t.shares||0, price=+t.price||0, fee=+t.fee||0;
-        if(ty==='buy'){ shares+=sh; cost+=sh*price+fee; }
-        else if(ty==='sell'){ if(shares>0){ const sellSh=Math.min(sh,shares); const avg=cost/shares; realized+=(price-avg)*sellSh-fee; cost-=avg*sellSh; shares-=sellSh; } }
-        else if(ty==='dividend'){ const amt=+t.amount||0; cost=Math.max(0,cost-amt); realized+=amt; }
+        if(ty==='buy'){ if(sh>0){ const cp=(sh*price+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=sh*price+fee; } }
+        else if(ty==='sell'){ if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(price-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }
+        else if(ty==='dividend'){ const amt=+t.amount||0; if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||(t.date&&t.date<firstDate)) firstDate=t.date;
       });
@@ -2761,7 +2760,7 @@ function isMarketOpen(d){ const day=d.getDay(); if(day===0||day===6) return fals
 // 净值性质标注：盘中=估值，收盘/官方=官方，手动填=手动
 function navKind(nc){ const mkt=isMarketOpen(new Date()); if(nc&&nc.date==='手动') return '手动'; if(mkt&&nc&&nc.gsz!=null) return '估值'; return '官方'; }
 function navBadge(nc){ const k=navKind(nc); const cls=k==='估值'?'nk-est':k==='手动'?'nk-man':'nk-off'; return `<i class="nk ${cls}">${k}</i>`; }
-function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} const eb=document.getElementById('eyeBtn'); if(eb) eb.textContent=hidden?'🙈':'👁'; render(); }
+function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁'); render(); }
 function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alerts));}catch(e){} }
 function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; const v=prompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur); if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ alert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }
 function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
@@ -2817,7 +2816,7 @@ function recordGrowth(){
   try{ const g=localStorage.getItem('ft_growth'); growthSeries=g?JSON.parse(g):[]; }catch(e){ growthSeries=[]; }
   hidden=localStorage.getItem('ft_hidden')==='1';
   document.body.classList.toggle('masked',hidden);
-  const eb=document.getElementById('eyeBtn'); if(eb) eb.textContent=hidden?'🙈':'👁';
+  document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁');
   buildFundsView();
   window.addEventListener('hashchange', route);
   route();

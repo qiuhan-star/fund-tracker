@@ -2983,6 +2983,7 @@ function atFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#allTra
 function atGo(nm,acc){ closeAllTrades(); goDetail(nm,acc); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
+  if(!confirm('确定删除「'+nm+'」？\n\n该基金及其全部交易都会被删除（删前已自动备份一份）。\n此操作不可直接撤销，可用「导入 CSV / JSON」恢复。')) return;
   if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
   backupData();
   snaps=snaps.filter(s=>s.name!==nm); trades=trades.filter(t=>t.name!==nm); delete navCache[nm];

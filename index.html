@@ -2982,7 +2982,7 @@ const ANALYSIS={
   }
 };
 
-function amChart(id,opt){ const el=document.getElementById(id); if(!el)return; const inst=echarts.getInstanceByDom(el); if(inst)inst.dispose(); echarts.init(el).setOption(opt); }
+function amChart(id,opt){ const el=document.getElementById(id); if(!el)return; if(typeof echarts==='undefined'){ el.innerHTML='<p class="hint" style="padding:24px;text-align:center">图表库（ECharts）未加载，请检查网络后刷新页面。</p>'; return; } try{ const inst=echarts.getInstanceByDom(el); if(inst)inst.dispose(); echarts.init(el).setOption(opt); }catch(e){ el.innerHTML='<p class="hint" style="padding:24px;text-align:center">图表渲染失败：'+((e&&e.message)||e)+'</p>'; console.error('amChart error:',e); } }
 function amShowHold(mode){ document.getElementById('amChartHold').style.display=mode==='chart'?'block':'none'; document.getElementById('amTableHold').style.display=mode==='table'?'block':'none'; document.getElementById('amBtnChart').className=mode==='chart'?'on':''; document.getElementById('amBtnTable').className=mode==='table'?'on':''; }
 
 function esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }

@@ -420,6 +420,9 @@
   .more-menu .drop button:hover { background: var(--bg); }
   .more-menu .drop hr { border: none; border-top: 1px solid var(--border-2); margin: 4px 0; }
   .more-menu .drop .drop-hint { font-size: 11px; color: var(--text-3); line-height: 1.55; padding: 6px 14px 4px; margin: 0; }
+  .col-set .drop { min-width: 132px; }
+  .col-set .drop label { display:flex; align-items:center; gap:8px; padding:7px 14px; font-size:13px; cursor:pointer; color:var(--text); user-select:none; }
+  .col-set .drop label:hover { background:var(--bg); }
 
   @keyframes flashUp { 0% { background: var(--up-bg); } 100% { background: transparent; } }
   @keyframes flashDown { 0% { background: var(--down-bg); } 100% { background: transparent; } }
@@ -635,6 +638,15 @@ input[type="number"] { -moz-appearance: textfield; }
             <span class="lab">视图</span>
             <button id="vCard" onclick="setHomeView('card')">卡片</button>
             <button id="vDense" class="on" onclick="setHomeView('dense')">紧凑</button>
+          </div>
+          <div class="more-menu col-set">
+            <button class="btn sm" onclick="toggleColSet(event)">⚙️ 列</button>
+            <div class="drop" id="colSetDrop">
+              <label><input type="checkbox" data-col="nav" onchange="toggleCol('nav',this.checked)"> 单位净值</label>
+              <label><input type="checkbox" data-col="est" onchange="toggleCol('est',this.checked)"> 估算涨跌</label>
+              <label><input type="checkbox" data-col="mv" onchange="toggleCol('mv',this.checked)"> 持仓金额</label>
+              <label><input type="checkbox" data-col="ret" onchange="toggleCol('ret',this.checked)"> 持有收益</label>
+            </div>
           </div>
         </div>
         </div>
@@ -1273,6 +1285,13 @@ function setSort(s){
   ['mv','ret','day','name'].forEach(k=>{ const e=document.getElementById('s'+k[0].toUpperCase()+k.slice(1)); if(e)e.classList.toggle('on',k===s); });
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
+// ---------- 自定义列显隐（紧凑表 ⚙️ 列设置）----------
+let colVis={nav:true,est:true,mv:true,ret:true};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,mv:o.mv!==false,ret:o.ret!==false}; } }catch(e){}
+function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderHomeList(); }
+function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
+function syncColSetChecks(){ ['nav','est','mv','ret'].forEach(k=>{ const cb=document.querySelector('#colSetDrop input[data-col="'+k+'"]'); if(cb) cb.checked=colVis[k]; }); }
+document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
 function setHomeView(v){
   homeView=v;
   try{ localStorage.setItem('ft_homeview', v); }catch(e){}
@@ -1348,6 +1367,7 @@ function blurbFor(f){
 }
 function renderHomeList(){
   syncHomeViewUI();
+  syncColSetChecks();
   var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
@@ -1426,6 +1446,11 @@ function renderHomeList(){
   }
 }
 function renderHomeDense(list){
+  const cols=[{key:'name',label:'基金 / 标签'}];
+  if(colVis.nav) cols.push({key:'nav',label:'单位净值'});
+  if(colVis.est) cols.push({key:'est',label:'估算涨跌'});
+  if(colVis.mv)  cols.push({key:'mv',label:'持仓金额'});
+  if(colVis.ret) cols.push({key:'ret',label:'持有收益'});
   const rows=list.map(f=>{
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
     const nc=navCache[f.name]||{};
@@ -1440,22 +1465,22 @@ function renderHomeDense(list){
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
     const code=syncCode(f.name);
     const profit=f.profit!=null?f.profit:0;
-    return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">
-      <td><div class="dt-name">${esc(f.name)}</div><div class="dt-sub">
+    let tds='';
+    cols.forEach(c=>{
+      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}</div><div class="dt-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}
         <span class="tag">${f.account||'支付宝'}</span>${ownerTag}
         ${code?`<span>#${code}</span>`:''}
-      </div></td>
-      <td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>
-      <td>${estCell}</td>
-      <td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>
-      <td class="${rcls}"><div class="dt-big">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div><div class="dt-sub2">${M(profit)}</div></td>
-    </tr>`;
+      </div></td>`;
+      else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
+      else if(c.key==='est') tds+=`<td>${estCell}</td>`;
+      else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
+      else if(c.key==='ret') tds+=`<td class="${rcls}"><div class="dt-big">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div><div class="dt-sub2">${M(profit)}</div></td>`;
+    });
+    return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">${tds}</tr>`;
   }).join('');
   return `<table class="dense-table">
-    <thead><tr>
-      <th>基金 / 标签</th><th>单位净值</th><th>估算涨跌</th><th>持仓金额</th><th>持有收益</th>
-    </tr></thead>
+    <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }

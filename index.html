@@ -693,7 +693,7 @@ input[type="number"] { -moz-appearance: textfield; }
             <span class="lab">排序</span>
             <button id="sMv" class="on" onclick="setSort('mv')">市值</button>
             <button id="sRet" onclick="setSort('ret')">收益率</button>
-            <button id="sDay" onclick="setSort('day')">当日</button>
+            <button id="sDay" onclick="setSort('day')">官方</button>
             <button id="sName" onclick="setSort('name')">名称</button>
           </div>
           <div class="seg">
@@ -706,7 +706,7 @@ input[type="number"] { -moz-appearance: textfield; }
             <div class="drop" id="colSetDrop">
               <label><input type="checkbox" data-col="nav" onchange="toggleCol('nav',this.checked)"> 单位净值</label>
               <label><input type="checkbox" data-col="est" onchange="toggleCol('est',this.checked)"> 估算涨跌</label>
-              <label><input type="checkbox" data-col="day" onchange="toggleCol('day',this.checked)"> 当日涨跌</label>
+              <label><input type="checkbox" data-col="day" onchange="toggleCol('day',this.checked)"> 官方涨跌</label>
               <label><input type="checkbox" data-col="mv" onchange="toggleCol('mv',this.checked)"> 持仓金额</label>
               <label><input type="checkbox" data-col="ret" onchange="toggleCol('ret',this.checked)"> 持有收益</label>
             </div>
@@ -1715,8 +1715,8 @@ function renderHomeList(){
 function renderHomeDense(list){
   const cols=[{key:'name',label:'基金 / 标签'}];
   if(colVis.nav) cols.push({key:'nav',label:'单位净值'});
-  if(colVis.est) cols.push({key:'est',label:'估算·估'});
-  if(colVis.day) cols.push({key:'day',label:'当日·确认'});
+  if(colVis.est) cols.push({key:'est',label:'估算涨跌'});
+  if(colVis.day) cols.push({key:'day',label:'官方涨跌'});
   if(colVis.mv)  cols.push({key:'mv',label:'持仓金额'});
   if(colVis.ret) cols.push({key:'ret',label:'持有收益'});
   const rows=list.map(f=>{

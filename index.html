@@ -3044,10 +3044,10 @@ function updateDetailHeader(f){
 function genericDetail(f){
   const tr=(trades||[]).filter(t=>t.name===f.name);
   // 交易型基金：基础数据全部由交易流水 FIFO 自动算出，详情页头部 + 下方「交易流水 / 回本计算器 / 止盈止损」
-  // 已完整覆盖，不再重复渲染「基金基础数据」卡片（避免快照手填值与 FIFO 计算值打架），也不画冗余的「成本 vs 现价」单条对比。
+  // 已完整覆盖，不再重复渲染冗余卡片（避免快照手填值与 FIFO 计算值打架）。
+  // 纯快照基金（无交易流水）仅保留极简「手动维护」入口（可编辑市值/净值/收益率），供「＋ 加一只基金」填数；
+  // 已彻底去掉「基金基础数据」标题及冗余展示（份额/成本/持有收益/持有天数/成本vs现价），这些在详情头部已有。
   if(tr.length) return '';
-  // 纯快照基金（无交易流水）才保留可编辑入口，否则「＋ 加一只基金」加进来的基金无法填数；
-  // 已移除「成本 vs 现价」对比条与调试说明，仅保留必要字段。
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   const navVal=navCache[f.name]?navCache[f.name].nav:'';
   const _nc=navCache[f.name]||{}, _mkt=isMarketOpen(new Date());
@@ -3055,11 +3055,9 @@ function genericDetail(f){
   const mvIn = si>=0 ? `<input data-fld="s-mv-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].mv}" oninput="snaps[${si}].mv=+this.value;compute();silentSave()">` : M(f.mv);
   const retIn = si>=0 ? `<input data-fld="s-ret-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()">` : (f.ret>=0?'+':'')+f.ret.toFixed(2)+'%';
   const navIn = si>=0 ? `<input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()">` : (navVal?mask4(navVal):'自动/未填');
-  let h=`<div class="card"><h2>基金基础数据</h2><table class="am-t"><tbody>
-    <tr><th>类别</th><td>${f.cat}</td><th>持有份额</th><td>${f.shares!=null?fmt(f.shares):'—'}</td></tr>
-    <tr><th>当前市值</th><td>${mvIn}</td><th>成本</th><td>${M(f.cost)}</td></tr>
-    <tr><th>持有收益</th><td class="${f.profit>0?'pos':f.profit<0?'neg':''}">${f.profit>=0?'+':''}${M(f.profit)}</td><th>收益率</th><td>${retIn}</td></tr>
-    <tr><th>持有天数</th><td>${f.days!=null?f.days+' 天':'—'}</td><th>最新净值 ${navBadge(_nc)}</th><td>${navIn}</td></tr>
+  let h=`<div class="card"><h2>手动维护（快照）</h2><table class="am-t"><tbody>
+    <tr><th>类别</th><td>${f.cat}</td><th>当前市值</th><td>${mvIn}</td></tr>
+    <tr><th>最新净值 ${navBadge(_nc)}</th><td>${navIn}</td><th>收益率</th><td>${retIn}</td></tr>
     ${estRow}
     </tbody></table>
     <p class="hint">无交易流水，数值为手动维护；一旦记录交易流水，此处自动隐藏，改由「交易流水」精确计算（FIFO 先进先出）。</p></div>`;

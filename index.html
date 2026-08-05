@@ -712,6 +712,7 @@ input[type="number"] { -moz-appearance: textfield; }
           </div>
         </div>
         </div>
+        <div class="cat-filter group-tabs" id="groupTabs"></div>
         <div class="cat-filter" id="catFilter"></div>
         <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)"></div>
         <div id="homeList"></div>
@@ -818,7 +819,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <p class="hint" style="font-size:11px;margin-top:8px">示例榜单，待接入天天基金 JSONP 接口后显示真实排行。</p>
       </div>
 
-      <div class="card">
+      <div class="card" id="selfCard">
         <div class="sec-head"><h2 style="margin:0;font-size:14px">⭐ 我的自选</h2><span class="hint" style="font-size:11px">点榜单基金 → ＋ → 一键加自选</span></div>
         <ul id="watch-list" class="watch-list"></ul>
         <p id="watch-empty" class="hint" style="font-size:11px;margin-top:6px">还没有自选。在上方榜单点任意基金，选「👁 加自选」即可加入。</p>
@@ -1037,15 +1038,16 @@ function updateScopeUI(){
                   : currentScope==='managed' ? '仅统计代管资产（妈妈的）'
                   : '个人 + 代管：全部经手资金';
 }
-let curAccount='全部', curGroup='全部', pendingAcc=null;
+let curAccount='全部', curGroup='汇总', pendingAcc=null;
+const GROUP_OBS_MV=700;
 function accOf(x){ return (x&&x.account)?x.account:'我的'; }
 function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'我的'; }
 let flashMap={}, todayGain=null;
 let holdSort='mv', holdCatFilter='全部', holdSearch='';
-let holdWatchOnly=false; // 「⭐ 仅自选」：只显示自选中的持仓 + 观察中
-try{ holdWatchOnly=localStorage.getItem('ft_watchonly')==='1'; }catch(e){}
+let holdWatchOnly=false; // 「⭐ 仅自选」：由 curGroup==='自选' 派生，此处仅占位
+let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){}
 let homeView='dense';
 try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
 let currentView='home', detailName=null, detailAcc='我的', detailChartFund=null;
@@ -1442,17 +1444,31 @@ function syncHomeViewUI(){
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 赛道筛选 ----------
+function renderGroupTabs(){
+  const box=document.getElementById('groupTabs'); if(!box) return;
+  ['汇总','自选','持有','观察'].forEach(function(t){
+    const b=document.createElement('button');
+    b.className='cat-chip'+(t===curGroup?' on':'');
+    b.textContent=t; b.onclick=function(){ setGroup(t); };
+    box.appendChild(b);
+  });
+}
+function setGroup(g){ curGroup=g; renderGroupTabs(); if(activeTab===0) renderHomeList(); }
 function renderCatFilter(){
   const cats=['全部', ...new Set(fundsView.map(f=>f.cat))];
   const box=document.getElementById('catFilter');
-  box.innerHTML=`<button class="cat-chip${holdWatchOnly?' on':''}" title="只看自选（已持有的 + 观察中的）" onclick="toggleWatchOnly()">⭐ 自选</button>`
-    +cats.map(c=>`<button class="cat-chip${c===holdCatFilter?' on':''}" onclick="filterCat('${esc(c)}')">${c}</button>`).join('');
+  box.innerHTML=cats.map(c=>`<button class="cat-chip${c===holdCatFilter?' on':''}" onclick="filterCat('${esc(c)}')">${c}</button>`).join('');
 }
-function toggleWatchOnly(){
-  holdWatchOnly=!holdWatchOnly;
-  try{ localStorage.setItem('ft_watchonly', holdWatchOnly?'1':'0'); }catch(e){}
-  renderCatFilter();
-  if(activeTab===0) renderHomeList();
+function editTags(code){
+  if(!code) return;
+  const cur=(userTags[code]||[]).join(',');
+  const v=prompt('编辑标签（逗号分隔，如：234,哈哈哈）', cur);
+  if(v===null) return;
+  const arr=v.split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean);
+  if(arr.length) userTags[code]=arr; else delete userTags[code];
+  try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
+  if(typeof compute==='function') compute();
+  if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 function filterCat(c){
   holdCatFilter=c;
@@ -1511,6 +1527,9 @@ function blurbFor(f){
 function renderHomeList(){
   syncHomeViewUI();
   syncColSetChecks();
+  renderGroupTabs();
+  holdWatchOnly=(curGroup==='自选');
+  var _sc=document.getElementById('selfCard'); if(_sc) _sc.style.display=(curGroup==='持有'||curGroup==='观察')?'none':'';
   var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
@@ -1520,6 +1539,7 @@ function renderHomeList(){
     const ws=watchSets();
     list=list.filter(f=> ws.names[f.name] || (syncCode(f.name)&&ws.codes[syncCode(f.name)]));
   }
+  if(curGroup==='观察'){ list=list.filter(f=> (f.mv||0) <= GROUP_OBS_MV); }
   // 观察中（自选但未持仓）区块 —— 仅自选视图
   let obsHtml='';
   if(holdWatchOnly){
@@ -1579,7 +1599,7 @@ function renderHomeList(){
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
         ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')}
-        <span class="tag">${f.account||'我的'}</span>${currentScope==='all'?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}
+        <span class="tag">${f.account||'我的'}</span>${currentScope==='all'?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
         <span>成本 ${M(f.cost)}</span>${estTag||confirmTag}${dayFmt(f)}
       </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
@@ -1635,6 +1655,7 @@ function renderHomeDense(list){
         <span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}
         <span class="tag">${f.account||'我的'}</span>${ownerTag}
         ${code?`<span>#${code}</span>`:''}
+        ${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
       </div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
@@ -2244,11 +2265,11 @@ function buildFundsView(){
     }
     f.currency=(snap&&snap.currency)||'CNY'; return f;
   });
+  all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
   _allHoldings = all.filter(f=> scopeMatches(f.account));
   if(curAccount!=='全部' && !_allHoldings.some(f=>f.account===curAccount)) curAccount='全部';
   const accF = curAccount==='全部'? null:curAccount;
-  const grpF = curGroup==='全部'? null:curGroup;
-  fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF) && (grpF==null||f.cat===grpF));
+  fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF));
 }
 function guessCat(name){
   if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康|药/.test(name)) return '医药';

@@ -640,6 +640,12 @@ input[type="number"] { -moz-appearance: textfield; }
   .tag-real{ background:rgba(31,157,77,.15); color:#1f9d4d; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }
   .basis-note{ font-size:11.5px; color:var(--text-3); margin-top:10px; line-height:1.5; }
   .basis-note b{ color:var(--text-2); }
+  /* 备份防丢提醒条 */
+  .bk-reminder{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:rgba(198,132,10,.10); border:1px solid rgba(198,132,10,.4); color:#9a6a08; padding:9px 12px; border-radius:10px; margin-bottom:12px; font-size:13px; }
+  .bk-reminder b{ color:#b8740a; }
+  .bk-btn{ border:none; background:#c6840a; color:#fff; padding:6px 12px; border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .bk-btn:hover{ background:#b0740a; }
+  .bk-skip{ border:1px solid rgba(198,132,10,.5); background:transparent; color:#9a6a08; padding:6px 12px; border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit; }
 /* ===== 设置弹窗 (sm-) ===== */
 .sm-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px; overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
 .sm-mask.show{ display:flex; }
@@ -692,7 +698,7 @@ input[type="number"] { -moz-appearance: textfield; }
   function TH(){var d=document.documentElement.getAttribute('data-theme')==='dark';return d?{up:'#f6465d',down:'#0ecb81',text:'#e8eef7',text3:'#6b7c97',axis:'#31405c',grid:'rgba(255,255,255,.06)',accent:'#3b82f6'}:{up:'#c0392b',down:'#27ae60',text:'#1f2329',text3:'#8a8f99',axis:'#dddddd',grid:'rgba(0,0,0,.05)',accent:'#2f6fed'};}
   function _setTheme(c){ try{localStorage.setItem('ft_theme',c);}catch(e){} if(c==='system'){ var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m?'dark':'light'); } else document.documentElement.setAttribute('data-theme', c); location.reload(); }
   function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');_setTheme(cur==='dark'?'light':'dark');}
-  window.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️ 亮色':'🌙 暗色';});
+  window.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️ 亮色':'🌙 暗色'; showBackupReminder();});
   if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){ try{ if((localStorage.getItem('ft_theme')||'system')==='system'){ document.documentElement.setAttribute('data-theme', e.matches?'dark':'light'); } }catch(_){} }); }catch(_){} }
 </script>
 </head>
@@ -701,6 +707,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
   <!-- ================= 首页 ================= -->
   <div id="homeView">
+    <div id="backupReminder" class="bk-reminder" style="display:none"></div>
     <div class="topbar">
       <div>
         <h1>我的基金追踪器</h1>
@@ -3715,7 +3722,20 @@ async function refresh(){
 }
 
 // ---------- 导入导出 ----------
-function exportJSON(){ const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click(); toast('已导出 fund-data.json'); }
+function exportJSON(){ const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click(); try{ localStorage.setItem('ft_last_export', new Date().toISOString().slice(0,10)); }catch(e){} toast('已导出 fund-data.json'); }
+function showBackupReminder(){
+  const el=document.getElementById('backupReminder'); if(!el) return;
+  const today=Math.floor(Date.now()/86400000);
+  const last=localStorage.getItem('ft_last_export');
+  let days=999;
+  if(last){ const p=last.split('-'); if(p.length===3){ const ld=Math.floor(new Date(+p[0],+p[1]-1,+p[2])/86400000); days=today-ld; } }
+  const snoozed=+(localStorage.getItem('ft_backup_snooze')||0);
+  if(days>=14 && snoozed!==today){
+    el.style.display='';
+    el.innerHTML='<span>⚠️ 距上次备份导出已 <b>'+days+'</b> 天，数据仅存本地浏览器，清缓存会丢。</span><button class="bk-btn" onclick="exportJSON();showBackupReminder()">立即导出 JSON</button><button class="bk-skip" onclick="snoozeBackup(this)">稍后</button>';
+  } else { el.style.display='none'; }
+}
+function snoozeBackup(btn){ try{ localStorage.setItem('ft_backup_snooze', Math.floor(Date.now()/86400000)); }catch(e){} if(btn&&btn.parentNode) btn.parentNode.style.display='none'; }
 function exportHoldingsCSV(){ if(!fundsView.length){ toast('暂无可导出的持仓'); return; } const head='基金名称,类别,持有份额,成本单价,最新净值,市值,盈亏,收益率%\n'; const rows=fundsView.map(f=>[f.name,f.cat||'',f.shares!=null?f.shares:'',f.costPx!=null?f.costPx:'',f.nav!=null?f.nav:'',f.mv!=null?f.mv:'',f.profit!=null?f.profit:'',f.ret!=null?f.ret.toFixed(2):''].join(',')).join('\n'); const blob=new Blob(['\ufeff'+head+rows],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click(); toast('已导出持仓 fund-holdings.csv'); }
 function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n汇添富中证芯片产业指数增强C,2026-01-15,买入,10000,1.9500,0\n汇添富中证芯片产业指数增强C,2026-03-20,卖出,5000,2.1000,5\n华夏有色金属ETF联接D,2026-02-01,定投,2000,1.2000,\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板'); }
 function importJSON(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader(); r.onload=()=>{ try{ const d=migrate(JSON.parse(r.result)); snaps=d.snaps; trades=d.trades; navCache=d.navCache; renderTrade(); compute(); saveLocal(); toast('已导入 JSON（已自动升级到 v'+SCHEMA_VERSION+'）'); }catch(e){alert('解析失败');} }; r.readAsText(f); }; inp.click(); }

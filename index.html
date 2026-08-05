@@ -439,6 +439,18 @@
   .am-tldr ul { margin: 0; padding-left: 18px; }
   .am-tldr li { margin: 5px 0; font-size: 12.5px; line-height: 1.6; }
   h4.am-h { font-size: 14.5px; margin: 16px 0 8px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  /* 定投模拟 / XIRR 测算工具 */
+  .calc-row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12.5px; }
+  .calc-row label { flex:0 0 72px; color:var(--text-3); }
+  .calc-row input.num { width:96px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; }
+  .calc-out { margin-top:10px; }
+  .co-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-2); font-size:12.5px; }
+  .co-row span { color:var(--text-3); }
+  .co-row b { font-variant-numeric:tabular-nums; }
+  .xr-row { display:flex; gap:6px; align-items:center; margin:5px 0; }
+  .xr-row .xr-date { flex:0 0 132px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size:12px; }
+  .xr-row .xr-amt { flex:1; min-width:0; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; text-align:right; }
+  .xr-row .xr-dir { padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size:12px; }
   h4.am-h .n { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; background: var(--accent); color: #fff; border-radius: 6px; font-size: 11.5px; font-weight: 700; }
   .am-toggle { display: flex; gap: 6px; margin-bottom: 8px; }
   .am-toggle button { border: 1px solid var(--border-strong); background:var(--surface); border-radius: 8px; padding: 4px 13px; font-size: 12px; cursor: pointer; font-family: inherit; }
@@ -660,6 +672,25 @@ input[type="number"] { -moz-appearance: textfield; }
       <div class="card">
         <h2>优化建议 + 止盈止损信号 <span class="tag">自动生成</span></h2>
         <div id="advice"></div>
+      </div>
+      <div class="card">
+        <h2>定投模拟 / 年化收益（XIRR）<span class="tag">测算工具</span></h2>
+        <p class="hint">左侧假设年化收益，算定投未来值；右侧填入真实现金流（日期 + 金额 + 方向），算你的真实年化（XIRR）。</p>
+        <div class="grid2">
+          <div>
+            <h4 class="am-h"><span class="n">📈</span>定投模拟</h4>
+            <div class="calc-row"><label>每月定投</label><input id="dcaMon" class="num" type="number" value="1000" oninput="calcDCA()"> <span class="hint">元</span></div>
+            <div class="calc-row"><label>定投年数</label><input id="dcaYrs" class="num" type="number" value="5" oninput="calcDCA()"> <span class="hint">年</span></div>
+            <div class="calc-row"><label>预期年化</label><input id="dcaRate" class="num" type="number" value="10" oninput="calcDCA()"> <span class="hint">%</span></div>
+            <div id="dcaOut" class="calc-out"></div>
+          </div>
+          <div>
+            <h4 class="am-h"><span class="n">🔁</span>真实年化（XIRR）</h4>
+            <div id="xirrRows"></div>
+            <button class="btn sm" onclick="xirrAddRow()">＋ 添加一笔现金流</button>
+            <div id="xirrOut" class="calc-out"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -986,7 +1017,9 @@ function migrate(raw){
   return data;
 }
 
-async function silentSave(){ try{localStorage.setItem('ft_data',JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots}));}catch(e){console.error(e);} }
+let _quotaWarned=false;
+function lsSafeSet(key,val){ try{ localStorage.setItem(key,val); return true; }catch(e){ const name=(e&&e.name)||'', msg=(e&&e.message)||'', code=e&&e.code; const quota = name==='QuotaExceededError' || code===22 || code===1014 || name.indexOf('Quota')>=0 || msg.toLowerCase().indexOf('quota')>=0; if(quota && !_quotaWarned){ _quotaWarned=true; toast('⚠️ 本地空间已满，数据未保存。建议：导出 JSON 备份，并清理早期「交易记录 / 每日快照」'); } else if(!quota){ console.error('localStorage 写入失败:',e); } return false; } }
+async function silentSave(){ lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots})); }
 function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data-'+ts+'.json'; a.click(); document.getElementById('updated').textContent='已保存并下载存档 '+ts; toast('已保存并下载存档'); }
 
 // ---------- 更多菜单 ----------
@@ -996,6 +1029,35 @@ document.addEventListener('click', function(e){ if(!e.target.closest('.more-menu
 
 // ---------- Tab 切换 ----------
 let activeTab=0;
+// ---------- 定投模拟 / XIRR 年化收益测算 ----------
+let xirrFlows=[{date:'2024-01-01',amt:1000,dir:'out'},{date:'2025-01-01',amt:1000,dir:'out'},{date:'2026-01-01',amt:2650,dir:'in'}];
+function calcDCA(){
+  const mon=+document.getElementById('dcaMon').value||0, yrs=+document.getElementById('dcaYrs').value||0, rate=(+document.getElementById('dcaRate').value||0)/100, n=yrs*12;
+  const out=document.getElementById('dcaOut'); if(!out) return;
+  if(mon<=0||n<=0){ out.innerHTML='<span class="hint">填入每月定投金额与年数</span>'; return; }
+  const fv = rate===0 ? mon*n : mon*((Math.pow(1+rate/12,n)-1)/(rate/12));
+  const invested=mon*n, profit=fv-invested;
+  out.innerHTML='<div class="co-row"><span>总投入</span><b>'+M(invested)+'</b></div><div class="co-row"><span>预期期末资产</span><b class="pos">'+M(fv)+'</b></div><div class="co-row"><span>预期收益</span><b class="'+(profit>=0?'pos':'neg')+'">'+(profit>=0?'+':'')+M(profit)+'</b></div><div class="co-row"><span>本金倍数</span><b>'+(fv/invested).toFixed(2)+'×</b></div>';
+}
+function xirr(flows){
+  const fs=flows.map(f=>({t:new Date(f.date), amt:(f.dir==='in'?1:-1)*Math.abs(parseFloat(f.amt)||0)}))
+    .filter(f=>!isNaN(f.t.getTime()) && f.amt!==0).sort((a,b)=>a.t-b.t);
+  if(fs.length<2) return null;
+  const d0=fs[0].t, npv=r=>fs.reduce((s,f)=>s+f.amt/Math.pow(1+r,(f.t-d0)/86400000/365),0);
+  let lo=-0.9999, hi=10, fLo=npv(lo), fHi=npv(hi); if(fLo*fHi>0) return null;
+  for(let k=0;k<200;k++){ const mid=(lo+hi)/2, fv=npv(mid); if(Math.abs(fv)<1e-7) return mid; if(fLo*fv<0) hi=mid; else lo=mid; }
+  return (lo+hi)/2;
+}
+function renderXirr(){ const box=document.getElementById('xirrRows'); if(!box) return;
+  box.innerHTML=xirrFlows.map((f,i)=>'<div class="xr-row"><input class="xr-date" type="date" value="'+f.date+'" onchange="xirrFlows['+i+'].date=this.value;calcXIRR()"><input class="num xr-amt" type="number" value="'+f.amt+'" oninput="xirrFlows['+i+'].amt=+this.value;calcXIRR()"><select class="xr-dir" onchange="xirrFlows['+i+'].dir=this.value;calcXIRR()"><option value="out" '+(f.dir==='out'?'selected':'')+'>投入</option><option value="in" '+(f.dir==='in'?'selected':'')+'>赎回</option></select><button class="del" onclick="xirrDelRow('+i+')">✕</button></div>').join('');
+}
+function xirrAddRow(){ const last=xirrFlows[xirrFlows.length-1]; const d=(last&&last.date)?last.date:new Date().toISOString().slice(0,10); xirrFlows.push({date:d,amt:1000,dir:'out'}); renderXirr(); calcXIRR(); }
+function xirrDelRow(i){ if(xirrFlows.length<=2){ toast('至少保留两笔现金流'); return; } xirrFlows.splice(i,1); renderXirr(); calcXIRR(); }
+function calcXIRR(){ const box=document.getElementById('xirrOut'); if(!box) return; const r=xirr(xirrFlows);
+  if(r===null){ box.innerHTML='<span class="hint">需至少两笔、且「投入/赎回」方向不同的现金流</span>'; return; }
+  const pct=r*100; box.innerHTML='<div class="co-row"><span>真实年化（XIRR）</span><b class="'+(r>=0?'pos':'neg')+'">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</b></div>';
+}
+
 function switchTab(i){
   activeTab=i;
   [0,1,2,3,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
@@ -1003,7 +1065,7 @@ function switchTab(i){
   const sb=document.getElementById('scopeBar'), ms=document.getElementById('marketStatus');
   if(sb) sb.style.display = (i===5)?'none':'flex';
   if(ms) ms.style.display = (i===5)?'flex':'none';
-  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
+  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderBond(); }
   if(i===5){ loadMarketData(); }

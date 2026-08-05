@@ -646,6 +646,11 @@ input[type="number"] { -moz-appearance: textfield; }
   .bk-btn{ border:none; background:#c6840a; color:#fff; padding:6px 12px; border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit; }
   .bk-btn:hover{ background:#b0740a; }
   .bk-skip{ border:1px solid rgba(198,132,10,.5); background:transparent; color:#9a6a08; padding:6px 12px; border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit; }
+  /* 平行宇宙复盘推演 */
+  .pu-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; }
+  @media (max-width: 560px){ .pu-grid{ grid-template-columns:1fr; } }
+  .pu-card .sub2{ font-size:11px; color:var(--text-3); margin:2px 0 0; }
+  .pu-note{ font-size:12px; color:var(--text-2); margin:12px 0 0; line-height:1.6; background:var(--surface-2); border-radius:8px; padding:8px 10px; }
 /* ===== 设置弹窗 (sm-) ===== */
 .sm-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px; overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
 .sm-mask.show{ display:flex; }
@@ -2710,10 +2715,34 @@ function enterDetail(f){
   renderFundProfile(f);
   renderFundHoldings(f);
 }
+function parallelUniverseCard(f){
+  const tr=(trades||[]).filter(function(t){return t.name===f.name;});
+  const buys=tr.filter(function(t){return (t.type==='buy'||t.type==='convert')&&(+t.amount>0)&&t.nav!=null&&t.nav!=='';}).sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+  if(!buys.length) return '<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 如果当时买入后躺平不动</h2></div><p class="hint" style="margin:8px 0">该基金暂无带净值的买入记录，无法推演。</p></div>';
+  const fb=buys[0]; const inv=+fb.amount; const sh=inv/(+fb.nav);
+  const curUnit=(navCache[f.name]&&navCache[f.name].nav)?navCache[f.name].nav:(f.shares>0?f.mv/f.shares:null);
+  if(curUnit==null) return '<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 如果当时买入后躺平不动</h2></div><p class="hint" style="margin:8px 0">刷新净值后即可推演「躺平」到今天的结果。</p></div>';
+  const puVal=sh*curUnit; const puProfit=puVal-inv;
+  const realProfit=(f.profit||0)+(f.realized||0);
+  const diff=realProfit-puProfit;
+  const cls=function(v){return v>=0?'pos':'neg';};
+  const sgn=function(v){return (v>=0?'+':'−')+M(Math.abs(v));};
+  const pct=inv>0?(diff/inv*100):0;
+  const note=diff>=0
+    ? ('你中途的加仓 / 卖出相比「第一笔买入后躺平」，让你<b>多赚 '+sgn(diff)+'</b>（约 '+(pct>=0?'+':'')+pct.toFixed(1)+'% 相对首笔投入）。')
+    : ('如果当时买了就不动，现在会<b>多赚 '+sgn(-diff)+'</b>——你的操作反而拖累了 '+sgn(-diff)+'（约 '+pct.toFixed(1)+'% 相对首笔投入）。');
+  return '<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 如果当时买入后躺平不动</h2><span class="hint">对比首笔买入持有至今</span></div>'
+    +'<div class="pu-grid">'
+    +'<div class="mcard"><p class="lbl">实际操作总收益</p><p class="val '+cls(realProfit)+'">'+sgn(realProfit)+'</p><p class="sub2">浮动 + 已实现</p></div>'
+    +'<div class="mcard"><p class="lbl">躺平不动收益</p><p class="val '+cls(puProfit)+'">'+sgn(puProfit)+'</p><p class="sub2">首笔投入持有至今</p></div>'
+    +'<div class="mcard"><p class="lbl">你的操作净效果</p><p class="val '+cls(diff)+'">'+sgn(diff)+'</p><p class="sub2">比躺平多 / 少赚</p></div>'
+    +'</div><p class="pu-note">📌 '+note+'</p></div>';
+}
 function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
+  try{ live.innerHTML += parallelUniverseCard(f); }catch(e){ console.error(e); }
   if(window._autoTrade){ window._autoTrade=false; const d=document.getElementById('nf-date'); if(d){ d.focus(); toast('填写交易信息后点「💾 保存并锁定」（净值可留空，T+1 自动填）'); } }
 }
 function headerHtml(f){

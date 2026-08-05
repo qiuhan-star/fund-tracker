@@ -2920,21 +2920,6 @@ function genericDetail(f){
 function liveSection(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   let h='';
-  const a=ANALYSIS[f.name];
-  if(a){
-    h+=`<div class="card"><h2>我的数据（可直接改，自动保存）</h2><p class="hint">把基金 App 里的市值、收益率抄进来；填了交易流水会自动精确计算。改动即时存本地。</p><div class="table-scroll"><table><tbody>`;
-    if(si>=0){
-      h+=`<tr><td style="width:34%">基金名称</td><td><input data-fld="s-name-${si}" value="${esc(snaps[si].name)}" oninput="snaps[${si}].name=this.value;compute();silentSave()"></td></tr>`;
-      h+=`<tr><td>类别</td><td><input data-fld="s-cat-${si}" value="${esc(snaps[si].cat||'')}" oninput="snaps[${si}].cat=this.value;compute();silentSave()"></td></tr>`;
-      h+=`<tr><td>当前市值(元)</td><td><input data-fld="s-mv-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].mv}" oninput="snaps[${si}].mv=+this.value;compute();silentSave()"></td></tr>`;
-      h+=`<tr><td>持有收益率(%)</td><td><input data-fld="s-ret-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()"></td></tr>`;
-    } else { h+=`<tr><td colspan="2" class="hint">该基金暂无快照（纯交易流水模式）。可在首页「+ 加一只基金」补一条快照，或下方直接记交易。</td></tr>`; }
-    const navVal=navCache[f.name]?navCache[f.name].nav:'';
-    const _nc=navCache[f.name]||{};
-    const _mkt=isMarketOpen(new Date());
-    const estRow=(_mkt&&_nc.gsz!=null)?`<tr><td>盘中估算</td><td>${mask4(_nc.gsz)} <span class="${_nc.gszzl>=0?'pos':'neg'}">${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>${_nc.gztime?` <span class="hint">@${_nc.gztime.slice(11,16)}</span>`:''}</td></tr>`:'';
-    h+=`<tr><td>最新净值 ${navBadge(_nc)}</td><td><input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()"></td></tr>${estRow}</tbody></table></div></div>`;
-  }
   const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
   const tdtoday=new Date().toISOString().slice(0,10);
   const defCol = tr.length>12;

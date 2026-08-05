@@ -129,6 +129,7 @@
   .drawer-body .fld input, .drawer-body .fld select { border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 9px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface); }
   .drawer-body .fld input:focus, .drawer-body .fld select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-on); }
   .drawer-body .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fee-hint { grid-column: 1 / -1; font-size: 11px; color: var(--text-3); margin: -8px 0 6px; line-height: 1.4; }
   .drawer-foot { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border-2); }
   .drawer-foot .btn { flex: 1; }
   .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -472,6 +473,13 @@
   .am-tag { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 11px; background: var(--border-3); color: var(--text-2); }
   .am-tag.st { background: var(--up-bg); color: var(--up); } .am-tag.eq { background: var(--accent-soft); color: var(--accent); } .am-tag.pcb { background: var(--warn-bg); color: #b8760a; } .am-tag.ch { background: var(--down-bg); color: #0f6e56; }
   .am-foot { margin-top: 12px; font-size: 12px; }
+  .liq-impact { margin-top:14px; padding:12px 14px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:10px; }
+  .liq-impact .lbl { margin:0 0 8px; font-size:12px; color:var(--text-3); font-weight:600; }
+  .liq-imp-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; font-size:12.5px; }
+  .liq-imp-cat { flex:0 0 84px; color:var(--text-2); }
+  .liq-imp-bar { flex:1; height:9px; background:var(--border-3); border-radius:999px; overflow:hidden; }
+  .liq-imp-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:999px; }
+  .liq-imp-val { flex:0 0 auto; color:var(--text-2); font-variant-numeric:tabular-nums; }
   .am-foot a { color: var(--accent); }
   .cmp-bar { margin-top: 6px; }
   .cb-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12.5px; }
@@ -518,6 +526,7 @@ input[type="number"] { -moz-appearance: textfield; }
   /* ===== 市场风向 Tab（适配项目主题变量，支持亮/暗） ===== */
   .text-up { color: var(--up); } .text-down { color: var(--down); } .font-bold { font-weight: 700; }
   .tag-sample { background: var(--warn); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+  .tag-live { background: var(--up); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
   .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
   @media (max-width: 600px) { .flow-grid { grid-template-columns: 1fr; } }
   .flow-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
@@ -738,7 +747,7 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
 
       <div class="card">
-        <div class="sec-head"><h2 style="margin:0;font-size:14px">🔥 板块资金流向 <span class="tag tag-sample">示例</span></h2><span class="hint" style="font-size:11px">暂无免费实时接口，以下为示例数据</span></div>
+        <div class="sec-head"><h2 style="margin:0;font-size:14px">🔥 板块资金流向 <span class="tag tag-sample" id="flowTag">示例</span></h2><span class="hint" style="font-size:11px" id="flowHint">暂无免费实时接口，以下为示例数据</span></div>
         <div class="flow-grid">
           <div class="flow-col inflow-bg"><h4 class="flow-title text-up">▲ 主力净流入 Top 5</h4><ul id="inflow-list" class="flow-list"></ul></div>
           <div class="flow-col outflow-bg"><h4 class="flow-title text-down">▼ 主力净流出 Top 5</h4><ul id="outflow-list" class="flow-list"></ul></div>
@@ -792,21 +801,22 @@ input[type="number"] { -moz-appearance: textfield; }
       </label>
       <div class="fld-row">
         <label class="fld"><span>账户</span>
-          <select id="dr-acc"><option>支付宝</option><option>天天基金</option><option>微信理财通</option><option>券商</option><option>其他</option></select>
+          <select id="dr-acc" onchange="autoFee('dr')"><option>支付宝</option><option>天天基金</option><option>微信理财通</option><option>券商</option><option>其他</option></select>
         </label>
         <label class="fld"><span>类型</span>
-          <select id="dr-type"></select>
+          <select id="dr-type" onchange="autoFee('dr')"></select>
         </label>
       </div>
       <div class="fld-row">
-        <label class="fld"><span>日期</span><input type="date" id="dr-date"></label>
+        <label class="fld"><span>日期</span><input type="date" id="dr-date" onchange="autoFee('dr')"></label>
         <label class="fld"><span>时间</span><input type="time" id="dr-time"></label>
       </div>
-      <label class="fld"><span>金额（元）</span><input type="number" id="dr-amount" inputmode="decimal" placeholder="0.00"></label>
+      <label class="fld"><span>金额（元）</span><input type="number" id="dr-amount" inputmode="decimal" placeholder="0.00" oninput="autoFee('dr')" onchange="autoFee('dr')"></label>
       <div class="fld-row">
         <label class="fld"><span>净值</span><input type="number" id="dr-nav" inputmode="decimal" step="0.0001" placeholder="可选"></label>
         <label class="fld"><span>费用（元）</span><input type="number" id="dr-fee" inputmode="decimal" placeholder="0"></label>
       </div>
+      <span class="fee-hint" id="dr-fee-hint"></span>
       <label class="fld"><span>份额（可选）</span><input type="number" id="dr-shares" inputmode="decimal" placeholder="不填则按 金额/净值 估算"></label>
       <p class="hint" style="margin:6px 0 0">买入金额含申购费；卖出按金额计、费用另填。保存后即时入账并刷新持仓列表。</p>
     </div>
@@ -1203,9 +1213,42 @@ const MARKET_RANK = {
     { code: '003003', name: '华夏半导体芯片ETF', type: '指数型', est: '+2.95%', w1: '+8.1%' }
   ]
 };
+function fetchCapitalFlow(){
+  return new Promise(resolve=>{
+    const timer=setTimeout(()=>resolve(null),5000);
+    const cb='cf_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    window[cb]=d=>{
+      clearTimeout(timer);
+      try{
+        const diff=(d&&d.data&&d.data.diff)||[];
+        if(!diff.length){ resolve(null); }
+        else {
+          const arr=diff.map(x=>({name:x.f14, net:+(x.f62||0)})).filter(x=>x.name);
+          const fmt=v=>{ const yi=v/1e8; return (yi>=0?'+':'')+yi.toFixed(1)+'亿'; };
+          const inflow=arr.filter(x=>x.net>0).sort((a,b)=>b.net-a.net).slice(0,5).map(x=>({name:x.name, amount:fmt(x.net)}));
+          const outflow=arr.filter(x=>x.net<0).sort((a,b)=>a.net-b.net).slice(0,5).map(x=>({name:x.name, amount:fmt(x.net)}));
+          resolve({inflow:inflow, outflow:outflow, ok:true});
+        }
+      }catch(e){ resolve(null); }
+      window[cb]=null; s.remove();
+    };
+    s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
+    // 东方财富行业板块主力资金流（m:90+t:2），JSONP 绕过 CORS
+    s.src='https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=50&po=1&np=1&fltt=2&invt=2&fs=m:90+t:2&fields=f12,f14,f3,f62,f184&cb='+cb+'&_='+Date.now();
+    document.body.appendChild(s);
+  });
+}
+function setFlowTag(live){
+  const t=document.getElementById('flowTag');
+  if(t){ t.textContent=live?'实时':'示例'; t.className='tag '+(live?'tag-live':'tag-sample'); }
+  const h=document.getElementById('flowHint');
+  if(h){ h.textContent=live?'东方财富实时行业板块主力资金流（A股盘中/收盘）':'实时接口拉取失败，暂用示例数据'; }
+}
 function loadMarketData(){
   try{ fetchIndices(); }catch(e){}
-  renderFlows(MARKET_FLOW);
+  renderFlows(MARKET_FLOW); setFlowTag(false);
+  fetchCapitalFlow().then(r=>{ if(r&&r.ok&&(r.inflow.length||r.outflow.length)){ renderFlows(r); setFlowTag(true); } });
   loadFundRank('top');
   renderWatch();
   const mr=document.getElementById('marketRefresh');
@@ -1701,6 +1744,67 @@ function fmtDate(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.g
 function addDays(d,n){const x=new Date(d); x.setDate(x.getDate()+n); return x;}
 function addMonths(d,m){const x=new Date(d); const day=x.getDate(); x.setMonth(x.getMonth()+m); if(x.getDate()!==day) x.setDate(0); return x;}
 function daysBetween(a,b){return Math.floor((new Date(b)-new Date(a))/86400000);}
+// ---------- 赎回费自动估算 & 卖出预览（v5-21 / v5-26）----------
+function firstBuyDate(name, acc){
+  let first=null;
+  for(const t of trades){
+    if(t.name!==name) continue;
+    if(acc && t.account && t.account!==acc) continue;
+    const ty=t.type||'buy';
+    if(ty==='buy'||ty==='reinvest'||ty==='convert'){ if(t.date && (!first||t.date<first)) first=t.date; }
+  }
+  return first;
+}
+function estRedemptionFee(name, acc, sellDate, amount){
+  const fb=firstBuyDate(name, acc);
+  if(!fb||!sellDate||!amount) return {rate:0, fee:0, days:null, fb:fb};
+  const d=daysBetween(fb, sellDate);
+  let rate;
+  if(d<7) rate=0.015; else if(d<=365) rate=0.005; else rate=0;
+  return {rate:rate, fee:Math.round(amount*rate*100)/100, days:d, fb:fb};
+}
+function autoFee(prefix){
+  const g=id=>document.getElementById(prefix+'-'+id);
+  const typeEl=g('type'); if(!typeEl) return;
+  const feeEl=g('fee'); if(!feeEl) return;
+  const h=g('fee-hint');
+  if(typeEl.value!=='sell'){ feeEl.removeAttribute('_auto'); if(h) h.textContent=''; return; }
+  let name, acc;
+  if(prefix==='nf'){ name=window.detailName; acc=g('acc').value; }
+  else { name=(g('fund').value||'').trim(); acc=g('acc').value||'支付宝'; }
+  if(!name) return;
+  const date=g('date').value, amount=+g('amount').value||0;
+  if(!date||!amount) return;
+  const est=estRedemptionFee(name, acc, date, amount);
+  if(est.fee>0){
+    const prev=feeEl.getAttribute('_auto');
+    if(feeEl.value==='' || feeEl.value===prev){ feeEl.value=est.fee.toFixed(2); feeEl.setAttribute('_auto', est.fee.toFixed(2)); }
+  } else { feeEl.removeAttribute('_auto'); }
+  if(h){ h.textContent = est.days==null?'':('持有 '+est.days+' 天 · 预估赎回费 '+(est.rate*100)+'%'+(est.fee>0?' ≈ ¥'+est.fee.toFixed(2):'（免）')); }
+}
+function sellPreview(name, acc, amount, nav, fee, shares){
+  const h=_allHoldings.find(x=>x.name===name && x.account===acc);
+  const remSh=h?(h.shares||0):0, avgCp=h?(h.costPx||0):0;
+  const sellSh=(shares!=null&&shares>0)?shares:(nav>0?amount/nav:0);
+  const costBasis=avgCp*sellSh, proceeds=amount-fee, gain=proceeds-costBasis;
+  const retPct=costBasis>0?gain/costBasis*100:0;
+  const isLiq=sellSh>=remSh-1e-6 && remSh>0;
+  return {remSh:remSh, sellSh:sellSh, costBasis:costBasis, proceeds:proceeds, gain:gain, retPct:retPct, isLiq:isLiq, fee:fee};
+}
+function sellPreviewConfirm(name, acc, amount, nav, fee, shares, date){
+  if(!(_allHoldings.length)) return true; // 无持仓记录则跳过预览，直接保存
+  const pv=sellPreview(name, acc, amount, nav, fee, shares);
+  const est=estRedemptionFee(name, acc, date, amount);
+  let msg='💱 卖出预览 · '+name+'（'+acc+'）\n';
+  msg+='卖出金额：'+M(amount)+'\n';
+  msg+='预估赎回费：'+M(pv.fee)+(est.days!=null?('（持有 '+est.days+' 天 · 费率 '+(est.rate*100)+'%）'):'')+'\n';
+  msg+='到手金额：'+M(pv.proceeds)+'\n';
+  msg+='成本（约）：'+M(pv.costBasis)+'\n';
+  msg+='预估盈亏：'+(pv.gain>=0?'+':'')+M(pv.gain)+'（'+(pv.retPct>=0?'+':'')+pv.retPct.toFixed(2)+'%）\n';
+  if(pv.isLiq) msg+='\n⚠️ 这将清空该账户下此基金的持仓（清仓）。\n';
+  msg+='\n确认保存这笔卖出？';
+  return confirm(msg);
+}
 function bondAmt(f){ return (bondState.amts&&bondState.amts[f.code]!=null)?bondState.amts[f.code]:f.amt; }
 function bondDate(f){ return (bondState.dates&&bondState.dates[f.code])?bondState.dates[f.code]:(BOND_DEF_DATES[f.code]||''); }
 function bondStatus(f,today){
@@ -1863,12 +1967,12 @@ function buildLiquidatedView(){
     const acc=ref.acc, name=ref.name;
     const tr=trades.filter(function(t){ return accOf(t)===acc && t.name===name; }).slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
     if(!tr.length) return;
-    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null, lots=[];
+    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null, lots=[], sellFee=0, sellNavW=0, sellShW=0;
     tr.forEach(function(t){
       const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
       const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
       if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } }
-      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }
+      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }
       else if(ty==='dividend'){ div+=amt; if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }
       else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }
       else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }
@@ -1879,11 +1983,12 @@ function buildLiquidatedView(){
     const EPS=1e-6;
     if(totalSell<=0) return;     // 没卖过 → 不算清仓
     if(shares>EPS) return;       // 仍持有 → 不算清仓
+    const avgSellNav = sellShW>0 ? sellNavW/sellShW : 0;
     const cat=guessCat(name);
     const days=(firstBuy&&lastSell)?Math.max(0,Math.round((new Date(lastSell)-new Date(firstBuy))/864e5)):0;
     const retPct=totalBuy>0?realized/totalBuy*100:0;
     const annual=(days>0&&totalBuy>0&&(realized/totalBuy)>-1)?(Math.pow(1+realized/totalBuy,365/days)-1)*100:null;
-    out.push({name:name, account:acc, cat:cat, totalBuy:totalBuy, totalSell:totalSell, div:div, realized:realized, days:days, firstBuy:firstBuy, lastSell:lastSell, retPct:retPct, annual:annual, win:realized>=0});
+    out.push({name:name, account:acc, cat:cat, totalBuy:totalBuy, totalSell:totalSell, div:div, realized:realized, days:days, firstBuy:firstBuy, lastSell:lastSell, retPct:retPct, annual:annual, win:realized>=0, sellFee:sellFee, avgSellNav:avgSellNav});
   });
   out.sort(function(a,b){ return liqSort==='ret' ? (b.retPct-a.retPct) : (b.realized-a.realized); });
   return out;
@@ -1893,37 +1998,52 @@ function setLiqSort(s){ liqSort=s; renderLiquidated(); }
 function renderLiquidated(){
   const box=document.getElementById('tp2'); if(!box) return;
   const list=buildLiquidatedView();
-  let sumR=0, sumB=0, sumS=0, wins=0, sumD=0;
-  list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; if(f.win) wins++; });
-  const cnt=list.length, winRate=cnt?wins/cnt*100:0, avgD=cnt?Math.round(sumD/cnt):0;
+  let sumR=0, sumB=0, sumS=0, wins=0, sumD=0, sumRetPct=0; const catMap={};
+  list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; sumRetPct+=f.retPct; if(f.win) wins++; catMap[f.cat]=(catMap[f.cat]||0)+f.totalBuy; });
+  const cnt=list.length, winRate=cnt?wins/cnt*100:0, avgD=cnt?Math.round(sumD/cnt):0, avgRet=cnt?sumRetPct/cnt:0;
   const cls=function(v){ return v>=0?'pos':'neg'; }, sign=function(v){ return v>=0?'+':''; };
   const sum='<div class="cards4">'
     +'<div class="mcard"><p class="lbl">清仓基金数</p><p class="val">'+cnt+'</p></div>'
     +'<div class="mcard"><p class="lbl">累计已实现盈亏</p><p class="val '+cls(sumR)+'">'+sign(sumR)+M(sumR)+'</p></div>'
     +'<div class="mcard"><p class="lbl">累计投入</p><p class="val">'+M(sumB)+'</p></div>'
     +'<div class="mcard"><p class="lbl">累计赎回</p><p class="val">'+M(sumS)+'</p></div>'
+    +'<div class="mcard"><p class="lbl">平均收益率</p><p class="val '+cls(avgRet)+'">'+sign(avgRet)+avgRet.toFixed(2)+'%</p></div>'
     +'<div class="mcard"><p class="lbl">胜率（赚/亏）</p><p class="val">'+(cnt?wins+'/'+cnt:'—')+'</p><p class="lbl" style="margin:4px 0 0">'+winRate.toFixed(0)+'%</p></div>'
     +'<div class="mcard"><p class="lbl">平均持有天数</p><p class="val">'+(cnt?avgD:'—')+'</p></div>'
     +'</div>';
-  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button></span></div><p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。</p>"+sum;
+  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button></span></div><p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
   if(!cnt){
     box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。</div></div>';
     return;
   }
   const rows=list.map(function(f){
     const enc=encodeURIComponent(f.name||'');
+    const curNav=(navCache[f.name]&&navCache[f.name].nav!=null)?+navCache[f.name].nav:null;
+    let holdCell='—';
+    if(curNav!=null && f.avgSellNav>0){
+      const curVal=f.totalSell*(curNav/f.avgSellNav), hp=(curNav/f.avgSellNav-1)*100;
+      holdCell='<div class="num '+cls(curVal-f.totalSell)+'">'+M(curVal)+'</div><div class="dt-sub2 '+cls(hp)+'">'+sign(hp)+hp.toFixed(1)+'%</div>';
+    }
     return "<tr><td><span class='nm'>"+esc(f.name||'—')+"</span> <span class='tag'>"+esc(f.account)+"</span></td>"
       +"<td>"+esc(f.cat)+"</td>"
       +"<td class='num'>"+M(f.totalBuy)+"</td>"
       +"<td class='num'>"+M(f.totalSell)+"</td>"
       +"<td class='num "+cls(f.realized)+"'>"+sign(f.realized)+M(f.realized)+"</td>"
       +"<td class='num "+cls(f.realized)+"'>"+sign(f.retPct)+f.retPct.toFixed(2)+"%</td>"
+      +"<td class='num'>"+(f.avgSellNav>0?navFmt(f.avgSellNav):'—')+"</td>"
+      +"<td class='num'>"+(f.sellFee>0?M(f.sellFee):'—')+"</td>"
       +"<td class='num'>"+f.days+"</td>"
       +"<td class='num'>"+(f.annual!=null?sign(f.annual)+f.annual.toFixed(1)+'%':'—')+"</td>"
+      +"<td>"+holdCell+"</td>"
       +"<td>"+(f.lastSell||'—')+"</td>"
       +"<td><button class='btn sm' data-nm='"+enc+"' data-acc='"+esc(f.account)+"' onclick='goLiq(this)'>查看 →</button></td></tr>";
   }).join('');
-  box.innerHTML='<div class="card">'+head+'<div class="table-scroll" style="margin-top:12px"><table class="am-t"><thead><tr><th>基金 / 账户</th><th>类别</th><th class="num">累计投入</th><th class="num">累计赎回</th><th class="num">已实现盈亏</th><th class="num">收益率</th><th class="num">持有天数</th><th class="num">年化</th><th>清仓日</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  const catKeys=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];});
+  const impact=catKeys.length?'<div class="liq-impact"><p class="lbl">清仓资金去向（按类别 · 累计投入）</p>'+catKeys.map(function(c){
+    const v=catMap[c], pct=sumB>0?v/sumB*100:0;
+    return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(c)+'</span><span class="liq-imp-bar"><i style="width:'+pct.toFixed(1)+'%"></i></span><span class="liq-imp-val">'+M(v)+' · '+pct.toFixed(0)+'%</span></div>';
+  }).join('')+'</div>':'';
+  box.innerHTML='<div class="card">'+head+'<div class="table-scroll" style="margin-top:12px"><table class="am-t"><thead><tr><th>基金 / 账户</th><th>类别</th><th class="num">累计投入</th><th class="num">累计赎回</th><th class="num">已实现盈亏</th><th class="num">收益率</th><th class="num">卖出价</th><th class="num">税费</th><th class="num">持有天数</th><th class="num">年化</th><th class="num">继续持有(近似)</th><th>清仓日</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+impact+'</div>';
 }
 
 
@@ -2201,13 +2321,14 @@ function liveSection(f){
   h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
   h+=`<p class="hint" style="margin:0 0 8px">每笔「保存并锁定」后自动 🔒 防误改；点 🔓 可临时解锁编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
   h+=`<div class="tr-add"><div class="tr-add-grid">
-    <select id="nf-acc">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(f)===a?'selected':''}>${a}</option>`).join('')}</select>
-    <input id="nf-date" type="date" value="${tdtoday}">
+    <select id="nf-acc" onchange="autoFee('nf')">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(f)===a?'selected':''}>${a}</option>`).join('')}</select>
+    <input id="nf-date" type="date" value="${tdtoday}" onchange="autoFee('nf')">
     <input id="nf-time" type="time" value="15:00">
-    <select id="nf-type">${TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>
-    <input id="nf-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="金额(元)">
+    <select id="nf-type" onchange="autoFee('nf')">${TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>
+    <input id="nf-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="金额(元)" oninput="autoFee('nf')" onchange="autoFee('nf')">
     <input id="nf-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="净值(留空=T+1)">
     <input id="nf-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="费用(元)">
+    <span class="fee-hint" id="nf-fee-hint"></span>
     <input id="nf-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="确认份额(可选)">
     <button class="btn sm primary" onclick="addTradeForForm('${encodeURIComponent(f.name)}')">💾 保存并锁定</button>
   </div></div>`;
@@ -2284,6 +2405,7 @@ function addTradeForForm(enc){
   const nav=(navRaw===''||navRaw==null)?null:+navRaw;
   if(!date){ toast('请填写交易日期'); return; }
   if(!amount){ toast('请填写金额'); return; }
+  if(type==='sell' && !sellPreviewConfirm(name, acc, amount, nav, fee, shares, date)) return;
   trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
   silentSave(); compute();
   toast('已保存并锁定 · '+typeLabel(type)+' '+M(amount));
@@ -2333,6 +2455,7 @@ function drawerSave(){
   const navRaw=g('dr-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
   const fee=+g('dr-fee').value||0;
   const shRaw=g('dr-shares').value, shares=(shRaw===''||shRaw==null)?null:+shRaw;
+  if(type==='sell' && !sellPreviewConfirm(name, acc, amount, nav, fee, shares, date)) return;
   trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
   silentSave(); compute(); recordSnapshot();
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }

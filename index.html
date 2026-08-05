@@ -1107,7 +1107,7 @@ const BUILTIN_ACCOUNTS=['我的','小号','微信债券'];
 const ACCOUNT_META={
   '我的':{isPersonal:true, owner:'本人'},
   '微信债券':{isPersonal:true, owner:'本人'},
-  '小号':{isPersonal:false, owner:'妈妈'},
+  '小号':{isPersonal:false, owner:'小号'},
   // 旧名兼容（存量 localStorage 数据归一化前的兜底；2026-08-05 改名：支付宝→我的 / 微信→微信债券）
   '支付宝':{isPersonal:true, owner:'本人'},
   '微信':{isPersonal:true, owner:'本人'}
@@ -1624,12 +1624,32 @@ function toggleSortHeader(key){
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
-// ---------- 自定义列显隐（紧凑表 ⚙️ 列设置）----------
+// ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
 let colVis={nav:true,est:true,day:true,mv:true,ret:true,tdy:true};
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,tdy:o.tdy!==false}; } }catch(e){}
-function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderHomeList(); }
+const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'持有收益',tdy:'当日收益'};
+const COL_KEYS=['nav','est','day','mv','ret','tdy'];
+let colOrder=COL_KEYS.slice();
+try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)) colOrder.push(k); }); } } }catch(e){}
+function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); }catch(e){} }
+function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
-function syncColSetChecks(){ ['nav','est','day','mv','ret','tdy'].forEach(k=>{ const cb=document.querySelector('#colSetDrop input[data-col="'+k+'"]'); if(cb) cb.checked=colVis[k]; }); }
+function syncColSetChecks(){ renderColSet(); }
+function renderColSet(){
+  const box=document.getElementById('colSetList'); if(!box) return;
+  box.innerHTML=colOrder.map((k,i)=>{
+    const canL=i>0, canR=i<colOrder.length-1;
+    return `<div class="col-row"><label class="col-cb"><input type="checkbox" data-col="${k}" ${colVis[k]?'checked':''} onchange="toggleCol('${k}',this.checked)"> ${COL_DEFS[k]}</label>`
+      +`<span class="col-mv"><button type="button" ${canL?'':'disabled'} onclick="moveCol('${k}','left')" title="左移">‹</button>`
+      +`<button type="button" ${canR?'':'disabled'} onclick="moveCol('${k}','right')" title="右移">›</button></span></div>`;
+  }).join('');
+}
+function moveCol(k,dir){
+  const i=colOrder.indexOf(k); if(i<0) return;
+  const j=dir==='left'?i-1:i+1; if(j<0||j>=colOrder.length) return;
+  const t=colOrder[i]; colOrder[i]=colOrder[j]; colOrder[j]=t;
+  saveColOrder(); renderColSet(); renderHomeList();
+}
 document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
 function setHomeView(v){
   homeView=v;
@@ -1846,7 +1866,7 @@ function renderHomeList(){
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>
         ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')}
-        ${f.account&&f.account!=='我的'?`<span class="tag">${f.account}</span>`:''}${currentScope==='all'?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
+        ${f.account&&f.account!=='我的'?`<span class="tag">${f.account}</span>`:''}${currentScope==='all' && accOwner(f.account)!==f.account?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
         <span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
       </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
@@ -1891,7 +1911,7 @@ function renderHomeDense(list){
     const estCell=(nc.gszzl!=null)
       ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${_mkt?(nc.gsz!=null?('估 '+navFmt(nc.gsz)):'估·预估'):'上次估'}</div>`
       : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'无预估'}</div>`;
-    const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人')?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
+    const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
     const code=syncCode(f.name);
@@ -2009,7 +2029,7 @@ function renderOverview(){
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const updLine=lastSyncLabel();
-  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'代管（妈妈）':'个人');
+  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'小号':'个人');
   const trendSvg=overviewTrendSvg();
   const trendNote=(Array.isArray(dailySnapshots)?dailySnapshots:(dailySnapshots[currentScope]||[])).length;
   const mask=v=>hidden?'****':v;
@@ -2351,7 +2371,7 @@ function renderBond(){
     const durTxt=(f.dur&&f.dur!=='—')?'<span class="tag-dur">'+f.dur+'</span>':'';
     const creTxt=(f.credit&&f.credit!=='—')?'<span class="tag-credit">'+f.credit+'</span>':'';
     const bar=(st.barPct!=null)?('<div class="cmp-bar"><div class="fill bar-'+st.barCls+'" style="width:'+st.barPct+'%"></div></div>'):'';
-    const ownerTag = currentScope==='all' ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
+    const ownerTag = (currentScope==='all' && accOwner(f.acc)!==f.acc) ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
     return '<tr>'
       +'<td><b>'+f.code+'</b><br><span class="nm">'+f.name+'</span></td>'
       +'<td>'+f.acc+ownerTag+'</td>'
@@ -2368,7 +2388,7 @@ function renderBond(){
     const yc=f.y1===best?'cmp-best':(f.y1===worst?'cmp-worst':'');
     const mc=f.mix?'<span class="tag-mix">混合</span>':'';
     const cre=f.mix?'含股票':f.credit;
-    const ownerTag = currentScope==='all' ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
+    const ownerTag = (currentScope==='all' && accOwner(f.acc)!==f.acc) ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
     return '<tr>'
       +'<td><b>'+f.code+'</b> '+f.name+mc+ownerTag+'</td>'
       +'<td class="'+yc+'">'+f.y1.toFixed(2)+'%</td>'

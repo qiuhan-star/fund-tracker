@@ -1186,7 +1186,7 @@ function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'我的'; }
 let flashMap={}, todayGain=null;
-let holdSort='mv', holdSortDir='desc', holdCatFilter='全部', holdSearch='';
+let holdSort='', holdSortDir='desc', holdCatFilter='全部', holdSearch='';
 let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
 let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){}
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){}
@@ -1609,7 +1609,7 @@ function setSort(s){
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
-// 列头点击排序：三段循环 降序↓ → 升序↑ → 默认(市值降序)
+// 列头点击排序：三段循环 降序↓ → 升序↑ → 默认(多级降序)
 function toggleSortHeader(key){
   if(holdSort!==key){ holdSort=key; holdSortDir = (key==='name')?'asc':'desc'; }
   else if(holdSortDir==='desc'){ holdSortDir='asc'; }
@@ -1805,6 +1805,17 @@ function buildObsHtml(){
     +obs.map(o=>`<div class="obs-item" title="点击记账买入" onclick="openDrawerPrefill('${esc(o.name)}')"><span class="obs-name">${esc(o.name)}</span><span class="obs-code">${o.code}</span><span class="obs-quote" data-code="${o.code}">…</span><button class="btn sm ghost" onclick="event.stopPropagation();removeWatch('${o.code}')">✕</button></div>`).join('')
     +`</div>`;
 }
+function sortKeyVal(f,k){
+  const nc=navCache[f.name]||{};
+  if(k==='tdy'){ const chg=nc.navChg!=null?nc.navChg:0; const mv=f.mv||0; return mv-mv/(1+chg/100); }
+  if(k==='est') return nc.gszzl||0;
+  if(k==='day') return nc.navChg!=null?nc.navChg:0;
+  if(k==='mv') return f.mv||0;
+  if(k==='nav') return nc.nav!=null?nc.nav:0;
+  if(k==='ret') return f.ret||0;
+  return 0;
+}
+
 function renderHomeList(){
   syncColSetChecks();
   renderCatFilter();
@@ -1829,7 +1840,15 @@ function renderHomeList(){
     else if(holdSort==='nav'){ av=(navCache[a.name]&&navCache[a.name].nav)||0; bv=(navCache[b.name]&&navCache[b.name].nav)||0; }
     else if(holdSort==='est'){ av=(navCache[a.name]&&navCache[a.name].gszzl)||0; bv=(navCache[b.name]&&navCache[b.name].gszzl)||0; }
     else if(holdSort==='tdy'){ const da=(navCache[a.name]&&navCache[a.name].navChg!=null)?a.mv-a.mv/(1+navCache[a.name].navChg/100):0; const db=(navCache[b.name]&&navCache[b.name].navChg!=null)?b.mv-b.mv/(1+navCache[b.name].navChg/100):0; av=da; bv=db; }
-    else { av=a.mv; bv=b.mv; }
+    else {
+      // 默认多级排序：当日收益→估算→官方→持仓金额→净值→持有收益（名称兜底）
+      const _keys=['tdy','est','day','mv','nav','ret','name'];
+      cmp=0;
+      for(const _k of _keys){
+        const _d=(_k==='name')?a.name.localeCompare(b.name,'zh-CN'):(sortKeyVal(a,_k)-sortKeyVal(b,_k));
+        if(_d!==0){ cmp=_d; break; }
+      }
+    }
     if(cmp===undefined) cmp=bv-av;
     return holdSortDir==='asc' ? -cmp : cmp;
   });

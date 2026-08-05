@@ -1129,13 +1129,7 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function accIsPersonal(acc){ const m=ACCOUNT_META[acc]; return m? (m.isPersonal!==false) : true; }
 function accOwner(acc){ const m=ACCOUNT_META[acc]; return m? m.owner : '本人'; }
 // 账户（账户级）：我的 / 小号 / 微信债券 / 自定义 / all(全量)；兼容旧值 personal→我的、managed→小号
-let scopeAcc='我的';
-try{ const _s=localStorage.getItem('ft_scope');
-  if(_s==='personal') scopeAcc='我的';
-  else if(_s==='managed') scopeAcc='小号';
-  else if(_s==='all') scopeAcc='all';
-  else if(_s==='我的'||_s==='小号'||_s==='微信债券') scopeAcc=_s;
-}catch(e){}
+let scopeAcc='我的'; // 默认资产口径就是「我的」：每次打开都从「我的」开始，不恢复上次所选账户
 let currentScope = scopeAcc==='all'?'all':(scopeAcc==='小号'?'managed':'personal');
 function scopeMatches(acc){
   const personal=accIsPersonal(acc);
@@ -4158,8 +4152,15 @@ function canvasLineChart(canvas, cfg){
     }
     (cfg.markers||[]).forEach(function(m){ const y=(m.y!=null?m.y:vals[m.idx]); drawMarker(ctx,xAt(m.idx),yAt(y),m.color||th.accent,m.symbol||'tri-up'); });
     if(hi!=null){
-      const x=xAt(hi); ctx.save(); ctx.strokeStyle=th.text3; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke(); ctx.restore();
-      const y=yAt(vals[hi]); ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fillStyle=cfg.line||th.accent; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+      const x=xAt(hi), y=yAt(vals[hi]);
+      ctx.save(); ctx.strokeStyle=th.text3; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+      // 竖向辅助线（吸附到最近交易日）
+      ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke();
+      // 横向辅助线（对齐该日净值，便于直接读值）
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+      ctx.restore();
+      // 数据点上画实心点
+      ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fillStyle=cfg.line||th.accent; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
     }
   }
   paint(null);

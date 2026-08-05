@@ -208,10 +208,18 @@
   .hk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
   .hk-table th, .hk-table td { padding: 5px 6px; border-bottom: 1px solid var(--border-2); text-align: right; white-space: nowrap; }
   .hk-table th { color: var(--text-3); font-weight: 600; }
+  /* 表头与数据列对齐一致（修复「名称/序号」错位：默认 th 右对齐，但数据列名称左、序号居中） */
+  .hk-table th:nth-child(1){ text-align:center; }
+  .hk-table th:nth-child(2){ text-align:left; }
+  .hk-table th:nth-child(3), .hk-table th:nth-child(4){ text-align:right; font-variant-numeric: tabular-nums; }
   .hk-table td.hk-rank { color: var(--text-3); text-align: center; }
-  .hk-table td.hk-name { text-align: left; font-weight: 600; }
+  .hk-table td.hk-name { text-align: left; font-weight: 600; white-space: normal; }
+  .hk-table td.hk-pct, .hk-table td.hk-chg { font-variant-numeric: tabular-nums; }
   .hk-table td.hk-chg.pos { color: var(--up); }
   .hk-table td.hk-chg.neg { color: var(--down); }
+  /* 名称 + 股票代码(市场标识) + 长名截断 */
+  .hk-nm { font-weight: 600; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hk-code { font-size: 10.5px; color: var(--text-3); margin-top: 2px; line-height: 1.2; }
   .nav-edit:hover { border-bottom-color: var(--accent-text); color: var(--accent-text); }
   .hl-num { flex: 0 0 auto; text-align: right; }
   .hl-mv { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -2230,61 +2238,53 @@ async function fetchFundMNFInfo(codes){
     return out;
   }catch(e){ return null; }
 }
-// 新浪 QDII 盘中估值兜底（天天基金不给 QDII 估值）：JSONP，返回 networth 分时数组，末点=盘中估算
+// 新浪 QDII 盘中估值兜底（天天基金不给 QDII 估值）：经 /api/intraday 代理，返回 networth 分时数组，末点=盘中估算
 function fetchSinaEstimate(code){
-  return new Promise(resolve=>{
-    const cb='sn_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    const timer=setTimeout(()=>{ window[cb]=null; resolve(null); },6000);
-    window[cb]=d=>{
-      clearTimeout(timer); window[cb]=null; s.remove();
-      try{
-        const data=d&&d.result&&d.result.data; if(!data){ resolve(null); return; }
-        const official=parseFloat(data.worth); const nw=data.networth;
-        let gsz=null, gszzl=null, gztime=null;
-        if(Array.isArray(nw)&&nw.length){ const p=nw[nw.length-1]; gsz=parseFloat(p.pre_nav); gszzl=parseFloat(p.growthrate); gztime=(p.min_time&&data.worth_date)?(data.worth_date+' '+p.min_time):null; }
-        if(isNaN(gsz)){ gsz=official; gszzl=parseFloat(data.worth_rate)*100; }
-        resolve({ nav:isNaN(gsz)?null:gsz, date:data.worth_date||'', gsz:isNaN(gsz)?null:gsz, gszzl:isNaN(gszzl)?null:gszzl, gztime, official:isNaN(official)?null:official });
-      }catch(e){ resolve(null); }
-    };
-    s.onerror=()=>{ clearTimeout(timer); window[cb]=null; resolve(null); };
-    s.src='https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic?symbol='+encodeURIComponent(code)+'&callback='+cb;
-    document.body.appendChild(s);
+  return fetchJSON(API_BASE+'/intraday?code='+encodeURIComponent(code), 12000).then(d=>{
+    const data=d&&d.result&&d.result.data; if(!data) return null;
+    const official=parseFloat(data.worth);
+    const nw=data.networth;
+    let gsz=null, gszzl=null, gztime=null;
+    if(Array.isArray(nw)&&nw.length){ const p=nw[nw.length-1]; gsz=parseFloat(p.pre_nav); gszzl=parseFloat(p.growthrate); gztime=(p.min_time&&data.worth_date)?(data.worth_date+' '+p.min_time):null; }
+    if(isNaN(gsz)){ gsz=official; gszzl=parseFloat(data.worth_rate)*100; }
+    return { nav:isNaN(gsz)?null:gsz, date:data.worth_date||'', gsz:isNaN(gsz)?null:gsz, gszzl:isNaN(gszzl)?null:gszzl, gztime, official:isNaN(official)?null:official };
+  }).catch(()=>null);
+}
+// 盘中估值分时数据源：新浪「getEstimateNetworthPic」。
+// 原接口用 <script src> JSONP 注入，但响应正文开头含裸 <\/script>，会被 HTML 解析器提前截断导致回调永不执行；
+// 且新浪不返回 CORS 头，浏览器 fetch 直连也被拦。故改由本站同源 /api/intraday 服务端代理（见 api/intraday.js）。
+// A股+QDII 通用；仅交易时段有数据（收盘后 networth=null）。
+const API_BASE = (typeof location!=='undefined' && location.protocol==='file:')
+  ? 'https://fund-tracker-chi.vercel.app/api'   // 本地双击打开时也直连已部署的函数
+  : (typeof location!=='undefined' ? (location.origin+'/api') : '/api');
+function fetchJSON(url, ms){
+  return new Promise((resolve, reject)=>{
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>{ try{ctrl.abort();}catch(e){} reject(new Error('timeout')); }, ms||12000);
+    fetch(url, {signal:ctrl.signal}).then(r=>{ clearTimeout(t); return r.ok?r.json():null; })
+      .then(d=>resolve(d)).catch(e=>{ clearTimeout(t); reject(e); });
   });
 }
-// 新浪盘中估值分时序列（networth 数组）：每只点含 min_time/pre_date/pre_nav(A股)/pre_nav2(QDII)。
-// JSONP 跨域免 CORS，A股+QDII 通用；仅交易时段有数据（收盘后 networth=null）。
 const intradayCache={}; // name -> {series:[{time,value}], refNav, ts}
 function fetchSinaIntraday(code){
-  return new Promise(resolve=>{
-    const cb='sni_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    const timer=setTimeout(()=>{ window[cb]=null; resolve(null); },6000);
-    window[cb]=d=>{
-      clearTimeout(timer); window[cb]=null; s.remove();
-      try{
-        const data=d&&d.result&&d.result.data; if(!data){ resolve(null); return; }
-        const nw=data.networth;
-        if(!Array.isArray(nw)||!nw.length){ resolve(null); return; }
-        const series=[], seen=new Set();
-        for(const p of nw){
-          const v=parseFloat(p.pre_nav), v2=parseFloat(p.pre_nav2);
-          const value=isNaN(v)?(isNaN(v2)?null:v2):v;
-          if(value==null) continue;
-          const time=p.min_time||null, date=p.pre_date||null;
-          if(!time||!date) continue;
-          const key=date+' '+time; if(seen.has(key)) continue; seen.add(key);
-          series.push({time:String(time).slice(0,5), value});
-        }
-        if(!series.length){ resolve(null); return; }
-        series.sort((a,b)=>a.time.localeCompare(b.time));
-        resolve({ series, worth:parseFloat(data.worth), worthDate:data.worth_date||'' });
-      }catch(e){ resolve(null); }
-    };
-    s.onerror=()=>{ clearTimeout(timer); window[cb]=null; resolve(null); };
-    s.src='https://stock.finance.sina.com.cn/fundInfo/api/openapi.php/FdFundService.getEstimateNetworthPic?symbol='+encodeURIComponent(code)+'&callback='+cb;
-    document.body.appendChild(s);
-  });
+  return fetchJSON(API_BASE+'/intraday?code='+encodeURIComponent(code), 12000).then(d=>{
+    const data=d&&d.result&&d.result.data; if(!data) return null;
+    const nw=data.networth;
+    if(!Array.isArray(nw)||!nw.length) return null;
+    const series=[], seen=new Set();
+    for(const p of nw){
+      const v=parseFloat(p.pre_nav), v2=parseFloat(p.pre_nav2);
+      const value=isNaN(v)?(isNaN(v2)?null:v2):v;
+      if(value==null) continue;
+      const time=p.min_time||null, date=p.pre_date||null;
+      if(!time||!date) continue;
+      const key=date+' '+time; if(seen.has(key)) continue; seen.add(key);
+      series.push({time:String(time).slice(0,5), value});
+    }
+    if(!series.length) return null;
+    series.sort((a,b)=>a.time.localeCompare(b.time));
+    return { series, worth:parseFloat(data.worth), worthDate:data.worth_date||'' };
+  }).catch(()=>null);
 }
 // 盘中分时按自然日持久化（localStorage），收盘后仍可回看当日曲线
 function _intradayKey(d){ d=d||new Date(); const p=n=>('0'+n).slice(-2); return 'ft_intraday_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
@@ -2877,7 +2877,7 @@ async function renderFundHoldings(f){
       else if(t==='新增'||t==='新进') chgCell=`<span class="pos">新进</span>`;
       else chgCell=`<span class="${chgVal>=0?'pos':'neg'}">${(chgVal>=0?'+':'')+v}%</span>`;
     } else if(t==='不变'){ chgCell='不变'; }
-    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${esc(x.GPJC||x.GPDM||'—')}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg">${chgCell}</td></tr>`;
+    return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name"><div class="hk-nm">${esc(x.GPJC||x.GPDM||'—')}</div>${ (x.GPJC&&x.GPDM)?'<div class="hk-code">'+esc(x.GPDM)+'</div>':'' }</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg">${chgCell}</td></tr>`;
   }).join('');
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }

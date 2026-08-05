@@ -2702,7 +2702,7 @@ async function renderFundHoldings(f){
       const v=Math.abs(chgVal).toFixed(2);
       if(t==='增持') chgCell=`<span class="pos">+${v}%</span>`;
       else if(t==='减持') chgCell=`<span class="neg">-${v}%</span>`;
-      else if(t==='新增'||t==='新进') chgCell=`<span class="pos">新进 +${v}%</span>`;
+      else if(t==='新增'||t==='新进') chgCell=`<span class="pos">新进</span>`;
       else chgCell=`<span class="${chgVal>=0?'pos':'neg'}">${(chgVal>=0?'+':'')+v}%</span>`;
     } else if(t==='不变'){ chgCell='不变'; }
     return `<tr><td class="hk-rank">${i+1}</td><td class="hk-name">${esc(x.GPJC||x.GPDM||'—')}</td><td class="hk-pct">${pct.toFixed(2)}%</td><td class="hk-chg">${chgCell}</td></tr>`;

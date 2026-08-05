@@ -101,6 +101,33 @@
   .legend { display: flex; flex-wrap: wrap; gap: 9px; font-size: 12px; margin-top: 8px; }
   .legend span { display: flex; align-items: center; gap: 5px; }
   .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  /* 饼图可点击图例（下钻筛选） */
+  .pie-leg { cursor: pointer; padding: 2px 7px; border-radius: 6px; transition: background .15s, color .15s; user-select: none; }
+  .pie-leg:hover { background: var(--surface-3); }
+  .pie-leg.on { background: var(--accent); color: #fff; }
+  .pie-leg.on i { box-shadow: 0 0 0 1px rgba(255,255,255,.6); }
+  /* ===== 快捷记账抽屉 ===== */
+  .fab { position: fixed; right: 20px; bottom: 20px; z-index: 80; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 28px; line-height: 1; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.22); transition: transform .15s, box-shadow .15s; }
+  .fab:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,.28); }
+  .fab:active { transform: translateY(0); }
+  .drawer-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 90; }
+  .drawer { position: fixed; top: 0; right: 0; height: 100%; width: 340px; max-width: 88vw; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 28px rgba(0,0,0,.14); z-index: 95; transform: translateX(100%); transition: transform .22s ease; display: flex; flex-direction: column; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-2); }
+  .drawer-head h3 { margin: 0; font-size: 15px; }
+  .drawer-x { border: none; background: none; font-size: 17px; cursor: pointer; color: var(--text-2); padding: 4px 8px; border-radius: 6px; }
+  .drawer-x:hover { background: var(--bg); }
+  .drawer-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+  .drawer-body .fld { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; font-size: 12.5px; color: var(--text-2); }
+  .drawer-body .fld > span { font-weight: 600; color: var(--text); }
+  .drawer-body .fld input, .drawer-body .fld select { border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 9px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface); }
+  .drawer-body .fld input:focus, .drawer-body .fld select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-on); }
+  .drawer-body .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .drawer-foot { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border-2); }
+  .drawer-foot .btn { flex: 1; }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.05); }
+  .btn.ghost { background: var(--surface-2); color: var(--text-2); border-color: var(--border-strong); }
   .tl { width: 100%; }
   /* ===== 债券板块 ===== */
   .sub2 { font-size: 11px; color: var(--text-3); margin: 3px 0 0; }
@@ -184,6 +211,7 @@
   .tag-QDII { background: #e6f7f1; color: #0f8a63; }
   .tag-海外 { background: #e6f0fb; color: #378add; }
   .tag-attr { background: var(--border-3); color: var(--text-2); }
+  .tag-cur { background: #f4f1ff; color: #6d4bb7; }
   .tag-科技 { background: var(--accent-soft); color: #534ab7; }
   .tag-周期资源 { background: var(--warn-bg); color: #a9701a; }
   .tag-制造 { background: var(--accent-soft); color: #2f7fb8; }
@@ -258,6 +286,9 @@
 
   /* 赛道筛选 chips */
   .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .hold-search { margin-bottom: 10px; }
+  .hold-search input { width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 10px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); }
+  .hold-search input:focus { outline: none; border-color: var(--accent-on); }
   .idx-card .sec-head { margin-bottom: 8px; }
   .idx-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(144px, 1fr)); gap: 10px; }
   /* 大盘指数按市场分组：外层纵向堆叠，每组内仍是网格 */
@@ -414,7 +445,7 @@
   @media print {
     :root{--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}
     body{background:var(--surface);} .wrap{max-width:none;padding:0;}
-    .more-menu,.main-tabs,.back-link,.detail-head button,.sec-tools{display:none!important;}
+    .more-menu,.main-tabs,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask{display:none!important;}
     .card{box-shadow:none;border:1px solid #ddd;break-inside:avoid;}
     .hint{display:none!important;}
     td input,td select{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}
@@ -508,6 +539,7 @@ input[type="number"] { -moz-appearance: textfield; }
         </div>
         <div class="cat-filter" id="accFilter"></div>
         <div class="cat-filter" id="catFilter"></div>
+        <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)" value="${holdSearch}"></div>
         <div id="homeList"></div>
         <p class="hint">点任意一行<b>展开</b>查看持仓摘要与最近交易；展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、十大重仓与复盘）。</p>
         <p class="privacy"><b>🔒 隐私：</b>所有数据仅保存在你本地浏览器 / 本文件，<b>不会上传任何服务器</b>。</p>
@@ -578,6 +610,45 @@ input[type="number"] { -moz-appearance: textfield; }
   <!-- 交易选择器弹窗 -->
   <div id="tradePicker"></div>
   <div id="allTradesModal"></div>
+
+  <!-- 快捷记账抽屉 -->
+  <button class="fab" id="quickFab" onclick="openDrawer()" title="快捷记账">＋</button>
+  <div class="drawer-mask" id="drawerMask" onclick="closeDrawer(event)"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3>＋ 快捷记账</h3>
+      <button class="drawer-x" onclick="closeDrawer()" title="关闭">✕</button>
+    </div>
+    <div class="drawer-body">
+      <label class="fld"><span>基金名称</span>
+        <input id="dr-fund" list="drFundList" placeholder="选择或输入基金名称" autocomplete="off">
+        <datalist id="drFundList"></datalist>
+      </label>
+      <div class="fld-row">
+        <label class="fld"><span>账户</span>
+          <select id="dr-acc"><option>支付宝</option><option>天天基金</option><option>微信理财通</option><option>券商</option><option>其他</option></select>
+        </label>
+        <label class="fld"><span>类型</span>
+          <select id="dr-type"></select>
+        </label>
+      </div>
+      <div class="fld-row">
+        <label class="fld"><span>日期</span><input type="date" id="dr-date"></label>
+        <label class="fld"><span>时间</span><input type="time" id="dr-time"></label>
+      </div>
+      <label class="fld"><span>金额（元）</span><input type="number" id="dr-amount" inputmode="decimal" placeholder="0.00"></label>
+      <div class="fld-row">
+        <label class="fld"><span>净值</span><input type="number" id="dr-nav" inputmode="decimal" step="0.0001" placeholder="可选"></label>
+        <label class="fld"><span>费用（元）</span><input type="number" id="dr-fee" inputmode="decimal" placeholder="0"></label>
+      </div>
+      <label class="fld"><span>份额（可选）</span><input type="number" id="dr-shares" inputmode="decimal" placeholder="不填则按 金额/净值 估算"></label>
+      <p class="hint" style="margin:6px 0 0">买入金额含申购费；卖出按金额计、费用另填。保存后即时入账并刷新持仓列表。</p>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn ghost" onclick="closeDrawer()">取消</button>
+      <button class="btn primary" onclick="drawerSave()">保存并记账</button>
+    </div>
+  </aside>
 
 <script>
 // ---------- 示例数据 ----------
@@ -662,7 +733,7 @@ function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'支付宝'; }
 let flashMap={}, todayGain=null;
-let holdSort='mv', holdCatFilter='全部';
+let holdSort='mv', holdCatFilter='全部', holdSearch='';
 let currentView='home', detailName=null, detailAcc='支付宝', detailChartFund=null;
 let _focusFld=null, _focusPos=0;
 let hidden=false; let alerts={}; let growthSeries=[];
@@ -792,6 +863,7 @@ function setSort(s){
   ['mv','ret','day','name'].forEach(k=>{ const e=document.getElementById('s'+k[0].toUpperCase()+k.slice(1)); if(e)e.classList.toggle('on',k===s); });
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
+function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 赛道筛选 ----------
 function renderCatFilter(){
@@ -855,6 +927,7 @@ function blurbFor(f){
 function renderHomeList(){
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
+  if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
   list.sort((a,b)=>{
     if(holdSort==='ret') return b.ret-a.ret;
     if(holdSort==='day') return (flashMap[b.name]||0)-(flashMap[a.name]||0);
@@ -964,10 +1037,11 @@ function renderPie(){
   const labels=Object.keys(cats), data=Object.values(cats);
   const colors=['#e24b4a','#ba7517','#378add','#0f6e56','#993c1d','#534ab7','#888780','#ef9f27','#3b6d11'];
   if(pieChart) pieChart.destroy();
-  pieChart=new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'58%'}});
+  pieChart=new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'58%',onClick:(evt,elements)=>{ if(!elements||!elements.length) return; const i=elements[0].index; if(labels[i]!=null) drillToCat(labels[i]); }}});
   const tot=data.reduce((a,b)=>a+b,0);
-  document.getElementById('pieLegend').innerHTML=labels.map((l,i)=>`<span><i style="background:${colors[i]}"></i>${l} ${tot?(data[i]/tot*100).toFixed(1):'0.0'}%</span>`).join('');
+  document.getElementById('pieLegend').innerHTML=labels.map((l,i)=>`<span class="pie-leg${l===holdCatFilter?' on':''}" title="点击筛选「${esc(l)}」持仓" onclick="drillToCat('${esc(l)}')"><i style="background:${colors[i]}"></i>${l} ${tot?(data[i]/tot*100).toFixed(1):'0.0'}%</span>`).join('');
 }
+function drillToCat(c){ filterCat(c); switchTab(0); }
 function renderBar(){
   const sorted=[...fundsView].sort((a,b)=>a.ret-b.ret);
   const labels=sorted.map(f=>f.name.length>9?f.name.slice(0,9)+'…':f.name);
@@ -1403,7 +1477,7 @@ function buildFundsView(){
       const cpx=snap&&snap.costPx!=null?snap.costPx:((nav&&mv)?cost/mv*nav:null);
       f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
     }
-    return f;
+    f.currency=(snap&&snap.currency)||'CNY'; return f;
   });
   _allHoldings=all;
   const accF = curAccount==='全部'? null:curAccount;
@@ -1552,7 +1626,7 @@ function renderDetailLive(arg){
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=ANALYSIS[f.name];
   return `<div class="card detail-head">
-    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'支付宝'}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
+    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'支付宝'}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span> &nbsp; <a href="#/" class="fundlink">← 返回首页</a></p></div>
     <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">删除该基金</button></div></div>
     <div class="cards4">
       <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">${M(f.mv)}</p></div>
@@ -1711,6 +1785,39 @@ function addTradeMenu(){
 function closeTradePicker(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; }
 function tpFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#tpList .tp-item').forEach(b=>{ b.style.display=(!q||b.textContent.includes(q))?'':'none'; }); }
 function tpPick(nm,acc){ const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; window._autoTrade=true; goDetail(nm,decodeURIComponent(acc)); }
+
+// ---------- 快捷记账抽屉 ----------
+function openDrawer(){
+  const dl=document.getElementById('drFundList');
+  const names=(_allHoldings.length?_allHoldings:fundsView).map(f=>f.name).filter(Boolean);
+  dl.innerHTML=[...new Set(names)].map(n=>`<option value="${esc(n)}">`).join('');
+  const dt=document.getElementById('dr-date'); if(!dt.value) dt.value=new Date().toISOString().slice(0,10);
+  const ty=document.getElementById('dr-type');
+  if(!ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
+  document.getElementById('drawerMask').style.display='block';
+  const d=document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden','false');
+  setTimeout(()=>{ const el=document.getElementById('dr-fund'); if(el) el.focus(); },90);
+}
+function closeDrawer(e){ if(e&&e.target&&!e.target.classList.contains('drawer-mask')) return; const m=document.getElementById('drawerMask'); if(m) m.style.display='none'; const d=document.getElementById('drawer'); if(d){ d.classList.remove('open'); d.setAttribute('aria-hidden','true'); } }
+function drawerSave(){
+  const g=id=>document.getElementById(id);
+  const name=(g('dr-fund').value||'').trim();
+  if(!name){ toast('请填写基金名称'); g('dr-fund').focus(); return; }
+  const date=g('dr-date').value; if(!date){ toast('请选择日期'); g('dr-date').focus(); return; }
+  const amount=+g('dr-amount').value||0; if(!amount){ toast('请填写金额'); g('dr-amount').focus(); return; }
+  const time=g('dr-time').value||'';
+  const acc=g('dr-acc').value||'支付宝';
+  const type=g('dr-type').value||'buy';
+  const navRaw=g('dr-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
+  const fee=+g('dr-fee').value||0;
+  const shRaw=g('dr-shares').value, shares=(shRaw===''||shRaw==null)?null:+shRaw;
+  trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
+  silentSave(); compute(); recordSnapshot();
+  if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+  toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
+  g('dr-amount').value=''; g('dr-nav').value=''; g('dr-fee').value=''; g('dr-shares').value=''; g('dr-fund').value='';
+  closeDrawer();
+}
 
 function openAllTrades(){
   const list=trades.slice().sort(function(a,b){return (b.date+' '+(b.time||'')).localeCompare(a.date+' '+(a.time||''));});

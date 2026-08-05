@@ -77,7 +77,7 @@
 | 16 | 交互与体验 | 止盈止损站内通知 | 低 | ⬜ |
 | 17 | 市场行情增强 | 资金流向排行（TOP5板块主力净流入/流出，东方财富API） | 中 | ⬜ |
 | 18 | 数据安全与终端UX | 快照容灾（导入/清空前自动备份 v1~v3 + 损坏自恢复） | 低 | ✅ |
-| 19 | 数据安全与终端UX | 交易时段状态灯（接出 🟢/🟡/⚪） | 极低 | ⬜ |
+| 19 | 数据安全与终端UX | 交易时段状态灯（接出 🟢/🟡/⚪） | 极低 | ✅ |
 | 20 | 数据安全与终端UX | 自定义列显隐（紧凑表 ⚙️ 列设置） | 低-中 | ⬜ |
 | 21 | 清仓模块增强 | 清仓预览（卖出确认：预计收益/税费） | 低-中 | ⬜ |
 | 22 | 清仓模块增强 | 清仓明细补「卖出价格/税费」列 | 低 | ⬜ |
@@ -321,5 +321,7 @@ function getBondFunds() {
 > ✅ **已实施**：第 16 项 上下文快捷记账抽屉（2026-08-05）。右下角常驻 FAB「＋」→ 右侧滑入抽屉（`openDrawer/closeDrawer/drawerSave`）：基金名称（datalist 自动带出已有基金）+ 账户 + 类型（TRADE_TYPES 全类型）+ 日期（默认今天）+ 时间 + 金额 + 净值 + 费用 + 份额。保存即 `trades.push`（与详情页表单同模型、locked:true）→ `silentSave → compute → recordSnapshot`，若在持仓 Tab 则即时刷新列表与总览，无需跳详情；连续记账自动清空金额字段。打印态隐藏 `.fab/.drawer/.drawer-mask`。**验证**：Node 语法校验通过；抽屉 HTML/CSS/JS 三处一致，函数引用全局符号均为既有（`_allHoldings/fundsView/TRADE_TYPES/esc/toast/silentSave/compute/recordSnapshot/renderHomeList/renderOverview/typeLabel/M`）。
 
 > ✅ **已实施**：v5 第 18 项 快照容灾（2026-08-05）。新增备份工具：`BK=['ft_backup_1','ft_backup_2','ft_backup_3']` 环形保留最近 3 份；`backupData()` 在执行破坏性操作前把当前 `ft_data` 写入 `_1`（旧 `_1`→`_2`→`_3` 滚动，示例数据跳过）；`isSampleData()` 用签名比对避免把示例数据当真备份；`findValidBackup()/backupMeta()` 供损坏恢复。挂钩点：`importJSON`(解析前)、`syncOnline`(确认同步后)、`importCSV`(确认导入后)、`delFundByIndex`(删除基金前)。`init()` 数据加载块改造：若 `ft_data` 为空/损坏，自动 `findValidBackup()` 弹 `confirm` 让用户从最近一份备份恢复（含备份时间），否则回退示例数据——杜绝手抖清空/导错 CSV 后全丢。**验证**：Node 语法校验通过（script[0]/[1] OK）。
+
+> ✅ **已实施**：v5 第 19 项 交易时段状态灯（2026-08-05）。新增 `marketSession(d)`（不动既有的 `isMarketOpen`，后者仍服务于盘中估值逻辑）返回三态：`🟢 交易中`(09:30–11:30 / 13:00–15:00)、`🟡 午间休市`(11:30–13:00) 或 `🟡 盘前集合竞价`(09:15–09:30)、`⚪ 已收盘`(盘后/周末)。`renderMktLight()` 写入标题下方 `.sub` 行的 `#mktLight` 胶囊（带 `ms-open/ms-lunch/ms-closed` 配色，亮暗主题通用）；`init()` 首屏调用 + `setInterval(…,30000)` 每 30s 自动切换。CSS 新增 `.mkt-light*` 类。**验证**：Node 语法校验通过。注：节假日未建库，周末+时段判定即"非交易"，后续如需精确节假日可补 `HOLIDAYS` 集合。
 
 </details>

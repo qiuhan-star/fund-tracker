@@ -543,6 +543,11 @@ input[type="number"] { -moz-appearance: textfield; }
 .watch-name{ font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .watch-code{ font-size:11px;color:var(--text-3); }
 .watch-acts{ display:flex;gap:4px; }
+/* 交易时段状态灯（A股沪深） */
+.mkt-light{ display:inline-flex;align-items:center;gap:4px;margin-left:10px;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border-3);color:var(--text-3);vertical-align:middle; }
+.mkt-light.ms-open{ color:#1f9d4d;background:rgba(31,157,77,.12);border-color:rgba(31,157,77,.35); }
+.mkt-light.ms-lunch{ color:#c6840a;background:rgba(198,132,10,.12);border-color:rgba(198,132,10,.35); }
+.mkt-light.ms-closed{ color:#8a9099;background:rgba(138,144,153,.12);border-color:rgba(138,144,153,.3); }
 </style>
 <script>
   try{var _t=localStorage.getItem('ft_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}
@@ -559,7 +564,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="topbar">
       <div>
         <h1>我的基金追踪器</h1>
-        <p class="sub"><span id="updated" class="loading">数据未刷新</span></p>
+        <p class="sub"><span id="updated" class="loading">数据未刷新</span><span id="mktLight" class="mkt-light" title="A股(沪深)交易时段状态"></span></p>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start">
         <button class="btn sm" id="themeBtn" onclick="toggleTheme()" title="切换亮色 / 暗色">🌓 主题</button>
@@ -3341,6 +3346,22 @@ function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,m
 function M(n){ return hidden ? '••••' : '¥'+fmt(n); }
 function mask4(v){ return hidden ? '••••' : (v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'); }
 function isMarketOpen(d){ const day=d.getDay(); if(day===0||day===6) return false; const t=d.getHours()*60+d.getMinutes(); return t>=570 && t<=900; }
+// 交易时段状态灯：A股(沪深) 三态 —— 🟢交易中 / 🟡午休或盘前 / ⚪收盘或周末
+function marketSession(d){
+  const day=d.getDay(); const t=d.getHours()*60+d.getMinutes();
+  if(day===0||day===6) return {state:'closed', emoji:'⚪', label:'休市(周末)'};
+  if(t>=570 && t<=690) return {state:'open', emoji:'🟢', label:'交易中'};   // 09:30–11:30
+  if(t>690 && t<780) return {state:'lunch', emoji:'🟡', label:'午间休市'};   // 11:30–13:00
+  if(t>=780 && t<=900) return {state:'open', emoji:'🟢', label:'交易中'};   // 13:00–15:00
+  if(t>=555 && t<570) return {state:'lunch', emoji:'🟡', label:'盘前集合竞价'}; // 09:15–09:30
+  return {state:'closed', emoji:'⚪', label:'已收盘'};
+}
+function renderMktLight(){
+  const el=document.getElementById('mktLight'); if(!el) return;
+  const s=marketSession(new Date());
+  el.className='mkt-light ms-'+s.state;
+  el.textContent=s.emoji+' '+s.label;
+}
 // 净值性质标注：盘中=估值，收盘/官方=官方，手动填=手动
 function navKind(nc){ const mkt=isMarketOpen(new Date()); if(nc&&nc.date==='手动') return '手动'; if(nc&&nc.gsz!=null&&isTodayTs(nc.gszTs)) return '估值'; if(mkt&&nc&&nc.gsz!=null) return '估值'; return '官方'; }
 function navBadge(nc){ const k=navKind(nc); const cls=k==='估值'?'nk-est':k==='手动'?'nk-man':'nk-off'; return `<i class="nk ${cls}">${k}</i>`; }
@@ -3424,6 +3445,8 @@ function recordGrowth(){
   try{ document.getElementById('updated').textContent=lastUpdatedLabel(); }catch(e){}
   // 打开即自动拉取最新净值，避免一直显示上次手动刷新（昨天）的净值
   refresh().catch(function(e){ console.error('auto refresh failed', e); });
+  renderMktLight();                 // 交易时段状态灯（首屏即显示）
+  setInterval(renderMktLight, 30000); // 每 30s 自动切换 🟢/🟡/⚪
 })();
 </script>
   <!-- 大盘走势放大弹窗 -->

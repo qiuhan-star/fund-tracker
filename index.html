@@ -471,6 +471,23 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 input[type="number"] { -moz-appearance: textfield; }
 /* 数值输入框内文字右对齐（与列对齐一致） */
 .num input, td.num input { text-align: right; }
+  /* ===== 市场风向 Tab（适配项目主题变量，支持亮/暗） ===== */
+  .text-up { color: var(--up); } .text-down { color: var(--down); } .font-bold { font-weight: 700; }
+  .tag-sample { background: var(--warn); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+  .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  @media (max-width: 600px) { .flow-grid { grid-template-columns: 1fr; } }
+  .flow-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
+  .inflow-bg { background: rgba(192,57,43,.05); } .outflow-bg { background: rgba(39,174,96,.05); }
+  .flow-title { font-size: .9rem; margin: 0 0 8px; font-weight: 600; }
+  .flow-list { list-style: none; padding: 0; margin: 0; }
+  .flow-list li { display: flex; justify-content: space-between; padding: 6px 0; font-size: .85rem; border-bottom: 1px dashed var(--border-2); }
+  .flow-list li:last-child { border-bottom: none; }
+  .sub-tabs { display: flex; gap: 8px; }
+  .sub-btn { background: var(--surface); border: 1px solid var(--border-strong); padding: 4px 10px; border-radius: 14px; font-size: .8rem; cursor: pointer; color: var(--text-2); font-family: inherit; }
+  .sub-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .market-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .market-table th, .market-table td { padding: 10px 8px; text-align: left; font-size: .85rem; border-bottom: 1px solid var(--border-2); }
+  .market-table th { color: var(--text-3); font-weight: 500; font-size: 11.5px; }
 </style>
 <script>
   try{var _t=localStorage.getItem('ft_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}
@@ -517,17 +534,6 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
 
     <!-- 大盘实时（腾讯财经，独立备用源） -->
-    <div class="card idx-card">
-      <div class="sec-head">
-        <h2 style="margin:0;font-size:14px">大盘实时 <span class="tag">腾讯财经</span></h2>
-        <span class="idx-head-right">
-          <button id="idxSparkToggle" class="idx-toggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button>
-          <span id="idxTime" class="idx-status"></span>
-        </span>
-      </div>
-      <div class="idx-list" id="idxList"><span class="hint">加载中…</span></div>
-    </div>
-
     <!-- 主 Tab 导航 -->
     <div class="main-tabs">
       <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
@@ -535,6 +541,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <button id="mt2" onclick="switchTab(2)">清仓</button>
       <button id="mt3" onclick="switchTab(3)">债券</button>
       <button id="mt4" onclick="switchTab(4)">个股</button>
+      <button id="mt5" onclick="switchTab(5)">🏛️ 市场风向</button>
     </div>
 
     <!-- 资产口径切换（个人 / 代管 / 全量） -->
@@ -619,6 +626,40 @@ input[type="number"] { -moz-appearance: textfield; }
     <!-- Tab 4: 个股 -->
     <div class="tab-panel" id="tp4">
       <div id="stockContent"></div>
+    </div>
+
+    <!-- Tab 5: 市场风向（独立空间：大盘看盘 + 板块资金 + 关注榜） -->
+    <div class="tab-panel" id="tp5">
+      <div class="card idx-card">
+        <div class="sec-head">
+          <h2 style="margin:0;font-size:14px">大盘实时 <span class="tag">腾讯财经</span></h2>
+          <span class="idx-head-right">
+            <button id="idxSparkToggle" class="idx-toggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button>
+            <button class="btn sm" onclick="loadMarketData()">🔄 刷新</button>
+            <span id="idxTime" class="idx-status"></span>
+          </span>
+        </div>
+        <div class="idx-list" id="idxList"><span class="hint">加载中…</span></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-head"><h2 style="margin:0;font-size:14px">🔥 板块资金流向 <span class="tag tag-sample">示例</span></h2><span class="hint" style="font-size:11px">暂无免费实时接口，以下为示例数据</span></div>
+        <div class="flow-grid">
+          <div class="flow-col inflow-bg"><h4 class="flow-title text-up">▲ 主力净流入 Top 5</h4><ul id="inflow-list" class="flow-list"></ul></div>
+          <div class="flow-col outflow-bg"><h4 class="flow-title text-down">▼ 主力净流出 Top 5</h4><ul id="outflow-list" class="flow-list"></ul></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-head"><h2 style="margin:0;font-size:14px">🏆 市场动态与关注榜 <span class="tag tag-sample">示例</span></h2>
+          <div class="sub-tabs">
+            <button class="sub-btn active" onclick="switchRankTab('top', this)">🚀 今日领涨</button>
+            <button class="sub-btn" onclick="switchRankTab('hot', this)">🔥 高关注度</button>
+          </div>
+        </div>
+        <div class="table-scroll"><table class="market-table"><thead><tr><th>基金代码 / 名称</th><th>类型</th><th>日估算涨跌</th><th>近1周</th></tr></thead><tbody id="rank-table-body"></tbody></table></div>
+        <p class="hint" style="font-size:11px;margin-top:8px">示例榜单，待接入天天基金 JSONP 接口后显示真实排行。</p>
+      </div>
     </div>
 
   </div>
@@ -905,11 +946,64 @@ document.addEventListener('click', function(e){ if(!e.target.closest('.more-menu
 let activeTab=0;
 function switchTab(i){
   activeTab=i;
-  [0,1,2,3,4].forEach(k=>{ document.getElementById('mt'+k).classList.toggle('on',k===i); document.getElementById('tp'+k).classList.toggle('active',k===i); });
+  [0,1,2,3,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderBond(); }
   if(i===4){ renderStocks(); fetchStockQuotes(); }
+  if(i===5){ loadMarketData(); }
+}
+
+// ---------- 市场风向 Tab（核心指数=真实腾讯源；资金流/榜单=示例，待接真实接口） ----------
+const MARKET_FLOW = {
+  inflow: [
+    { name: '半导体/芯片', amount: '+24.5亿' },
+    { name: '人工智能/CPO', amount: '+18.2亿' },
+    { name: '新能源汽车', amount: '+12.0亿' },
+    { name: '创新药', amount: '+8.4亿' },
+    { name: '军工电子', amount: '+5.1亿' }
+  ],
+  outflow: [
+    { name: '白酒/消费', amount: '-14.2亿' },
+    { name: '房地产', amount: '-9.8亿' },
+    { name: '银行', amount: '-7.5亿' },
+    { name: '煤炭开采', amount: '-4.3亿' },
+    { name: '光伏设备', amount: '-3.1亿' }
+  ]
+};
+const MARKET_RANK = {
+  top: [
+    { code: '001630', name: '天弘中证计算机ETF联接C', type: '指数型', est: '+3.12%', w1: '+6.4%' },
+    { code: '005827', name: '易方达蓝筹精选混合', type: '混合型', est: '+2.45%', w1: '+4.1%' },
+    { code: '008086', name: '华夏中证500ETF联接C', type: '指数型', est: '+1.88%', w1: '+2.9%' }
+  ],
+  hot: [
+    { code: '001180', name: '易方达中小盘混合', type: '混合型', est: '+0.85%', w1: '+1.2%' },
+    { code: '110011', name: '易方达中小盘', type: '股票型', est: '-0.32%', w1: '+0.5%' },
+    { code: '003003', name: '华夏半导体芯片ETF', type: '指数型', est: '+2.95%', w1: '+8.1%' }
+  ]
+};
+function loadMarketData(){
+  try{ fetchIndices(); }catch(e){}
+  renderFlows(MARKET_FLOW);
+  loadFundRank('top');
+}
+function renderFlows(data){
+  const inList=document.getElementById('inflow-list'), outList=document.getElementById('outflow-list');
+  if(inList) inList.innerHTML=data.inflow.map(i=>`<li><span>${i.name}</span><span class="text-up font-bold">${i.amount}</span></li>`).join('');
+  if(outList) outList.innerHTML=data.outflow.map(i=>`<li><span>${i.name}</span><span class="text-down font-bold">${i.amount}</span></li>`).join('');
+}
+function switchRankTab(type, btnEl){
+  if(btnEl){ const p=btnEl.parentElement; if(p) p.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active')); btnEl.classList.add('active'); }
+  loadFundRank(type);
+}
+function loadFundRank(type){
+  const tbody=document.getElementById('rank-table-body'); if(!tbody) return;
+  const rows=MARKET_RANK[type]||[];
+  tbody.innerHTML=rows.map(item=>{
+    const isUp=item.est.startsWith('+');
+    return `<tr><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3)">${item.code}</div></td><td>${item.type}</td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td>${item.w1}</td></tr>`;
+  }).join('');
 }
 
 function setSort(s){

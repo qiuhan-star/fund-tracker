@@ -325,6 +325,11 @@
   .dense-table th.sortable:hover { color: var(--accent-text); background: var(--surface-2); }
   .dense-table th .sort-ico { display: inline-block; margin-left: 3px; font-size: 10px; line-height: 1; color: var(--text-3); opacity: .5; font-weight: 700; }
   .dense-table th.sort-on .sort-ico.on { color: var(--accent); opacity: 1; }
+  /* 拖动换列：轻点=排序，按住拖动=换列 */
+  .dense-table th.col-drag { cursor: grab; }
+  .dense-table th.col-drag:active { cursor: grabbing; }
+  .dense-table th.col-dragging { opacity: .35; }
+  .dense-table th.col-dragover { box-shadow: inset 3px 0 0 var(--accent); background: var(--surface-2); }
   .dense-table td { padding: 9px 8px; border-bottom: 1px solid var(--border-3); text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }
   .dense-table td:first-child { text-align: left; }
   .dense-table tbody tr { cursor: pointer; }
@@ -488,16 +493,15 @@
   .more-menu .drop button:hover { background: var(--bg); }
   .more-menu .drop hr { border: none; border-top: 1px solid var(--border-2); margin: 4px 0; }
   .more-menu .drop .drop-hint { font-size: 11px; color: var(--text-3); line-height: 1.55; padding: 6px 14px 4px; margin: 0; }
-  .col-set .drop { min-width: 132px; }
-  .col-set .drop label { display:flex; align-items:center; gap:8px; padding:7px 14px; font-size:13px; cursor:pointer; color:var(--text); user-select:none; }
+  .col-set .drop { min-width: 168px; padding:6px 0; }
+  .col-set .drop label { display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:13px; cursor:pointer; color:var(--text); user-select:none; }
   .col-set .drop label:hover { background:var(--bg); }
-  .col-set .drop .col-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 14px; font-size:13px; color:var(--text); }
-  .col-set .drop .col-row:hover { background:var(--bg); }
-  .col-set .drop .col-cb { display:flex; align-items:center; gap:8px; flex:1; cursor:pointer; user-select:none; }
-  .col-set .drop .col-mv { display:flex; gap:4px; }
-  .col-set .drop .col-mv button { width:22px; height:22px; border:1px solid var(--border-strong); background:var(--surface); border-radius:5px; cursor:pointer; color:var(--text-2); font-size:15px; line-height:1; padding:0; }
-  .col-set .drop .col-mv button:hover:not(:disabled){ border-color:var(--accent); color:var(--accent); }
-  .col-set .drop .col-mv button:disabled{ opacity:.28; cursor:not-allowed; }
+  .col-set .drop .col-cb { display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; transition:opacity .12s; }
+  .col-set .drop .col-cb:not(.on) { opacity:.5; }
+  .col-set .drop .col-cb input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+  .col-set .drop .col-name { flex:1; }
+  .col-set .drop .col-grip { color:var(--text-3); font-size:13px; opacity:.55; cursor:grab; letter-spacing:-2px; }
+  .col-set .drop .col-grip:active { cursor:grabbing; }
 
   @keyframes flashUp { 0% { background: var(--up-bg); } 100% { background: transparent; } }
   @keyframes flashDown { 0% { background: var(--down-bg); } 100% { background: transparent; } }
@@ -816,7 +820,6 @@ input[type="number"] { -moz-appearance: textfield; }
         <div class="filter-row"><span class="filter-lab">标签</span><div class="cat-filter" id="tagFilter"></div></div>
         <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" aria-label="搜索基金" oninput="setHoldSearch(this.value)"></div>
         <div id="homeList"></div>
-        <p class="hint">「紧凑」表格点任意一行直接进入详情；「卡片」视图点行可<b>展开</b>查看持仓摘要与最近交易。展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、前十大持仓与复盘笔记）。</p>
         <p class="privacy"><b>🔒 隐私：</b>所有数据仅保存在你本地浏览器 / 本文件，<b>不会上传任何服务器</b>。</p>
       </div>
     </div>
@@ -1639,18 +1642,41 @@ function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('
 function syncColSetChecks(){ renderColSet(); }
 function renderColSet(){
   const box=document.getElementById('colSetList'); if(!box) return;
-  box.innerHTML=colOrder.map((k,i)=>{
-    const canL=i>0, canR=i<colOrder.length-1;
-    return `<div class="col-row"><label class="col-cb"><input type="checkbox" data-col="${k}" ${colVis[k]?'checked':''} onchange="toggleCol('${k}',this.checked)"> ${COL_DEFS[k]}</label>`
-      +`<span class="col-mv"><button type="button" ${canL?'':'disabled'} onclick="moveCol('${k}','left')" title="左移">‹</button>`
-      +`<button type="button" ${canR?'':'disabled'} onclick="moveCol('${k}','right')" title="右移">›</button></span></div>`;
+  box.innerHTML=colOrder.map(k=>{
+    const on=colVis[k];
+    return `<label class="col-cb${on?' on':''}"><input type="checkbox" data-col="${k}" ${on?'checked':''} onchange="toggleCol('${k}',this.checked)">`
+      +`<span class="col-name">${COL_DEFS[k]}</span><span class="col-grip" title="在表格里直接拖动列头即可换顺序">⠿</span></label>`;
   }).join('');
 }
-function moveCol(k,dir){
-  const i=colOrder.indexOf(k); if(i<0) return;
-  const j=dir==='left'?i-1:i+1; if(j<0||j>=colOrder.length) return;
-  const t=colOrder[i]; colOrder[i]=colOrder[j]; colOrder[j]=t;
-  saveColOrder(); renderColSet(); renderHomeList();
+// 拖动列头换列顺序：轻点列头=排序，按住拖动列头=换列（HTML5 原生 DnD 自动区分 click / drag，二者不冲突）
+let _colDragKey=null;
+function colDragStart(e){
+  const th=e.currentTarget; if(!th) return;
+  _colDragKey=th.getAttribute('data-col');
+  try{ e.dataTransfer.setData('text/plain',_colDragKey||''); e.dataTransfer.effectAllowed='move'; }catch(_){}
+  th.classList.add('col-dragging');
+}
+function colDragOver(e){
+  e.preventDefault();
+  try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+  const th=e.currentTarget; if(th) th.classList.add('col-dragover');
+}
+function colDrop(e){
+  e.preventDefault();
+  const th=e.currentTarget;
+  if(!th){ _colDragKey=null; return; }
+  const to=th.getAttribute('data-col'), from=_colDragKey; _colDragKey=null;
+  document.querySelectorAll('.dense-table th').forEach(t=>t.classList.remove('col-dragging','col-dragover'));
+  if(!from||!to||from===to) return;
+  const i=colOrder.indexOf(from), j=colOrder.indexOf(to);
+  if(i<0||j<0) return;
+  colOrder.splice(i,1);
+  colOrder.splice(i<j?j-1:j,0,from);
+  saveColOrder(); renderHomeList();
+}
+function colDragEnd(e){
+  _colDragKey=null;
+  document.querySelectorAll('.dense-table th').forEach(t=>t.classList.remove('col-dragging','col-dragover'));
 }
 document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
 function setHomeView(v){
@@ -1956,8 +1982,10 @@ function renderHomeDense(list){
   const headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const cls = 'sortable'+(active?' sort-on':'');
-    return `<th class="${cls}" onclick="toggleSortHeader('${c.key}')">${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
+    const cls = 'sortable'+(active?' sort-on':'')+(c.key==='name'?'':' col-drag');
+    const drag = c.key==='name' ? '' : ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"`;
+    const tip = c.key==='name' ? '' : ` title="点击排序 · 拖动列头换列"`;
+    return `<th class="${cls}" onclick="toggleSortHeader('${c.key}')"${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
   }).join('');
   return `<table class="dense-table">
     <thead><tr>${headHtml}</tr></thead>

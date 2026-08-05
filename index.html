@@ -565,7 +565,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <div class="cat-filter" id="catFilter"></div>
         <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)" value="${holdSearch}"></div>
         <div id="homeList"></div>
-        <p class="hint">点任意一行<b>展开</b>查看持仓摘要与最近交易；展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、十大重仓与复盘）。</p>
+        <p class="hint">点任意一行<b>展开</b>查看持仓摘要与最近交易；展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、前十大持仓与复盘笔记）。</p>
         <p class="privacy"><b>🔒 隐私：</b>所有数据仅保存在你本地浏览器 / 本文件，<b>不会上传任何服务器</b>。</p>
       </div>
     </div>
@@ -1725,7 +1725,6 @@ function genericDetail(f){
       <div class="cb-row"><span class="cb-l">当前</span><div class="cb-track"><div class="cb-fill cur" style="width:${mvPct}%"></div></div><span class="cb-v">${M(f.mv)}</span></div>
     </div>
     <div class="am-note">说明：本对比基于你的持仓成本与当前市值，不含历史净值走势。若要每日净值走势曲线，需接入历史 NAV 数据（可后续补充）。</div></div>`;
-  h+=`<div class="card"><h2>十大重仓</h2><div class="am-empty">📊 该基金暂无深度持仓分析。<br>把它的持仓截图发我，我就能生成和「富国全球科技互联网(QDII)C（022184）」一样的分析并自动接进来。</div></div>`;
   h+=`<div class="card"><h2>个人复盘 & 调仓笔记</h2><div class="am-note">暂无。可在「分析」Tab 看整体建议，或把你的判断发我整理进来。</div></div>`;
   return h;
 }

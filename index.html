@@ -3238,7 +3238,7 @@ function drawHist(all, f){
   }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
-    labels:labels, vals:vals, line:line, area:true, padL:52, padR:16, padT:18, padB:46,
+    labels:labels, vals:vals, line:line, area:false, padL:52, padR:16, padT:18, padB:46,
     yFmt:function(v){ return v.toFixed(3); },
     markers:markers,
     refLine: (f&&f.costPx>0)?{value:f.costPx, label:'成本 '+f.costPx.toFixed(4), color:'#64748b'}:null,

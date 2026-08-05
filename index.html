@@ -727,8 +727,8 @@ input[type="number"] { -moz-appearance: textfield; }
           </div>
         </div>
         </div>
-        <div class="cat-filter group-tabs" id="groupTabs"></div>
-        <div class="cat-filter" id="catFilter"></div>
+        <div class="filter-row"><span class="filter-lab">分类</span><div class="cat-filter" id="catFilter"></div></div>
+        <div class="filter-row"><span class="filter-lab">标签</span><div class="cat-filter" id="tagFilter"></div></div>
         <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)"></div>
         <div id="homeList"></div>
         <p class="hint">「紧凑」表格点任意一行直接进入详情；「卡片」视图点行可<b>展开</b>查看持仓摘要与最近交易。展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、前十大持仓与复盘笔记）。</p>
@@ -1101,7 +1101,7 @@ function removeAccount(name){
   toast('已删除账户「'+name+'」');
 }
 function updateScopeUI(){ renderScopeBar(); }
-let curAccount='全部', curGroup='汇总', pendingAcc=null;
+let curAccount='全部', pendingAcc=null;
 const GROUP_OBS_MV=700;
 function accOf(x){ return (x&&x.account)?x.account:'我的'; }
 function accKey(acc,name){ return acc+'||'+name; }
@@ -1109,7 +1109,8 @@ function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'我的'; }
 let flashMap={}, todayGain=null;
 let holdSort='mv', holdSortDir='desc', holdCatFilter='全部', holdSearch='';
-let holdWatchOnly=false; // 「⭐ 仅自选」：由 curGroup==='自选' 派生，此处仅占位
+let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
+let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){}
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){}
 let homeView='dense';
 try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
@@ -1542,19 +1543,29 @@ function syncHomeViewUI(){
 }
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
-// ---------- 赛道筛选 ----------
-function renderGroupTabs(){
-  const box=document.getElementById('groupTabs'); if(!box) return;
-  box.innerHTML='';
-  ['汇总','自选','持有','观察'].forEach(function(t){
-    const b=document.createElement('button');
-    b.className='cat-chip'+(t===curGroup?' on':'');
-    b.textContent=t; b.onclick=function(){ setGroup(t); };
-    if(t==='观察') b.title='小仓位（市值≤700）自动归入；也可在基金行点 ✎ 手动加「观察」标签归入';
-    box.appendChild(b);
-  });
+// ---------- 标签筛选（你打的标签 + 自动「观察」，可多选叠加）----------
+function effectiveTags(f){
+  const t=(userTags[syncCode(f.name)]||f.tags||[]).slice();
+  if((f.mv||0)<=GROUP_OBS_MV && t.indexOf('观察')<0) t.push('观察');
+  return t;
 }
-function setGroup(g){ curGroup=g; renderGroupTabs(); if(activeTab===0) renderHomeList(); }
+function renderTagFilter(){
+  const box=document.getElementById('tagFilter'); if(!box) return;
+  const set=new Set();
+  fundsView.forEach(f=> effectiveTags(f).forEach(t=>set.add(t)));
+  const tags=[...set].sort();
+  const all=tagFilter.size===0;
+  box.innerHTML='<button class="cat-chip'+(all?' on':'')+'" onclick="toggleTag(null)">全部</button>'
+    + tags.map(t=>`<button class="cat-chip${tagFilter.has(t)?' on':''}" onclick="toggleTag('${esc(t)}')">${t}</button>`).join('');
+}
+function toggleTag(t){
+  if(t===null){ tagFilter.clear(); }
+  else if(tagFilter.has(t)){ tagFilter.delete(t); }
+  else { tagFilter.add(t); }
+  renderTagFilter();
+  if(currentView==='home'&&activeTab===0) renderHomeList();
+}
+// ---------- 分类筛选（系统按名称自动判定，可手动覆盖）----------
 function renderCatFilter(){
   const cats=['全部', ...new Set(fundsView.map(f=>f.cat))];
   const box=document.getElementById('catFilter');
@@ -1570,6 +1581,27 @@ function editTags(code){
   try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
   if(typeof compute==='function') compute();
   if(currentView==='home'&&activeTab===0) renderHomeList();
+}
+// ---------- 分类手动覆盖（系统自动判定，可点 ✎ 改）----------
+const CAT_LIST=['芯片','周期资源','医药','制造','海外','科技','债基','混合','其他'];
+function closeMenus(){ document.querySelectorAll('.float-menu').forEach(m=>m.remove()); }
+function catMenu(name, ev){
+  closeMenus();
+  const cur=catOverride[name]||((fundsView.find(f=>f.name===name)||{}).cat)||'';
+  const m=document.createElement('div'); m.className='float-menu';
+  m.innerHTML='<div class="fm-title">修改分类（系统按名称自动判定，可手动覆盖）</div>'
+    + CAT_LIST.map(c=>`<button class="fm-opt${c===cur?' on':''}" onclick="setCatOverride('${esc(name)}','${c}')">${c}</button>`).join('')
+    + `<button class="fm-opt" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`;
+  document.body.appendChild(m);
+  const r=(ev&&ev.currentTarget?ev.currentTarget:ev&&ev.target?ev.target:document.body).getBoundingClientRect();
+  m.style.left=Math.min(r.left, window.innerWidth-180)+'px'; m.style.top=(r.bottom+4)+'px';
+  setTimeout(function(){ document.addEventListener('click', function h(e){ if(!m.contains(e.target)){ m.remove(); document.removeEventListener('click',h); } }); },0);
+}
+function setCatOverride(name, cat){
+  if(cat) catOverride[name]=cat; else delete catOverride[name];
+  try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
+  closeMenus();
+  if(typeof compute==='function') compute();
 }
 function filterCat(c){
   holdCatFilter=c;
@@ -1625,37 +1657,29 @@ function blurbFor(f){
   if(needBack) s+=`距回本还需 +${needBack}。`;
   return s;
 }
+function buildObsHtml(){
+  // 自选（未持仓）区块：想关注但还没买的基金，单独留一块，不挤进持仓表
+  const heldN={}, heldC={};
+  fundsView.forEach(f=>{ heldN[f.name]=1; const c=syncCode(f.name); if(c) heldC[c]=1; });
+  const obs=loadWatch().filter(x=>!heldC[x.code]&&!heldN[x.name]);
+  if(!obs.length) return '';
+  return `<div class="obs-block"><h3>👁 自选（未持仓） · ${obs.length} 只 <span class="hint" style="font-weight:400">想关注但还没买，点行快速记账</span></h3>`
+    +obs.map(o=>`<div class="obs-item" title="点击记账买入" onclick="openDrawerPrefill('${esc(o.name)}')"><span class="obs-name">${esc(o.name)}</span><span class="obs-code">${o.code}</span><span class="obs-quote" data-code="${o.code}">…</span><button class="btn sm ghost" onclick="event.stopPropagation();removeWatch('${o.code}')">✕</button></div>`).join('')
+    +`</div>`;
+}
 function renderHomeList(){
   syncHomeViewUI();
   syncColSetChecks();
-  renderGroupTabs();
-  holdWatchOnly=(curGroup==='自选');
-  var _sc=document.getElementById('selfCard'); if(_sc) _sc.style.display=(curGroup==='持有'||curGroup==='观察')?'none':'';
+  renderCatFilter();
+  renderTagFilter();
   var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
-  // ⭐ 仅自选：持仓只保留自选中的（未持仓的观察基金走 obsHtml 区块）
-  if(holdWatchOnly){
-    const ws=watchSets();
-    list=list.filter(f=> ws.names[f.name] || (syncCode(f.name)&&ws.codes[syncCode(f.name)]));
-  }
-  // 观察：小仓位(市值≤700)自动归入；或在基金行点 ✎ 手动加「观察」标签也归入。持有视图排除已归观察的（两者互斥）
-  const _isObs=f=> (f.mv||0) <= GROUP_OBS_MV || (f.tags||[]).indexOf('观察')>=0;
-  if(curGroup==='观察'){ list=list.filter(_isObs); }
-  else if(curGroup==='持有'){ list=list.filter(f=> !_isObs(f)); }
-  // 观察中（自选但未持仓）区块 —— 仅自选视图
-  let obsHtml='';
-  if(holdWatchOnly){
-    const heldN={}, heldC={};
-    fundsView.forEach(f=>{ heldN[f.name]=1; const c=syncCode(f.name); if(c) heldC[c]=1; });
-    const obs=loadWatch().filter(x=>!heldC[x.code]&&!heldN[x.name]);
-    if(obs.length){
-      obsHtml=`<div class="obs-block"><h3>👁 观察中 · ${obs.length} 只 <span class="hint" style="font-weight:400">自选里尚未持仓，点行快速记账</span></h3>`
-        +obs.map(o=>`<div class="obs-item" title="点击记账买入" onclick="openDrawerPrefill('${esc(o.name)}')"><span class="obs-name">${esc(o.name)}</span><span class="obs-code">${o.code}</span><span class="obs-quote" data-code="${o.code}">…</span><button class="btn sm ghost" onclick="event.stopPropagation();removeWatch('${o.code}')">✕</button></div>`).join('')
-        +`</div>`;
-    }
-  }
+  // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
+  if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }
+  // 自选（未持仓）区块 —— 始终在列表底部展示
+  const obsHtml=buildObsHtml();
   list.sort((a,b)=>{
     let av,bv,cmp;
     if(holdSort==='ret'){ av=a.ret; bv=b.ret; }
@@ -1680,10 +1704,9 @@ function renderHomeList(){
         </div>
       </div>`;
     } else {
-      if(holdWatchOnly) box.innerHTML='<p class="hint">自选中还没有已持有的基金，看下方观察区；或再点「⭐ 自选」切回全部。</p>'+obsHtml;
-      else box.innerHTML='<p class="hint">该赛道暂无持仓，或切换筛选查看全部。</p>';
+      box.innerHTML='<p class="hint">该筛选条件下暂无持仓，或切换分类 / 标签查看全部。</p>'+obsHtml;
     }
-    if(holdWatchOnly&&obsHtml) fillWatchQuotes();
+    if(obsHtml) fillWatchQuotes();
     return;
   }
   // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
@@ -2380,17 +2403,20 @@ function buildFundsView(){
     f.currency=(snap&&snap.currency)||'CNY'; return f;
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
+  all.forEach(f=>{ if(catOverride[f.name]) f.cat=catOverride[f.name]; });
   _allHoldings = all.filter(f=> scopeMatches(f.account));
   // 保留显式选择的账户：即使暂无持仓也展示空状态，避免「切了跟没切一样」的错觉（自定义账户添加后即可在此记账）
   const accF = curAccount==='全部'? null:curAccount;
   fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF));
 }
 function guessCat(name){
-  if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康|药/.test(name)) return '医药';
-  if(/有色|煤炭|化工|钢铁|资源|稀土/.test(name)) return '周期资源'; if(/军工|国防/.test(name)) return '制造';
+  if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康|药|创新药/.test(name)) return '医药';
+  if(/有色|煤炭|化工|钢铁|资源|稀土/.test(name)) return '周期资源'; if(/军工|国防|机械|装备|制造/.test(name)) return '制造';
   if(/日本|纳斯达克|标普|道琼|美国|全球|海外/.test(name)) return '海外';
-  if(/港股|恒生|QDII|金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网/.test(name)) return '科技';
-  if(/混合|债|货币/.test(name)) return '混合/债'; if(/指数|ETF|联接/.test(name)) return '宽基/行业'; return '其他';
+  if(/债券|纯债|信用|利率|中短债/.test(name)) return '债基';
+  if(/港股|恒生|QDII|金融|计算机|科技|信息|软件|人工智能|AI|通信|传媒|互联网|智能/.test(name)) return '科技';
+  if(/混合|灵活配置/.test(name)) return '混合';
+  return '其他';
 }
 const CONFIG={tinyThreshold:1000,takeProfit1:15,takeProfit2:20,stopLoss:-15,top3Warn:70,singleWarn:20};
 function getCatAllocation(){

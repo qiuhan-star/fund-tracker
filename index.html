@@ -226,6 +226,9 @@
   .scope-seg button.add { color:var(--accent); font-weight:700; padding:6px 10px; }
   .scope-seg button .acc-x { margin-left:5px; opacity:.55; font-size:11px; cursor:pointer; }
   .scope-seg button .acc-x:hover { opacity:1; }
+  .scope-seg button .acc-cnt { margin-left:5px; font-size:11px; opacity:.55; font-variant-numeric:tabular-nums; }
+  .scope-seg button.on .acc-cnt { opacity:.9; }
+  .scope-seg button .acc-cnt::before { content:"·"; margin-right:4px; opacity:.6; }
   .tag-owner { display:inline-block; background:#fff3e0; color:#c77700; border:1px solid #ffd9a0; padding:0 6px; border-radius:6px; font-size:11px; margin-left:4px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
@@ -640,6 +643,20 @@ input[type="number"] { -moz-appearance: textfield; }
   .tag-real{ background:rgba(31,157,77,.15); color:#1f9d4d; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }
   .basis-note{ font-size:11.5px; color:var(--text-3); margin-top:10px; line-height:1.5; }
   .basis-note b{ color:var(--text-2); }
+  /* 详情页头部：主次聚焦（方案A）—— 金额与百分比绑定、成本降级小字 */
+  .dh-main{ display:grid; grid-template-columns:1.1fr 1fr; gap:16px; margin-top:2px; }
+  .dh-primary{ background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:14px 16px; }
+  .dh-sec{ font-size:12px; color:var(--text-3); font-weight:600; letter-spacing:.5px; margin-bottom:7px; }
+  .dh-sec .tag-unreal{ margin-left:5px; vertical-align:middle; }
+  .dh-mv{ font-size:28px; font-weight:700; letter-spacing:.5px; line-height:1.1; }
+  .dh-cost{ font-size:12.5px; color:var(--text-3); margin-top:6px; }
+  .dh-cost b{ color:var(--text-2); font-weight:600; }
+  .dh-profit-row{ display:flex; align-items:baseline; gap:12px; }
+  .dh-amt{ font-size:25px; font-weight:700; }
+  .dh-pct{ font-size:16px; font-weight:600; }
+  .dh-realized{ font-size:13px; color:var(--text-2); margin-top:11px; border-top:1px dashed var(--border-3); padding-top:10px; }
+  .dh-realized b{ font-weight:600; }
+  @media (max-width:560px){ .dh-main{ grid-template-columns:1fr; gap:12px; } .dh-mv{ font-size:24px; } .dh-amt{ font-size:22px; } }
   /* 备份防丢提醒条 */
   .bk-reminder{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:rgba(198,132,10,.10); border:1px solid rgba(198,132,10,.4); color:#9a6a08; padding:9px 12px; border-radius:10px; margin-bottom:12px; font-size:13px; }
   .bk-reminder b{ color:#b8740a; }
@@ -2748,21 +2765,30 @@ function headerHtml(f){
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'我的'}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">删除该基金</button></div></div>
-    <div class="cards4">
-      <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">${M(f.mv)}</p></div>
-      <div class="mcard"><p class="lbl">持有收益率</p><p class="val ${rcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</p></div>
-      <div class="mcard"><p class="lbl">浮动盈亏 <span class="tag tag-unreal">未实现</span></p><p class="val ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</p></div>
-      <div class="mcard"><p class="lbl">已实现盈亏 <span class="tag tag-real">落袋</span></p><p class="val ${f.realized>=0?'pos':'neg'}" id="dhRealized">${f.realized>=0?'+':''}${M(f.realized||0)}</p></div>
+    <div class="dh-main">
+      <div class="dh-primary">
+        <div class="dh-sec">当前市值（元）</div>
+        <div class="dh-mv" id="dhMv">${M(f.mv)}</div>
+        <div class="dh-cost">持仓成本 <b id="dhCost">${M(f.cost)}</b></div>
+      </div>
+      <div class="dh-primary dh-profit">
+        <div class="dh-sec">持有收益 <span class="tag tag-unreal">浮动</span></div>
+        <div class="dh-profit-row">
+          <span class="dh-amt ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</span>
+          <span class="dh-pct ${pcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</span>
+        </div>
+        <div class="dh-realized">已实现盈亏（落袋）：<b id="dhRealized" class="${f.realized>=0?'pos':'neg'}">${f.realized>=0?'+':''}${M(f.realized||0)}</b></div>
+      </div>
     </div>
     <div class="basis-note">💡 成本计算口径：<b>FIFO 先进先出法</b>——加仓 / 部分卖出按买入先后顺序匹配成本，与主流券商一致。</div></div>`;
 }
 function updateDetailHeader(f){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set('dhMv',M(f.mv));
-  const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.className='val '+(f.ret>0?'pos':f.ret<0?'neg':'zero');}
+  const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.classList.remove('pos','neg','zero'); e.classList.add(f.ret>0?'pos':f.ret<0?'neg':'zero');}
   set('dhCost',M(f.cost));
-  const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+M(f.profit); e2.className='val '+(f.profit>0?'pos':f.profit<0?'neg':'zero');}
-  const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.className='val '+(f.realized>=0?'pos':'neg');}
+  const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+M(f.profit); e2.classList.remove('pos','neg','zero'); e2.classList.add(f.profit>0?'pos':f.profit<0?'neg':'zero');}
+  const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.classList.remove('pos','neg'); e3.classList.add(f.realized>=0?'pos':'neg');}
 }
 function genericDetail(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);

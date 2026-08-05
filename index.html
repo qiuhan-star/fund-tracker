@@ -1148,12 +1148,14 @@ function setScopeAcc(acc){
   updateScopeUI();
   compute(); // 重建 _allHoldings(scope) + fundsView(curAccount)
 }
+function cntSpan(n){ return ' <span class="acc-cnt">'+n+'</span>'; }
 function renderScopeBar(){
   const seg=document.getElementById('scopeSeg'); if(!seg) return;
+  const cntOf=a=> (a==='all')? _allHoldings.length : _allHoldings.filter(f=>f.account===a).length;
   let html='';
-  ['我的','小号','微信债券'].forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+'</button>'; });
-  CUSTOM_ACCOUNTS.forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+'<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span></button>'; });
-  html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(\'all\')">全量</button>';
+  ['我的','小号','微信债券'].forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a))+'</button>'; });
+  CUSTOM_ACCOUNTS.forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a))+'<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span></button>'; });
+  html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(\'all\')">全量'+cntSpan(cntOf('all'))+'</button>';
   html+='<button class="add" onclick="addAccount()" title="添加账户">＋</button>';
   seg.innerHTML=html;
 }

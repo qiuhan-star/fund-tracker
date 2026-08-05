@@ -1747,7 +1747,7 @@ function renderHomeDense(list){
     const _mkt=isMarketOpen(new Date());
     // 估算涨跌：盘中估值为预估，收盘后若估值缺失（如 QDII）仍标注「估·预估」，明确其非确认值
     const estCell=(nc.gszzl!=null)
-      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${_mkt&&nc.gsz!=null?('估 '+navFmt(nc.gsz)):'估·预估'}</div>`
+      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${_mkt?(nc.gsz!=null?('估 '+navFmt(nc.gsz)):'估·预估'):'上次估'}</div>`
       : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'无预估'}</div>`;
     const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人')?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
@@ -3015,7 +3015,13 @@ async function fetchNavBatch(names){
     if(data){
       pairs.forEach(([nm,c])=>{
         const d=data[c]; if(d&&d.nav!=null){
-          navCache[nm]={ nav:(d.gsz!=null?d.gsz:d.nav), date:d.date, gsz:d.gsz, gszTs:(d.gsz!=null&&isMarketOpen(new Date())?Date.now():undefined), gszzl:d.gszzl, gztime:d.gztime, official:d.official, navChg:(d.navChg!=null?d.navChg:undefined), navChgDate:(d.navChgDate||undefined) };
+          const ex=navCache[nm]||{};
+          const freshGsz=d.gsz!=null;
+          const _today=t=> t && new Date(t).toDateString()===new Date().toDateString();
+          const keepEst=!freshGsz && ex.gszTs && _today(ex.gszTs); // 收盘后保留当日最后一次估值冻结，次日清零
+          const gsz=freshGsz?d.gsz:(keepEst?ex.gsz:null);
+          const gszzl=freshGsz?d.gszzl:(keepEst?ex.gszzl:null);
+          navCache[nm]={ nav:(freshGsz?d.gsz:d.nav), date:d.date||ex.date, gsz:gsz, gszTs:freshGsz?Date.now():ex.gszTs, gszzl:gszzl, gztime:d.gztime||ex.gztime, official:d.official!=null?d.official:ex.official, navChg:(d.navChg!=null?d.navChg:ex.navChg), navChgDate:(d.navChgDate||ex.navChgDate) };
           ok++;
         }
       });

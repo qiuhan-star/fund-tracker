@@ -39,6 +39,35 @@
   .mcard { background: var(--surface-2); border-radius: 10px; padding: 12px; }
   .mcard .lbl { font-size: 11.5px; color: var(--text-3); margin: 0 0 5px; }
   .mcard .val { font-size: 20px; font-weight: 600; margin: 0; }
+  :root{ --ov-up:#c0696b; --ov-down:#4f9d86; --ov-accent:#aeb7c2; --ov-warn:#c9a86a; }
+  .ov-wrap{ display:flex; flex-direction:column; gap:14px; }
+  .ov-hero{ background:linear-gradient(135deg,#eef3fb 0%,#f7f9fc 100%); border:1px solid #e3e9f3; border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.05); padding:22px 26px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; }
+  .ov-hero-left{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .ov-hero-label{ font-size:14px; color:var(--text-3); }
+  .ov-hero-label .eye-inline{ border:none; background:transparent; cursor:pointer; font-size:13px; padding:0 2px; }
+  .ov-hero-value{ font-size:42px; font-weight:700; letter-spacing:-.5px; line-height:1.05; font-variant-numeric:tabular-nums; }
+  .ov-hero-sub{ font-size:13px; color:var(--text-3); }
+  .ov-hero-right{ display:flex; flex-direction:column; gap:7px; text-align:right; font-size:13px; color:var(--text-3); }
+  .ov-hero-right b{ font-size:18px; font-weight:700; margin-left:6px; font-variant-numeric:tabular-nums; }
+  .ov-pos{ color:var(--ov-up); } .ov-neg{ color:var(--ov-down); } .ov-zero{ color:var(--text-3); }
+  .ov-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .ov-card{ background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.045); padding:14px 16px; display:flex; flex-direction:column; gap:9px; min-width:0; }
+  .ov-head{ display:flex; align-items:center; gap:6px; color:var(--text-3); font-size:13px; }
+  .ov-head svg{ width:16px; height:16px; color:var(--ov-accent); flex:none; }
+  .ov-val{ font-size:25px; font-weight:700; letter-spacing:-.3px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .ov-sub{ font-size:12.5px; color:var(--text-3); }
+  .ov-sub.warn{ color:var(--ov-warn); font-weight:600; }
+  .ov-bar{ height:8px; border-radius:6px; background:#eef0f3; overflow:hidden; display:flex; }
+  .ov-bar > span{ display:block; height:100%; }
+  .ov-bar-pos{ background:var(--ov-up); } .ov-bar-neg{ background:var(--ov-down); } .ov-bar-c{ background:#7c93c9; }
+  .ov-trend{ background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.045); padding:14px 16px; display:flex; flex-direction:column; gap:9px; }
+  .ov-trend-head{ display:flex; align-items:center; gap:6px; color:var(--text-3); font-size:13px; }
+  .ov-trend-head svg{ width:16px; height:16px; color:var(--ov-accent); }
+  .ov-legend{ margin-left:auto; display:flex; gap:14px; font-size:12px; color:var(--text-3); }
+  .ov-legend i{ display:inline-block; width:14px; height:0; border-top:2px solid; margin-right:5px; vertical-align:middle; }
+  .ov-legend .l-mkt i{ border-color:#7c93c9; } .ov-legend .l-pri i{ border-color:var(--text-3); border-top-style:dashed; }
+  .ov-spark{ width:100%; height:170px; display:block; }
+  @media (max-width:680px){ .ov-grid{ grid-template-columns:repeat(2,1fr); } .ov-hero-value{ font-size:34px; } }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { padding: 7px 7px; text-align: left; border-bottom: 1px solid var(--border-2); }
@@ -1213,6 +1242,11 @@ const MIGRATIONS = [
 ];
 
 // 自动迁移：localStorage / 导入文件 等任何来源的旧结构都经此平滑升级
+function normDailySnap(x){
+  if(Array.isArray(x)) return {personal:[],managed:[],all:x};
+  if(x && typeof x==='object'){ return {personal:Array.isArray(x.personal)?x.personal:[], managed:Array.isArray(x.managed)?x.managed:[], all:Array.isArray(x.all)?x.all:[]}; }
+  return {personal:[],managed:[],all:[]};
+}
 function migrate(raw){
   if(!raw || typeof raw!=='object' || Array.isArray(raw)) return freshData();
   let data = raw;
@@ -1223,7 +1257,7 @@ function migrate(raw){
   if(!Array.isArray(data.snaps)) data.snaps = [];
   if(!Array.isArray(data.trades)) data.trades = [];
   if(!data.navCache || typeof data.navCache!=='object') data.navCache = {};
-  if(!Array.isArray(data.daily_snapshots)) data.daily_snapshots = [];
+  data.daily_snapshots = normDailySnap(data.daily_snapshots);
   // 账户名归一化（2026-08-05：支付宝→我的 / 微信→微信债券；幂等）
   const _accNorm=a=>(a==='支付宝')?'我的':((a==='微信')?'微信债券':a);
   (data.trades||[]).forEach(t=>{ t.account=_accNorm(t.account); });
@@ -1828,42 +1862,113 @@ function goDetail(enc, acc){
 }
 
 // ---------- 分析（概览/饼/柱/建议）----------
-// 资产走势 sparkline：基于 daily_snapshots.totalAssets，涨绿跌红
-function snapshotSpark(){
-  if(dailySnapshots.length<2) return '';
-  const vals=dailySnapshots.map(s=>s.totalAssets);
-  const min=Math.min.apply(null,vals), max=Math.max.apply(null,vals), span=(max-min)||1;
-  const W=120,H=30,n=vals.length;
-  const pts=vals.map((v,i)=>{ const x=n===1?W/2:(i/(n-1))*W; const y=H-((v-min)/span)*(H-4)-2; return x.toFixed(1)+','+y.toFixed(1); }).join(' ');
-  const up=vals[n-1]>=vals[0];
-  const col=up?'#1f9d55':'#d8453a';
-  return '<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" style="display:block;margin-top:2px"><polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+// 首页总览趋势：本金虚线 vs 市值实线（按当前账户口径），缝隙＝真实收益
+function principalUpTo(dateStr, scope){
+  let p=0;
+  trades.forEach(t=>{
+    if((t.type||'fund')==='stock') return;
+    const inScope = scope==='all'?true:(scope==='managed'? !accIsPersonal(accOf(t)) : accIsPersonal(accOf(t)));
+    if(!inScope) return;
+    if(t.date && t.date <= dateStr){
+      const ty=t.type||'buy', amt=+t.amount||0;
+      if(ty==='buy'||ty==='convert') p+=amt; else if(ty==='sell'||ty==='convert_out') p-=amt;
+    }
+  });
+  BOND_FUNDS.forEach(b=>{ const inScope = scope==='all'?true:(scope==='managed'? !accIsPersonal(b.acc) : accIsPersonal(b.acc)); if(inScope && b.since && b.since<=dateStr) p+=bondAmt(b); });
+  return p;
 }
+function overviewTrendSvg(){
+  const arr=(Array.isArray(dailySnapshots)?dailySnapshots:(dailySnapshots[currentScope]||[]));
+  if(!arr.length) return '';
+  const W=1000,H=170,pad=10,n=arr.length;
+  const mkt=arr.map(s=>s.totalAssets);
+  const pri=arr.map(s=> (s.principal!=null? s.principal : principalUpTo(s.date,currentScope)) );
+  const all=mkt.concat(pri), min=Math.min.apply(null,all), max=Math.max.apply(null,all), span=(max-min)||1;
+  const X=i=> n===1? W/2 : (i/(n-1))*W;
+  const Y=v=> H-pad-((v-min)/span)*(H-pad*2);
+  let mktP='',priP='';
+  mkt.forEach((v,i)=>{ mktP+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
+  pri.forEach((v,i)=>{ priP+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; if(i<n-1) priP+='L'+X(i+1).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
+  let svg='<svg class="ov-spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">';
+  if(n>1){ const area='M'+X(0)+' '+H+' '+mktP.replace(/^M/,'L')+' '+'L'+X(n-1)+' '+H+' Z'; svg+='<path d="'+area+'" fill="#7c93c9" fill-opacity="0.10"/>'; }
+  svg+='<path d="'+priP+'" fill="none" stroke="#8a8f99" stroke-width="1.6" stroke-dasharray="5 4"/>';
+  svg+='<path d="'+mktP+'" fill="none" stroke="#7c93c9" stroke-width="2.2" stroke-linejoin="round"/>';
+  if(n===1) svg+='<circle cx="'+X(0).toFixed(1)+'" cy="'+Y(mkt[0]).toFixed(1)+'" r="3" fill="#7c93c9"/>';
+  svg+='</svg>';
+  return svg;
+}
+const IC={
+  win:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a1 1 0 0 1-1-1V7z"/><path d="M3 7V5a1 1 0 0 1 1-1h12v3"/><circle cx="17" cy="13" r="1.2"/></svg>',
+  bars:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20v-3"/></svg>',
+  pie:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9h9a9 9 0 1 0-9-9z"/><path d="M12 3a9 9 0 0 1 9 9h-9z"/></svg>',
+  trend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/></svg>'
+};
 function renderOverview(){
-  const total=fundsView.reduce((a,f)=>a+f.mv,0), cost=fundsView.reduce((a,f)=>a+f.cost,0);
-  const profit=total-cost, pret=cost>0?profit/cost*100:0;
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const realized=fundsView.reduce((a,f)=>a+(f.realized||0),0);
   const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length, flat=fundsView.filter(f=>f.ret===0).length;
-  const cls=profit>=0?'pos':'neg';
+  const cnt=fundsView.length;
+  let principal=0;
+  fundsView.forEach(f=>{ if(f.isBond) principal+=f.cost; (f.trades||[]).forEach(t=>{ const ty=t.type||'buy', amt=+t.amount||0; if(ty==='buy'||ty==='convert') principal+=amt; else if(ty==='sell'||ty==='convert_out') principal-=amt; }); });
+  const holdGain=total-principal, holdPct=principal>0?holdGain/principal*100:0;
   const top3=getCatAllocation().slice(0,3).reduce((a,b)=>a+b[1],0);
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
-  const tgcls=todayGain==null?'zero':(todayGain>=0?'pos':'neg');
-  // 今日预估：附加估值涨跌%与更新时间；无确认盈亏时显示估值口径，避免空白
-  let _wsum=0, _pw=0;
-  fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
+  const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
+  let _wsum=0,_pw=0; fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
   const estPct=_pw>0?(_wsum/_pw):null;
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
-  const estCls=estPct==null?'':(estPct>=0?'pos':'neg');
+  const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const updLine=lastSyncLabel();
+  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'代管（妈妈）':'个人');
+  const trendSvg=overviewTrendSvg();
+  const trendNote=(Array.isArray(dailySnapshots)?dailySnapshots:(dailySnapshots[currentScope]||[])).length;
+  const mask=v=>hidden?'****':v;
   document.getElementById('overview').innerHTML=`
-    <div class="mcard"><p class="lbl">总市值 <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></p><p class="val">${M(total)}</p></div>
-    <div class="mcard"><p class="lbl">今日预估</p><p class="val ${tgcls}">${tg}</p><p class="sub2 ${estCls}">${estLine}</p><p class="sub2">更新 ${updLine}</p></div>
-    <div class="mcard"><p class="lbl">持有总收益</p><p class="val ${cls}">${profit>=0?'+':''}${M(profit)}</p></div>
-    <div class="mcard"><p class="lbl">已实现盈亏</p><p class="val ${realized>=0?'pos':'neg'}">${realized>=0?'+':''}${M(realized)}</p></div>
-    <div class="mcard"><p class="lbl">总收益率</p><p class="val ${cls}">${pret>=0?'+':''}${pret.toFixed(2)}%</p></div>
-    <div class="mcard"><p class="lbl">基金数 / 盈:亏</p><p class="val">${fundsView.length} 只 · <span class="pos">${win}盈</span>/<span class="neg">${lose}亏</span>${flat?`/<span class="zero">${flat}平</span>`:''}</p></div>
-    <div class="mcard"><p class="lbl">前三大赛道集中度</p><p class="val ${top3>CONFIG.top3Warn?'neg':'pos'}">${top3.toFixed(0)}%</p></div>
-    <div class="mcard"><p class="lbl">资产走势</p>${snapshotSpark()||'<p class="val zero">—</p>'}<p class="sub2">${dailySnapshots.length} 个记录日</p></div>`;
+    <div class="ov-wrap">
+      <section class="ov-hero">
+        <div class="ov-hero-left">
+          <span class="ov-hero-label">总资产市值 · 账户 ${scopeLabel} <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></span>
+          <span class="ov-hero-value">${mask(M(total))}</span>
+          <span class="ov-hero-sub">累计投入本金 ${mask(M(principal))}</span>
+        </div>
+        <div class="ov-hero-right">
+          <div>今日预估 <b class="${tgcls}">${mask(tg)}</b> <span class="${estCls}">${estLine}</span></div>
+          <div class="ov-hero-sub">更新 ${updLine}</div>
+        </div>
+      </section>
+      <section class="ov-grid">
+        <div class="ov-card">
+          <div class="ov-head">${IC.win} 持有总收益</div>
+          <div class="ov-val ${holdGain>=0?'ov-pos':'ov-neg'}">${mask((holdGain>=0?'+':'−')+M(Math.abs(holdGain)))}</div>
+          <div class="ov-sub">${holdPct>=0?'+':''}${holdPct.toFixed(2)}%（市值 − 本金）</div>
+        </div>
+        <div class="ov-card">
+          <div class="ov-head">${IC.wallet} 已实现盈亏</div>
+          <div class="ov-val ${realized>=0?'ov-pos':'ov-neg'}">${mask((realized>=0?'+':'−')+M(Math.abs(realized)))}</div>
+          <div class="ov-sub">已落袋收益</div>
+        </div>
+        <div class="ov-card">
+          <div class="ov-head">${IC.bars} 基金数 / 胜率</div>
+          <div class="ov-val">${cnt} 只</div>
+          ${cnt?`<div class="ov-bar"><span class="ov-bar-pos" style="width:${(win/cnt*100).toFixed(1)}%"></span><span class="ov-bar-neg" style="width:${(lose/cnt*100).toFixed(1)}%"></span></div>`:''}
+          <div class="ov-sub">${win} 盈 / ${lose} 亏${flat?` / ${flat}平`:''}</div>
+        </div>
+        <div class="ov-card">
+          <div class="ov-head">${IC.pie} 赛道集中度</div>
+          <div class="ov-val ${top3>CONFIG.top3Warn?'ov-neg':'ov-pos'}">Top3 ${top3.toFixed(0)}%</div>
+          <div class="ov-bar"><span class="ov-bar-c" style="width:${Math.min(100,top3).toFixed(0)}%"></span></div>
+          <div class="ov-sub ${top3>CONFIG.top3Warn?'warn':''}">${top3>CONFIG.top3Warn?'⚠ 偏高，注意分散':'持仓较分散'}</div>
+        </div>
+      </section>
+      <section class="ov-trend">
+        <div class="ov-trend-head">${IC.trend} 资产趋势
+          <span class="ov-legend"><span class="l-mkt"><i></i>总资产市值</span><span class="l-pri"><i></i>累计投入本金</span></span>
+        </div>
+        ${trendSvg||`<p class="ov-zero" style="padding:34px 0;text-align:center">暂无历史记录，刷新后将开始积累走势</p>`}
+        <div class="ov-sub">${trendNote} 个记录日 · 本金虚线与市值实线之间的缝隙＝真实收益</div>
+      </section>
+    </div>`;
 }
 
 let pieChart=null, barChart=null;
@@ -2507,20 +2612,25 @@ function renderSectorTotal(){
 }
 function compute(){ buildFundsView(); render(); silentSave(); }
 // 每日资产快照：盘后/刷新时落一条结存（同一天去重只更新），支撑历史收益曲线与回撤
+function scopeTotals(scope){
+  const list=_allHoldings.filter(f=> scope==='all'?true:(scope==='managed'? !accIsPersonal(f.account) : accIsPersonal(f.account)));
+  const total=list.reduce((a,f)=>a+f.mv,0);
+  let principal=0;
+  list.forEach(f=>{ if(f.isBond) principal+=f.cost; (f.trades||[]).forEach(t=>{ const ty=t.type||'buy', amt=+t.amount||0; if(ty==='buy'||ty==='convert') principal+=amt; else if(ty==='sell'||ty==='convert_out') principal-=amt; }); });
+  return {total, principal:+principal.toFixed(2)};
+}
+// 每日资产快照：盘后/刷新时落一条结存（同天去重只更新），按账户口径分三组，支撑历史收益曲线与回撤
 function recordSnapshot(){
-  const total=fundsView.reduce((a,f)=>a+f.mv,0);
-  const cost=fundsView.reduce((a,f)=>a+f.cost,0);
-  const profit=total-cost;
-  const date=fmtDate(new Date());
-  const last=dailySnapshots[dailySnapshots.length-1];
-  if(last && last.date===date){
-    last.totalAssets=+total.toFixed(2); last.totalProfit=+profit.toFixed(2);
-  } else {
-    const prev=dailySnapshots.length?dailySnapshots[dailySnapshots.length-1]:null;
-    const dayProfit=(prev&&prev.totalAssets!=null)?+(total-prev.totalAssets).toFixed(2):null;
-    dailySnapshots.push({date, totalAssets:+total.toFixed(2), totalProfit:+profit.toFixed(2), dayProfit});
-  }
-  if(dailySnapshots.length>400) dailySnapshots=dailySnapshots.slice(-400);
+  ['personal','managed','all'].forEach(function(scope){
+    const arr=dailySnapshots[scope]; if(!Array.isArray(arr)) dailySnapshots[scope]=[];
+    const tt=scopeTotals(scope); const total=tt.total, principal=tt.principal;
+    const profit=+(total-principal).toFixed(2);
+    const date=fmtDate(new Date());
+    const last=dailySnapshots[scope][dailySnapshots[scope].length-1];
+    if(last && last.date===date){ last.totalAssets=+total.toFixed(2); last.principal=principal; last.totalProfit=profit; }
+    else { const prev=dailySnapshots[scope].length?dailySnapshots[scope][dailySnapshots[scope].length-1]:null; const dayProfit=(prev&&prev.totalAssets!=null)?+(total-prev.totalAssets).toFixed(2):null; dailySnapshots[scope].push({date, totalAssets:+total.toFixed(2), principal:principal, totalProfit:profit, dayProfit}); }
+    if(dailySnapshots[scope].length>400) dailySnapshots[scope]=dailySnapshots[scope].slice(-400);
+  });
   silentSave();
 }
 
@@ -3915,7 +4025,7 @@ function recordGrowth(){
   if(saved){
     try{
       const migrated=migrate(JSON.parse(saved));
-      snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=migrated.daily_snapshots||[];
+      snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots);
       try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){} // 升级后立即回写，下次即为新模式
       loaded=true;
     }catch(e){ /* 损坏，下面尝试从历史备份恢复 */ }
@@ -3925,7 +4035,7 @@ function recordGrowth(){
     if(bk && confirm('本地数据为空或已损坏，但检测到历史备份（'+backupMeta(bk)+'）。\n\n点「确定」从备份恢复；点「取消」载入示例数据。')){
       try{
         const migrated=migrate(JSON.parse(bk));
-        snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=migrated.daily_snapshots||[];
+        snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots);
         try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){}
         loaded=true;
         setTimeout(function(){ toast('已从历史备份恢复数据'); },400);

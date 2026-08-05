@@ -555,6 +555,17 @@ input[type="number"] { -moz-appearance: textfield; }
 .watch-name{ font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .watch-code{ font-size:11px;color:var(--text-3); }
 .watch-acts{ display:flex;gap:4px; }
+.watch-item{ cursor:pointer; }
+.watch-held{ font-size:11px;font-weight:600;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border-3);border-radius:6px;padding:2px 7px;white-space:nowrap; }
+.watch-quote{ font-size:12px;font-weight:600;color:var(--text-2);min-width:76px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap; }
+/* 首页「仅自选」视图：观察中（自选但未持仓）区块 */
+.obs-block{ margin-top:14px;border-top:1px dashed var(--border-strong);padding-top:12px; }
+.obs-block h3{ margin:0 0 4px;font-size:13px;display:flex;align-items:center;gap:8px; }
+.obs-item{ display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px dashed var(--border-3);cursor:pointer; }
+.obs-item:last-child{ border-bottom:none; }
+.obs-name{ font-weight:600;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.obs-code{ font-size:11px;color:var(--text-3); }
+.obs-quote{ font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;min-width:84px;text-align:right;white-space:nowrap; }
 /* 交易时段状态灯（A股沪深） */
 .mkt-light{ display:inline-flex;align-items:center;gap:4px;margin-left:10px;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border-3);color:var(--text-3);vertical-align:middle; }
 .mkt-light.ms-open{ color:#1f9d4d;background:rgba(31,157,77,.12);border-color:rgba(31,157,77,.35); }
@@ -988,6 +999,8 @@ function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'支付宝'; }
 let flashMap={}, todayGain=null;
 let holdSort='mv', holdCatFilter='全部', holdSearch='';
+let holdWatchOnly=false; // 「⭐ 仅自选」：只显示自选中的持仓 + 观察中
+try{ holdWatchOnly=localStorage.getItem('ft_watchonly')==='1'; }catch(e){}
 let homeView='dense';
 try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
 let currentView='home', detailName=null, detailAcc='支付宝', detailChartFund=null;
@@ -1181,7 +1194,7 @@ function switchTab(i){
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderBond(); }
-  if(i===5){ loadMarketData(); }
+  if(i===5){ loadMarketData(); renderWatch(); refreshWatchQuotes(); }
 }
 
 // ---------- 市场风向 Tab（核心指数=真实腾讯源；资金流/榜单=示例，待接真实接口） ----------
@@ -1311,6 +1324,32 @@ function removeWatch(code){
   try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
   renderWatch();
 }
+function watchSets(){
+  const w=loadWatch(), codes={}, names={};
+  w.forEach(x=>{ if(x.code) codes[x.code]=true; if(x.name) names[x.name]=true; });
+  return {codes: codes, names: names};
+}
+// 自选条目 / 观察区批量拉实时估值（东方财富 FundMNFInfo）；已填充的带 data-done 不重复拉
+function fillWatchQuotes(){
+  const els=[].slice.call(document.querySelectorAll('.obs-quote[data-code]:not([data-done]), .watch-quote[data-code]:not([data-done])'));
+  const codes=els.map(el=>el.getAttribute('data-code')).filter(function(c,i,a){ return c&&a.indexOf(c)===i; });
+  if(!codes.length) return;
+  fetchFundMNFInfo(codes.join(',')).then(m=>{
+    if(!m) return;
+    codes.forEach(c=>{
+      const v=m[c]; if(!v) return;
+      const up=v.gszzl!=null&&v.gszzl>=0;
+      const txt=(v.gszzl!=null)?(v.gszzl>=0?'+':'')+v.gszzl.toFixed(2)+'%':(v.gsz!=null?navFmt(v.gsz):(v.nav!=null?navFmt(v.nav):null));
+      if(txt==null) return;
+      els.forEach(el=>{ if(el.getAttribute('data-code')===c){ el.textContent=txt; el.classList.add(up?'pos':'neg'); el.setAttribute('data-done','1'); } });
+    });
+  });
+}
+// 强制刷新自选估值（进入市场风向 Tab 时调用）
+function refreshWatchQuotes(){
+  [].slice.call(document.querySelectorAll('.obs-quote, .watch-quote')).forEach(el=>{ el.textContent='…'; el.removeAttribute('data-done'); el.classList.remove('pos','neg'); });
+  fillWatchQuotes();
+}
 function renderWatch(){
   const ul=document.getElementById('watch-list'); const empty=document.getElementById('watch-empty');
   if(!ul) return;
@@ -1318,9 +1357,15 @@ function renderWatch(){
   if(!w.length){ ul.innerHTML=''; if(empty) empty.style.display=''; return; }
   if(empty) empty.style.display='none';
   ul.innerHTML=w.map(function(x){
-    return `<li class="watch-item"><span class="watch-name">${esc(x.name)}</span><span class="watch-code">${x.code}</span>`
-      +`<span class="watch-acts"><button class="btn sm" onclick="openDrawerPrefill('${esc(x.name)}')">记账</button><button class="btn sm ghost" onclick="removeWatch('${x.code}')">✕</button></span></li>`;
+    // 已持有判断：自选 code/name 命中任一持仓（全口径 _allHoldings），买入后自动变「已持有」，无需手动标记
+    const held=_allHoldings.find(f=>{ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
+    const onClick=held?`goDetail('${encodeURIComponent(x.name)}','')`:`openDrawerPrefill('${esc(x.name)}')`;
+    const mid=held
+      ? `<span class="watch-held" title="已持有 · 点击进入详情">已持有 ${held.ret>=0?'+':''}${held.ret.toFixed(2)}%</span>`
+      : `<span class="watch-quote" data-code="${x.code}">…</span>`;
+    return `<li class="watch-item" title="${held?'点击进入详情':'点击记账买入'}" onclick="${onClick}"><span class="watch-name">${esc(x.name)}</span><span class="watch-code">${x.code}</span>${mid}<span class="watch-acts"><button class="btn sm" onclick="event.stopPropagation();openDrawerPrefill('${esc(x.name)}')">记账</button><button class="btn sm ghost" onclick="event.stopPropagation();removeWatch('${x.code}')">✕</button></span></li>`;
   }).join('');
+  fillWatchQuotes();
 }
 
 function setSort(s){
@@ -1352,7 +1397,14 @@ function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0)
 function renderCatFilter(){
   const cats=['全部', ...new Set(fundsView.map(f=>f.cat))];
   const box=document.getElementById('catFilter');
-  box.innerHTML=cats.map(c=>`<button class="cat-chip${c===holdCatFilter?' on':''}" onclick="filterCat('${esc(c)}')">${c}</button>`).join('');
+  box.innerHTML=`<button class="cat-chip${holdWatchOnly?' on':''}" title="只看自选（已持有的 + 观察中的）" onclick="toggleWatchOnly()">⭐ 自选</button>`
+    +cats.map(c=>`<button class="cat-chip${c===holdCatFilter?' on':''}" onclick="filterCat('${esc(c)}')">${c}</button>`).join('');
+}
+function toggleWatchOnly(){
+  holdWatchOnly=!holdWatchOnly;
+  try{ localStorage.setItem('ft_watchonly', holdWatchOnly?'1':'0'); }catch(e){}
+  renderCatFilter();
+  if(activeTab===0) renderHomeList();
 }
 function filterCat(c){
   holdCatFilter=c;
@@ -1415,6 +1467,23 @@ function renderHomeList(){
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
+  // ⭐ 仅自选：持仓只保留自选中的（未持仓的观察基金走 obsHtml 区块）
+  if(holdWatchOnly){
+    const ws=watchSets();
+    list=list.filter(f=> ws.names[f.name] || (syncCode(f.name)&&ws.codes[syncCode(f.name)]));
+  }
+  // 观察中（自选但未持仓）区块 —— 仅自选视图
+  let obsHtml='';
+  if(holdWatchOnly){
+    const heldN={}, heldC={};
+    fundsView.forEach(f=>{ heldN[f.name]=1; const c=syncCode(f.name); if(c) heldC[c]=1; });
+    const obs=loadWatch().filter(x=>!heldC[x.code]&&!heldN[x.name]);
+    if(obs.length){
+      obsHtml=`<div class="obs-block"><h3>👁 观察中 · ${obs.length} 只 <span class="hint" style="font-weight:400">自选里尚未持仓，点行快速记账</span></h3>`
+        +obs.map(o=>`<div class="obs-item" title="点击记账买入" onclick="openDrawerPrefill('${esc(o.name)}')"><span class="obs-name">${esc(o.name)}</span><span class="obs-code">${o.code}</span><span class="obs-quote" data-code="${o.code}">…</span><button class="btn sm ghost" onclick="event.stopPropagation();removeWatch('${o.code}')">✕</button></div>`).join('')
+        +`</div>`;
+    }
+  }
   list.sort((a,b)=>{
     if(holdSort==='ret') return b.ret-a.ret;
     if(holdSort==='day') return (flashMap[b.name]||0)-(flashMap[a.name]||0);
@@ -1434,13 +1503,15 @@ function renderHomeList(){
         </div>
       </div>`;
     } else {
-      box.innerHTML='<p class="hint">该赛道暂无持仓，或切换筛选查看全部。</p>';
+      if(holdWatchOnly) box.innerHTML='<p class="hint">自选中还没有已持有的基金，看下方观察区；或再点「⭐ 自选」切回全部。</p>'+obsHtml;
+      else box.innerHTML='<p class="hint">该赛道暂无持仓，或切换筛选查看全部。</p>';
     }
+    if(holdWatchOnly&&obsHtml) fillWatchQuotes();
     return;
   }
   const dayFmt=f=> flashMap[f.name]!=null?`<span class="hl-sep">|</span><span class="${flashMap[f.name]>=0?'pos':'neg'}">${flashMap[f.name]>=0?'▲':'▼'}${Math.abs(flashMap[f.name]).toFixed(2)}%</span>`:'';
   if(homeView==='dense'){
-    box.innerHTML=renderHomeDense(list);
+    box.innerHTML=renderHomeDense(list)+obsHtml;
   } else {
     box.innerHTML=list.map(f=>{
     const key=encodeURIComponent(accKey(f.account,f.name));
@@ -1484,9 +1555,10 @@ function renderHomeList(){
       </div>
     </div>`;
     return `<div class="hl ${flash}${alertCls}${isOpen?' open':''}">${head}${body}</div>`;
-    }).join('');
+    }).join('')+obsHtml;
     list.forEach(f=>{ const c=syncCode(f.name); if(c&&holdingsCache[c]) paintHomeHold(c, holdingsCache[c]); });
   }
+  fillWatchQuotes();
 }
 function renderHomeDense(list){
   const cols=[{key:'name',label:'基金 / 标签'}];

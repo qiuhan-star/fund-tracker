@@ -4137,18 +4137,32 @@ function canvasLineChart(canvas, cfg){
 }
 function attachCanvasHover(canvas){
   if(canvas._hoverAttached) return; canvas._hoverAttached=true;
-  let tip=null;
-  canvas.addEventListener('mousemove',function(e){
+  let tip=null, hideTimer=null;
+  function ensureTip(){ if(!tip){ tip=document.createElement('div'); tip.className='cc-tip'; const p=canvas.parentNode; if(p){ p.style.position='relative'; p.appendChild(tip); } } return tip; }
+  function locate(clientX){
     const h=canvas._hover; if(!h||!canvas._paint) return;
-    const rect=canvas.getBoundingClientRect(); const mx=e.clientX-rect.left;
+    const rect=canvas.getBoundingClientRect(); const mx=clientX-rect.left;
     let idx=Math.round((mx-h.padL)/h.plotW*(h.n-1)); idx=Math.max(0,Math.min(h.n-1,idx));
     canvas._paint(idx);
     const markersAt=h.markers.filter(function(m){ return m.idx===idx; });
     const html=h.tooltip?h.tooltip(idx,markersAt):'';
-    if(!tip){ tip=document.createElement('div'); tip.className='cc-tip'; const p=canvas.parentNode; if(p){ p.style.position='relative'; p.appendChild(tip); } }
-    if(tip){ tip.innerHTML=html; tip.style.display='block'; const r=canvas.getBoundingClientRect(); let tx=mx+12; if(tx+tip.offsetWidth>r.width) tx=mx-tip.offsetWidth-12; if(tx<0)tx=0; tip.style.left=tx+'px'; tip.style.top='6px'; }
-  });
-  canvas.addEventListener('mouseleave',function(){ if(canvas._paint)canvas._paint(null); if(tip)tip.style.display='none'; });
+    const t=ensureTip();
+    if(t){ t.innerHTML=html; t.style.display='block'; const r=canvas.getBoundingClientRect(); let tx=mx+12; if(tx+t.offsetWidth>r.width) tx=mx-t.offsetWidth-12; if(tx<0)tx=0; t.style.left=tx+'px'; t.style.top='6px'; }
+  }
+  function clear(){ if(canvas._paint)canvas._paint(null); if(tip)tip.style.display='none'; }
+  function cancelHide(){ if(hideTimer){ clearTimeout(hideTimer); hideTimer=null; } }
+  function scheduleHide(){ if(hideTimer)clearTimeout(hideTimer); hideTimer=setTimeout(clear, 1600); }
+  // 桌面：鼠标悬浮
+  canvas.addEventListener('mousemove',function(e){ cancelHide(); locate(e.clientX); });
+  canvas.addEventListener('mouseleave',function(){ clear(); });
+  // 移动端：手指滑动吸附最近交易日 + tooltip（touchmove 阻止页面滚动，专注看图；松手 1.6s 后收起）
+  function tStart(e){ cancelHide(); if(e.cancelable) e.preventDefault(); if(e.touches&&e.touches.length) locate(e.touches[0].clientX); }
+  function tMove(e){ if(e.cancelable) e.preventDefault(); if(e.touches&&e.touches.length) locate(e.touches[0].clientX); }
+  function tEnd(){ scheduleHide(); }
+  canvas.addEventListener('touchstart', tStart, {passive:false});
+  canvas.addEventListener('touchmove', tMove, {passive:false});
+  canvas.addEventListener('touchend', tEnd, {passive:true});
+  canvas.addEventListener('touchcancel', tEnd, {passive:true});
 }
 window.addEventListener('resize',function(){ document.querySelectorAll('canvas[data-cc]').forEach(function(c){ try{ if(c._hover&&c._hover.cfg) canvasLineChart(c, c._hover.cfg); }catch(e){} }); });
 

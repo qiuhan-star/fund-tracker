@@ -784,7 +784,7 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
       <div class="card">
         <div class="sec-head">
-          <h2 style="margin:0;font-size:14px">我的持仓</h2>
+          <h2 style="margin:0;font-size:14px" id="holdTitle">我的持仓</h2>
           <div class="seg-group">
           <div class="sort-seg">
             <span class="lab">排序</span>
@@ -1809,7 +1809,11 @@ function renderHomeList(){
   renderTagFilter();
   var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
   let list=[...fundsView];
+  // 最终防线：确保列表严格匹配当前账户（防御上游 fundsView 意外混入）
+  if(curAccount && curAccount!=='全部') list=list.filter(f=> (f.account||'我的')===curAccount || (f.acc||'我的')===curAccount);
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
+  // 动态标题：跟随当前账户
+  const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=curAccount==='全部'?'全部持仓':curAccount+'的持仓';
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
   // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }

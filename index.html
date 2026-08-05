@@ -3324,7 +3324,6 @@ function drawHist(all, f){
   const myTr=(f?trades.filter(t=>t.name===f.name && ['buy','sell','convert','convert_out'].indexOf(t.type)>=0):[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
   const markers=[];
   let buyN=0,sellN=0,convN=0;
-  const monthCount={}; // '2026-04' -> {buy, sell, conv}
   myTr.forEach(t=>{
     let li=-1;
     for(let k=0;k<labels.length;k++){ if(labels[k]<=t.date) li=k; else break; }
@@ -3334,12 +3333,6 @@ function drawHist(all, f){
     else if(t.type==='convert'||t.type==='convert_out'){ color='#7c3aed'; convN++; }
     else { buyN++; }
     markers.push({idx:li, y:vals[li], color:color, symbol:'dot', meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares}});
-    const dm=new Date(t.date.replace(/-/g,'/'));
-    const ym=dm.getFullYear()+'-'+('0'+(dm.getMonth()+1)).slice(-2);
-    if(!monthCount[ym]) monthCount[ym]={buy:0,sell:0,conv:0};
-    if(t.type==='sell') monthCount[ym].sell++;
-    else if(t.type==='convert'||t.type==='convert_out') monthCount[ym].conv++;
-    else monthCount[ym].buy++;
   });
   const plotted=markers.length; // 区间可见交易笔数（= 分项之和）
   // 月份标注：覆盖可见数据区间的月份，逐月画分隔线 + 标签「M月」（单独成行，不堆统计数）
@@ -3363,7 +3356,7 @@ function drawHist(all, f){
   const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
-    labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:58,
+    labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:50,
     yFmt:function(v){ return v.toFixed(3); },
     markers:markers,
     monthTicks:monthTicks,
@@ -4146,17 +4139,14 @@ function canvasLineChart(canvas, cfg){
     if(!(cfg.monthTicks && cfg.monthTicks.length)){
       for(let i=0;i<n;i+=step){ const x=xAt(i); ctx.fillStyle=th.text3; ctx.fillText(cfg.labels[i], x, padT+plotH+6); }
     }
-    // 按月标注：细竖线分隔 + 月份标签（仅 drawHist 的历史净值图传入 monthTicks）
+    // 按月标注：图内细竖线分隔 + 月份标签单独成行（与图留出一小段间距）
     if(cfg.monthTicks && cfg.monthTicks.length){
       ctx.textBaseline='top'; ctx.font='10px -apple-system,system-ui,sans-serif';
-      let prevX=-999;
       (cfg.monthTicks||[]).forEach(function(mt){
         const x=xAt(mt.idx);
         ctx.save(); ctx.strokeStyle=th.grid; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke(); ctx.restore();
         ctx.fillStyle=th.text2; ctx.textAlign='left';
-        if(x-prevX < 46){ ctx.fillStyle=th.text3; ctx.font='9px -apple-system,system-ui,sans-serif'; } else { ctx.font='10px -apple-system,system-ui,sans-serif'; }
-        ctx.fillText(mt.label, x+3, padT+plotH+18);
-        prevX=x;
+        ctx.fillText(mt.label, x+3, padT+plotH+26);
       });
       ctx.textAlign='left';
     }

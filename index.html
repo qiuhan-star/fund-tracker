@@ -208,8 +208,12 @@
   .hk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
   .hk-table th, .hk-table td { padding: 5px 6px; border-bottom: 1px solid var(--border-2); text-align: right; white-space: nowrap; }
   .hk-table th { color: var(--text-3); font-weight: 600; }
+  .hk-table th:nth-child(1) { text-align: center; }
+  .hk-table th:nth-child(2) { text-align: left; }
+  .hk-table th:nth-child(3), .hk-table th:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
   .hk-table td.hk-rank { color: var(--text-3); text-align: center; }
-  .hk-table td.hk-name { text-align: left; font-weight: 600; }
+  .hk-table td.hk-name { text-align: left; font-weight: 600; white-space: normal; }
+  .hk-table td.hk-pct, .hk-table td.hk-chg { font-variant-numeric: tabular-nums; }
   .hk-table td.hk-chg.pos { color: var(--up); }
   .hk-table td.hk-chg.neg { color: var(--down); }
   .nav-edit:hover { border-bottom-color: var(--accent-text); color: var(--accent-text); }

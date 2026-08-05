@@ -1094,7 +1094,7 @@ function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'我的'; }
 let flashMap={}, todayGain=null;
-let holdSort='mv', holdCatFilter='全部', holdSearch='';
+let holdSort='mv', holdSortDir='desc', holdCatFilter='全部', holdSearch='';
 let holdWatchOnly=false; // 「⭐ 仅自选」：由 curGroup==='自选' 派生，此处仅占位
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){}
 let homeView='dense';
@@ -1636,10 +1636,15 @@ function renderHomeList(){
     }
   }
   list.sort((a,b)=>{
-    if(holdSort==='ret') return b.ret-a.ret;
-    if(holdSort==='day') return ((navCache[b.name]&&navCache[b.name].navChg)||0)-((navCache[a.name]&&navCache[a.name].navChg)||0);
-    if(holdSort==='name') return a.name.localeCompare(b.name,'zh-CN');
-    return b.mv-a.mv;
+    let av,bv,cmp;
+    if(holdSort==='ret'){ av=a.ret; bv=b.ret; }
+    else if(holdSort==='day'){ av=(navCache[a.name]&&navCache[a.name].navChg)||0; bv=(navCache[b.name]&&navCache[b.name].navChg)||0; }
+    else if(holdSort==='name'){ cmp=a.name.localeCompare(b.name,'zh-CN'); }
+    else if(holdSort==='nav'){ av=(navCache[a.name]&&navCache[a.name].nav)||0; bv=(navCache[b.name]&&navCache[b.name].nav)||0; }
+    else if(holdSort==='est'){ av=(navCache[a.name]&&navCache[a.name].gszzl)||0; bv=(navCache[b.name]&&navCache[b.name].gszzl)||0; }
+    else { av=a.mv; bv=b.mv; }
+    if(cmp===undefined) cmp=bv-av;
+    return holdSortDir==='asc' ? -cmp : cmp;
   });
   const box=document.getElementById('homeList');
   if(!list.length){
@@ -1858,15 +1863,7 @@ function suggestedAlloc(p){
   sug['宽基/行业']=Math.max(0,100-used);
   return sug;
 }
-let cmpCurChart=null, cmpSugChart=null, cmpBarChart=null;
-function drawDough(id,labels,data){
-  const cv=document.getElementById(id); if(!cv) return;
-  if(id==='pieCur'&&cmpCurChart) cmpCurChart.destroy();
-  if(id==='pieSug'&&cmpSugChart) cmpSugChart.destroy();
-  const colors=labels.map(l=>CAT_COLORS[l]||'#888780');
-  const ch=new Chart(cv,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'56%'}});
-  if(id==='pieCur') cmpCurChart=ch; else cmpSugChart=ch;
-}
+let cmpBarChart=null;
 function renderAdvice(){
   const box=document.getElementById('advice'); if(!box) return;
   if(!_profileLoaded) loadProfile();
@@ -1885,7 +1882,7 @@ function renderAdvice(){
   const curLabels=catPct.map(c=>c[0]), curData=catPct.map(c=>+c[1].toFixed(1));
   const sugEntries=Object.entries(sug).filter(([k,v])=>v>0.05);
   const sugLabels=sugEntries.map(e=>e[0]), sugData=sugEntries.map(e=>+e[1].toFixed(1));
-  // 锁定全局统一分类顺序（方案B：左右两图顺序/起始角/颜色完全一致，不再各自按数值重排）
+  // 锁定全局统一分类顺序（当前配置 vs 建议配置 共用同一顺序：条形图与差值表左右对齐，不再各自按数值重排）
   const CMP_ORDER=['芯片','科技','制造','医药','周期资源','海外','QDII','宽基/行业','混合','债基','其他'];
   const allCats=Array.from(new Set([...curLabels,...sugLabels]));
   allCats.sort((a,b)=>{ const ia=CMP_ORDER.indexOf(a), ib=CMP_ORDER.indexOf(b); const ra=ia<0?999:ia, rb=ib<0?999:ib; return (ra-rb)||a.localeCompare(b); });
@@ -2363,7 +2360,7 @@ function buildFundsView(){
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
   _allHoldings = all.filter(f=> scopeMatches(f.account));
-  if(curAccount!=='全部' && !_allHoldings.some(f=>f.account===curAccount)) curAccount='全部';
+  // 保留显式选择的账户：即使暂无持仓也展示空状态，避免「切了跟没切一样」的错觉（自定义账户添加后即可在此记账）
   const accF = curAccount==='全部'? null:curAccount;
   fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF));
 }
@@ -2702,6 +2699,8 @@ function openDrawer(){
   const dt=document.getElementById('dr-date'); if(!dt.value) dt.value=new Date().toISOString().slice(0,10);
   const ty=document.getElementById('dr-type');
   if(!ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
+  const accSel=document.getElementById('dr-acc');
+  if(accSel){ const cur=accSel.value||'我的'; accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
   document.getElementById('drawerMask').style.display='block';
   const d=document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden','false');
   setTimeout(()=>{ const el=document.getElementById('dr-fund'); if(el) el.focus(); },90);

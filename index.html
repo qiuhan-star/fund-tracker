@@ -80,7 +80,17 @@
   .cmp .cc { background: var(--surface-3); border: 1px solid var(--border-3); border-radius: 10px; padding: 10px; }
   .cmp h3 { font-size: 12.5px; margin: 0 0 6px; color: var(--text-2); font-weight: 600; text-align: center; }
   .cmp .chart-box { height: 180px; }
-  .cmp .legend { justify-content: center; margin-top: 6px; }
+   .cmp .legend { justify-content: center; margin-top: 6px; }
+  .cmp-diff { margin: 12px 0 4px; }
+  .cmp-diff table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .cmp-diff th, .cmp-diff td { padding:6px 8px; text-align:right; border-bottom:1px solid var(--border); }
+  .cmp-diff th.dl, .cmp-diff td.dl { text-align:left; }
+  .cmp-diff thead th { color:var(--text-2); font-weight:600; }
+  .cmp-diff .sw { width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:middle; }
+  .cmp-diff .cmp-up { color:#e24b4b; font-weight:600; }
+  .cmp-diff .cmp-down { color:#27ae60; font-weight:600; }
+  .cmp-diff .cmp-flat { color:var(--text-3); }
+  .cmp-diff-note { font-size:11px; color:var(--text-3); margin-top:6px; }
   .risk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-2); margin: 2px 0 14px; justify-content: center; }
   .risk-legend span { display: flex; align-items: center; gap: 5px; }
   .risk-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
@@ -570,13 +580,62 @@ input[type="number"] { -moz-appearance: textfield; }
 .mkt-light{ display:inline-flex;align-items:center;gap:4px;margin-left:10px;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border-3);color:var(--text-3);vertical-align:middle; }
 .mkt-light.ms-open{ color:#1f9d4d;background:rgba(31,157,77,.12);border-color:rgba(31,157,77,.35); }
 .mkt-light.ms-lunch{ color:#c6840a;background:rgba(198,132,10,.12);border-color:rgba(198,132,10,.35); }
-.mkt-light.ms-closed{ color:#8a9099;background:rgba(138,144,153,.12);border-color:rgba(138,144,153,.3); }
+  .mkt-light.ms-closed{ color:#8a9099;background:rgba(138,144,153,.12);border-color:rgba(138,144,153,.3); }
+
+/* ===== 设置弹窗 (sm-) ===== */
+.sm-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px; overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+.sm-mask.show{ display:flex; }
+.sm-modal{ background:var(--surface); color:var(--text); width:100%; max-width:560px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }
+.sm-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }
+.sm-head h2{ margin:0; font-size:17px; font-weight:600; }
+.sm-x{ border:none; background:var(--surface-2); color:var(--text-2); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size:15px; line-height:1; }
+.sm-x:hover{ background:var(--border); color:var(--text); }
+.sm-body{ padding:14px 18px 22px; overflow:auto; }
+.sm-card{ background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; }
+.sm-card h3{ margin:0 0 12px; font-size:14px; font-weight:600; }
+.sm-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--border-2); }
+.sm-row:first-of-type{ border-top:none; padding-top:0; }
+.sm-rt{ min-width:0; }
+.sm-rd{ font-size:12px; color:var(--text-3); margin-top:2px; line-height:1.4; }
+.sm-seg{ display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; flex-shrink:0; }
+.sm-seg button{ border:none; background:transparent; color:var(--text-2); font-size:13px; padding:6px 11px; border-radius:8px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.sm-seg button.on{ background:var(--accent); color:#fff; font-weight:600; }
+.sm-sw{ display:flex; gap:10px; flex-shrink:0; }
+.sm-sw-dot{ width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid transparent; outline:2px solid transparent; outline-offset:2px; transition:transform .12s; }
+.sm-sw-dot:hover{ transform:scale(1.1); }
+.sm-sw-dot.on{ outline-color:var(--text); }
+.sm-switch{ position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0; }
+.sm-switch input{ opacity:0; width:0; height:0; }
+.sm-slider{ position:absolute; inset:0; background:#c4c9d2; border-radius:999px; transition:.2s; cursor:pointer; }
+.sm-slider:before{ content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+.sm-switch input:checked + .sm-slider{ background:var(--accent); }
+.sm-switch input:checked + .sm-slider:before{ transform:translateX(19px); }
+.sm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.sm-act{ display:flex; align-items:center; gap:9px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:10px; padding:11px 13px; font-size:13.5px; cursor:pointer; text-align:left; font-family:inherit; }
+.sm-act:hover{ border-color:var(--accent); color:var(--accent); }
+.sm-act span{ font-size:16px; }
+.sm-note{ font-size:12px; color:var(--text-3); margin:12px 0 0; line-height:1.5; }
+.sm-pill{ font-size:12px; color:var(--text-2); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }
+.sm-ghost{ border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:9px; padding:7px 12px; font-size:13px; cursor:pointer; font-family:inherit; }
+.sm-ghost:hover{ border-color:var(--accent); color:var(--accent); }
+.danger-text{ color:var(--danger); }
+.sm-danger{ border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); border-radius:10px; padding:10px 14px; font-size:13.5px; cursor:pointer; font-family:inherit; font-weight:600; width:100%; margin-top:6px; }
+.sm-danger:hover{ background:var(--danger); color:#fff; }
+@media (max-width:480px){ .sm-grid{ grid-template-columns:1fr; } }
 </style>
 <script>
-  try{var _t=localStorage.getItem('ft_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}
+  try{
+    var _t=localStorage.getItem('ft_theme');
+    if(_t==='system'||!_t){ var _sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', _sys?'dark':'light'); }
+    else document.documentElement.setAttribute('data-theme', _t);
+  }catch(e){}
+  function applyAccentVars(c){ if(!c)return; var r=document.documentElement.style; r.setProperty('--accent',c.a); r.setProperty('--accent-strong',c.s); r.setProperty('--accent-on',c.o); r.setProperty('--accent-text',c.t); r.setProperty('--accent-soft',c.soft); }
+  try{ var _ac=localStorage.getItem('ft_accent'); if(_ac){ applyAccentVars(JSON.parse(_ac)); } }catch(e){}
   function TH(){var d=document.documentElement.getAttribute('data-theme')==='dark';return d?{up:'#f6465d',down:'#0ecb81',text:'#e8eef7',text3:'#6b7c97',axis:'#31405c',grid:'rgba(255,255,255,.06)',accent:'#3b82f6'}:{up:'#c0392b',down:'#27ae60',text:'#1f2329',text3:'#8a8f99',axis:'#dddddd',grid:'rgba(0,0,0,.05)',accent:'#2f6fed'};}
-  function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';try{localStorage.setItem('ft_theme',c);}catch(e){}document.documentElement.setAttribute('data-theme',c);location.reload();}
+  function _setTheme(c){ try{localStorage.setItem('ft_theme',c);}catch(e){} if(c==='system'){ var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m?'dark':'light'); } else document.documentElement.setAttribute('data-theme', c); location.reload(); }
+  function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');_setTheme(cur==='dark'?'light':'dark');}
   window.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️ 亮色':'🌙 暗色';});
+  if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){ try{ if((localStorage.getItem('ft_theme')||'system')==='system'){ document.documentElement.setAttribute('data-theme', e.matches?'dark':'light'); } }catch(_){} }); }catch(_){} }
 </script>
 </head>
 <body>
@@ -591,25 +650,7 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start">
         <button class="btn sm" id="themeBtn" onclick="toggleTheme()" title="切换亮色 / 暗色">🌓 主题</button>
-        <div class="more-menu">
-          <button class="btn sm" onclick="toggleMore(event)">⋯ 更多</button>
-          <div class="drop" id="moreDrop">
-            <button onclick="refresh();closeMore()">↻ 刷新净值·行情</button>
-            <button onclick="addSnapRow();closeMore()">+ 加一只基金</button>
-            <button onclick="addTradeMenu();closeMore()">+ 记一笔交易</button>
-            <button onclick="openAllTrades();closeMore()">📒 全部交易</button>
-            <hr>
-            <button onclick="saveLocal();closeMore()">💾 保存下载</button>
-            <button onclick="exportJSON();closeMore()">📤 导出 JSON</button>
-            <button onclick="exportHoldingsCSV();closeMore()">📊 导出持仓 CSV</button>
-            <button onclick="importJSON();closeMore()">📥 导入 JSON</button>
-            <button onclick="syncOnline();closeMore()">🔄 从线上同步最新数据</button>
-            <button onclick="loadSample();closeMore()">📦 载入示例数据</button>
-            <button onclick="importCSV();closeMore()">📥 导入 CSV</button>
-            <button onclick="downloadCSVTemplate();closeMore()">📄 下载 CSV 模板</button>
-            <button onclick="window.print();closeMore()">🖨 导出 PDF</button>
-            <p class="drop-hint">CSV 格式（首行表头，逗号/中文逗号/制表符均可）：<br>基金名称,日期,方向,金额,净值,费用<br>方向可写：买入/卖出/分红/再投/拆分（或 买/卖）</p>          </div>
-        </div>
+        <button class="btn sm" onclick="openSettings()" title="设置">⚙️ 设置</button>
       </div>
     </div>
 
@@ -1149,10 +1190,7 @@ function showQuotaBanner(){
 function dismissQuotaBar(){ const b=document.getElementById('quotaBar'); if(b) b.classList.remove('show'); }
 function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data-'+ts+'.json'; a.click(); document.getElementById('updated').textContent='已保存并下载存档 '+ts; toast('已保存并下载存档'); }
 
-// ---------- 更多菜单 ----------
-function toggleMore(e){ e.stopPropagation(); document.getElementById('moreDrop').classList.toggle('show'); }
-function closeMore(){ document.getElementById('moreDrop').classList.remove('show'); }
-document.addEventListener('click', function(e){ if(!e.target.closest('.more-menu')) closeMore(); });
+// ---------- 设置弹窗（逻辑见 openSettings / closeSettings / renderSettings，位于文件末尾 <script>） ----------
 
 // ---------- Tab 切换 ----------
 let activeTab=0;
@@ -1688,9 +1726,13 @@ function suggestedAlloc(p){
   const M=profileModel(p), cur=getCatAllocation(), curMap={};
   cur.forEach(([k,v])=>curMap[k]=v);
   const sug={}; let used=0;
-  sug['混合/债']=M.def; used+=M.def;
+  // 防御性目标：分配到当前已有的防御类（债基/混合），与"当前"保持同一套分类口径（不再凭空造"混合/债"）
+  const DEF_CATS=['债基','混合'];
+  const defBase=DEF_CATS.reduce((a,c)=>a+(curMap[c]||0),0);
+  if(defBase<=0){ sug['债基']=M.def; used+=M.def; }
+  else { DEF_CATS.forEach(c=>{ if(curMap[c]){ const add=M.def*curMap[c]/defBase; sug[c]=add; used+=add; } }); }
   RISK_CATS.forEach(c=>{ if(curMap[c]!=null){ sug[c]=Math.min(curMap[c], M.single); used+=sug[c]; } });
-  cur.forEach(([k,v])=>{ if(k==='混合/债'||k==='宽基/行业'||RISK_CATS.includes(k)) return; sug[k]=Math.min(v,M.single); used+=sug[k]; });
+  cur.forEach(([k,v])=>{ if(DEF_CATS.includes(k)||k==='宽基/行业'||RISK_CATS.includes(k)) return; sug[k]=Math.min(v,M.single); used+=sug[k]; });
   sug['宽基/行业']=Math.max(0,100-used);
   return sug;
 }
@@ -1721,14 +1763,27 @@ function renderAdvice(){
   const curLabels=catPct.map(c=>c[0]), curData=catPct.map(c=>+c[1].toFixed(1));
   const sugEntries=Object.entries(sug).filter(([k,v])=>v>0.05);
   const sugLabels=sugEntries.map(e=>e[0]), sugData=sugEntries.map(e=>+e[1].toFixed(1));
+  // 锁定全局统一分类顺序（方案B：左右两图顺序/起始角/颜色完全一致，不再各自按数值重排）
+  const CMP_ORDER=['芯片','科技','制造','医药','周期资源','海外','QDII','宽基/行业','混合','债基','其他'];
+  const allCats=Array.from(new Set([...curLabels,...sugLabels]));
+  allCats.sort((a,b)=>{ const ia=CMP_ORDER.indexOf(a), ib=CMP_ORDER.indexOf(b); const ra=ia<0?999:ia, rb=ib<0?999:ib; return (ra-rb)||a.localeCompare(b); });
+  const curMap2={}, sugMap2={}; curLabels.forEach((l,i)=>curMap2[l]=curData[i]); sugLabels.forEach((l,i)=>sugMap2[l]=sugData[i]);
+  const uLabels=allCats, uCur=allCats.map(l=>+(curMap2[l]||0).toFixed(1)), uSug=allCats.map(l=>+(sugMap2[l]||0).toFixed(1));
+  const diffRows=uLabels.map((l,i)=>{
+    const c=uCur[i], s=uSug[i], d=+(s-c).toFixed(1);
+    const flat=Math.abs(d)<0.05, up=d>0;
+    const dc=flat?'cmp-flat':(up?'cmp-up':'cmp-down'), arrow=flat?'—':(up?'▲':'▼');
+    return `<tr><td class="dl"><i class="sw" style="background:${CAT_COLORS[l]||'#9aa0a6'}"></i>${l}</td><td>${c.toFixed(1)}%</td><td>${s.toFixed(1)}%</td><td class="${dc}">${arrow} ${up?'+':''}${d.toFixed(1)}%</td></tr>`;
+  }).join('');
   html+=`<div class="cmp">
     <div class="cc"><h3>当前配置</h3><div class="chart-box"><canvas id="pieCur"></canvas></div><div class="legend" id="pieCurLg"></div></div>
     <div class="cc"><h3>建议配置（${userProfile.risk}档）</h3><div class="chart-box"><canvas id="pieSug"></canvas></div><div class="legend" id="pieSugLg"></div></div>
   </div>`;
-  html+=`<div class="risk-legend"><span><i style="background:#e24b4b"></i>高风险：芯片/周期资源/海外/跨境(QDII)/科技等</span><span><i style="background:#e0a800"></i>中风险：宽基/行业</span><span><i style="background:#27ae60"></i>低风险：混合/债</span></div>`;
+  html+=`<div class="cmp-diff"><table><thead><tr><th class="dl">板块</th><th>当前</th><th>建议</th><th>变动</th></tr></thead><tbody>${diffRows}</tbody></table><div class="cmp-diff-note">▲ 需增持 / 调高权重　▼ 需减仓 / 压降（红=加、绿=减、灰=持平）</div></div>`;
+  html+=`<div class="risk-legend"><span><i style="background:#e24b4b"></i>高风险：芯片/周期资源/海外/跨境(QDII)/科技等</span><span><i style="background:#e0a800"></i>中风险：宽基/行业</span><span><i style="background:#27ae60"></i>低风险：债基 / 混合</span></div>`;
 
   const top3=catPct.slice(0,3), top3Pct=top3.reduce((a,b)=>a+b[1],0);
-  const defCur=cats['混合/债']||0;
+  const defCur=(cats['债基']||0)+(cats['混合']||0);
   const overCap=catPct.filter(([k,p])=>RISK_CATS.includes(k)&&p>M2.single);
   const tiny=fundsView.filter(f=>f.mv>0&&f.mv<CONFIG.tinyThreshold);
   const byCat={}; fundsView.forEach(f=>{(byCat[f.cat]=byCat[f.cat]||[]).push(f);});
@@ -1802,10 +1857,10 @@ function renderAdvice(){
   </div>`;
 
   box.innerHTML=html;
-  drawDough('pieCur',curLabels,curData);
-  const lg1=document.getElementById('pieCurLg'); if(lg1) lg1.innerHTML=curLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${curData[i]}%</span>`).join('');
-  drawDough('pieSug',sugLabels,sugData);
-  const lg2=document.getElementById('pieSugLg'); if(lg2) lg2.innerHTML=sugLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${sugData[i]}%</span>`).join('');
+  drawDough('pieCur',uLabels,uCur);
+  const lg1=document.getElementById('pieCurLg'); if(lg1) lg1.innerHTML=uLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${uCur[i]}%</span>`).join('');
+  drawDough('pieSug',uLabels,uSug);
+  const lg2=document.getElementById('pieSugLg'); if(lg2) lg2.innerHTML=uLabels.map((l,i)=>`<span><i style="background:${CAT_COLORS[l]||'#888780'}"></i>${l} ${uSug[i]}%</span>`).join('');
 }
 // ---------- 债券板块：我的债基（不看 10Y、不看温度计） ----------
 let bondState={dates:{},amts:{}};
@@ -3691,5 +3746,96 @@ function recordGrowth(){
       <div id="idxModalBody" class="idx-modal-body"></div>
     </div>
   </div>
+
+<!-- ================= 设置弹窗 ================= -->
+<div class="sm-mask" id="settingsMask" onclick="if(event.target===this)closeSettings()">
+  <div class="sm-modal" role="dialog" aria-label="设置">
+    <div class="sm-head"><h2>⚙️ 设置</h2><button class="sm-x" onclick="closeSettings()" aria-label="关闭">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-card">
+        <h3>🚀 常用操作</h3>
+        <div class="sm-grid">
+          <button class="sm-act" onclick="refresh();closeSettings()"><span>↻</span>刷新净值·行情</button>
+          <button class="sm-act" onclick="addSnapRow();closeSettings()"><span>＋</span>加一只基金</button>
+          <button class="sm-act" onclick="addTradeMenu();closeSettings()"><span>＋</span>记一笔交易</button>
+          <button class="sm-act" onclick="openAllTrades();closeSettings()"><span>📒</span>全部交易</button>
+          <button class="sm-act" onclick="saveLocal();closeSettings()"><span>💾</span>保存下载</button>
+          <button class="sm-act" onclick="window.print();closeSettings()"><span>🖨</span>导出 PDF</button>
+        </div>
+      </div>
+      <div class="sm-card">
+        <h3>🎨 外观与显示</h3>
+        <div class="sm-row"><div class="sm-rt">主题模式<div class="sm-rd">浅色 / 深色，或跟随系统</div></div>
+          <div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div></div>
+        <div class="sm-row"><div class="sm-rt">强调色 (Accent)<div class="sm-rd">用于按钮、开关与高亮</div></div>
+          <div class="sm-sw" id="smSwatches"></div></div>
+        <div class="sm-row"><div class="sm-rt">默认资产口径<div class="sm-rd">打开应用时的初始口径</div></div>
+          <div class="sm-seg" id="smScopeSeg"><button data-s="personal">个人资产</button><button data-s="managed">代管(妈妈)</button><button data-s="all">全量</button></div></div>
+        <div class="sm-row"><div class="sm-rt">自动刷新净值<div class="sm-rd">每 3 分钟后台刷新一次行情</div></div>
+          <label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div>
+      </div>
+      <div class="sm-card">
+        <h3>🔐 数据与安全</h3>
+        <div class="sm-grid">
+          <button class="sm-act" onclick="syncOnline();closeSettings()"><span>🔄</span>从线上同步</button>
+          <button class="sm-act" onclick="importJSON();closeSettings()"><span>📥</span>导入 JSON</button>
+          <button class="sm-act" onclick="importCSV();closeSettings()"><span>📥</span>导入 CSV</button>
+          <button class="sm-act" onclick="exportJSON();closeSettings()"><span>📤</span>导出 JSON</button>
+          <button class="sm-act" onclick="exportHoldingsCSV();closeSettings()"><span>📊</span>导出持仓CSV</button>
+          <button class="sm-act" onclick="downloadCSVTemplate();closeSettings()"><span>📄</span>CSV 模板</button>
+        </div>
+        <p class="sm-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。删除 / 导入前已自动环形备份最近 3 份，可从备份恢复。</p>
+      </div>
+      <div class="sm-card">
+        <h3>💾 存储与缓存</h3>
+        <div class="sm-row"><div class="sm-rt">本地缓存<div class="sm-rd">持仓、净值与备份占用</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="sm-pill" id="smCacheSize">—</span><button class="sm-ghost danger-text" onclick="clearCache()">清除缓存</button></div></div>
+      </div>
+      <div class="sm-card">
+        <h3>ℹ️ 关于</h3>
+        <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
+        <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
+        <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var SM_ACCENTS=[
+    {name:'蓝',a:'#2f6fed',s:'#2560d4',o:'#1677ff',t:'#2f6bd6',soft:'#eaf1fd'},
+    {name:'紫',a:'#7c4dff',s:'#6a3df0',o:'#8a5cff',t:'#6a3df0',soft:'#efeaff'},
+    {name:'绿',a:'#1faa6a',s:'#178a57',o:'#23c47a',t:'#178a57',soft:'#e6f7ef'},
+    {name:'橙',a:'#e0820a',s:'#c46e05',o:'#f5911f',t:'#c46e05',soft:'#fdf0e0'},
+    {name:'玫红',a:'#e24b6b',s:'#cf3a5a',o:'#f25c7c',t:'#cf3a5a',soft:'#fdeaef'},
+    {name:'青',a:'#0aa2b8',s:'#088a9e',o:'#16b8cf',t:'#088a9e',soft:'#e2f6f9'}
+  ];
+  window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); };
+  window.closeSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.remove('show'); };
+  window.renderSettings=function(){ try{
+    var t=localStorage.getItem('ft_theme')||'system';
+    var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-t')||'')===t); }); }
+    var sw=document.getElementById('smSwatches');
+    if(sw && !sw.dataset.built){
+      SM_ACCENTS.forEach(function(c,i){ var d=document.createElement('div'); d.className='sm-sw-dot'; d.style.background=c.a; d.title=c.name; d.setAttribute('data-i',i); d.onclick=function(){ applyAccentVars(c); try{localStorage.setItem('ft_accent',JSON.stringify(c));}catch(e){} Array.prototype.forEach.call(sw.children,function(x){x.classList.remove('on');}); d.classList.add('on'); }; sw.appendChild(d); });
+      sw.dataset.built='1';
+    }
+    try{ var ac=JSON.parse(localStorage.getItem('ft_accent')||'null'); if(ac){ Array.prototype.forEach.call(sw.children,function(x){ x.classList.toggle('on', SM_ACCENTS[+x.getAttribute('data-i')].a===ac.a); }); } else if(sw.firstChild){ sw.firstChild.classList.add('on'); } }catch(e){}
+    var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-s')||'')===currentScope); }); }
+    var ar=document.getElementById('smAutoRefresh'); if(ar){ try{ ar.checked = localStorage.getItem('ft_autorefresh')!=='0'; }catch(e){ ar.checked=true; } }
+    var cs=document.getElementById('smCacheSize'); if(cs){ try{ var keys=['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh']; var bytes=0; keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) bytes+=v.length; }); cs.textContent='约 '+(bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB'); }catch(e){ cs.textContent='—'; } }
+    var ver=document.getElementById('smVersion'); if(ver) ver.textContent='v'+SCHEMA_VERSION;
+  }catch(e){ console.error(e); } };
+  window.clearCache=function(){ if(!confirm('清除本地缓存（净值快照与备份）？\n持仓与交易台账保留，仅清掉可重新拉取的净值缓存以释放空间。')) return; try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
+  window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ ['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} location.reload(); };
+  document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); } });
+  document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScope(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
+  document.addEventListener('change',function(e){ if(e.target && e.target.id==='smAutoRefresh'){ try{ localStorage.setItem('ft_autorefresh', e.target.checked?'1':'0'); }catch(_){} } });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=document.getElementById('settingsMask'); if(m&&m.classList.contains('show')) closeSettings(); } });
+  try{ if((localStorage.getItem('ft_autorefresh')||'1')!=='0'){ setInterval(function(){ try{ if(document.visibilityState==='visible' && typeof refresh==='function') refresh(); }catch(_){} }, 180000); } }catch(_){}
+})();
+</script>
+
 </body>
 </html>

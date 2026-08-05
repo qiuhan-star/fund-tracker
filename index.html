@@ -2284,34 +2284,34 @@ function _isToday(ts){ if(!ts) return false; const a=new Date(ts), b=new Date();
 function saveIntraday(name, series, refNav){ try{ const k=_intradayKey(); const store=JSON.parse(localStorage.getItem(k)||'{}'); store[name]={series, refNav, ts:Date.now()}; localStorage.setItem(k, JSON.stringify(store)); }catch(e){} }
 function loadIntraday(name){ try{ const store=JSON.parse(localStorage.getItem(_intradayKey())||'{}'); return store[name]||null; }catch(e){ return null; } }
 // 详情页：盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）；交易时段实时、收盘后回看当日
+// 详情页：盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）。
+// 不再强依赖「交易时段」才拉取：新浪在非交易时段仍会返回最近一个交易日的分时曲线，
+// 故只要没有可用的当日缓存，就随时向同源 /api/intraday 代理拉取并展示「最新可得」曲线；
+// 交易时段内每 60s 刷新一次（live），非交易时段缓存 1 小时，避免频繁请求。
 async function renderIntraday(f){
   const box=document.getElementById('detailIntraday'); if(!box) return;
   const mkt=isMarketOpen(new Date());
-  if(mkt){
-    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2><span id="intradayTime" class="hint" style="font-size:11px"></span></div><canvas id="intradayChart" style="width:100%;height:200px;display:block"></canvas><p class="hint" id="intradayNote" style="margin:6px 0 0">正在拉取盘中估值…</p></div>`;
+  // 优先用当日已缓存的曲线（内存优先，其次 localStorage 按日存，次日自动失效）
+  let data=intradayCache[f.name];
+  if(!data){ const saved=loadIntraday(f.name); if(saved&&saved.series&&saved.series.length) data=saved; }
+  const ttl=mkt?60000:3600000;
+  if(!data || Date.now()-data.ts>ttl){
     const code=await resolveCode(f.name);
-    if(!code){ const n=document.getElementById('intradayNote'); if(n) n.textContent='未匹配到基金代码，无法拉取盘中估值。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
-    let data=intradayCache[f.name];
-    if(!data || Date.now()-data.ts>60000){
-      const raw=await fetchSinaIntraday(code);
-      if(!raw||!raw.series||!raw.series.length){ const n=document.getElementById('intradayNote'); if(n) n.textContent='该基金新浪暂未提供盘中估值（可能为非交易时段或代码未覆盖）。'; const c=document.getElementById('intradayChart'); if(c) c.style.display='none'; return; }
+    if(!code){ box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">未匹配到基金代码，无法拉取盘中估值。</p></div>`; return; }
+    const raw=await fetchSinaIntraday(code);
+    if(raw&&raw.series&&raw.series.length){
       const nc=navCache[f.name]||{};
       const refNav=(nc.official!=null&&!isNaN(nc.official))?nc.official:raw.series[0].value;
       data={ series:raw.series, refNav, ts:Date.now() };
       intradayCache[f.name]=data; saveIntraday(f.name, raw.series, refNav);
     }
-    drawIntraday(f, data, true);
+  }
+  if(!data||!data.series||!data.series.length){
+    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">该基金新浪暂未提供盘中估值（代码未覆盖或当日无数据）。交易时段打开会自动记录当日分时。</p></div>`;
     return;
   }
-  // 收盘后：回看当日已记录的盘中分时（localStorage 按日存，次日自动失效）
-  const saved=loadIntraday(f.name), mem=intradayCache[f.name];
-  const data = saved || (mem && _isToday(mem.ts) ? mem : null);
-  if(!data || !data.series || !data.series.length){
-    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">当日暂无盘中估值记录（交易时段未打开本页 / 新浪未提供）。交易时段打开会自动记录当日分时，收盘后仍可在此回看。</p></div>`;
-    return;
-  }
-  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">当日盘中估值分时 <span class="tag">新浪·已收盘</span></h2><span class="hint" style="font-size:11px">收盘回看</span></div><canvas id="intradayChart" style="width:100%;height:200px;display:block"></canvas><p class="hint" id="intradayNote" style="margin:6px 0 0"></p></div>`;
-  drawIntraday(f, data, false);
+  box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪${mkt?'':'·最新可得'}</span></h2><span id="intradayTime" class="hint" style="font-size:11px"></span></div><canvas id="intradayChart" style="width:100%;height:200px;display:block"></canvas><p class="hint" id="intradayNote" style="margin:6px 0 0">正在拉取盘中估值…</p></div>`;
+  drawIntraday(f, data, mkt);
 }
 function drawIntraday(f, data, live){
   const ref=data.refNav||data.series[0].value;

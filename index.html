@@ -780,6 +780,7 @@ input[type="number"] { -moz-appearance: textfield; }
             <select id="sortSelect" onchange="setSort(this.value)">
               <option value="mv">市值</option>
               <option value="ret">收益率</option>
+              <option value="tdy">当日收益</option>
               <option value="day">官方涨跌</option>
               <option value="nav">单位净值</option>
               <option value="est">估算涨跌</option>
@@ -799,6 +800,7 @@ input[type="number"] { -moz-appearance: textfield; }
               <label><input type="checkbox" data-col="day" onchange="toggleCol('day',this.checked)"> 官方涨跌</label>
               <label><input type="checkbox" data-col="mv" onchange="toggleCol('mv',this.checked)"> 持仓金额</label>
               <label><input type="checkbox" data-col="ret" onchange="toggleCol('ret',this.checked)"> 持有收益</label>
+              <label><input type="checkbox" data-col="tdy" onchange="toggleCol('tdy',this.checked)"> 当日收益</label>
             </div>
           </div>
         </div>
@@ -1607,11 +1609,11 @@ function setSort(s){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,day:true,mv:true,ret:true};
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false}; } }catch(e){}
+let colVis={nav:true,est:true,day:true,mv:true,ret:true,tdy:true};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,tdy:o.tdy!==false}; } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderHomeList(); }
 function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
-function syncColSetChecks(){ ['nav','est','day','mv','ret'].forEach(k=>{ const cb=document.querySelector('#colSetDrop input[data-col="'+k+'"]'); if(cb) cb.checked=colVis[k]; }); }
+function syncColSetChecks(){ ['nav','est','day','mv','ret','tdy'].forEach(k=>{ const cb=document.querySelector('#colSetDrop input[data-col="'+k+'"]'); if(cb) cb.checked=colVis[k]; }); }
 document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
 function setHomeView(v){
   homeView=v;
@@ -1782,6 +1784,7 @@ function renderHomeList(){
     else if(holdSort==='name'){ cmp=a.name.localeCompare(b.name,'zh-CN'); }
     else if(holdSort==='nav'){ av=(navCache[a.name]&&navCache[a.name].nav)||0; bv=(navCache[b.name]&&navCache[b.name].nav)||0; }
     else if(holdSort==='est'){ av=(navCache[a.name]&&navCache[a.name].gszzl)||0; bv=(navCache[b.name]&&navCache[b.name].gszzl)||0; }
+    else if(holdSort==='tdy'){ const da=(navCache[a.name]&&navCache[a.name].navChg!=null)?a.mv-a.mv/(1+navCache[a.name].navChg/100):0; const db=(navCache[b.name]&&navCache[b.name].navChg!=null)?b.mv-b.mv/(1+navCache[b.name].navChg/100):0; av=da; bv=db; }
     else { av=a.mv; bv=b.mv; }
     if(cmp===undefined) cmp=bv-av;
     return holdSortDir==='asc' ? -cmp : cmp;
@@ -1863,6 +1866,7 @@ function renderHomeDense(list){
   if(colVis.day) cols.push({key:'day',label:'官方涨跌'});
   if(colVis.mv)  cols.push({key:'mv',label:'持仓金额'});
   if(colVis.ret) cols.push({key:'ret',label:'持有收益'});
+  if(colVis.tdy) cols.push({key:'tdy',label:'当日收益'});
   const rows=list.map(f=>{
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
     const nc=navCache[f.name]||{};
@@ -1899,6 +1903,16 @@ function renderHomeDense(list){
       }
       else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
       else if(c.key==='ret') tds+=`<td class="${rcls}"><div class="dt-big">${profit>=0?'+':''}${M(profit)}</div><div class="dt-sub2">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
+      else if(c.key==='tdy'){
+        const dp=(navCache[f.name]&&navCache[f.name].navChg!=null)?navCache[f.name].navChg:null;
+        if(dp!=null && f.mv!=null){
+          const amt=f.mv-f.mv/(1+dp/100);
+          const acls=amt>=0?'pos':'neg';
+          tds+=`<td class="${acls}"><div class="dt-big">${amt>=0?'+':''}${M(amt)}</div><div class="dt-sub2">${dp>=0?'+':''}${dp.toFixed(2)}%</div></td>`;
+        } else {
+          tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
+        }
+      }
     });
     return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">${tds}</tr>`;
   }).join('');

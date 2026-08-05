@@ -2659,8 +2659,11 @@ function buildFundsView(){
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
   all.forEach(f=>{ if(catOverride[f.name]) f.cat=catOverride[f.name]; });
-  const _fundNames = new Set(all.map(f=>f.name));
-  const _bondHold = BOND_FUNDS.filter(f=> !_fundNames.has(f.name)).map(f=>{
+  // 债基去重：snaps 存的是全名（如「摩根瑞益纯债债券C」），BOND_FUNDS 存的是短名（「摩根瑞益纯债C」），
+  // 精确名匹配会失效导致同一债基在持仓里出现两次。按归一化名（去「债券」）判定是否为同一只，避免双计。
+  const _normBondName = n => (n||'').replace(/债券/g,'');
+  const _fundNames = new Set(all.map(f=> _normBondName(f.name)));
+  const _bondHold = BOND_FUNDS.filter(f=> !_fundNames.has(_normBondName(f.name))).map(f=>{
     const _amt = bondAmt(f);
     return { name:f.name, cat:'债基', account:f.acc, tags:undefined, shares:0, cost:_amt, mv:_amt, profit:0, ret:0, days:null, nav:null, costPx:1, trades:[], realized:0, currency:'CNY', isBond:true, code:f.code };
   });

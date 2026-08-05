@@ -3479,7 +3479,8 @@ async function refresh(){
   flashMap={};
   Object.keys(navCache).forEach(n=>{ const p=prev[n],cur=navCache[n].nav; if(p!=null&&cur!=null&&p!==0){ const chg=(cur-p)/p*100; if(Math.abs(chg)>0.0001) flashMap[n]=+chg.toFixed(2); } });
   compute(); todayGain=0; let anyG=false;
-  fundsView.forEach(f=>{ if(flashMap[f.name]!=null){ const chg=flashMap[f.name]/100; const oldMV=f.mv/(1+chg); todayGain+=(f.mv-oldMV); anyG=true; } });
+  // 今日盈亏改用「当日确认涨跌幅(navChg)」驱动（相对昨收的已确认盈亏），而非两次刷新差值(flashMap)
+  fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.navChg!=null){ const chg=_nc.navChg/100; const oldMV=f.mv/(1+chg); todayGain+=(f.mv-oldMV); anyG=true; } });
   todayGain=anyG?todayGain:null; if(currentView==='home'){ renderOverview(); renderHomeList(); if(activeTab===1) renderPie(); }
   recordSnapshot();
   prefetchHoldings();

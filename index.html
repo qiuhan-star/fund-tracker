@@ -192,6 +192,9 @@
   .scope-seg button + button { border-left:1px solid var(--border-strong); }
   .scope-seg button.on { background:var(--accent); color:#fff; font-weight:600; }
   .scope-hint { font-size:11.5px; color:var(--text-3); }
+  .scope-seg button.add { color:var(--accent); font-weight:700; padding:6px 10px; }
+  .scope-seg button .acc-x { margin-left:5px; opacity:.55; font-size:11px; cursor:pointer; }
+  .scope-seg button .acc-x:hover { opacity:1; }
   .tag-owner { display:inline-block; background:#fff3e0; color:#c77700; border:1px solid #ffd9a0; padding:0 6px; border-radius:6px; font-size:11px; margin-left:4px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
@@ -555,6 +558,9 @@ input[type="number"] { -moz-appearance: textfield; }
 .rank-row:hover{ background:var(--surface-2); }
 .rank-act{ text-align:center; }
 .rank-plus{ display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-text);font-weight:700;font-size:15px; }
+.rank-more-row td{ padding:6px 8px; text-align:center; }
+.rank-more-btn{ width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text-2); border-radius:8px; padding:8px; font-size:13px; cursor:pointer; font-family:inherit; transition:.15s; }
+.rank-more-btn:hover{ border-color:var(--accent); color:var(--accent); }
 .rank-menu{ position:fixed;z-index:9000;min-width:184px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);padding:8px; }
 .rm-title{ font-size:12px;font-weight:600;padding:4px 8px 8px;color:var(--text-2);border-bottom:1px solid var(--border-3);margin-bottom:6px; }
 .rm-title .rm-code{ font-weight:400;color:var(--text-3);font-size:11px; }
@@ -655,16 +661,10 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
 
     <!-- 大盘实时（腾讯财经，独立备用源） -->
-    <!-- 资金口径切换（我的 / 小号 / 微信债券 / 全量）· 置于最顶，作为整页数据口径上下文（先看是谁的钱，再看数据） -->
+    <!-- 账户切换（我的 / 小号 / 微信债券 / 自定义 / 全量）· 置于最顶，作为整页数据归属上下文 -->
     <div class="scope-bar" id="scopeBar">
-      <span class="scope-lab">资金口径</span>
-      <div class="scope-seg">
-        <button id="sc-我的" class="on" onclick="setScopeAcc('我的')">我的</button>
-        <button id="sc-小号" onclick="setScopeAcc('小号')">小号</button>
-        <button id="sc-微信债券" onclick="setScopeAcc('微信债券')">微信债券</button>
-        <button id="sc-all" onclick="setScopeAcc('all')">全量</button>
-      </div>
-      <span id="scopeHint" class="scope-hint"></span>
+      <span class="scope-lab">账户</span>
+      <div class="scope-seg" id="scopeSeg"></div>
     </div>
 
     <!-- 市场风向 Tab 专用：数据源 / 刷新状态栏（公共市场数据，与"谁的账户"无关） -->
@@ -1005,7 +1005,7 @@ const SAMPLE_TRADE = [
 
 let snaps=[], trades=[], navCache={}, dailySnapshots=[];
 let fundsView=[], _allHoldings=[];
-const ACCOUNTS=['我的','小号','微信债券'];
+const BUILTIN_ACCOUNTS=['我的','小号','微信债券'];
 // 账户归属：isPersonal=false 表示代管（如帮家人理财），不计入个人总资产 / 个人仓位
 const ACCOUNT_META={
   '我的':{isPersonal:true, owner:'本人'},
@@ -1015,9 +1015,18 @@ const ACCOUNT_META={
   '支付宝':{isPersonal:true, owner:'本人'},
   '微信':{isPersonal:true, owner:'本人'}
 };
+// 用户自定义账户（持久化于 localStorage ft_accounts）：在内置账户之外自行添加，默认计入本人个人资产
+let ACCOUNTS=[...BUILTIN_ACCOUNTS];
+let CUSTOM_ACCOUNTS=[];
+try{ CUSTOM_ACCOUNTS=JSON.parse(localStorage.getItem('ft_accounts')||'[]'); }catch(e){}
+CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNT_META[a]) ACCOUNT_META[a]={isPersonal:true, owner:'本人'}; });
+function loadCustomAccounts(){ ACCOUNTS=[...BUILTIN_ACCOUNTS]; CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNTS.includes(a)) ACCOUNTS.push(a); }); }
+loadCustomAccounts();
+function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function accIsPersonal(acc){ const m=ACCOUNT_META[acc]; return m? (m.isPersonal!==false) : true; }
 function accOwner(acc){ const m=ACCOUNT_META[acc]; return m? m.owner : '本人'; }
-// 资金口径（账户级）：我的 / 小号 / 微信债券 / all(全量)；兼容旧值 personal→我的、managed→小号
+// 账户（账户级）：我的 / 小号 / 微信债券 / 自定义 / all(全量)；兼容旧值 personal→我的、managed→小号
 let scopeAcc='我的';
 try{ const _s=localStorage.getItem('ft_scope');
   if(_s==='personal') scopeAcc='我的';
@@ -1040,7 +1049,7 @@ function setScope(s){ // 兼容旧调用（设置弹窗）→ 同步到账户口
   updateScopeUI();
   compute();
 }
-// 资金口径（账户级）：我的 / 小号 / 微信债券 / all
+// 账户（账户级）：我的 / 小号 / 微信债券 / 自定义 / all
 function setScopeAcc(acc){
   scopeAcc=acc;
   currentScope = acc==='all'?'all':(acc==='小号'?'managed':'personal');
@@ -1049,14 +1058,35 @@ function setScopeAcc(acc){
   updateScopeUI();
   compute(); // 重建 _allHoldings(scope) + fundsView(curAccount)
 }
-function updateScopeUI(){
-  ['我的','小号','微信债券','all'].forEach(k=>{ const e=document.getElementById('sc-'+k); if(e) e.classList.toggle('on', k===scopeAcc); });
-  const e=document.getElementById('scopeHint');
-  if(e) e.textContent = scopeAcc==='我的' ? '仅统计「我的」账户'
-                  : scopeAcc==='小号' ? '仅统计「小号」账户（妈妈的代管资产）'
-                  : scopeAcc==='微信债券' ? '仅统计「微信债券」账户'
-                  : '全部账户：我的 + 小号 + 微信债券';
+function renderScopeBar(){
+  const seg=document.getElementById('scopeSeg'); if(!seg) return;
+  let html='';
+  ['我的','小号','微信债券'].forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+'</button>'; });
+  CUSTOM_ACCOUNTS.forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+'<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span></button>'; });
+  html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(\'all\')">全量</button>';
+  html+='<button class="add" onclick="addAccount()" title="添加账户">＋</button>';
+  seg.innerHTML=html;
 }
+function addAccount(){
+  const name=(window.prompt('添加账户名称：')||'').trim();
+  if(!name) return;
+  if(BUILTIN_ACCOUNTS.indexOf(name)>=0){ toast('「'+name+'」是内置账户'); return; }
+  if(CUSTOM_ACCOUNTS.indexOf(name)>=0){ setScopeAcc(name); return; }
+  CUSTOM_ACCOUNTS.push(name); ACCOUNT_META[name]={isPersonal:true, owner:'本人'};
+  try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
+  loadCustomAccounts(); setScopeAcc(name);
+  toast('已添加账户「'+name+'」');
+}
+function removeAccount(name){
+  if(BUILTIN_ACCOUNTS.indexOf(name)>=0){ toast('内置账户不可删除'); return; }
+  if(!window.confirm('删除账户「'+name+'」？\n仅移除该账户标签，已存在的交易记录仍保留（显示为原账户名）。')) return;
+  CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.filter(a=>a!==name);
+  try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
+  loadCustomAccounts();
+  if(scopeAcc===name) setScopeAcc('我的'); else { renderScopeBar(); compute(); }
+  toast('已删除账户「'+name+'」');
+}
+function updateScopeUI(){ renderScopeBar(); }
 let curAccount='全部', curGroup='汇总', pendingAcc=null;
 const GROUP_OBS_MV=700;
 function accOf(x){ return (x&&x.account)?x.account:'我的'; }
@@ -1285,13 +1315,31 @@ const MARKET_FLOW = {
 const MARKET_RANK = {
   top: [
     { code: '001630', name: '天弘中证计算机ETF联接C', type: '指数型', est: '+3.12%', w1: '+6.4%' },
+    { code: '011609', name: '国泰中证动漫游戏ETF联接C', type: '指数型', est: '+4.02%', w1: '+9.1%' },
+    { code: '013814', name: '富国中证芯片ETF联接C', type: '指数型', est: '+3.80%', w1: '+8.4%' },
     { code: '005827', name: '易方达蓝筹精选混合', type: '混合型', est: '+2.45%', w1: '+4.1%' },
-    { code: '008086', name: '华夏中证500ETF联接C', type: '指数型', est: '+1.88%', w1: '+2.9%' }
+    { code: '012348', name: '富国中证科技50ETF联接C', type: '指数型', est: '+3.45%', w1: '+7.2%' },
+    { code: '008086', name: '华夏中证500ETF联接C', type: '指数型', est: '+1.88%', w1: '+2.9%' },
+    { code: '270042', name: '广发纳斯达克100指数', type: '指数型', est: '+2.20%', w1: '+5.5%' },
+    { code: '519674', name: '银河创新成长混合', type: '混合型', est: '+3.45%', w1: '+7.0%' },
+    { code: '003096', name: '中欧医疗健康混合C', type: '混合型', est: '+1.65%', w1: '+2.3%' },
+    { code: '164824', name: '工银瑞信印度市场', type: '指数型', est: '+1.30%', w1: '+4.2%' },
+    { code: '001632', name: '天弘中证食品饮料C', type: '指数型', est: '+1.95%', w1: '+3.0%' },
+    { code: '501016', name: '国泰中证申万证券', type: '指数型', est: '+1.55%', w1: '+2.6%' }
   ],
   hot: [
     { code: '001180', name: '易方达中小盘混合', type: '混合型', est: '+0.85%', w1: '+1.2%' },
     { code: '110011', name: '易方达中小盘', type: '股票型', est: '-0.32%', w1: '+0.5%' },
-    { code: '003003', name: '华夏半导体芯片ETF', type: '指数型', est: '+2.95%', w1: '+8.1%' }
+    { code: '003003', name: '华夏半导体芯片ETF', type: '指数型', est: '+2.95%', w1: '+8.1%' },
+    { code: '161725', name: '招商中证白酒指数', type: '指数型', est: '+2.10%', w1: '+3.8%' },
+    { code: '320007', name: '诺安成长混合', type: '混合型', est: '+3.10%', w1: '+6.5%' },
+    { code: '163406', name: '兴全合润混合', type: '混合型', est: '+1.20%', w1: '+2.4%' },
+    { code: '519674', name: '银河创新成长混合', type: '混合型', est: '+3.45%', w1: '+7.0%' },
+    { code: '001714', name: '工银瑞信文体产业', type: '混合型', est: '+0.95%', w1: '+1.8%' },
+    { code: '002001', name: '华夏回报混合', type: '混合型', est: '+0.60%', w1: '+1.1%' },
+    { code: '011609', name: '国泰中证动漫游戏ETF联接C', type: '指数型', est: '+4.02%', w1: '+9.1%' },
+    { code: '010198', name: '易方达竞争优势企业', type: '混合型', est: '-0.45%', w1: '+0.8%' },
+    { code: '012348', name: '富国中证科技50ETF联接C', type: '指数型', est: '+3.45%', w1: '+7.2%' }
   ]
 };
 function fetchCapitalFlow(){
@@ -1347,10 +1395,25 @@ function switchRankTab(type, btnEl){
 function loadFundRank(type){
   const tbody=document.getElementById('rank-table-body'); if(!tbody) return;
   const rows=MARKET_RANK[type]||[];
-  tbody.innerHTML=rows.map(item=>{
+  const LIMIT=5;
+  let html='';
+  rows.forEach(function(item,i){
     const isUp=item.est.startsWith('+');
-    return `<tr class="rank-row" onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3)">${item.code}</div></td><td>${item.type}</td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td>${item.w1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td></tr>`;
-  }).join('');
+    const hide = i>=LIMIT ? ' data-more="1" style="display:none"' : '';
+    html += `<tr class="rank-row"${hide} onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3)">${item.code}</div></td><td>${item.type}</td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td>${item.w1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td></tr>`;
+  });
+  if(rows.length>LIMIT){
+    html += `<tr class="rank-more-row"><td colspan="5"><button class="rank-more-btn" data-exp="0" onclick="toggleRankMore(this)">展开全部 ${rows.length} 条 ▼</button></td></tr>`;
+  }
+  tbody.innerHTML=html;
+}
+function toggleRankMore(btn){
+  const tbody=btn.closest('tbody'); if(!tbody) return;
+  const expanded = btn.getAttribute('data-exp')==='1';
+  [].slice.call(tbody.querySelectorAll('.rank-row[data-more="1"]')).forEach(function(r){ r.style.display = expanded ? 'none' : ''; });
+  btn.setAttribute('data-exp', expanded?'0':'1');
+  const total=tbody.querySelectorAll('.rank-row').length;
+  btn.textContent = expanded ? ('展开全部 '+total+' 条 ▼') : '收起 ▲';
 }
 // ---------- 榜单一键加自选 / 记账 ----------
 let _rankMenuEl=null;
@@ -1443,8 +1506,8 @@ function setSort(s){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,day:false,mv:true,ret:true};
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day===true,mv:o.mv!==false,ret:o.ret!==false}; } }catch(e){}
+let colVis={nav:true,est:true,day:true,mv:true,ret:true};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false}; } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderHomeList(); }
 function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
 function syncColSetChecks(){ ['nav','est','day','mv','ret'].forEach(k=>{ const cb=document.querySelector('#colSetDrop input[data-col="'+k+'"]'); if(cb) cb.checked=colVis[k]; }); }
@@ -1499,7 +1562,7 @@ function filterCat(c){
 // ---------- 账户筛选 + 按账户汇总 ----------
 function renderAccFilter(){
   const box=document.getElementById('accFilter'); if(!box) return;
-  // 级联过滤：只显示当前资金口径下实际存在的账户（_allHoldings 已按 scopeMatches 过滤）
+  // 级联过滤：只显示当前账户口径下实际存在的账户（_allHoldings 已按 scopeMatches 过滤）
   const accs=['全部', ...new Set(_allHoldings.map(f=>f.account))].filter((v,i,a)=>a.indexOf(v)===i);
   box.innerHTML=accs.map(c=>`<button class="cat-chip${c===curAccount?' on':''}" onclick="filterAccount('${esc(c)}')">${c}</button>`).join('');
 }
@@ -1574,7 +1637,7 @@ function renderHomeList(){
   }
   list.sort((a,b)=>{
     if(holdSort==='ret') return b.ret-a.ret;
-    if(holdSort==='day') return (flashMap[b.name]||0)-(flashMap[a.name]||0);
+    if(holdSort==='day') return ((navCache[b.name]&&navCache[b.name].navChg)||0)-((navCache[a.name]&&navCache[a.name].navChg)||0);
     if(holdSort==='name') return a.name.localeCompare(b.name,'zh-CN');
     return b.mv-a.mv;
   });
@@ -1597,7 +1660,8 @@ function renderHomeList(){
     if(holdWatchOnly&&obsHtml) fillWatchQuotes();
     return;
   }
-  const dayFmt=f=> flashMap[f.name]!=null?`<span class="hl-sep">|</span><span class="${flashMap[f.name]>=0?'pos':'neg'}">${flashMap[f.name]>=0?'▲':'▼'}${Math.abs(flashMap[f.name]).toFixed(2)}%</span>`:'';
+  // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
+  const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
   if(homeView==='dense'){
     box.innerHTML=renderHomeDense(list)+obsHtml;
   } else {
@@ -1613,14 +1677,14 @@ function renderHomeList(){
     const sharesFmt=f.shares!=null&&f.shares>0?(hidden?'••••份':fmt(f.shares)+' 份'):'';
     const _nc=navCache[f.name];
     const _mkt=isMarketOpen(new Date());
+    // 估算涨跌(预估)始终显示；当日确认涨跌交由 dayFmt 渲染（收盘后/盘中均显示最后确认值）
     const estTag=(_mkt&&_nc&&_nc.gsz!=null)?`<span class="hl-sep">|</span><span class="est ${_nc.gszzl>=0?'pos':'neg'}">估 ${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>`:'';
-    const confirmTag=(!_mkt&&_nc&&_nc.gszzl!=null)?`<span class="hl-sep">|</span><span class="est confirm ${_nc.gszzl>=0?'pos':'neg'}">${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}% · ${_nc.date?_nc.date.slice(5):'收盘'}</span>`:'';
     const head=`<div class="hl-head" onclick="toggleHold('${key}')">
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
         ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')}
         ${f.account&&f.account!=='我的'?`<span class="tag">${f.account}</span>`:''}${currentScope==='all'?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
-        <span>成本 ${M(f.cost)}</span>${estTag||confirmTag}${dayFmt(f)}
+        <span>成本 ${M(f.cost)}</span>${estTag}${dayFmt(f)}
       </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       <div class="hl-arrow">›</div>
@@ -1651,19 +1715,18 @@ function renderHomeList(){
 function renderHomeDense(list){
   const cols=[{key:'name',label:'基金 / 标签'}];
   if(colVis.nav) cols.push({key:'nav',label:'单位净值'});
-  if(colVis.est) cols.push({key:'est',label:'估算涨跌'});
-  if(colVis.day) cols.push({key:'day',label:'当日涨跌'});
+  if(colVis.est) cols.push({key:'est',label:'估算·估'});
+  if(colVis.day) cols.push({key:'day',label:'当日·确认'});
   if(colVis.mv)  cols.push({key:'mv',label:'持仓金额'});
   if(colVis.ret) cols.push({key:'ret',label:'持有收益'});
   const rows=list.map(f=>{
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
     const nc=navCache[f.name]||{};
     const _mkt=isMarketOpen(new Date());
-    const estCell=(_mkt&&nc.gsz!=null)
-      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">估 ${navFmt(nc.gsz)}</div>`
-      : (nc.gszzl!=null)
-        ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${nc.date?nc.date.slice(5):'收盘'}</div>`
-        : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'收盘'}</div>`;
+    // 估算涨跌：盘中估值为预估，收盘后若估值缺失（如 QDII）仍标注「估·预估」，明确其非确认值
+    const estCell=(nc.gszzl!=null)
+      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${_mkt&&nc.gsz!=null?('估 '+navFmt(nc.gsz)):'估·预估'}</div>`
+      : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'无预估'}</div>`;
     const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人')?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
@@ -1680,10 +1743,12 @@ function renderHomeDense(list){
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
       else if(c.key==='day'){
-        const dp=flashMap[f.name];
+        // 当日涨跌 = 收盘后最后确认的官方涨跌幅（navChg = NAVCHGRT），不再用两次刷新差值(flashMap)冒充
+        const dp=(navCache[f.name]&&navCache[f.name].navChg!=null)?navCache[f.name].navChg:null;
+        const dpDate=(navCache[f.name]&&navCache[f.name].navChgDate)?navCache[f.name].navChgDate:'';
         if(dp!=null && f.mv!=null){
           const amt=f.mv-f.mv/(1+dp/100);
-          tds+=`<td class="${dp>=0?'pos':'neg'}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">${amt>=0?'+':''}${M(amt)}</div></td>`;
+          tds+=`<td class="${dp>=0?'pos':'neg'}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">收 ${dpDate?dpDate.slice(5):''}</div></td>`;
         } else {
           tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
         }
@@ -2729,8 +2794,9 @@ async function fetchFundMNFInfo(codes){
     const out={};
     d.Datas.forEach(v=>{
       const code=v.FCODE; if(!code) return;
-      const nav=parseFloat(v.NAV), gsz=parseFloat(v.GSZ), gszzl=parseFloat(v.GSZZL);
-      out[code]={ nav:isNaN(nav)?null:nav, date:v.PDATE||'', gsz:isNaN(gsz)?null:gsz, gszzl:isNaN(gszzl)?null:gszzl, gztime:v.GZTIME||null, official:isNaN(nav)?null:nav };
+      const nav=parseFloat(v.NAV), gsz=parseFloat(v.GSZ), gszzl=parseFloat(v.GSZZL), navChg=parseFloat(v.NAVCHGRT);
+      // navChg = 基金公司收盘后确认的当日涨跌幅（NAVCHGRT）；与盘中估算 gszzl 区分：估值只是预估，navChg 才是最后确认值
+      out[code]={ nav:isNaN(nav)?null:nav, date:v.PDATE||'', gsz:isNaN(gsz)?null:gsz, gszzl:isNaN(gszzl)?null:gszzl, gztime:v.GZTIME||null, official:isNaN(nav)?null:nav, navChg:isNaN(navChg)?null:navChg, navChgDate:v.PDATE||'' };
     });
     return out;
   }catch(e){ return null; }
@@ -2744,7 +2810,10 @@ function fetchSinaEstimate(code){
     let gsz=null, gszzl=null, gztime=null;
     if(Array.isArray(nw)&&nw.length){ const p=nw[nw.length-1]; gsz=parseFloat(p.pre_nav); gszzl=parseFloat(p.growthrate); gztime=(p.min_time&&data.worth_date)?(data.worth_date+' '+p.min_time):null; }
     if(isNaN(gsz)){ gsz=official; gszzl=parseFloat(data.worth_rate)*100; }
-    return { nav:isNaN(gsz)?null:gsz, date:data.worth_date||'', gsz:isNaN(gsz)?null:gsz, gszzl:isNaN(gszzl)?null:gszzl, gztime, official:isNaN(official)?null:official };
+    // QDII 无盘中分时 → gsz 为 null，此时 gszzl 实为「官方净值涨跌率(worth_rate)」，即当日确认涨跌幅
+    const navChg=(isNaN(gsz))?(isNaN(gszzl)?null:gszzl):null;
+    const navChgDate=(isNaN(gsz))?(data.worth_date||''):'';
+    return { nav:isNaN(gsz)?null:gsz, date:data.worth_date||'', gsz:isNaN(gsz)?null:gsz, gszzl:isNaN(gszzl)?null:gszzl, gztime, official:isNaN(official)?null:official, navChg, navChgDate };
   }).catch(()=>null);
 }
 // 盘中估值分时数据源：新浪「getEstimateNetworthPic」。
@@ -2921,7 +2990,7 @@ async function fetchNavBatch(names){
     if(data){
       pairs.forEach(([nm,c])=>{
         const d=data[c]; if(d&&d.nav!=null){
-          navCache[nm]={ nav:(d.gsz!=null?d.gsz:d.nav), date:d.date, gsz:d.gsz, gszTs:(d.gsz!=null&&isMarketOpen(new Date())?Date.now():undefined), gszzl:d.gszzl, gztime:d.gztime, official:d.official };
+          navCache[nm]={ nav:(d.gsz!=null?d.gsz:d.nav), date:d.date, gsz:d.gsz, gszTs:(d.gsz!=null&&isMarketOpen(new Date())?Date.now():undefined), gszzl:d.gszzl, gztime:d.gztime, official:d.official, navChg:(d.navChg!=null?d.navChg:undefined), navChgDate:(d.navChgDate||undefined) };
           ok++;
         }
       });
@@ -2932,11 +3001,11 @@ async function fetchNavBatch(names){
     const need=pairs.filter(([nm])=> !navCache[nm] || navCache[nm].gsz==null );
     await Promise.all(need.map(async ([nm,c])=>{
       const s=await fetchSinaEstimate(c);
-      if(s&&s.gsz!=null){ const ex=navCache[nm]||{}; navCache[nm]={ nav:s.gsz, date:ex.date||s.date, gsz:s.gsz, gszTs:Date.now(), gszzl:s.gszzl, gztime:s.gztime, official:(ex.official!=null?ex.official:(s.official!=null?s.official:ex.nav)) }; }
+      if(s&&s.gsz!=null){ const ex=navCache[nm]||{}; navCache[nm]={ nav:s.gsz, date:ex.date||s.date, gsz:s.gsz, gszTs:Date.now(), gszzl:s.gszzl, gztime:s.gztime, official:(ex.official!=null?ex.official:(s.official!=null?s.official:ex.nav)), navChg:(ex.navChg!=null?ex.navChg:undefined), navChgDate:(ex.navChgDate||undefined) }; }
     }));
   }
   const missing=names.filter(nm=>!navCache[nm]||navCache[nm].nav==null);
-  await Promise.all(missing.map(async nm=>{ const r=await fetchNav(nm); if(r&&r.nav!=null){ const ex=navCache[nm]||{}; navCache[nm]={ nav:r.nav, date:r.date||ex.date||'', gsz:ex.gsz, gszzl:ex.gszzl, gztime:ex.gztime, official:(ex.official!=null?ex.official:r.nav) }; } }));
+  await Promise.all(missing.map(async nm=>{ const r=await fetchNav(nm); if(r&&r.nav!=null){ const ex=navCache[nm]||{}; navCache[nm]={ nav:r.nav, date:r.date||ex.date||'', gsz:ex.gsz, gszzl:ex.gszzl, gztime:ex.gztime, official:(ex.official!=null?ex.official:r.nav), navChg:(ex.navChg!=null?ex.navChg:undefined), navChgDate:(ex.navChgDate||undefined) }; } }));
   return ok;
 }
 function lastUpdatedLabel(){
@@ -3736,7 +3805,7 @@ function renderGrowth(){
   growthChart=new Chart(box,{type:'line',data:{labels,datasets:[
     {label:'总资产(元)',data:totData,borderColor:'#2f6fed',backgroundColor:'rgba(47,111,237,.08)',fill:true,tension:.3,pointRadius:3},
     {label:'累计收益(元)',data:profData,borderColor:TH().up,backgroundColor:'transparent',tension:.3,pointRadius:3,yAxisID:'y2'}
-  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10}}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{color:TH().grid}},y2:{position:'right',ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{display:false}}}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10}}},tooltip:{titleFont:{family:CH_FONT,size:12,weight:'600'},bodyFont:{family:CH_FONT,size:12},padding:8,cornerRadius:8}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{color:TH().grid}},y2:{position:'right',ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{display:false}}}}});
   if(info) info.textContent=growthSeries.length?('已记录 '+growthSeries.length+' 个快照点'):'（示意：点「记录此刻」开始积累真实曲线）';
 }
 function recordGrowth(){

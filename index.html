@@ -55,6 +55,12 @@
   .btn.primary:hover { background: var(--accent-strong); }
   .btn.sm { padding: 4px 10px; font-size: 12px; }
   .del { color: var(--up); cursor: pointer; border: none; background: none; font-size: 13px; }
+  /* 配额超限持久横幅（带一键导出备份） */
+  .quota-bar { position:fixed; left:50%; bottom:18px; transform:translateX(-50%) translateY(20px); max-width:540px; width:calc(100% - 32px); background:var(--card); border:1px solid var(--up); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,.14); padding:12px 14px; display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:60; }
+  .quota-bar.show { opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+  .quota-bar .qb-ico { font-size:20px; line-height:1; }
+  .quota-bar .qb-txt { flex:1; font-size:12.5px; line-height:1.4; }
+  .quota-bar .btn { white-space:nowrap; }
   .tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; line-height: 18px; background: var(--border-3); color: var(--text-2); }
   .advice { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 9px 13px; border-radius: 0 8px 8px 0; margin-bottom: 8px; font-size: 12.5px; line-height: 1.7; }
   .advice.danger { border-left-color: var(--danger); background: var(--danger-bg); }
@@ -1018,8 +1024,15 @@ function migrate(raw){
 }
 
 let _quotaWarned=false;
-function lsSafeSet(key,val){ try{ localStorage.setItem(key,val); return true; }catch(e){ const name=(e&&e.name)||'', msg=(e&&e.message)||'', code=e&&e.code; const quota = name==='QuotaExceededError' || code===22 || code===1014 || name.indexOf('Quota')>=0 || msg.toLowerCase().indexOf('quota')>=0; if(quota && !_quotaWarned){ _quotaWarned=true; toast('⚠️ 本地空间已满，数据未保存。建议：导出 JSON 备份，并清理早期「交易记录 / 每日快照」'); } else if(!quota){ console.error('localStorage 写入失败:',e); } return false; } }
+function lsSafeSet(key,val){ try{ localStorage.setItem(key,val); return true; }catch(e){ const name=(e&&e.name)||'', msg=(e&&e.message)||'', code=e&&e.code; const quota = name==='QuotaExceededError' || code===22 || code===1014 || name.indexOf('Quota')>=0 || msg.toLowerCase().indexOf('quota')>=0; if(quota && !_quotaWarned){ _quotaWarned=true; showQuotaBanner(); } else if(!quota){ console.error('localStorage 写入失败:',e); } return false; } }
 async function silentSave(){ lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots})); }
+function showQuotaBanner(){
+  let b=document.getElementById('quotaBar');
+  if(!b){ b=document.createElement('div'); b.id='quotaBar'; b.className='quota-bar'; document.body.appendChild(b); }
+  b.innerHTML='<div class="qb-ico">\u26A0\uFE0F</div><div class="qb-txt"><b>\u672C\u5730\u7A7A\u95F4\u5DF2\u6EE1\uFF0C\u6570\u636E\u672A\u80FD\u4FDD\u5B58</b><br><span class="hint">\u5EFA\u8BAE\u7ACB\u523B\u5BFC\u51FA JSON \u5907\u4EFD\uFF0C\u5E76\u6E05\u7406\u65E9\u671F\u300C\u4EA4\u6613\u8BB0\u5F55 / \u6BCF\u65E5\u5FEB\u7167\u300D\u817E\u51FA\u7A7A\u95F4\u3002</span></div><button class="btn sm primary" onclick="exportJSON();dismissQuotaBar()">\uD83D\uDCE4 \u5BFC\u51FA JSON \u5907\u4EFD</button><button class="btn sm" onclick="dismissQuotaBar()">\u77E5\u9053\u4E86</button>';
+  b.classList.add('show');
+}
+function dismissQuotaBar(){ const b=document.getElementById('quotaBar'); if(b) b.classList.remove('show'); }
 function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data-'+ts+'.json'; a.click(); document.getElementById('updated').textContent='已保存并下载存档 '+ts; toast('已保存并下载存档'); }
 
 // ---------- 更多菜单 ----------

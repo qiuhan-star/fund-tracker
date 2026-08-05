@@ -1600,12 +1600,23 @@ function renderWatch(){
 }
 
 function setSort(s){
-  if(holdSort===s){ holdSortDir = holdSortDir==='desc'?'asc':'desc'; }
+  if(s===''||s==='default'){ holdSort=''; holdSortDir=''; }
+  else if(holdSort===s){ holdSortDir = holdSortDir==='desc'?'asc':'desc'; }
   else { holdSort=s; holdSortDir = (s==='name')?'asc':'desc'; }
   if(s==='day'&&!colVis.day){ colVis.day=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='est'&&!colVis.est){ colVis.est=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='nav'&&!colVis.nav){ colVis.nav=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
-  const sel=document.getElementById('sortSelect'); if(sel) sel.value=s;
+  if(s==='ret'&&!colVis.ret){ colVis.ret=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
+  if(s==='tdy'&&!colVis.tdy){ colVis.tdy=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
+  const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
+  if(currentView==='home'&&activeTab===0) renderHomeList();
+}
+// 列头点击排序：三段循环 降序↓ → 升序↑ → 默认(市值降序)
+function toggleSortHeader(key){
+  if(holdSort!==key){ holdSort=key; holdSortDir = (key==='name')?'asc':'desc'; }
+  else if(holdSortDir==='desc'){ holdSortDir='asc'; }
+  else { holdSort=''; holdSortDir=''; }
+  const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐（紧凑表 ⚙️ 列设置）----------

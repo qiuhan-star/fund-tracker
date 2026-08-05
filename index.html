@@ -635,6 +635,11 @@ input[type="number"] { -moz-appearance: textfield; }
 .mkt-light.ms-lunch{ color:#c6840a;background:rgba(198,132,10,.12);border-color:rgba(198,132,10,.35); }
   .mkt-light.ms-closed{ color:#8a9099;background:rgba(138,144,153,.12);border-color:rgba(138,144,153,.3); }
 
+  /* 详情页：浮动/已实现区分 + FIFO 口径声明 */
+  .tag-unreal{ background:var(--warn); color:#fff; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }
+  .tag-real{ background:rgba(31,157,77,.15); color:#1f9d4d; font-size:10px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }
+  .basis-note{ font-size:11.5px; color:var(--text-3); margin-top:10px; line-height:1.5; }
+  .basis-note b{ color:var(--text-2); }
 /* ===== 设置弹窗 (sm-) ===== */
 .sm-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px; overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
 .sm-mask.show{ display:flex; }
@@ -2712,9 +2717,10 @@ function headerHtml(f){
     <div class="cards4">
       <div class="mcard"><p class="lbl">当前市值</p><p class="val" id="dhMv">${M(f.mv)}</p></div>
       <div class="mcard"><p class="lbl">持有收益率</p><p class="val ${rcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</p></div>
-      <div class="mcard"><p class="lbl">成本</p><p class="val" id="dhCost">${M(f.cost)}</p></div>
-      <div class="mcard"><p class="lbl">收益</p><p class="val ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</p></div>
-    </div></div>`;
+      <div class="mcard"><p class="lbl">浮动盈亏 <span class="tag tag-unreal">未实现</span></p><p class="val ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</p></div>
+      <div class="mcard"><p class="lbl">已实现盈亏 <span class="tag tag-real">落袋</span></p><p class="val ${f.realized>=0?'pos':'neg'}" id="dhRealized">${f.realized>=0?'+':''}${M(f.realized||0)}</p></div>
+    </div>
+    <div class="basis-note">💡 成本计算口径：<b>FIFO 先进先出法</b>——加仓 / 部分卖出按买入先后顺序匹配成本，与主流券商一致。</div></div>`;
 }
 function updateDetailHeader(f){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -2722,6 +2728,7 @@ function updateDetailHeader(f){
   const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.className='val '+(f.ret>0?'pos':f.ret<0?'neg':'zero');}
   set('dhCost',M(f.cost));
   const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+M(f.profit); e2.className='val '+(f.profit>0?'pos':f.profit<0?'neg':'zero');}
+  const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.className='val '+(f.realized>=0?'pos':'neg');}
 }
 function genericDetail(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);

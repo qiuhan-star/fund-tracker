@@ -254,9 +254,15 @@
   .tag-科技 { background: var(--accent-soft); color: #534ab7; }
   .tag-周期资源 { background: var(--warn-bg); color: #a9701a; }
   .tag-制造 { background: var(--accent-soft); color: #2f7fb8; }
-  .tag-混合\/债 { background: var(--down-bg); color: #3a8a4a; }
-  .tag-宽基\/行业 { background: var(--accent-soft); color: #7a4ab7; }
+  .tag-债基 { background: var(--down-bg); color: #3a8a4a; }
+  .tag-混合 { background: var(--border-3); color: var(--text-2); }
   .tag-其他 { background: var(--border-3); color: var(--text-2); }
+  /* 分类编辑浮动菜单 */
+  .float-menu { position: fixed; z-index: 9999; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; padding: 6px; box-shadow: 0 8px 28px rgba(0,0,0,.16); min-width: 150px; }
+  .float-menu .fm-title { font-size: 11px; color: var(--text-3); padding: 3px 8px 6px; }
+  .float-menu .fm-opt { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; color: var(--text); font-family: inherit; }
+  .float-menu .fm-opt:hover { background: var(--border-3); }
+  .float-menu .fm-opt.on { color: var(--accent-on); font-weight: 600; }
   /* 首页持仓列表：基金内"重仓"小条（前三大） */
   .hl-hold { display:none; margin-top:6px; font-size:11px; color:var(--text-3); align-items:center; flex-wrap:wrap; gap:6px; }
   .hh-label { font-weight:600; margin-right:2px; }
@@ -338,7 +344,9 @@
   .al-input { width: 70px; padding: 5px 8px; border: 1px solid var(--border-strong); border-radius: 8px; font-size: 13px; font-family: inherit; }
 
   /* 赛道筛选 chips */
-  .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .filter-lab { font-size: 12px; color: var(--text-3); min-width: 28px; flex: none; }
+  .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
   .hold-search { margin-bottom: 10px; }
   .hold-search input { width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 10px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); }
   .hold-search input:focus { outline: none; border-color: var(--accent-on); }

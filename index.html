@@ -1465,6 +1465,7 @@ function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0)
 // ---------- 赛道筛选 ----------
 function renderGroupTabs(){
   const box=document.getElementById('groupTabs'); if(!box) return;
+  box.innerHTML='';
   ['汇总','自选','持有','观察'].forEach(function(t){
     const b=document.createElement('button');
     b.className='cat-chip'+(t===curGroup?' on':'');

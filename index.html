@@ -495,15 +495,8 @@
   .more-menu .drop button:hover { background: var(--bg); }
   .more-menu .drop hr { border: none; border-top: 1px solid var(--border-2); margin: 4px 0; }
   .more-menu .drop .drop-hint { font-size: 11px; color: var(--text-3); line-height: 1.55; padding: 6px 14px 4px; margin: 0; }
-  .col-set .drop { min-width: 168px; padding:6px 0; }
-  .col-set .drop label { display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:13px; cursor:pointer; color:var(--text); user-select:none; }
-  .col-set .drop label:hover { background:var(--bg); }
-  .col-set .drop .col-cb { display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; transition:opacity .12s; }
-  .col-set .drop .col-cb:not(.on) { opacity:.5; }
-  .col-set .drop .col-cb input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
-  .col-set .drop .col-name { flex:1; }
-  .col-set .drop .col-grip { color:var(--text-3); font-size:13px; opacity:.55; cursor:grab; letter-spacing:-2px; }
-  .col-set .drop .col-grip:active { cursor:grabbing; }
+  .col-chips { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .col-chips .cat-chip { padding: 3px 10px; font-size: 11.5px; }
 
   @keyframes flashUp { 0% { background: var(--up-bg); } 100% { background: transparent; } }
   @keyframes flashDown { 0% { background: var(--down-bg); } 100% { background: transparent; } }
@@ -805,11 +798,9 @@ input[type="number"] { -moz-appearance: textfield; }
               <option value="">默认</option>
             </select>
           </div>
-          <div class="more-menu col-set">
-            <button class="btn sm" onclick="toggleColSet(event)">⚙️ 列</button>
-            <div class="drop" id="colSetDrop">
-              <div id="colSetList"></div>
-            </div>
+          <div class="sort-seg">
+            <span class="lab">列</span>
+            <div class="col-chips" id="colChips"></div>
           </div>
         </div>
         </div>
@@ -1627,16 +1618,11 @@ const COL_KEYS=['nav','est','day','mv','ret','tdy'];
 let colOrder=COL_KEYS.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)) colOrder.push(k); }); } } }catch(e){}
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); }catch(e){} }
-function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
-function toggleColSet(e){ e.stopPropagation(); const d=document.getElementById('colSetDrop'); if(d) d.classList.toggle('show'); }
+function toggleCol(k,on){ const v=(on===undefined)?!colVis[k]:!!on; colVis[k]=v; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
 function syncColSetChecks(){ renderColSet(); }
 function renderColSet(){
-  const box=document.getElementById('colSetList'); if(!box) return;
-  box.innerHTML=colOrder.map(k=>{
-    const on=colVis[k];
-    return `<label class="col-cb${on?' on':''}"><input type="checkbox" data-col="${k}" ${on?'checked':''} onchange="toggleCol('${k}',this.checked)">`
-      +`<span class="col-name">${COL_DEFS[k]}</span><span class="col-grip" title="在表格里直接拖动列头即可换顺序">⠿</span></label>`;
-  }).join('');
+  const box=document.getElementById('colChips'); if(!box) return;
+  box.innerHTML=colOrder.map(k=>`<button type="button" class="cat-chip${colVis[k]?' on':''}" onclick="toggleCol('${k}')">${COL_DEFS[k]}</button>`).join('');
 }
 // 拖动列头换列顺序：轻点列头=排序，按住拖动列头=换列（HTML5 原生 DnD 自动区分 click / drag，二者不冲突）
 let _colDragKey=null;
@@ -1668,7 +1654,6 @@ function colDragEnd(e){
   _colDragKey=null;
   document.querySelectorAll('.dense-table th').forEach(t=>t.classList.remove('col-dragging','col-dragover'));
 }
-document.addEventListener('click', function(e){ if(!e.target.closest('.col-set')){ const d=document.getElementById('colSetDrop'); if(d) d.classList.remove('show'); } });
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 标签筛选（你打的标签 + 自动「观察」，可多选叠加）----------
@@ -2818,11 +2803,142 @@ function parallelUniverseCard(f){
     +'<div class="mcard"><p class="lbl">你的操作净效果</p><p class="val '+cls(diff)+'">'+sgn(diff)+'</p><p class="sub2">比躺平多 / 少赚</p></div>'
     +'</div><p class="pu-note">📌 '+note+'</p></div>';
 }
+
+// ---------- 平行宇宙 · 扩展场景（定投 / 分批vs一次性 / 止盈止损 / 转换优化） ----------
+function navOnOrBefore(arr, ds){
+  if(!arr||!arr.length) return null;
+  const target=new Date(String(ds).replace(/-/g,'/'));
+  let best=null;
+  for(let i=0;i<arr.length;i++){ if(arr[i].t<=target) best=arr[i].nav; else break; }
+  return best;
+}
+function pp(v){ return (v>=0?'+':'−')+Math.abs(v).toFixed(1)+'%'; }
+function puCls(v){ return v>=0?'pos':'neg'; }
+function puBuys(f){
+  return (trades||[]).filter(t=>t.name===f.name)
+    .filter(t=>(t.type==='buy'||t.type==='convert')&&(+t.amount>0)&&t.nav!=null&&t.nav!=='')
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+}
+// A. 定投版平行宇宙：从首笔买入月起每月定投到今天
+function puDCA(f, hist){
+  const buys=puBuys(f);
+  if(!buys.length) return null;
+  const fb=buys[0];
+  const monthly=Math.max(100, Math.round(fb.amount));
+  const start=new Date((fb.date||'1970-01-01').replace(/-/g,'/'));
+  const today=new Date();
+  const dom=Math.min(28, start.getDate());
+  const todayStr=today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
+  let y=start.getFullYear(), m=start.getMonth(), totalInv=0, totalSh=0, months=0;
+  while(y<today.getFullYear()||(y===today.getFullYear()&&m<=today.getMonth())){
+    const ds=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+dom).slice(-2);
+    if(ds<=todayStr){
+      const nav=navOnOrBefore(hist, ds);
+      if(nav!=null&&nav>0){ totalInv+=monthly; totalSh+=monthly/nav; months++; }
+    }
+    if(m===11){m=0;y++;} else m++;
+  }
+  const curUnit=(navCache[f.name]&&navCache[f.name].nav)?navCache[f.name].nav:(hist.length?hist[hist.length-1].nav:null);
+  if(curUnit==null||months===0) return null;
+  const endVal=totalSh*curUnit, profit=endVal-totalInv, retPct=totalInv>0?profit/totalInv*100:0;
+  const yrs=months/12, annual=(yrs>0&&retPct/100>-1)?(Math.pow(1+retPct/100,1/yrs)-1)*100:null;
+  const realInv=f.cost||0, realTotal=(f.profit||0)+(f.realized||0), realRet=realInv>0?realTotal/realInv*100:0;
+  const better=retPct>=realRet;
+  return '<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 定投版（从首笔月起每月定投 ¥'+monthly+'）</h2><span class="hint">对比你真实操作</span></div>'
+    +'<div class="pu-grid">'
+    +'<div class="mcard"><p class="lbl">定投累计投入</p><p class="val">'+M(totalInv)+'</p><p class="sub2">'+months+' 个月 · 月投 ¥'+monthly+'</p></div>'
+    +'<div class="mcard"><p class="lbl">定投期末市值</p><p class="val">'+M(endVal)+'</p><p class="sub2">份额 '+totalSh.toFixed(0)+'</p></div>'
+    +'<div class="mcard"><p class="lbl">定投收益 / 年化</p><p class="val '+puCls(profit)+'">'+M(profit)+'</p><p class="sub2">'+pp(retPct)+' · 年化'+(annual!=null?pp(annual):'—')+'</p></div>'
+    +'</div><p class="pu-note">📌 若当初不一把买，而是从首笔买入月（'+fb.date+'）起每月定投 ¥'+monthly+' 到今天，收益 '+pp(retPct)+'；你真实总收益 '+pp(realRet)+'（同样按投入算）。'+(better?'定投平滑了成本，跑赢你实际择时。':'你实际择时跑赢了这个机械定投。')+'</p></div>';
+}
+// B. 分批建仓 vs 一次性
+function puBatch(f){
+  const buys=puBuys(f);
+  if(!buys.length) return null;
+  const fb=buys[0];
+  let sAmt=0,sSh=0; buys.forEach(function(b){ const amt=+b.amount; const sh=(b.shares>0)?+b.shares:(+b.nav>0?amt/+b.nav:0); sAmt+=amt; sSh+=sh; });
+  if(sSh<=0) return null;
+  const wAvg=sAmt/sSh;
+  const firstNav=+fb.nav;
+  const diffPct=(wAvg-firstNav)/firstNav*100;
+  const costDiff=sAmt*(wAvg-firstNav);
+  const months=new Set(buys.map(function(b){return b.date.slice(0,7);})).size;
+  return '<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 分批建仓 vs 一次性</h2><span class="hint">'+buys.length+' 笔 · '+months+' 个月</span></div>'
+    +'<div class="pu-grid">'
+    +'<div class="mcard"><p class="lbl">首笔净值（一次性基准）</p><p class="val">'+firstNav.toFixed(4)+'</p><p class="sub2">'+fb.date+'</p></div>'
+    +'<div class="mcard"><p class="lbl">实际加权建仓净值</p><p class="val">'+wAvg.toFixed(4)+'</p><p class="sub2">'+(diffPct<0?('较首笔日便宜 '+pp(-diffPct)):('较首笔日贵 '+pp(diffPct)))+'</p></div>'
+    +'<div class="mcard"><p class="lbl">若全集中首日 vs 实际</p><p class="val '+puCls(-costDiff)+'">'+M(-costDiff)+'</p><p class="sub2">'+(costDiff<0?'分批帮你省下':'分批多花了')+'成本</p></div>'
+    +'</div><p class="pu-note">📌 你分 '+buys.length+' 笔在 '+months+' 个月建仓，加权均价 ¥'+wAvg.toFixed(4)+'，比首笔日 ¥'+firstNav.toFixed(4)+' '+(diffPct<0?'低':'高')+' '+pp(Math.abs(diffPct))+'。'+(diffPct<0?'分批买入摊低了成本。':'一次性在首笔日买反而更便宜。')+'</p></div>';
+}
+// C. 止盈 / 止损假设
+function puStop(f, hist){
+  const buys=puBuys(f);
+  if(!buys.length||!hist||!hist.length) return null;
+  const fb=buys[0];
+  const fbDate=new Date((fb.date||'1970-01-01').replace(/-/g,'/'));
+  let sA=0,sS=0; buys.forEach(function(b){const a=+b.amount;const s=(b.shares>0)?+b.shares:(+b.nav>0?a/+b.nav:0);sA+=a;sS+=s;});
+  const costPx=f.costPx||(sS>0?sA/sS:fb.nav);
+  let minNav=Infinity,maxNav=-Infinity,minP=null,maxP=null;
+  hist.forEach(function(p){ if(p.t>=fbDate){ if(p.nav<minNav){minNav=p.nav;minP=p;} if(p.nav>maxNav){maxNav=p.nav;maxP=p;} } });
+  if(!minP||!maxP) return null;
+  const spanHi=(maxNav-costPx)/costPx*100, spanLo=(minNav-costPx)/costPx*100;
+  function firstReach(test){ for(let i=0;i<hist.length;i++){ if(hist[i].t>=fbDate&&test(hist[i].nav)) return hist[i]; } return null; }
+  const tp=firstReach(function(n){return n>=costPx*1.2;});
+  const sl=firstReach(function(n){return n<=costPx*0.9;});
+  const curUnit=(navCache[f.name]&&navCache[f.name].nav)?navCache[f.name].nav:(hist.length?hist[hist.length-1].nav:null);
+  const hold=f.profit||0;
+  const tpTxt = tp ? ('触发 '+tp.t.toISOString().slice(0,10)+'，彼时卖收益 '+M(f.shares*tp.nav-f.cost)+'（vs 持有至今 '+M(hold)+'）') : ('未触发（区间最高仅 '+pp(spanHi)+'）');
+  const slTxt = sl ? ('触发 '+sl.t.toISOString().slice(0,10)+'，彼时割肉亏 '+M(f.shares*sl.nav-f.cost)+'（vs 扛到最低 '+M(f.shares*minNav-f.cost)+'）') : ('未触发（区间最低 '+pp(spanLo)+'）');
+  const extra = (tp&&hold>(f.shares*tp.nav-f.cost))?('（注：你选择持有至今比那时止盈多赚 '+M(hold-(f.shares*tp.nav-f.cost))+'）'):'';
+  return '<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 止盈 / 止损假设</h2><span class="hint">成本线 ¥'+costPx.toFixed(4)+'</span></div>'
+    +'<div class="pu-grid">'
+    +'<div class="mcard"><p class="lbl">历史最高 vs 成本</p><p class="val '+puCls(spanHi)+'">'+pp(spanHi)+'</p><p class="sub2">'+maxP.t.toISOString().slice(0,10)+'</p></div>'
+    +'<div class="mcard"><p class="lbl">历史最低 vs 成本</p><p class="val '+puCls(spanLo)+'">'+pp(spanLo)+'</p><p class="sub2">'+minP.t.toISOString().slice(0,10)+'</p></div>'
+    +'<div class="mcard"><p class="lbl">+20% 止盈 / −10% 止损</p><p class="val">'+(tp?'已触发':'未触')+' / '+(sl?'已触发':'未触')+'</p><p class="sub2">基于首笔日起历史</p></div>'
+    +'</div><p class="pu-note">📌 止盈：'+tpTxt+'。止损：'+slTxt+'。'+extra+'</p></div>';
+}
+// D. 转换优化（建仓资金来源分析）
+function puConvert(f){
+  const allTr=(trades||[]).filter(function(t){return t.name===f.name;});
+  const convIns=allTr.filter(function(t){return t.type==='convert';});
+  const fresh=allTr.filter(function(t){return t.type==='buy';});
+  if(!convIns.length&&!fresh.length) return null;
+  const convAmt=convIns.reduce(function(a,t){return a+(+t.amount||0);},0);
+  const freshAmt=fresh.reduce(function(a,t){return a+(+t.amount||0);},0);
+  const total=convAmt+freshAmt;
+  const ratio=total>0?convAmt/total*100:0;
+  return '<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 转换优化</h2><span class="hint">建仓资金来源</span></div>'
+    +'<div class="pu-grid">'
+    +'<div class="mcard"><p class="lbl">转换转入</p><p class="val">'+M(convAmt)+'</p><p class="sub2">'+convIns.length+' 笔</p></div>'
+    +'<div class="mcard"><p class="lbl">直接申购（新钱）</p><p class="val">'+M(freshAmt)+'</p><p class="sub2">'+fresh.length+' 笔</p></div>'
+    +'<div class="mcard"><p class="lbl">转换占比</p><p class="val">'+ratio.toFixed(0)+'%</p><p class="sub2">内部调仓程度</p></div>'
+    +'</div><p class="pu-note">📌 你这只基金 '+(ratio>=50?'主要靠内部转换调仓':'有一定比例靠转换调仓')+'（'+ratio.toFixed(0)+'% 来自转换）。C 类基金转换通常免申购费，且来源基金持有≥7天一般免赎回费，比「赎A+申B」省一道费、少一天在途；但若某笔转换的来源基金持有&lt;7天，可能本应扣 1.5% 赎回费（视平台是否豁免），可自行核对。</p></div>';
+}
+// 入口：异步取历史净值后拼装 A/B/C/D
+async function parallelUniverseExtras(f){
+  try{
+    const code=await resolveCode(f.name);
+    let hist=null;
+    if(code) hist=await fetchNavHistory(code);
+    let html='';
+    const b=puBatch(f); if(b) html+=b;
+    const d=puConvert(f); if(d) html+=d;
+    if(hist&&hist.length){
+      const a=puDCA(f,hist); if(a) html+=a;
+      const c=puStop(f,hist); if(c) html+=c;
+    } else {
+      html+='<div class="card pu-card"><div class="sec-head"><h2>🪐 平行宇宙 · 定投 / 止盈止损</h2></div><p class="hint" style="margin:8px 0">刷新历史净值（点 ↻ 刷新净值 或 查看「历史净值走势」）后可推演定投版与止盈止损场景。</p></div>';
+    }
+    return html;
+  }catch(e){ console.error('PU extras',e); return ''; }
+}
+
 function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
   try{ live.innerHTML += parallelUniverseCard(f); }catch(e){ console.error(e); }
+  try{ parallelUniverseExtras(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
   if(window._autoTrade){ window._autoTrade=false; const d=document.getElementById('nf-date'); if(d){ d.focus(); toast('填写交易信息后点「💾 保存并锁定」（净值可留空，T+1 自动填）'); } }
 }
 function headerHtml(f){

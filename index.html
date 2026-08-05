@@ -241,6 +241,19 @@
   .hl.alert-tp:hover { background: var(--warn-bg); }
   .hl.alert-sl { background: var(--up-bg); box-shadow: inset 3px 0 0 var(--danger); }
   .hl.alert-sl:hover { background: var(--up-bg); }
+  /* 持仓紧凑表格 */
+  .seg-group { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .dense-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .dense-table th { padding: 9px 8px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 11.5px; }
+  .dense-table th:first-child { text-align: left; }
+  .dense-table td { padding: 9px 8px; border-bottom: 1px solid var(--border-3); text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }
+  .dense-table td:first-child { text-align: left; }
+  .dense-table tbody tr { cursor: pointer; }
+  .dense-table tbody tr:hover { background: var(--surface-2); }
+  .dt-name { font-weight: 600; font-size: 0.88rem; line-height: 1.2; }
+  .dt-sub { font-size: 0.72rem; color: var(--text-3); margin-top: 4px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+  .dt-big { font-weight: 700; font-size: 0.92rem; }
+  .dt-sub2 { font-size: 0.72rem; color: var(--text-3); margin-top: 3px; }
   /* 持仓手风琴展开 */
   .hl-body { display: none; padding: 4px 14px 16px; border-top: 1px dashed var(--border-3); }
   .hl.open .hl-body { display: block; }
@@ -560,6 +573,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <div class="card">
         <div class="sec-head">
           <h2 style="margin:0;font-size:14px">我的持仓</h2>
+          <div class="seg-group">
           <div class="seg">
             <span class="lab">排序</span>
             <button id="sMv" class="on" onclick="setSort('mv')">市值</button>
@@ -567,12 +581,18 @@ input[type="number"] { -moz-appearance: textfield; }
             <button id="sDay" onclick="setSort('day')">当日</button>
             <button id="sName" onclick="setSort('name')">名称</button>
           </div>
+          <div class="seg">
+            <span class="lab">视图</span>
+            <button id="vCard" onclick="setHomeView('card')">卡片</button>
+            <button id="vDense" class="on" onclick="setHomeView('dense')">紧凑</button>
+          </div>
+        </div>
         </div>
         <div class="cat-filter" id="accFilter"></div>
         <div class="cat-filter" id="catFilter"></div>
         <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)" value="${holdSearch}"></div>
         <div id="homeList"></div>
-        <p class="hint">点任意一行<b>展开</b>查看持仓摘要与最近交易；展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、前十大持仓与复盘笔记）。</p>
+        <p class="hint">「紧凑」表格点任意一行直接进入详情；「卡片」视图点行可<b>展开</b>查看持仓摘要与最近交易。展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、前十大持仓与复盘笔记）。</p>
         <p class="privacy"><b>🔒 隐私：</b>所有数据仅保存在你本地浏览器 / 本文件，<b>不会上传任何服务器</b>。</p>
       </div>
     </div>
@@ -824,6 +844,8 @@ function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'支付宝'; }
 let flashMap={}, todayGain=null;
 let holdSort='mv', holdCatFilter='全部', holdSearch='';
+let homeView='dense';
+try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
 let currentView='home', detailName=null, detailAcc='支付宝', detailChartFund=null;
 let _focusFld=null, _focusPos=0;
 let hidden=false; let alerts={}; let growthSeries=[];
@@ -1005,6 +1027,17 @@ function setSort(s){
   ['mv','ret','day','name'].forEach(k=>{ const e=document.getElementById('s'+k[0].toUpperCase()+k.slice(1)); if(e)e.classList.toggle('on',k===s); });
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
+function setHomeView(v){
+  homeView=v;
+  try{ localStorage.setItem('ft_homeview', v); }catch(e){}
+  syncHomeViewUI();
+  if(currentView==='home'&&activeTab===0) renderHomeList();
+}
+function syncHomeViewUI(){
+  const c=document.getElementById('vCard'), d=document.getElementById('vDense');
+  if(c)c.classList.toggle('on', homeView==='card');
+  if(d)d.classList.toggle('on', homeView==='dense');
+}
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 赛道筛选 ----------
@@ -1067,6 +1100,7 @@ function blurbFor(f){
   return s;
 }
 function renderHomeList(){
+  syncHomeViewUI();
   let list=[...fundsView];
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
@@ -1094,7 +1128,10 @@ function renderHomeList(){
     return;
   }
   const dayFmt=f=> flashMap[f.name]!=null?`<span class="hl-sep">|</span><span class="${flashMap[f.name]>=0?'pos':'neg'}">${flashMap[f.name]>=0?'▲':'▼'}${Math.abs(flashMap[f.name]).toFixed(2)}%</span>`:'';
-  box.innerHTML=list.map(f=>{
+  if(homeView==='dense'){
+    box.innerHTML=renderHomeDense(list);
+  } else {
+    box.innerHTML=list.map(f=>{
     const key=encodeURIComponent(accKey(f.account,f.name));
     const code=syncCode(f.name);
     const isOpen=openSet.has(accKey(f.account,f.name));
@@ -1136,9 +1173,43 @@ function renderHomeList(){
       </div>
     </div>`;
     return `<div class="hl ${flash}${alertCls}${isOpen?' open':''}">${head}${body}</div>`;
-  }).join('');
-  list.forEach(f=>{ const c=syncCode(f.name); if(c&&holdingsCache[c]) paintHomeHold(c, holdingsCache[c]); });
+    }).join('');
+    list.forEach(f=>{ const c=syncCode(f.name); if(c&&holdingsCache[c]) paintHomeHold(c, holdingsCache[c]); });
+  }
 }
+function renderHomeDense(list){
+  const rows=list.map(f=>{
+    const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
+    const nc=navCache[f.name]||{};
+    const _mkt=isMarketOpen(new Date());
+    const estCell=(_mkt&&nc.gsz!=null)
+      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">估 ${navFmt(nc.gsz)}</div>`
+      : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'收盘'}</div>`;
+    const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人')?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
+    const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
+    const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
+    const code=syncCode(f.name);
+    const profit=f.profit!=null?f.profit:0;
+    return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">
+      <td><div class="dt-name">${esc(f.name)}</div><div class="dt-sub">
+        <span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}
+        <span class="tag">${f.account||'支付宝'}</span>${ownerTag}
+        ${code?`<span>#${code}</span>`:''}
+      </div></td>
+      <td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>
+      <td>${estCell}</td>
+      <td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>
+      <td class="${rcls}"><div class="dt-big">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div><div class="dt-sub2">${M(profit)}</div></td>
+    </tr>`;
+  }).join('');
+  return `<table class="dense-table">
+    <thead><tr>
+      <th>基金 / 标签</th><th>单位净值</th><th>估算涨跌</th><th>持仓金额</th><th>持有收益</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
 function goDetail(enc, acc){ pendingAcc=acc||null; location.hash='#/fund/'+enc; }
 
 // ---------- 分析（概览/饼/柱/建议）----------

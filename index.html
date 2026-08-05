@@ -491,6 +491,13 @@
   .col-set .drop { min-width: 132px; }
   .col-set .drop label { display:flex; align-items:center; gap:8px; padding:7px 14px; font-size:13px; cursor:pointer; color:var(--text); user-select:none; }
   .col-set .drop label:hover { background:var(--bg); }
+  .col-set .drop .col-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 14px; font-size:13px; color:var(--text); }
+  .col-set .drop .col-row:hover { background:var(--bg); }
+  .col-set .drop .col-cb { display:flex; align-items:center; gap:8px; flex:1; cursor:pointer; user-select:none; }
+  .col-set .drop .col-mv { display:flex; gap:4px; }
+  .col-set .drop .col-mv button { width:22px; height:22px; border:1px solid var(--border-strong); background:var(--surface); border-radius:5px; cursor:pointer; color:var(--text-2); font-size:15px; line-height:1; padding:0; }
+  .col-set .drop .col-mv button:hover:not(:disabled){ border-color:var(--accent); color:var(--accent); }
+  .col-set .drop .col-mv button:disabled{ opacity:.28; cursor:not-allowed; }
 
   @keyframes flashUp { 0% { background: var(--up-bg); } 100% { background: transparent; } }
   @keyframes flashDown { 0% { background: var(--down-bg); } 100% { background: transparent; } }
@@ -800,12 +807,7 @@ input[type="number"] { -moz-appearance: textfield; }
           <div class="more-menu col-set">
             <button class="btn sm" onclick="toggleColSet(event)">⚙️ 列</button>
             <div class="drop" id="colSetDrop">
-              <label><input type="checkbox" data-col="nav" onchange="toggleCol('nav',this.checked)"> 单位净值</label>
-              <label><input type="checkbox" data-col="est" onchange="toggleCol('est',this.checked)"> 估算涨跌</label>
-              <label><input type="checkbox" data-col="day" onchange="toggleCol('day',this.checked)"> 官方涨跌</label>
-              <label><input type="checkbox" data-col="mv" onchange="toggleCol('mv',this.checked)"> 持仓金额</label>
-              <label><input type="checkbox" data-col="ret" onchange="toggleCol('ret',this.checked)"> 持有收益</label>
-              <label><input type="checkbox" data-col="tdy" onchange="toggleCol('tdy',this.checked)"> 当日收益</label>
+              <div id="colSetList"></div>
             </div>
           </div>
         </div>
@@ -1897,12 +1899,7 @@ function renderHomeList(){
 }
 function renderHomeDense(list){
   const cols=[{key:'name',label:'基金 / 标签'}];
-  if(colVis.nav) cols.push({key:'nav',label:'单位净值'});
-  if(colVis.est) cols.push({key:'est',label:'估算涨跌'});
-  if(colVis.day) cols.push({key:'day',label:'官方涨跌'});
-  if(colVis.mv)  cols.push({key:'mv',label:'持仓金额'});
-  if(colVis.ret) cols.push({key:'ret',label:'持有收益'});
-  if(colVis.tdy) cols.push({key:'tdy',label:'当日收益'});
+  colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   const rows=list.map(f=>{
     const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero';
     const nc=navCache[f.name]||{};
@@ -4259,6 +4256,7 @@ function recordGrowth(){
   document.body.classList.toggle('masked',hidden);
   document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁');
   buildFundsView();
+  renderColSet();
   recordSnapshot();
   window.addEventListener('hashchange', route);
   route();

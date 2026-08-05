@@ -3840,7 +3840,7 @@ function parseCSV(text){
   const kw={ name:['名称','基金','代码','标的'], date:['日期','时间','买入日','成交日'], type:['方向','类型','买卖','操作'], amount:['金额','份额金额','成交金额','资金','金额(元)','金额元'], nav:['净值','单价','成交净值','单位净值'], fee:['费用','手续费','佣金','申购费','赎回费'], account:['账户','账号','平台','来源'], market:['市场','交易所','地区'], code:['代码','代号','证券代码','ticker'], shares:['股数','数量','持股数','股份'], price:['价格','成交价','现价','市价'] };
   const find=(arr)=>{ for(let i=0;i<head.length;i++){ if(arr.some(k=>head[i].includes(k))) return i; } return -1; };
   Object.keys(kw).forEach(k=>col[k]=find(kw[k]));
-  const guessType=(s)=>{ const v=String(s||'').toLowerCase(); if(/转换/.test(v)) return 'convert'; if(/买|申购|定投/.test(v)) return 'buy'; if(/卖|赎/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; if(/拆/.test(v)) return 'split'; return 'buy'; };
+  const guessType=(s)=>{ const v=String(s||'').toLowerCase(); if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'sell'; if(/买|申购|定投/.test(v)) return 'buy'; if(/卖|赎/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; if(/拆/.test(v)) return 'split'; return 'buy'; };
   let start=1; const added=[];
   if(col.name<0 && col.amount<0){ // 无表头 → 按列序：名称,日期,方向,金额,净值,费用
     col.name=0; col.date=1; col.type=2; col.amount=3; col.nav=4; col.fee=5; start=0;

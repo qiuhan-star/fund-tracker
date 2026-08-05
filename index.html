@@ -55,6 +55,8 @@
   .btn.primary:hover { background: var(--accent-strong); }
   .btn.sm { padding: 4px 10px; font-size: 12px; }
   .del { color: var(--up); cursor: pointer; border: none; background: none; font-size: 13px; }
+  .home-actions { display:flex; gap:8px; flex-wrap:wrap; margin:2px 0 12px; }
+  .home-actions .btn { display:inline-flex; align-items:center; gap:5px; }
   /* 配额超限持久横幅（带一键导出备份） */
   .quota-bar { position:fixed; left:50%; bottom:18px; transform:translateX(-50%) translateY(20px); max-width:540px; width:calc(100% - 32px); background:var(--card); border:1px solid var(--up); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,.14); padding:12px 14px; display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:60; }
   .quota-bar.show { opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
@@ -686,6 +688,11 @@ input[type="number"] { -moz-appearance: textfield; }
 
     <!-- Tab 0: 持仓 -->
     <div class="tab-panel active" id="tp0">
+      <div class="home-actions" id="homeActions">
+        <button class="btn primary" onclick="refresh()">↻ 刷新净值</button>
+        <button class="btn" onclick="addSnapRow()">＋ 加一只基金</button>
+        <button class="btn" onclick="addTradeMenu()">＋ 记一笔交易</button>
+      </div>
       <div class="card">
         <div class="sec-head">
           <h2 style="margin:0;font-size:14px">我的持仓</h2>
@@ -3908,9 +3915,6 @@ function recordGrowth(){
       <div class="sm-card">
         <h3>🚀 常用操作</h3>
         <div class="sm-grid">
-          <button class="sm-act" onclick="refresh();closeSettings()"><span>↻</span>刷新净值·行情</button>
-          <button class="sm-act" onclick="addSnapRow();closeSettings()"><span>＋</span>加一只基金</button>
-          <button class="sm-act" onclick="addTradeMenu();closeSettings()"><span>＋</span>记一笔交易</button>
           <button class="sm-act" onclick="openAllTrades();closeSettings()"><span>📒</span>全部交易</button>
           <button class="sm-act" onclick="saveLocal();closeSettings()"><span>💾</span>保存下载</button>
           <button class="sm-act" onclick="window.print();closeSettings()"><span>🖨</span>导出 PDF</button>

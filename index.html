@@ -2438,11 +2438,33 @@ function bondStatus(f,today){
 function setBondDate(code,v){ if(!bondState.dates) bondState.dates={}; bondState.dates[code]=v; saveBond(); renderBond(); }
 function setBondAmt(code,v){ const n=parseFloat(v); if(isNaN(n)) return; if(!bondState.amts) bondState.amts={}; bondState.amts[code]=n; saveBond(); renderBond(); }
 
+let bondWatch=loadBondWatch();
+function loadBondWatch(){ try{ const s=localStorage.getItem('ft_bond_watch'); if(s){const a=JSON.parse(s); if(Array.isArray(a)) return a;} }catch(e){} return []; }
+function saveBondWatch(){ try{localStorage.setItem('ft_bond_watch',JSON.stringify(bondWatch));}catch(e){} }
+function bondTypeOf(f){ return f.mix?'混合':'纯债'; }
+function bondWsInScope(w){ return (currentScope==='all') ? true : (w.acc && w.acc!=='—' && scopeMatches(w.acc)); }
+function addBondWatch(){
+  const el=document.getElementById('bwInput'); if(!el) return;
+  const v=(el.value||'').trim(); if(!v){ alert('请输入基金代码或名称'); return; }
+  if(bondWatch.some(x=>x.code===v)){ alert('已在自选池'); return; }
+  const isCode=/^\d{6}$/.test(v);
+  const f={code:v, name:isCode?('（'+v+'）待补全'):v, acc:'—', type:'待分类', dur:'—', credit:'—', y1:null, since:null, risk:'—', lock:0, mix:false, company:'待定', isWatch:true};
+  bondWatch.push(f); saveBondWatch(); el.value=''; renderBond();
+}
+function delBondWatch(code){ bondWatch=bondWatch.filter(x=>x.code!==code); saveBondWatch(); renderBond(); }
+function setWatchField(code,field,val){
+  const f=bondWatch.find(x=>x.code===code); if(!f) return;
+  if(field==='y1'||field==='since'){ const n=parseFloat(val); f[field]=isNaN(n)?null:n; }
+  else if(field==='lock'){ const n=parseInt(val,10); f[field]=isNaN(n)?0:n; }
+  else { f[field]=val; }
+  saveBondWatch(); renderBond();
+}
 function renderBond(){
   const bc=document.getElementById('bondContent'); if(!bc) return;
   loadBond();
   const today=new Date(); today.setHours(0,0,0,0);
   const scopedBonds=BOND_FUNDS.filter(f=>scopeMatches(f.acc));
+  const wsBonds=bondWatch.filter(bondWsInScope);
   const accs=ACCOUNTS.filter(a=>scopeMatches(a));
   let accCards=accs.map(a=>{ const fs=scopedBonds.filter(f=>f.acc===a); const sum=fs.reduce((s,f)=>s+bondAmt(f),0); return '<div class="mcard"><div class="lbl">'+a+'</div><div class="val">'+M(sum)+'</div><div class="sub2">'+fs.length+' 只债基</div></div>'; }).join('');
   const totalAll=scopedBonds.reduce((s,f)=>s+bondAmt(f),0);
@@ -2466,47 +2488,86 @@ function renderBond(){
     +'</tr>';
   }).join('');
 
-  const best=Math.max.apply(null,scopedBonds.map(f=>f.y1));
-  const worst=Math.min.apply(null,scopedBonds.map(f=>f.y1));
-  let cmp=scopedBonds.map(f=>{
-    const yc=f.y1===best?'cmp-best':(f.y1===worst?'cmp-worst':'');
+  let bwRows=wsBonds.map(f=>{
     const mc=f.mix?'<span class="tag-mix">混合</span>':'';
-    const cre=f.mix?'含股票':f.credit;
-    const ownerTag = (currentScope==='all' && accOwner(f.acc)!==f.acc) ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
     return '<tr>'
-      +'<td><b>'+f.code+'</b> '+f.name+mc+ownerTag+'</td>'
-      +'<td class="'+yc+'">'+f.y1.toFixed(2)+'%</td>'
-      +'<td>'+f.since.toFixed(2)+'%</td>'
-      +'<td>'+(f.dur==='—'?'—':f.dur)+'</td>'
-      +'<td>'+cre+'</td>'
-      +'<td>'+f.risk+'</td>'
-      +'<td>'+f.company+'</td>'
+      +'<td><b>'+escHtml(f.code)+'</b><br><span class="nm">'+escHtml(f.name)+'</span></td>'
+      +'<td>'+escHtml(f.acc||'—')+mc+'</td>'
+      +'<td><input class="mini-in" value="'+escHtml(f.type)+'" data-c="'+escHtml(f.code)+'" data-f="type" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
+      +'<td><input class="mini-in" value="'+escHtml(f.dur)+'" data-c="'+escHtml(f.code)+'" data-f="dur" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
+      +'<td><input class="mini-in" value="'+escHtml(f.credit)+'" data-c="'+escHtml(f.code)+'" data-f="credit" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
+      +'<td><input class="mini-in num" value="'+(f.y1==null?'':f.y1)+'" data-c="'+escHtml(f.code)+'" data-f="y1" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
+      +'<td><input class="mini-in num" value="'+(f.since==null?'':f.since)+'" data-c="'+escHtml(f.code)+'" data-f="since" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
+      +'<td><input class="mini-in" value="'+escHtml(f.risk)+'" data-c="'+escHtml(f.code)+'" data-f="risk" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
+      +'<td><input class="mini-in num" value="'+f.lock+'" data-c="'+escHtml(f.code)+'" data-f="lock" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
+      +'<td><button class="btn tiny danger" onclick="delBondWatch('+escJs(f.code)+')">删</button></td>'
     +'</tr>';
   }).join('');
+  if(!bwRows) bwRows='<tr><td colspan="10" class="sub2" style="color:#9aa0aa">暂无自选，用上方输入框加一只（手动补全资料，应用内暂不支持自动拉取）。</td></tr>';
 
-  const byCompany={};
-  scopedBonds.forEach(f=>{ (byCompany[f.company]=byCompany[f.company]||[]).push(f); });
-  let conv=Object.keys(byCompany).map(c=>{
-    const fs=byCompany[c];
-    if(fs.length>1){ return '<div class="conv-ok">✅ <b>'+c+'</b>：'+fs.map(x=>x.code).join(' ↔ ')+' 可同公司互转</div>'; }
-    return '<div class="conv-no">· <b>'+c+'</b>：'+fs[0].code+' 账户内仅 1 只，无同公司互转对象</div>';
-  }).join('');
+  let warnHtml='';
+  const byType={}; scopedBonds.forEach(f=>{const t=bondTypeOf(f); (byType[t]=byType[t]||[]).push(f);});
+  Object.keys(byType).forEach(t=>{ if(byType[t].length>=3){ warnHtml+='<div class="alert red"><span class="ttl">⚠️ 同一类型集中：</span>'+byType[t].length+' 只都是「'+t+'」('+byType[t].map(f=>f.code).join('、')+')。利率/信用暴露高度相似，利率上行时同跌，建议搭配其他类型分散。</div>'; }});
+  const byCo={}; scopedBonds.forEach(f=>{(byCo[f.company]=byCo[f.company]||[]).push(f);});
+  Object.keys(byCo).forEach(c=>{ if(byCo[c].length>=2){ warnHtml+='<div class="alert amber"><span class="ttl">🔁 同一公司集中：</span>'+byCo[c].length+' 只来自「'+c+'」('+byCo[c].map(f=>f.code).join('、')+')。同公司转换免赎回费方便，但公司风控/信用事件会一损俱损，建议跨公司分散。</div>'; }});
+  const byDC={}; scopedBonds.forEach(f=>{const k=(f.dur==='—'?'—':f.dur)+'/'+(f.credit==='—'?'—':f.credit); (byDC[k]=byDC[k]||[]).push(f);});
+  Object.keys(byDC).forEach(k=>{ if(byDC[k].length>=3){ warnHtml+='<div class="alert amber"><span class="ttl">📉 久期/信用相近：</span>'+byDC[k].length+' 只都是「'+k+'」('+byDC[k].map(f=>f.code).join('、')+')，对利率环境变化同涨同跌，分散效果有限。</div>'; }});
+  if(!warnHtml) warnHtml='<div class="alert ok">✅ 持仓暂未检测到明显同质化集中。</div>';
 
-  bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:13px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid #eef0f3;padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:#8a909a;font-weight:600;white-space:nowrap}.bond-tbl .nm{color:#9aa0aa;font-size:11.5px}.tag-mix{display:inline-block;background:#fff3e0;color:#c77700;border:1px solid #ffd9a0;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-lock{display:inline-block;background:#eef2ff;color:#3a5bd9;border:1px solid #c7d2fe;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:#9aa0aa}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.conv-ok{background:#eafaf0;border:1px solid #bfe9cd;color:#1f7a45;padding:8px 10px;border-radius:8px;margin:4px 0}.conv-no{color:#6b7280;padding:4px 2px}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:13px;color:#3a3f47}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12.5px}.mcard.hl{background:#f3f7ff;border-color:#c7d2fe}.tbl-wrap{overflow-x:auto}.tag-dur{display:inline-block;background:#eef6ff;color:#3a6ea5;border:1px solid #cfe2f5;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-credit{display:inline-block;background:#f0f2f5;color:#5a6270;border:1px solid #e2e5ea;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.cmp-bar{height:6px;background:#eef1f6;border-radius:3px;margin-top:5px;overflow:hidden}.cmp-bar .fill{height:100%;border-radius:3px}.bar-green{background:#1f9d55}.bar-amber{background:#e0962a}.bar-blue{background:#3a5bd9}</style>'
+  let sugHtml='';
+  const byCo2={}; scopedBonds.forEach(f=>{(byCo2[f.company]=byCo2[f.company]||[]).push(f);});
+  Object.keys(byCo2).forEach(c=>{ const g=byCo2[c]; if(g.length>=2){ sugHtml+='<div class="suggest"><b>同公司互转：</b>'+c+' 的 '+g.map(f=>f.code).join(' ↔ ')+' 可在同公司内互转（免赎回费），想换时优先，省 1.5% 惩罚。</div>'; }});
+  wsBonds.forEach(w=>{ if(w.mix) return; const alts=scopedBonds.filter(h=>!h.mix && bondTypeOf(h)===bondTypeOf(w) && h.risk===w.risk && w.y1!=null && h.y1!=null && w.y1>h.y1+0.3); alts.forEach(h=>{ sugHtml+='<div class="suggest"><b>更优替代：</b>自选 '+escHtml(w.code)+'(近1年 '+(w.y1==null?'—':w.y1.toFixed(2))+'%) 优于同类型持仓 '+h.code+'(近1年 '+h.y1.toFixed(2)+'%)。调仓时'+(w.company===h.company?'同公司可互转':'需赎 '+h.code+' 再申 '+escHtml(w.code)+'，注意 <7 天 1.5% 费 / 012279 锁6个月')+'。</div>'; });});
+  const pure=scopedBonds.filter(f=>!f.mix);
+  for(let i=0;i<pure.length;i++)for(let j=i+1;j<pure.length;j++){ const a=pure[i],b=pure[j]; if(a.company===b.company&&a.dur===b.dur&&a.credit===b.credit&&Math.abs(a.y1-b.y1)<1){ sugHtml+='<div class="suggest"><b>近似重复：</b>'+a.code+' 与 '+b.code+'(同为 '+a.company+a.dur+a.credit+'，近1年差 '+Math.abs(a.y1-b.y1).toFixed(2)+'%)功能重叠，保留其一即可，避免资金分散在雷同产品。</div>'; }}
+  scopedBonds.filter(f=>f.lock>0).forEach(f=>{ sugHtml+='<div class="suggest"><b>锁定期提醒：</b>'+f.code+' 每笔买入锁定 '+f.lock+' 个月，期内不可赎回，调仓前先算好到期日。</div>'; });
+  if(!sugHtml) sugHtml='<div class="placeholder">纳入自选后，这里会自动给出转换/替代/近似重复建议。</div>';
+
+  const segHtml=['all','hold','watch'].map(function(f){ return '<button data-f="'+f+'"'+(f===bondCmpFilter?' class="on"':'')+' onclick="setBondCmp('+escJs(f)+',this)">'+({'all':'全部','hold':'仅持仓','watch':'仅自选'})[f]+'</button>'; }).join('');
+
+  bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:13px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid #eef0f3;padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:#8a909a;font-weight:600;white-space:nowrap}.bond-tbl .nm{color:#9aa0aa;font-size:11.5px}.tag-mix{display:inline-block;background:#fff3e0;color:#c77700;border:1px solid #ffd9a0;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-lock{display:inline-block;background:#eef2ff;color:#3a5bd9;border:1px solid #c7d2fe;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:#9aa0aa}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:13px;color:#3a3f47}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12.5px}.mcard.hl{background:#f3f7ff;border-color:#c7d2fe}.tbl-wrap{overflow-x:auto}.tag-dur{display:inline-block;background:#eef6ff;color:#3a6ea5;border:1px solid #cfe2f5;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-credit{display:inline-block;background:#f0f2f5;color:#5a6270;border:1px solid #e2e5ea;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.cmp-bar{height:6px;background:#eef1f6;border-radius:3px;margin-top:5px;overflow:hidden}.cmp-bar .fill{height:100%;border-radius:3px}.bar-green{background:#1f9d55}.bar-amber{background:#e0962a}.bar-blue{background:#3a5bd9}.addbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.addbar input{border:1px solid #d0d3d9;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;width:200px}.mini-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12px;width:74px}.mini-in.num{width:58px}.seg{display:inline-flex;border:1px solid #d0d3d9;border-radius:8px;overflow:hidden;margin-bottom:8px}.seg button{border:none;background:#fff;padding:6px 14px;font-size:12.5px;cursor:pointer;color:#5a6270;font-family:inherit}.seg button.on{background:#2f6fed;color:#fff}.pool-h{display:inline-block;background:#eaf2ff;color:#2f6fed;padding:1px 7px;border-radius:6px;font-size:11px}.pool-w{display:inline-block;background:#fff3e0;color:#c77700;padding:1px 7px;border-radius:6px;font-size:11px}.alert{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13px;line-height:1.6}.alert.red{background:#fdeceb;border:1px solid #f6c9c4;color:#b4281c}.alert.amber{background:#fff7e8;border:1px solid #ffe2a8;color:#8a5a00}.alert.ok{background:#eafaf0;border:1px solid #bfe9cd;color:#1f7a45}.alert .ttl{font-weight:700}.suggest{border-left:3px solid #2f6fed;background:#f7faff;padding:8px 12px;margin:6px 0;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6}.suggest b{color:#2f6fed}.placeholder{background:#fafbfc;border:1px dashed #dcdfe4;border-radius:10px;padding:14px;color:#9aa0aa;font-size:12.5px}.btn.tiny{padding:2px 8px;font-size:11px}.btn.tiny.danger{background:#fff;color:#d8453a;border:1px solid #f6c9c4}</style>'
     +'<div class="card"><h2>持仓总览 <span class="hint">（按账户）</span></h2>'
     +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'+accCards+'</div>'
     +'<p class="hint" style="margin-top:10px">金额、买入日均可点开直接改，自动重算卖出时点与锁定期。</p></div>'
     +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
-    +'<div class="card"><h2>几只比一比 <span class="hint">（近1年 · 成立以来，截至 2026-08-04）</span></h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>近1年</th><th>成立以来</th><th>久期</th><th>信用</th><th>风险</th><th>公司</th></tr></thead><tbody>'+cmp+'</tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。注意 <b>011505 是混合基金（含股票）</b>，波动远大于纯债，不能与纯债直接比收益。</p></div>'
-    +'<div class="card"><h2>可转换提示</h2><p class="hint" style="margin-bottom:8px">基金转换（把 A 基金份额转成同公司 B 基金）通常只限<b>同一基金公司</b>内，且转入基金需开放转换。</p>'+conv+'</div>'
+    +'<div class="card"><h2>自选池 <span class="hint">（没买，纯围观研究）</span></h2><div class="addbar"><input id="bwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addBondWatch()">加自选</button><span class="hint">添加后在下表补全资料（应用内暂不支持自动拉取；有 App 截图可发我，我读图帮你填）</span></div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>类型</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th></th></tr></thead><tbody>'+bwRows+'</tbody></table></div></div>'
+    +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
+    +'<div class="card"><h2>同质化预警 <span class="hint">（你最怕的：不知不觉全买成同一类）</span></h2>'+warnHtml+'</div>'
+    +'<div class="card"><h2>决策建议 <span class="hint">（基于持仓 + 自选）</span></h2>'+sugHtml+'</div>'
     +'<div class="card"><h2>债基规则速记 <span class="hint">（小白必看）</span></h2><ul class="rules">'
     +'<li><b>赎回费：</b>多数债基持有 <b>＜7 天</b>赎回收 <b>1.5%</b> 惩罚费；满 7 天通常免赎回费（具体看基金合同）。</li>'
     +'<li><b>锁定期：</b><b>012279 嘉实稳和</b>有 <b>6 个月持有期</b>，买入后 6 个月内<b>不能卖</b>，期满后才可赎。</li>'
     +'<li><b>含股票：</b><b>011505 上银丰益混合C</b> 是<b>混合基金（含股票）</b>，不是纯债，波动更大、收益更高，不属于稳健防御仓。</li>'
-    +'<li><b>可转换：</b>仅<b>摩根</b>的 007330 ↔ 016211 可在同公司内互转；其余各公司仅 1 只，无互转对象。</li>'
+    +'<li><b>债基 vs 单只债券：</b>你买的是<b>债基（基金）</b>，随时可向基金公司赎回（受上述规则约束），不是交易所上市债券。</li>'
     +'</ul></div>';
+  renderBondCmp();
 }
-
+let bondCmpFilter='all';
+function renderBondCmp(){
+  const body=document.getElementById('bondCmpBody'); if(!body) return;
+  const scopedBonds=BOND_FUNDS.filter(f=>scopeMatches(f.acc));
+  const wsBonds=bondWatch.filter(bondWsInScope);
+  let list=[];
+  if(bondCmpFilter==='all') list=scopedBonds.map(f=>({f:f,pool:'持仓'})).concat(wsBonds.map(f=>({f:f,pool:'自选'})));
+  else if(bondCmpFilter==='hold') list=scopedBonds.map(f=>({f:f,pool:'持仓'}));
+  else list=wsBonds.map(f=>({f:f,pool:'自选'}));
+  const comp=list.filter(x=>!x.f.mix).map(x=>x.f.y1).filter(v=>v!=null);
+  const best=comp.length?Math.max.apply(null,comp):null;
+  const worst=comp.length?Math.min.apply(null,comp):null;
+  body.innerHTML=list.map(x=>{ const f=x.f; const yc=(!f.mix&&f.y1!=null&&best!=null&&f.y1===best)?'cmp-best':((!f.mix&&f.y1!=null&&worst!=null&&f.y1===worst)?'cmp-worst':''); const poolTag=x.pool==='持仓'?'<span class="pool-h">持仓</span>':'<span class="pool-w">自选</span>'; const mc=f.mix?'<span class="tag-mix">混合</span>':''; const ownerTag=(x.pool==='持仓'&&currentScope==='all'&&accOwner(f.acc)!==f.acc)?('<span class="tag-owner">'+accOwner(f.acc)+'</span>'):''; return '<tr>'
+    +'<td><b>'+escHtml(f.code)+'</b><br><span class="nm">'+escHtml(f.name)+'</span>'+mc+ownerTag+'</td>'
+    +'<td>'+poolTag+'</td>'
+    +'<td>'+(f.mix?'混合':(f.type||'纯债'))+'</td>'
+    +'<td>'+escHtml(f.company)+'</td>'
+    +'<td>'+(f.dur==='—'?'—':escHtml(f.dur))+'</td>'
+    +'<td>'+(f.credit==='—'?'—':escHtml(f.credit))+'</td>'
+    +'<td class="'+yc+'">'+(f.y1!=null?f.y1.toFixed(2)+'%':'—')+'</td>'
+    +'<td>'+(f.since!=null?f.since.toFixed(2)+'%':'—')+'</td>'
+    +'<td>'+escHtml(f.risk)+'</td>'
+    +'<td>'+(f.lock>0?f.lock+'个月':'—')+'</td>'
+  +'</tr>'; }).join('');
+}
+function setBondCmp(f,el){ bondCmpFilter=f; document.querySelectorAll('#bondCmpSeg button').forEach(b=>b.classList.remove('on')); if(el)el.classList.add('on'); renderBondCmp(); }
 
 
 // ---------- 交易流水 + 时间轴 ----------

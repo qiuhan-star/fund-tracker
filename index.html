@@ -1816,6 +1816,17 @@ function sortKeyVal(f,k){
   return 0;
 }
 
+function sortKeyVal(f,k){
+  const nc=navCache[f.name]||{};
+  if(k==='tdy'){ const chg=nc.navChg!=null?nc.navChg:0; const mv=f.mv||0; return mv-mv/(1+chg/100); }
+  if(k==='est') return nc.gszzl||0;
+  if(k==='day') return nc.navChg!=null?nc.navChg:0;
+  if(k==='mv') return f.mv||0;
+  if(k==='nav') return nc.nav!=null?nc.nav:0;
+  if(k==='ret') return f.ret||0;
+  return 0;
+}
+
 function renderHomeList(){
   syncColSetChecks();
   renderCatFilter();

@@ -118,8 +118,8 @@
   .cmp-diff th.dl, .cmp-diff td.dl { text-align:left; }
   .cmp-diff thead th { color:var(--text-2); font-weight:600; }
   .cmp-diff .sw { width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:middle; }
-  .cmp-diff .cmp-up { color:#e24b4b; font-weight:600; }
-  .cmp-diff .cmp-down { color:#27ae60; font-weight:600; }
+  .cmp-diff .cmp-up { color:var(--up); font-weight:600; }
+  .cmp-diff .cmp-down { color:var(--down); font-weight:600; }
   .cmp-diff .cmp-flat { color:var(--text-3); }
   .cmp-diff-note { font-size:11px; color:var(--text-3); margin-top:6px; }
   .risk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-2); margin: 2px 0 14px; justify-content: center; }
@@ -729,7 +729,7 @@ input[type="number"] { -moz-appearance: textfield; }
   function applyAccentVars(c){ if(!c)return; var r=document.documentElement.style; r.setProperty('--accent',c.a); r.setProperty('--accent-strong',c.s); r.setProperty('--accent-on',c.o); r.setProperty('--accent-text',c.t); r.setProperty('--accent-soft',c.soft); }
   try{ var _ac=localStorage.getItem('ft_accent'); if(_ac){ applyAccentVars(JSON.parse(_ac)); } }catch(e){}
   function TH(){var d=document.documentElement.getAttribute('data-theme')==='dark';return d?{up:'#f6465d',down:'#0ecb81',text:'#e8eef7',text3:'#6b7c97',axis:'#31405c',grid:'rgba(255,255,255,.06)',accent:'#3b82f6'}:{up:'#c0392b',down:'#27ae60',text:'#1f2329',text3:'#8a8f99',axis:'#dddddd',grid:'rgba(0,0,0,.05)',accent:'#2f6fed'};}
-  function _setTheme(c){ try{localStorage.setItem('ft_theme',c);}catch(e){} if(c==='system'){ var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m?'dark':'light'); } else document.documentElement.setAttribute('data-theme', c); location.reload(); }
+  function _setTheme(c){ try{localStorage.setItem('ft_theme',c);}catch(e){} if(c==='system'){ var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m?'dark':'light'); } else document.documentElement.setAttribute('data-theme', c); }
   function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');_setTheme(cur==='dark'?'light':'dark');}
   window.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️ 亮色':'🌙 暗色'; showBackupReminder();});
   if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){ try{ if((localStorage.getItem('ft_theme')||'system')==='system'){ document.documentElement.setAttribute('data-theme', e.matches?'dark':'light'); } }catch(_){} }); }catch(_){} }
@@ -788,7 +788,7 @@ input[type="number"] { -moz-appearance: textfield; }
           <div class="seg-group">
           <div class="sort-seg">
             <span class="lab">排序</span>
-            <select id="sortSelect" onchange="setSort(this.value)">
+            <select id="sortSelect" aria-label="排序方式" onchange="setSort(this.value)">
               <option value="mv">市值</option>
               <option value="ret">收益率</option>
               <option value="tdy">当日收益</option>
@@ -814,7 +814,7 @@ input[type="number"] { -moz-appearance: textfield; }
         </div>
         <div class="filter-row"><span class="filter-lab">分类</span><div class="cat-filter" id="catFilter"></div></div>
         <div class="filter-row"><span class="filter-lab">标签</span><div class="cat-filter" id="tagFilter"></div></div>
-        <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" oninput="setHoldSearch(this.value)"></div>
+        <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" aria-label="搜索基金" oninput="setHoldSearch(this.value)"></div>
         <div id="homeList"></div>
         <p class="hint">「紧凑」表格点任意一行直接进入详情；「卡片」视图点行可<b>展开</b>查看持仓摘要与最近交易。展开后点「📊 进入详情」进入详情页（实时估值、成本 vs 现价、交易流水、前十大持仓与复盘笔记）。</p>
         <p class="privacy"><b>🔒 隐私：</b>所有数据仅保存在你本地浏览器 / 本文件，<b>不会上传任何服务器</b>。</p>

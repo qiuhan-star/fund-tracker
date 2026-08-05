@@ -2491,7 +2491,7 @@ function showDetail(name){
   detailAcc = pendingAcc || (_allHoldings.find(x=>x.name===name)?.account) || '我的'; pendingAcc=null;
   document.getElementById('homeView').style.display='none'; document.getElementById('detailView').style.display='block';
   const f=findFund(name,detailAcc), c=document.getElementById('detailContent');
-  if(!f){ c.innerHTML=`<div class="card"><h2>未找到「${esc(name)}」</h2><p class="hint">可能已删除或数据未加载。<a href="#/" class="fundlink">返回首页</a></p></div>`; return; }
+  if(!f){ c.innerHTML=`<div class="card"><h2>未找到「${esc(name)}」</h2><p class="hint">可能已删除或数据未加载。点上方「← 返回首页」返回。</p></div>`; return; }
   enterDetail(f);
 }
 

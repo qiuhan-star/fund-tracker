@@ -690,9 +690,9 @@ input[type="number"] { -moz-appearance: textfield; }
     <!-- 主 Tab 导航 -->
     <div class="main-tabs">
       <button id="mt0" class="on" onclick="switchTab(0)">持仓</button>
+      <button id="mt3" onclick="switchTab(3)">债券</button>
       <button id="mt1" onclick="switchTab(1)">分析</button>
       <button id="mt2" onclick="switchTab(2)">清仓</button>
-      <button id="mt3" onclick="switchTab(3)">债券</button>
       <button id="mt5" onclick="switchTab(5)">🏛️ 市场风向</button>
     </div>
 
@@ -1892,7 +1892,7 @@ function loadProfile(){ try{const s=localStorage.getItem('ft_profile'); if(s){co
 function saveProfile(){ try{localStorage.setItem('ft_profile',JSON.stringify(userProfile));}catch(e){} }
 function setProfile(k,v){ userProfile[k]=v; saveProfile(); render(); }
 const RISK_CATS=['芯片','周期资源','海外','科技','制造','医药'];
-const CAT_COLORS={'芯片':'#5b6fd6','周期资源':'#e0913a','QDII':'#3aa0a0','海外':'#3aa0a0','科技':'#8a5cd0','制造':'#c0653a','医药':'#3f9e7a','宽基/行业':'#d4a017','混合/债':'#7a8290','其他':'#9aa0a6'};
+const CAT_COLORS={'芯片':'#5b6fd6','周期资源':'#e0913a','QDII':'#3aa0a0','海外':'#3aa0a0','科技':'#8a5cd0','制造':'#c0653a','医药':'#3f9e7a','宽基/行业':'#d4a017','混合/债':'#7a8290','债基':'#6E8CA0','其他':'#9aa0a6'};
 function profileModel(p){
   const base={'保守':{single:10,def:25,qdii:15},'稳健':{single:15,def:15,qdii:20},'激进':{single:25,def:8,qdii:25}}[p.risk]||{single:15,def:15,qdii:20};
   let def=base.def;
@@ -2413,6 +2413,13 @@ function buildFundsView(){
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
   all.forEach(f=>{ if(catOverride[f.name]) f.cat=catOverride[f.name]; });
   _allHoldings = all.filter(f=> scopeMatches(f.account));
+  // 债基并入统一总账（方案A·视图合并）：把 BOND_FUNDS 折叠成 cat='债基' 持仓并入，自动进总资产/每日快照/仓位饼图/账户汇总/分析页。与基金去重避免双计。
+  const _fundNames = new Set(all.map(f=>f.name));
+  const _bondHold = BOND_FUNDS.filter(f=> scopeMatches(f.acc) && !_fundNames.has(f.name)).map(f=>{
+    const _amt = bondAmt(f);
+    return { name:f.name, cat:'债基', account:f.acc, tags:undefined, shares:0, cost:_amt, mv:_amt, profit:0, ret:0, days:null, nav:null, costPx:1, trades:[], realized:0, currency:'CNY', isBond:true, code:f.code };
+  });
+  _allHoldings = _allHoldings.concat(_bondHold);
   // 保留显式选择的账户：即使暂无持仓也展示空状态，避免「切了跟没切一样」的错觉（自定义账户添加后即可在此记账）
   const accF = curAccount==='全部'? null:curAccount;
   fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF));

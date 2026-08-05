@@ -1313,7 +1313,7 @@ function renderHomeList(){
     const _nc=navCache[f.name];
     const _mkt=isMarketOpen(new Date());
     const estTag=(_mkt&&_nc&&_nc.gsz!=null)?`<span class="hl-sep">|</span><span class="est ${_nc.gszzl>=0?'pos':'neg'}">估 ${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>`:'';
-    const confirmTag=(!_mkt&&_nc&&_nc.date)?`<span class="hl-sep">|</span><span class="est confirm">确 ${_nc.date.slice(5)}</span>`:'';
+    const confirmTag=(!_mkt&&_nc&&_nc.gszzl!=null)?`<span class="hl-sep">|</span><span class="est confirm ${_nc.gszzl>=0?'pos':'neg'}">${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}% · ${_nc.date?_nc.date.slice(5):'收盘'}</span>`:'';
     const head=`<div class="hl-head" onclick="toggleHold('${key}')">
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
@@ -1353,7 +1353,9 @@ function renderHomeDense(list){
     const _mkt=isMarketOpen(new Date());
     const estCell=(_mkt&&nc.gsz!=null)
       ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">估 ${navFmt(nc.gsz)}</div>`
-      : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'收盘'}</div>`;
+      : (nc.gszzl!=null)
+        ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${nc.date?nc.date.slice(5):'收盘'}</div>`
+        : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'收盘'}</div>`;
     const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人')?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');

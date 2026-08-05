@@ -2666,7 +2666,7 @@ function buildFundsView(){
   });
   _allRaw = all.concat(_bondHold);  // 未过滤全量（所有账户 + 债基），供账户切换栏统计真实总数，不随当前账户口径变化
   // 债基并入统一总账（方案A·视图合并）：把 BOND_FUNDS 折叠成 cat='债基' 持仓并入，自动进总资产/每日快照/仓位饼图/账户汇总/分析页。与基金去重避免双计。
-  _allHoldings = all.filter(f=> scopeMatches(f.account)).concat(_bondHold.filter(f=> scopeMatches(f.acc)));
+  _allHoldings = all.filter(f=> scopeMatches(f.account)).concat(_bondHold.filter(f=> scopeMatches(f.account)));
   // 保留显式选择的账户：即使暂无持仓也展示空状态，避免「切了跟没切一样」的错觉（自定义账户添加后即可在此记账）
   const accF = curAccount==='全部'? null:curAccount;
   fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF));
@@ -3342,7 +3342,7 @@ function drawHist(all, f){
     else monthCount[ym].buy++;
   });
   const plotted=markers.length; // 区间可见交易笔数（= 分项之和）
-  // 月度操作带：覆盖可见数据区间的月份，逐月画分隔线 + 标签「M月 买N·卖N·转N」
+  // 月份标注：覆盖可见数据区间的月份，逐月画分隔线 + 标签「M月」（单独成行，不堆统计数）
   const monthTicks=[];
   if(labels.length){
     const firstM=new Date(labels[0].replace(/-/g,'/')), lastM=new Date(labels[labels.length-1].replace(/-/g,'/'));
@@ -3354,15 +3354,13 @@ function drawHist(all, f){
       let li=-1;
       for(let k=0;k<labels.length;k++){ if(labels[k] < ym+'-01') continue; li=k; break; }
       if(li>=0){
-        const mc=monthCount[ym];
         const lblTxt=(cy!==startYear?(''+(cy%100)+'年'):'')+(cm+1)+'月';
-        const stat = mc ? (' 买'+mc.buy+(mc.sell?('·卖'+mc.sell):'')+(mc.conv?('·转'+mc.conv):'')) : '';
-        monthTicks.push({label:lblTxt+stat, idx:li});
+        monthTicks.push({label:lblTxt, idx:li});
       }
       if(cm===11){ cm=0; cy++; } else cm++;
     }
   }
-  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注操作数') : ''; }
+  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
     labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:58,

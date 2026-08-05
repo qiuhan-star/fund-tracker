@@ -3337,7 +3337,7 @@ function drawHist(all, f){
   const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注操作数') : ''; }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
-    labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:46,
+    labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:58,
     yFmt:function(v){ return v.toFixed(3); },
     markers:markers,
     monthTicks:monthTicks,
@@ -4123,10 +4123,14 @@ function canvasLineChart(canvas, cfg){
     // 按月标注：细竖线分隔 + 月份标签（仅 drawHist 的历史净值图传入 monthTicks）
     if(cfg.monthTicks && cfg.monthTicks.length){
       ctx.textBaseline='top'; ctx.font='10px -apple-system,system-ui,sans-serif';
+      let prevX=-999;
       (cfg.monthTicks||[]).forEach(function(mt){
         const x=xAt(mt.idx);
         ctx.save(); ctx.strokeStyle=th.grid; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,padT+plotH); ctx.stroke(); ctx.restore();
-        ctx.fillStyle=th.text2; ctx.textAlign='left'; ctx.fillText(mt.label, x+3, padT+plotH+18);
+        ctx.fillStyle=th.text2; ctx.textAlign='left';
+        if(x-prevX < 46){ ctx.fillStyle=th.text3; ctx.font='9px -apple-system,system-ui,sans-serif'; } else { ctx.font='10px -apple-system,system-ui,sans-serif'; }
+        ctx.fillText(mt.label, x+3, padT+plotH+18);
+        prevX=x;
       });
       ctx.textAlign='left';
     }

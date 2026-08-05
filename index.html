@@ -1734,12 +1734,13 @@ function renderOverview(){
 }
 
 let pieChart=null, barChart=null;
+const CH_FONT='-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
 function renderPie(){
   const cats={}; fundsView.forEach(f=>cats[f.cat]=(cats[f.cat]||0)+f.mv);
   const labels=Object.keys(cats), data=Object.values(cats);
   const colors=labels.map(l=>CAT_COLORS[l]||'#9aa0a6');
   if(pieChart) pieChart.destroy();
-  pieChart=new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'58%',onClick:(evt,elements)=>{ if(!elements||!elements.length) return; const i=elements[0].index; if(labels[i]!=null) drillToCat(labels[i]); }}});
+  pieChart=new Chart(document.getElementById('pie'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{titleFont:{family:CH_FONT,size:12,weight:'600'},bodyFont:{family:CH_FONT,size:12},padding:8,cornerRadius:8}},cutout:'58%',onClick:(evt,elements)=>{ if(!elements||!elements.length) return; const i=elements[0].index; if(labels[i]!=null) drillToCat(labels[i]); }}});
   const tot=data.reduce((a,b)=>a+b,0);
   document.getElementById('pieLegend').innerHTML=labels.map((l,i)=>`<span class="pie-leg${l===holdCatFilter?' on':''}" title="点击筛选「${esc(l)}」持仓" onclick="drillToCat('${esc(l)}')"><i style="background:${colors[i]}"></i>${l} ${tot?(data[i]/tot*100).toFixed(1):'0.0'}%</span>`).join('');
 }
@@ -1752,7 +1753,7 @@ function renderBar(){
   const box=document.getElementById('bar').parentElement;
   box.style.height=Math.max(200, sorted.length*18+12)+'px';
   if(barChart) barChart.destroy();
-  barChart=new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:TH().grid}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
+  barChart=new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{titleFont:{family:CH_FONT,size:12,weight:'600'},bodyFont:{family:CH_FONT,size:12},padding:8,cornerRadius:8}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:TH().grid}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
 }
 
 // ---------- 个性化配置建议（当前/建议对比 + 优先级 + 分阶段计划）----------

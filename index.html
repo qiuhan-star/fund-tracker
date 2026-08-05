@@ -1821,7 +1821,11 @@ function renderHomeDense(list){
   </table>`;
 }
 
-function goDetail(enc, acc){ pendingAcc=acc||null; location.hash='#/fund/'+enc; }
+function goDetail(enc, acc){
+  const f=findFund(decodeURIComponent(enc), acc);
+  if(f && f.isBond){ switchTab(3); return; } // 债基无交易/净值详情，直接进「债券」Tab 看深度分析
+  pendingAcc=acc||null; location.hash='#/fund/'+enc;
+}
 
 // ---------- 分析（概览/饼/柱/建议）----------
 // 资产走势 sparkline：基于 daily_snapshots.totalAssets，涨绿跌红

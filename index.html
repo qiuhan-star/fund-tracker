@@ -162,6 +162,15 @@
   .main-tabs { display: flex; gap: 0; background: var(--border-3); border-radius: 10px; padding: 3px; margin-bottom: 14px; }
   .main-tabs button { flex: 1; border: none; background: transparent; padding: 9px 0; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-2); cursor: pointer; font-family: inherit; transition: all .15s; }
   .main-tabs button.on { background:var(--surface); color: var(--accent-on); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  /* 资产口径切换器 */
+  .scope-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border-strong); border-radius:10px; padding:8px 12px; margin-bottom:14px; }
+  .scope-bar .scope-lab { font-size:12px; color:var(--text-3); font-weight:600; }
+  .scope-seg { display:inline-flex; border:1px solid var(--border-strong); border-radius:8px; overflow:hidden; }
+  .scope-seg button { border:none; background:var(--surface); padding:6px 14px; font-size:13px; cursor:pointer; font-family:inherit; color:var(--text-2); transition:all .15s; }
+  .scope-seg button + button { border-left:1px solid var(--border-strong); }
+  .scope-seg button.on { background:var(--accent); color:#fff; font-weight:600; }
+  .scope-hint { font-size:11.5px; color:var(--text-3); }
+  .tag-owner { display:inline-block; background:#fff3e0; color:#c77700; border:1px solid #ffd9a0; padding:0 6px; border-radius:6px; font-size:11px; margin-left:4px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
@@ -364,6 +373,10 @@
   .cat-chip:hover { border-color: var(--text-3); }
   .cat-chip.on { background: var(--accent-on); color: #fff; border-color: var(--accent-on); }
   .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .sec-head.collapsible { cursor: pointer; user-select: none; }
+  .sec-head.collapsible:hover h2 { color: var(--accent); }
+  .sec-head .chev { font-size: 14px; line-height: 1; color: var(--text-3); transition: transform .15s; }
+  .tr-collapse.collapsed { display: none; }
   .seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden; }
   .seg .lab { align-self: center; font-size: 11.5px; color: var(--text-3); padding: 0 6px 0 0; }
   .seg button { border: none; background:var(--surface); padding: 5px 11px; font-size: 11.5px; cursor: pointer; font-family: inherit; color: var(--text-2); }
@@ -445,7 +458,7 @@
   @media print {
     :root{--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}
     body{background:var(--surface);} .wrap{max-width:none;padding:0;}
-    .more-menu,.main-tabs,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask{display:none!important;}
+    .more-menu,.main-tabs,.scope-bar,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask{display:none!important;}
     .card{box-shadow:none;border:1px solid #ddd;break-inside:avoid;}
     .hint{display:none!important;}
     td input,td select{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}
@@ -522,6 +535,17 @@ input[type="number"] { -moz-appearance: textfield; }
       <button id="mt2" onclick="switchTab(2)">清仓</button>
       <button id="mt3" onclick="switchTab(3)">债券</button>
       <button id="mt4" onclick="switchTab(4)">个股</button>
+    </div>
+
+    <!-- 资产口径切换（个人 / 代管 / 全量） -->
+    <div class="scope-bar">
+      <span class="scope-lab">资产口径</span>
+      <div class="scope-seg">
+        <button id="sc-personal" class="on" onclick="setScope('personal')">个人资产</button>
+        <button id="sc-managed" onclick="setScope('managed')">代管(妈妈)</button>
+        <button id="sc-all" onclick="setScope('all')">全量</button>
+      </div>
+      <span id="scopeHint" class="scope-hint"></span>
     </div>
 
     <!-- Tab 0: 持仓 -->
@@ -727,6 +751,36 @@ const SAMPLE_TRADE = [
 let snaps=[], trades=[], navCache={}, dailySnapshots=[];
 let fundsView=[], _allHoldings=[];
 const ACCOUNTS=['支付宝','小号','微信'];
+// 账户归属：isPersonal=false 表示代管（如帮家人理财），不计入个人总资产 / 个人仓位
+const ACCOUNT_META={
+  '支付宝':{isPersonal:true, owner:'本人'},
+  '微信':{isPersonal:true, owner:'本人'},
+  '小号':{isPersonal:false, owner:'妈妈'}
+};
+function accIsPersonal(acc){ const m=ACCOUNT_META[acc]; return m? (m.isPersonal!==false) : true; }
+function accOwner(acc){ const m=ACCOUNT_META[acc]; return m? m.owner : '本人'; }
+// 视图口径：personal=仅个人 / managed=仅代管(妈妈) / all=全量（个人+代管）
+let currentScope='personal';
+try{ const _s=localStorage.getItem('ft_scope'); if(_s==='personal'||_s==='managed'||_s==='all') currentScope=_s; }catch(e){}
+function scopeMatches(acc){
+  const personal=accIsPersonal(acc);
+  if(currentScope==='personal') return personal;
+  if(currentScope==='managed') return !personal;
+  return true; // all
+}
+function setScope(s){
+  currentScope=s;
+  try{ localStorage.setItem('ft_scope', s); }catch(e){}
+  updateScopeUI();
+  compute(); // 重建 fundsView/_allHoldings 并按新口径过滤
+}
+function updateScopeUI(){
+  ['personal','managed','all'].forEach(k=>{ const e=document.getElementById('sc-'+k); if(e) e.classList.toggle('on', k===currentScope); });
+  const e=document.getElementById('scopeHint');
+  if(e) e.textContent = currentScope==='personal' ? '仅统计你本人的资产（不含代管）'
+                  : currentScope==='managed' ? '仅统计代管资产（妈妈的）'
+                  : '个人 + 代管：全部经手资金';
+}
 let curAccount='全部', curGroup='全部', pendingAcc=null;
 function accOf(x){ return (x&&x.account)?x.account:'支付宝'; }
 function accKey(acc,name){ return acc+'||'+name; }
@@ -902,9 +956,9 @@ function renderAccountSummary(){
   }).sort((a,b)=>b.mv-a.mv);
   const tMv=rows.reduce((a,r)=>a+r.mv,0), tFl=rows.reduce((a,r)=>a+r.fl,0), tRl=rows.reduce((a,r)=>a+r.rl,0);
   const cls=v=>v>=0?'pos':'neg', sign=v=>v>=0?'+':'';
-  box.innerHTML=`<table class="hk-table" style="margin-top:0"><thead><tr><th>账户</th><th>市值</th><th>浮动收益</th><th>已实现</th><th>合计收益</th><th>占比</th></tr></thead><tbody>`
-    + rows.map(r=>`<tr><td class="hk-name">${r.acc}</td><td>${M(r.mv)}</td><td class="${cls(r.fl)}">${sign(r.fl)}${M(r.fl)}</td><td class="${cls(r.rl)}">${sign(r.rl)}${M(r.rl)}</td><td class="${cls(r.fl+r.rl)}">${sign(r.fl+r.rl)}${M(r.fl+r.rl)}</td><td>${r.pct.toFixed(1)}%</td></tr>`).join('')
-    + `<tr style="font-weight:700"><td class="hk-name">合计</td><td>${M(tMv)}</td><td class="${cls(tFl)}">${sign(tFl)}${M(tFl)}</td><td class="${cls(tRl)}">${sign(tRl)}${M(tRl)}</td><td class="${cls(tFl+tRl)}">${sign(tFl+tRl)}${M(tFl+tRl)}</td><td>100%</td></tr>`
+  box.innerHTML=`<table class="hk-table" style="margin-top:0"><thead><tr><th>账户</th><th>归属</th><th>市值</th><th>浮动收益</th><th>已实现</th><th>合计收益</th><th>占比</th></tr></thead><tbody>`
+    + rows.map(r=>`<tr><td class="hk-name">${r.acc}</td><td><span class="tag-owner">${accOwner(r.acc)}</span></td><td>${M(r.mv)}</td><td class="${cls(r.fl)}">${sign(r.fl)}${M(r.fl)}</td><td class="${cls(r.rl)}">${sign(r.rl)}${M(r.rl)}</td><td class="${cls(r.fl+r.rl)}">${sign(r.fl+r.rl)}${M(r.fl+r.rl)}</td><td>${r.pct.toFixed(1)}%</td></tr>`).join('')
+    + `<tr style="font-weight:700"><td class="hk-name">合计</td><td></td><td>${M(tMv)}</td><td class="${cls(tFl)}">${sign(tFl)}${M(tFl)}</td><td class="${cls(tRl)}">${sign(tRl)}${M(tRl)}</td><td class="${cls(tFl+tRl)}">${sign(tFl+tRl)}${M(tFl+tRl)}</td><td>100%</td></tr>`
     + `</tbody></table>`;
 }
 
@@ -970,7 +1024,7 @@ function renderHomeList(){
       <div class="hl-main"><div class="hl-name">${esc(f.name)}</div><div class="hl-sub">
         <span class="tag tag-${f.cat}">${f.cat}</span>
         ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')}
-        <span class="tag">${f.account||'支付宝'}</span>
+        <span class="tag">${f.account||'支付宝'}</span>${currentScope==='all'?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:''}
         <span>成本 ${M(f.cost)}</span>${estTag||confirmTag}${dayFmt(f)}
       </div>${code?`<div class="hl-hold" data-code="${code}"></div>`:''}</div>
       <div class="hl-num"><div class="hl-mv">${M(f.mv)}</div>${sharesFmt?`<div class="hl-shares">${sharesFmt}</div>`:''}<div class="hl-ret ${rcls}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
@@ -1233,21 +1287,23 @@ function renderBond(){
   const bc=document.getElementById('bondContent'); if(!bc) return;
   loadBond();
   const today=new Date(); today.setHours(0,0,0,0);
-  const accs=['支付宝','小号'];
-  let accCards=accs.map(a=>{ const fs=BOND_FUNDS.filter(f=>f.acc===a); const sum=fs.reduce((s,f)=>s+bondAmt(f),0); return '<div class="mcard"><div class="lbl">'+a+'</div><div class="val">'+M(sum)+'</div><div class="sub2">'+fs.length+' 只债基</div></div>'; }).join('');
-  const totalAll=BOND_FUNDS.reduce((s,f)=>s+bondAmt(f),0);
-  accCards+='<div class="mcard hl"><div class="lbl">合计</div><div class="val">'+M(totalAll)+'</div><div class="sub2">'+BOND_FUNDS.length+' 只</div></div>';
+  const scopedBonds=BOND_FUNDS.filter(f=>scopeMatches(f.acc));
+  const accs=ACCOUNTS.filter(a=>scopeMatches(a));
+  let accCards=accs.map(a=>{ const fs=scopedBonds.filter(f=>f.acc===a); const sum=fs.reduce((s,f)=>s+bondAmt(f),0); return '<div class="mcard"><div class="lbl">'+a+'</div><div class="val">'+M(sum)+'</div><div class="sub2">'+fs.length+' 只债基</div></div>'; }).join('');
+  const totalAll=scopedBonds.reduce((s,f)=>s+bondAmt(f),0);
+  accCards+='<div class="mcard hl"><div class="lbl">合计</div><div class="val">'+M(totalAll)+'</div><div class="sub2">'+scopedBonds.length+' 只</div></div>';
 
-  let rows=BOND_FUNDS.map(f=>{
+  let rows=scopedBonds.map(f=>{
     const st=bondStatus(f,today);
     const tag=f.mix?'<span class="tag-mix">含股票</span>':'';
     const lockTxt=f.lock>0?'<span class="tag-lock">'+f.lock+'个月锁</span>':'';
     const durTxt=(f.dur&&f.dur!=='—')?'<span class="tag-dur">'+f.dur+'</span>':'';
     const creTxt=(f.credit&&f.credit!=='—')?'<span class="tag-credit">'+f.credit+'</span>':'';
     const bar=(st.barPct!=null)?('<div class="cmp-bar"><div class="fill bar-'+st.barCls+'" style="width:'+st.barPct+'%"></div></div>'):'';
+    const ownerTag = currentScope==='all' ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
     return '<tr>'
       +'<td><b>'+f.code+'</b><br><span class="nm">'+f.name+'</span></td>'
-      +'<td>'+f.acc+'</td>'
+      +'<td>'+f.acc+ownerTag+'</td>'
       +'<td><input class="amt-in" type="number" value="'+bondAmt(f)+'" data-code="'+f.code+'" onchange="setBondAmt(this.dataset.code,this.value)" style="width:84px"></td>'
       +'<td>'+f.risk+durTxt+creTxt+tag+lockTxt+'</td>'
       +'<td><input class="date-in" type="date" value="'+bondDate(f)+'" data-code="'+f.code+'" onchange="setBondDate(this.dataset.code,this.value)"></td>'
@@ -1255,14 +1311,15 @@ function renderBond(){
     +'</tr>';
   }).join('');
 
-  const best=Math.max.apply(null,BOND_FUNDS.map(f=>f.y1));
-  const worst=Math.min.apply(null,BOND_FUNDS.map(f=>f.y1));
-  let cmp=BOND_FUNDS.map(f=>{
+  const best=Math.max.apply(null,scopedBonds.map(f=>f.y1));
+  const worst=Math.min.apply(null,scopedBonds.map(f=>f.y1));
+  let cmp=scopedBonds.map(f=>{
     const yc=f.y1===best?'cmp-best':(f.y1===worst?'cmp-worst':'');
     const mc=f.mix?'<span class="tag-mix">混合</span>':'';
     const cre=f.mix?'含股票':f.credit;
+    const ownerTag = currentScope==='all' ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
     return '<tr>'
-      +'<td><b>'+f.code+'</b> '+f.name+mc+'</td>'
+      +'<td><b>'+f.code+'</b> '+f.name+mc+ownerTag+'</td>'
       +'<td class="'+yc+'">'+f.y1.toFixed(2)+'%</td>'
       +'<td>'+f.since.toFixed(2)+'%</td>'
       +'<td>'+(f.dur==='—'?'—':f.dur)+'</td>'
@@ -1273,7 +1330,7 @@ function renderBond(){
   }).join('');
 
   const byCompany={};
-  BOND_FUNDS.forEach(f=>{ (byCompany[f.company]=byCompany[f.company]||[]).push(f); });
+  scopedBonds.forEach(f=>{ (byCompany[f.company]=byCompany[f.company]||[]).push(f); });
   let conv=Object.keys(byCompany).map(c=>{
     const fs=byCompany[c];
     if(fs.length>1){ return '<div class="conv-ok">✅ <b>'+c+'</b>：'+fs.map(x=>x.code).join(' ↔ ')+' 可同公司互转</div>'; }
@@ -1479,10 +1536,11 @@ function buildFundsView(){
     }
     f.currency=(snap&&snap.currency)||'CNY'; return f;
   });
-  _allHoldings=all;
+  _allHoldings = all.filter(f=> scopeMatches(f.account));
+  if(curAccount!=='全部' && !_allHoldings.some(f=>f.account===curAccount)) curAccount='全部';
   const accF = curAccount==='全部'? null:curAccount;
   const grpF = curGroup==='全部'? null:curGroup;
-  fundsView = all.filter(f=> (accF==null||f.account===accF) && (grpF==null||f.cat===grpF));
+  fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF) && (grpF==null||f.cat===grpF));
 }
 function guessCat(name){
   if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康|药/.test(name)) return '医药';
@@ -1574,6 +1632,7 @@ function recordSnapshot(){
 function render(){
   captureFocus();
   if(currentView==='home'){
+    updateScopeUI();
     renderOverview(); renderAccFilter(); renderHomeList(); renderCatFilter();
     if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
     if(activeTab===3){ renderBond(); }
@@ -1677,7 +1736,9 @@ function liveSection(f){
   h+=`<tr><td>最新净值 ${navBadge(_nc)}</td><td><input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()"></td></tr>${estRow}</tbody></table></div></div>`;
   const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
   const tdtoday=new Date().toISOString().slice(0,10);
-  h+=`<div class="card"><div class="sec-head"><h2>本只基金 · 交易流水（${tr.length} 笔）</h2></div>`;
+  const defCol = tr.length>12;
+  h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>本只基金 · 交易流水（${tr.length} 笔）</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
+  h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
   h+=`<p class="hint" style="margin:0 0 8px">每笔「保存并锁定」后自动 🔒 防误改；点 🔓 可临时解锁编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
   h+=`<div class="tr-add"><div class="tr-add-grid">
     <select id="nf-acc">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(f)===a?'selected':''}>${a}</option>`).join('')}</select>
@@ -1723,6 +1784,7 @@ function liveSection(f){
   } else {
     h+=`<p class="hint" style="margin-top:8px">还没有交易流水。在上方填写后点「💾 保存并锁定」即可记录第一笔。</p>`;
   }
+  h+=`</div>`;
 
   const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
   if(f.shares!=null && calcNav){

@@ -2262,11 +2262,13 @@ function fetchJSON(url, ms){
   });
 }
 const intradayCache={}; // name -> {series:[{time,value}], refNav, ts}
+// 返回 {series, worth, worthDate} 或 {series:null, reason:'netfail'|'qdii'}。
+// reason='qdii'：新浪接口返回成功但 networth 为空（QDII 等基金新浪不提供分时曲线，仅给单点估算）。
 function fetchSinaIntraday(code){
   return fetchJSON(API_BASE+'/intraday?code='+encodeURIComponent(code), 12000).then(d=>{
-    const data=d&&d.result&&d.result.data; if(!data) return null;
+    const data=d&&d.result&&d.result.data; if(!data) return {series:null, reason:'netfail'};
     const nw=data.networth;
-    if(!Array.isArray(nw)||!nw.length) return null;
+    if(!Array.isArray(nw)||!nw.length) return {series:null, reason:'qdii'};
     const series=[], seen=new Set();
     for(const p of nw){
       const v=parseFloat(p.pre_nav), v2=parseFloat(p.pre_nav2);
@@ -2277,18 +2279,17 @@ function fetchSinaIntraday(code){
       const key=date+' '+time; if(seen.has(key)) continue; seen.add(key);
       series.push({time:String(time).slice(0,5), value});
     }
-    if(!series.length) return null;
+    if(!series.length) return {series:null, reason:'qdii'};
     series.sort((a,b)=>a.time.localeCompare(b.time));
     return { series, worth:parseFloat(data.worth), worthDate:data.worth_date||'' };
-  }).catch(()=>null);
+  }).catch(()=>({series:null, reason:'netfail'}));
 }
 // 盘中分时按自然日持久化（localStorage），收盘后仍可回看当日曲线
 function _intradayKey(d){ d=d||new Date(); const p=n=>('0'+n).slice(-2); return 'ft_intraday_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
 function _isToday(ts){ if(!ts) return false; const a=new Date(ts), b=new Date(); return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate(); }
 function saveIntraday(name, series, refNav){ try{ const k=_intradayKey(); const store=JSON.parse(localStorage.getItem(k)||'{}'); store[name]={series, refNav, ts:Date.now()}; localStorage.setItem(k, JSON.stringify(store)); }catch(e){} }
 function loadIntraday(name){ try{ const store=JSON.parse(localStorage.getItem(_intradayKey())||'{}'); return store[name]||null; }catch(e){ return null; } }
-// 详情页：盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）；交易时段实时、收盘后回看当日
-// 详情页：盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）。
+// 盘中估值分时折线（涨=红/跌=绿，参考=最新官方净值）。
 // 不再强依赖「交易时段」才拉取：新浪在非交易时段仍会返回最近一个交易日的分时曲线，
 // 故只要没有可用的当日缓存，就随时向同源 /api/intraday 代理拉取并展示「最新可得」曲线；
 // 交易时段内每 60s 刷新一次（live），非交易时段缓存 1 小时，避免频繁请求。
@@ -2299,10 +2300,11 @@ async function renderIntraday(f){
   let data=intradayCache[f.name];
   if(!data){ const saved=loadIntraday(f.name); if(saved&&saved.series&&saved.series.length) data=saved; }
   const ttl=mkt?60000:3600000;
+  let raw=null;
   if(!data || Date.now()-data.ts>ttl){
     const code=await resolveCode(f.name);
     if(!code){ box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">未匹配到基金代码，无法拉取盘中估值。</p></div>`; return; }
-    const raw=await fetchSinaIntraday(code);
+    raw=await fetchSinaIntraday(code);
     if(raw&&raw.series&&raw.series.length){
       const nc=navCache[f.name]||{};
       const refNav=(nc.official!=null&&!isNaN(nc.official))?nc.official:raw.series[0].value;
@@ -2311,7 +2313,11 @@ async function renderIntraday(f){
     }
   }
   if(!data||!data.series||!data.series.length){
-    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">该基金新浪暂未提供盘中估值（代码未覆盖或当日无数据）。交易时段打开会自动记录当日分时。</p></div>`;
+    const reason=raw&&raw.reason;
+    const msg = reason==='qdii'
+      ? '该基金（QDII 等）新浪未提供盘中估值分时曲线，仅给单点估算；A股基金可正常显示。'
+      : '该基金新浪暂未提供盘中估值（代码未覆盖或当日无数据）。交易时段打开 A股基金可自动记录当日分时。';
+    box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪</span></h2></div><p class="hint" style="margin:8px 0 0">${msg}</p></div>`;
     return;
   }
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">盘中估值分时 <span class="tag">新浪${mkt?'':'·最新可得'}</span></h2><span id="intradayTime" class="hint" style="font-size:11px"></span></div><canvas id="intradayChart" style="width:100%;height:200px;display:block"></canvas><p class="hint" id="intradayNote" style="margin:6px 0 0">正在拉取盘中估值…</p></div>`;

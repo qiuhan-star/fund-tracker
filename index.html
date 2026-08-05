@@ -3167,7 +3167,7 @@ function parseCSV(text){
   if(!added.length) return 0;
   trades=trades.concat(added); return added.length;
 }
-function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); }
+function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
 
 
 // ---------- ANALYSIS 数据对象（详情页内联渲染）----------

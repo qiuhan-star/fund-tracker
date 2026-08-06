@@ -941,9 +941,10 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
       <div class="card">
         <h2>累计收益 / 总资产曲线 <span class="tag">随记录变真实</span></h2>
-        <p class="hint">应用会<b>自动</b>在每次打开或改动数据时，把当前<b>总资产</b>与<b>累计收益</b>记为一个每日快照点（按账户口径分开）；曲线实时展示你账户的真实净值轨迹。也可点「记录此刻」立即补记今天。</p>
+        <p class="hint">应用会<b>自动</b>在每次打开或改动数据时，把当前<b>总资产</b>与<b>累计收益</b>记为一个每日快照点（按账户口径分开）；曲线实时展示你账户的真实净值轨迹。也可点「记录此刻」立即补记今天。<b>若历史点为空（曲线只有最近几天）</b>，点「从交易记录重建」即可用你已有的全部交易流水 + 各基金历史净值，把曲线一路算回到第一笔交易那天（含债基、含三账户口径）。</p>
         <div class="chart-box"><canvas id="growth" role="img" aria-label="累计收益曲线"></canvas></div>
-        <div style="margin-top:10px"><button class="btn sm primary" onclick="recordGrowth()">📍 记录此刻为快照点</button><span id="growthInfo" class="hint" style="margin-left:8px"></span></div>
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm primary" onclick="recordGrowth()">📍 记录此刻为快照点</button><button class="btn sm" onclick="rebuildHistory()">🔄 从交易记录重建历史曲线</button><span id="growthInfo" class="hint" style="margin-left:0"></span></div>
+        <p class="hint" id="rebuildStatus" style="margin:6px 0 0;color:#b45309"></p>
       </div>
       <div class="card">
         <h2>优化建议 + 止盈止损信号 <span class="tag">自动生成</span></h2>
@@ -4816,6 +4817,76 @@ function recordGrowth(){
   recordSnapshot(); renderGrowth();
   const d=new Date(), t=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   toast('已记录 '+t+' 的账户快照');
+}
+// ---------- 从交易记录重建历史收益曲线 ----------
+function _tradeInScope(t, scope){
+  if((t.type||'fund')==='stock') return false;
+  const personal=accIsPersonal(accOf(t));
+  if(scope==='all') return true;
+  if(scope==='managed') return !personal;
+  return personal;
+}
+function _bondInScope(b, scope){
+  const personal=accIsPersonal(b.acc);
+  if(scope==='all') return true;
+  if(scope==='managed') return !personal;
+  return personal;
+}
+function _histPrincipalUpTo(dateStr, scope){
+  // 与「今日」口径对齐：基金按交易流水累计本金；债基按 BOND_DEF_DATES（真实买入日）起算当前金额
+  let p=0;
+  trades.forEach(t=>{ if((t.type||'fund')==='stock') return; if(!_tradeInScope(t,scope)) return;
+    if(t.date && t.date<=dateStr){ const ty=t.type||'buy', amt=+t.amount||0; if(ty==='buy'||ty==='convert') p+=amt; else if(ty==='sell'||ty==='convert_out') p-=amt; } });
+  BOND_FUNDS.forEach(b=>{ if(!_bondInScope(b,scope)) return; const since=BOND_DEF_DATES[b.code]; if(since && since<=dateStr) p+=bondAmt(b); });
+  return p;
+}
+async function rebuildHistory(){
+  const st=document.getElementById('rebuildStatus');
+  if(st) st.textContent='正在从交易记录重建历史曲线（抓取各基金历史净值）…';
+  const names=new Set();
+  trades.forEach(t=>{ if((t.type||'fund')!=='stock') names.add(t.name); });
+  BOND_FUNDS.forEach(b=> names.add(b.name));
+  const histByName={}; let done=0, total=names.size;
+  for(const name of names){
+    const code=await resolveCode(name);
+    const hist=code? await fetchNavHistory(code): null;
+    histByName[name]={code, hist};
+    done++; if(st) st.textContent='正在抓取历史净值… ('+done+'/'+total+')';
+  }
+  const scopes=['personal','managed','all'];
+  scopes.forEach(function(scope){
+    const byDate={};
+    names.forEach(function(name){
+      const fh=histByName[name]; if(!fh.hist||!fh.hist.length) return;
+      const ft=trades.filter(t=> t.name===name && (t.type||'fund')!=='stock' && _tradeInScope(t,scope)).slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+      if(!ft.length) return;
+      const navArr=fh.hist.map(function(p){return {d:fmtDate(p.t), nav:p.nav};}).sort(function(a,b){return a.d.localeCompare(b.d);});
+      const firstDate=ft[0].date; let evIdx=0, shares=0;
+      navArr.forEach(function(nv){
+        if(nv.d<firstDate) return;
+        while(evIdx<ft.length && ft[evIdx].date<=nv.d){
+          const t=ft[evIdx], ty=t.type||'buy', navAt=(+t.nav>0)?+t.nav:nv.nav, sh=(+t.amount||0)/navAt;
+          if(ty==='buy'||ty==='convert') shares+=sh; else if(ty==='sell'||ty==='convert_out') shares-=sh;
+          evIdx++;
+        }
+        if(shares>1e-6){ if(!byDate[nv.d]) byDate[nv.d]={mv:0}; byDate[nv.d].mv+=shares*nv.nav; }
+      });
+    });
+    BOND_FUNDS.forEach(function(b){
+      if(!_bondInScope(b,scope)) return; const since=BOND_DEF_DATES[b.code]; if(!since) return;
+      const amt=bondAmt(b); let d=new Date(since.replace(/-/g,'/')), end=new Date();
+      while(d<=end){ const ds=fmtDate(d); if(!byDate[ds]) byDate[ds]={mv:0}; byDate[ds].mv+=amt; d.setDate(d.getDate()+1); }
+    });
+    dailySnapshots[scope]=Object.keys(byDate).sort().map(function(d){
+      const totalAssets=+byDate[d].mv.toFixed(2), principal=+_histPrincipalUpTo(d,scope).toFixed(2);
+      return {date:d, totalAssets:totalAssets, principal:principal, totalProfit:+(totalAssets-principal).toFixed(2)};
+    });
+  });
+  silentSave();
+  recordSnapshot(); // 用当前真实结存刷新/追加今日点，保证最新值与持仓一致
+  renderGrowth();
+  if(st) st.textContent='已重建：当前口径共 '+dailySnapshots[currentScope].length+' 个历史点（含债基、按账户口径）。点「记录此刻」或下次打开会自动追加当日点。';
+  toast('历史曲线已从交易记录重建完成');
 }
 
 // ---------- 启动 ----------

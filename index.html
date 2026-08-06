@@ -3613,8 +3613,6 @@ function renderDetailLive(arg){
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
   live.innerHTML += reviewCardHtml(f.name);
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
-  live.innerHTML += `<div class="card" id="holdingsCard"><div class="sec-head"><h2>📦 前十大持仓（股票/债券）</h2></div><div id="holdingsBody" class="hint">加载中…</div></div>`;
-  try{ loadFundHoldings(f); }catch(e){ console.error(e); }
   try{ retroScenarioCards(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
   if(window._autoTrade){ window._autoTrade=false; const d=document.getElementById('nf-date'); if(d){ d.focus(); toast('填写交易信息后点「💾 保存并锁定」（净值可留空，T+1 自动填）'); } }
 }

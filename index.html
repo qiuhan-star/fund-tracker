@@ -1098,7 +1098,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <div class="card">
         <h2>累计收益 / 总资产曲线 <span class="tag">随记录变真实</span></h2>
         <p class="hint">应用会<b>自动</b>在每次打开或改动数据时，把当前<b>总资产</b>与<b>累计收益</b>记为一个每日快照点（按账户口径分开）；曲线实时展示你账户的真实净值轨迹。也可点「记录此刻」立即补记今天。<b>若历史点为空（曲线只有最近几天）</b>，点「从交易记录重建」即可用你已有的全部交易流水 + 各基金历史净值，把曲线一路算回到第一笔交易那天（含债基、含三账户口径）。</p>
-        <div class="chart-box"><canvas id="growth" role="img" aria-label="累计收益曲线"></canvas></div>
+        <div class="chart-box"><div id="growth" role="img" aria-label="累计收益曲线" style="width:100%;height:100%"></div></div>
         <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm primary" onclick="recordGrowth()">📍 记录此刻为快照点</button><button class="btn sm" onclick="rebuildHistory()">🔄 从交易记录重建历史曲线</button><span id="growthInfo" class="hint" style="margin-left:0"></span></div>
         <p class="hint" id="rebuildStatus" style="margin:6px 0 0;color:#b45309"></p>
       </div>
@@ -5014,7 +5014,6 @@ function renderSector(){
   if(maxPct>45){ w.innerHTML=`<div class="advice danger">⚠️ 单一板块「${rows[0][0]}」占比 <b>${maxPct.toFixed(1)}%</b>，集中度过高，回撤时会同涨同跌、缺乏对冲。</div>`; } else w.innerHTML='';
   renderSectorTotal();
 }
-let growthChart=null;
 function renderGrowth(){
   const box=document.getElementById('growth'), info=document.getElementById('growthInfo'); if(!box) return;
   const scope=currentScope||'personal';
@@ -5024,14 +5023,29 @@ function renderGrowth(){
   let pts=arr.map(s=>({t:s.date,total:s.totalAssets,profit:s.totalProfit}));
   if(!pts.length && growthSeries.length) pts=growthSeries.slice();
   if(!pts.length) pts.push({t:'示例起点',total:0,profit:0});
-  const labels=pts.map(p=>p.t), totData=pts.map(p=>Math.round(p.total)), profData=pts.map(p=>Math.round(p.profit));
-  if(growthChart) growthChart.destroy();
-  growthChart=new Chart(box,{type:'line',data:{labels,datasets:[
-    {label:'总资产(元)',data:totData,borderColor:'#2f6fed',backgroundColor:'rgba(47,111,237,.08)',fill:true,tension:.3,pointRadius:3},
-    {label:'累计收益(元)',data:profData,borderColor:TH().up,backgroundColor:'transparent',tension:.3,pointRadius:3,yAxisID:'y2'}
-  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10}}},tooltip:{titleFont:{family:CH_FONT,size:12,weight:'600'},bodyFont:{family:CH_FONT,size:12},padding:8,cornerRadius:8}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{color:TH().grid}},y2:{position:'right',ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{display:false}}}}});
+  const th=TH(), W=1000,H=230,padL=8,padR=8,padT=10,padB=18;
+  const tot=pts.map(p=>p.total), pro=pts.map(p=>p.profit);
+  const tmin=Math.min.apply(null,tot), tmax=Math.max.apply(null,tot), tr=(tmax-tmin)||1;
+  const pmin=Math.min.apply(null,pro), pmax=Math.max.apply(null,pro), pr=(pmax-pmin)||1;
+  const n=pts.length, X=i=> n===1? W/2 : padL+(i/(n-1))*(W-padL-padR);
+  const Yt=v=> H-padB-((v-tmin)/tr)*(H-padT-padB);
+  const Yp=v=> H-padB-((v-pmin)/pr)*(H-padT-padB);
+  let totP='', proP='', area='';
+  pts.forEach((p,i)=>{ const x=X(i).toFixed(1); totP+=(i?'L':'M')+x+' '+Yt(p.total).toFixed(1)+' '; });
+  pts.forEach((p,i)=>{ const x=X(i).toFixed(1); proP+=(i?'L':'M')+x+' '+Yp(p.profit).toFixed(1)+' '; });
+  const lastX=X(n-1).toFixed(1);
+  area='M'+X(0).toFixed(1)+' '+(H-padB)+' '+totP.replace(/^M/,'L')+' L'+lastX+' '+(H-padB)+' Z';
+  const last=i=>pts[i];
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:100%;display:block">';
+  svg+='<path d="'+area+'" fill="#2f6fed" fill-opacity="0.08"/>';
+  svg+='<path d="'+proP+'" fill="none" stroke="'+th.up+'" stroke-width="2" stroke-linejoin="round"/>';
+  svg+='<path d="'+totP+'" fill="none" stroke="#2f6fed" stroke-width="2.4" stroke-linejoin="round"/>';
+  if(n===1){ svg+='<circle cx="'+lastX+' cy="'+Yt(last(0).total).toFixed(1)+'" r="3" fill="#2f6fed"/>'; }
+  svg+='</svg>';
+  box.innerHTML=svg;
+  // 图例（与资产趋势一致的小标识）
   if(info){
-    if(pts.length>1 && pts[0].t!=='示例起点') info.textContent='已自动记录 '+pts.length+' 个每日快照（每次打开/改数据都会更新当日点）';
+    if(pts.length>1 && pts[0].t!=='示例起点') info.innerHTML='已自动记录 '+pts.length+' 个每日快照 <span style="color:#2f6fed">■</span>总资产 <span style="color:'+th.up+'">■</span>累计收益（每次打开/改数据都会更新当日点）';
     else if(pts.length===1 && pts[0].t!=='示例起点') info.textContent='今天已记录 1 个快照，多用几天即可连成真实曲线';
     else info.textContent='（尚无记录：每次打开应用会自动记录当日总资产与累计收益）';
   }

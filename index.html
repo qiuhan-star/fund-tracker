@@ -1381,7 +1381,8 @@ function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'我的'; }
 let flashMap={}, todayGain=null;
-let holdSort='', holdSortDir='desc', holdCatFilter='全部', holdSearch='', holdGroupBy='none';
+const DEFAULT_SORT={key:'est',dir:'desc'}; const SORT_VER='2';
+let holdSort=DEFAULT_SORT.key, holdSortDir=DEFAULT_SORT.dir, holdCatFilter='全部', holdSearch='', holdGroupBy='none';
 let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
 let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){}
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){}
@@ -1802,7 +1803,7 @@ function setSort(s){
   if(s==='ret'&&!colVis.ret){ colVis.ret=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='tdy'&&!colVis.tdy){ colVis.tdy=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
-  try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); }catch(e){}
+  try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); localStorage.setItem('ft_sort_ver',SORT_VER); }catch(e){}
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // 列头点击排序：三段循环 降序↓ → 升序↑ → 默认(多级降序)
@@ -1811,7 +1812,7 @@ function toggleSortHeader(key){
   else if(holdSortDir==='desc'){ holdSortDir='asc'; }
   else { holdSort=''; holdSortDir=''; }
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
-  try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); }catch(e){}
+  try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); localStorage.setItem('ft_sort_ver',SORT_VER); }catch(e){}
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
@@ -1819,9 +1820,12 @@ let colVis={nav:true,est:true,day:true,mv:true,ret:true,tdy:true};
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,tdy:o.tdy!==false}; } }catch(e){}
 const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'持有收益',tdy:'当日收益'};
 const COL_KEYS=['nav','est','day','mv','ret','tdy'];
-let colOrder=COL_KEYS.slice();
+const DEFAULT_COL_ORDER=['est','tdy','day','ret','nav','mv'];
+const COL_ORDER_VER='2';
+function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
+let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)) colOrder.push(k); }); } } }catch(e){}
-function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); }catch(e){} }
+try{ if(localStorage.getItem('ft_colorder_ver')!==COL_ORDER_VER){ colOrder=DEFAULT_COL_ORDER.slice(); saveColOrder(); } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }

@@ -842,6 +842,33 @@ input[type="number"] { -moz-appearance: textfield; }
 .sm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .sm-act{ display:flex; align-items:center; gap:9px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:10px; padding:11px 13px; font-size:13.5px; cursor:pointer; text-align:left; font-family:inherit; }
 .sm-act:hover{ border-color:var(--accent); color:var(--accent); }
+/* 详情页定投快捷卡 */
+.dca-quick{ padding:10px 14px; margin:0 0 12px; }
+.dca-quick-row{ display:flex; align-items:center; gap:10px; }
+.dca-quick-t{ font-weight:600; font-size:14px; }
+.dca-quick .btn{ margin-left:auto; }
+/* 定投计划管理弹窗 */
+.dca-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1200; padding:24px 12px; overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+.dca-mask.show{ display:flex; }
+.dca-modal{ background:var(--surface); color:var(--text); width:100%; max-width:600px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }
+.dca-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }
+.dca-head h2{ margin:0; font-size:17px; font-weight:600; }
+.dca-body{ padding:14px 18px 22px; overflow:auto; }
+.dca-card{ border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:12px; }
+.dca-card-top{ display:flex; align-items:center; gap:10px; }
+.dca-card-name{ font-weight:600; font-size:15px; }
+.dca-card-meta{ font-size:12.5px; color:var(--text-3); margin-top:5px; line-height:1.5; }
+.dca-card-actions{ margin-left:auto; display:flex; gap:6px; flex-shrink:0; }
+.dca-paused{ opacity:.6; }
+.dca-empty{ text-align:center; color:var(--text-3); font-size:13px; padding:18px 0; }
+.dca-form{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.dca-form h3{ margin:0 0 12px; font-size:14px; font-weight:600; }
+.dca-frow{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.dca-frow label{ font-size:13px; color:var(--text-2); min-width:74px; }
+.dca-frow input, .dca-frow select{ flex:1; min-width:120px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:8px; padding:8px 10px; font-size:13.5px; font-family:inherit; box-sizing:border-box; }
+.dca-frow input[type=number]{ flex:0 0 120px; min-width:0; }
+.dca-hint{ font-size:12px; color:var(--text-3); margin:4px 0 0; line-height:1.5; }
+@media (max-width:560px){ .dca-frow label{ min-width:100%; } .dca-frow input, .dca-frow select{ min-width:0; width:100%; } }
 .sm-act span{ font-size:16px; }
 .sm-note{ font-size:12px; color:var(--text-3); margin:12px 0 0; line-height:1.5; }
 .sm-pill{ font-size:12px; color:var(--text-2); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }
@@ -2204,7 +2231,7 @@ function estCellHtml(f){
     return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 est-fresh"><span class="est-tag">估 ${gt}</span>${ageHtml}</div>`;
   }
   if(nc.navChg!=null){
-    return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-stale"><span class="est-tag">收</span><span class="est-dot">·</span>${mkt?'无盘中估值':'昨日预估'}</div>`;
+    return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-stale"><span class="est-tag">收</span><span class="est-dot">·</span>${mkt?'无盘中估值':(nc.navChgDate?nc.navChgDate.slice(5):'已确认')}</div>`;
   }
   return `<div class="dt-big zero">—</div><div class="dt-sub2 est-nodata">${mkt?'无估算':'无预估'}</div>`;
 }
@@ -4869,6 +4896,93 @@ async function runDcaPlans(){
 function dcaPlanOf(name){ return dcaPlans.filter(p=>p.name===name); }
 function dcaBookedCount(plan){ return trades.filter(t=>t.dcaId===plan.id).length; }
 
+// ---------- 定投计划管理弹窗 ----------
+let _dcaEditId=null;
+function openDcaModal(name){
+  const m=document.getElementById('dcaMask'); if(m) m.classList.add('show');
+  dcaResetForm();
+  // 账户下拉
+  const acc=document.getElementById('dcaAcc');
+  if(acc){ try{ const list=Array.isArray(ACCOUNTS)?ACCOUNTS:['我的','小号','微信债券']; acc.innerHTML=list.map(a=>'<option>'+escHtml(a)+'</option>').join(''); }catch(e){ acc.innerHTML='<option>我的</option>'; } }
+  // 基金名 datalist（持仓 + 交易里出现过的名称）
+  try{
+    const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean).sort();
+    const dl=document.getElementById('dcaNameList'); if(dl) dl.innerHTML=names.map(n=>'<option value="'+escHtml(n)+'">').join('');
+  }catch(e){}
+  if(name){ const dec=decodeURIComponent(name); const el=document.getElementById('dcaName'); if(el) el.value=dec; const f=findFund(dec); if(f){ const acc=document.getElementById('dcaAcc'); if(acc && f.account) acc.value=f.account; } }
+  dcaRenderList();
+}
+function closeDcaModal(){ const m=document.getElementById('dcaMask'); if(m) m.classList.remove('show'); }
+function dcaResetForm(){
+  _dcaEditId=null;
+  const t=document.getElementById('dcaFormTitle'); if(t) t.textContent='➕ 新增定投计划';
+  const cb=document.getElementById('dcaCancelBtn'); if(cb) cb.style.display='none';
+  ['dcaName','dcaAmount','dcaDay','dcaStart','dcaEnd'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
+  const day=document.getElementById('dcaDay'); if(day) day.value='1';
+  const acc=document.getElementById('dcaAcc'); if(acc && acc.options.length) acc.selectedIndex=0;
+}
+function dcaRenderList(){
+  const box=document.getElementById('dcaList'); if(!box) return;
+  if(!dcaPlans.length){ box.innerHTML='<div class="dca-empty">还没有定投计划。在下方填好基金、金额与起始月份即可开启自动记账。</div>'; return; }
+  box.innerHTML=dcaPlans.map(function(p){
+    const booked=dcaBookedCount(p);
+    const periods=dcaPeriods(p, new Date().getFullYear()+'-'+pad2(new Date().getMonth()+1)+'-'+pad2(new Date().getDate()));
+    const due=periods.filter(function(per){ return !dcaIsBooked(p, per.ym); }).length;
+    const status=p.paused?'<span class="tag tag-cur">已暂停</span>':(due?'<span class="tag tag-attr">待记账 '+due+' 期</span>':'<span class="tag">进行中</span>');
+    return '<div class="dca-card'+(p.paused?' dca-paused':'')+'">'
+      +'<div class="dca-card-top"><span class="dca-card-name">'+escHtml(p.name)+'</span>'+status
+      +'<div class="dca-card-actions">'
+      +'<button class="btn sm" onclick="dcaEdit(\''+escHtml(p.id)+'\')">编辑</button>'
+      +'<button class="btn sm" onclick="dcaToggle(\''+escHtml(p.id)+'\')">'+(p.paused?'恢复':'暂停')+'</button>'
+      +'<button class="btn sm danger-text" onclick="dcaDelete(\''+escHtml(p.id)+'\')">删除</button>'
+      +'</div></div>'
+      +'<div class="dca-card-meta">账户：'+(p.account||'我的')+' · 每月 '+escHtml(String(p.day||1))+' 号投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期。</div>'
+      +'</div>';
+  }).join('');
+}
+function dcaEdit(id){
+  const p=dcaPlans.find(x=>x.id===id); if(!p) return;
+  _dcaEditId=id;
+  const t=document.getElementById('dcaFormTitle'); if(t) t.textContent='✏️ 编辑定投计划';
+  const cb=document.getElementById('dcaCancelBtn'); if(cb) cb.style.display='';
+  const setV=function(i,v){ const el=document.getElementById(i); if(el) el.value=v; };
+  setV('dcaName',p.name); setV('dcaAmount',p.amount); setV('dcaDay',p.day); setV('dcaStart',p.start); setV('dcaEnd',p.end||'');
+  const acc=document.getElementById('dcaAcc'); if(acc){ let ok=false; Array.prototype.forEach.call(acc.options,function(o){ if(o.value===p.account){ o.selected=true; ok=true; } }); if(!ok && acc.options.length){ acc.selectedIndex=0; } }
+}
+function dcaToggle(id){
+  const p=dcaPlans.find(x=>x.id===id); if(!p) return;
+  p.paused=!p.paused; silentSave(); dcaRenderList();
+  if(!p.paused){ runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); }); }
+}
+function dcaDelete(id){
+  const p=dcaPlans.find(x=>x.id===id); if(!p) return;
+  if(!confirm('删除定投计划「'+p.name+'」？\n已自动记账的买入记录保留（不会被删除）。')) return;
+  dcaPlans=dcaPlans.filter(x=>x.id!==id); silentSave(); dcaRenderList(); dcaResetForm();
+}
+function dcaSave(){
+  const name=(document.getElementById('dcaName')||{}).value||'';
+  const amount=parseFloat((document.getElementById('dcaAmount')||{}).value||'0');
+  const dayRaw=parseInt((document.getElementById('dcaDay')||{}).value||'1',10);
+  const start=(document.getElementById('dcaStart')||{}).value||'';
+  const end=(document.getElementById('dcaEnd')||{}).value||'';
+  const acc=(document.getElementById('dcaAcc')||{}).value||'我的';
+  if(!name.trim()){ toast('请填写基金名称'); return; }
+  if(!(amount>0)){ toast('请填写有效的每月金额'); return; }
+  if(!(dayRaw>=1 && dayRaw<=28)){ toast('每月几号请填 1~28'); return; }
+  if(!start){ toast('请选择起始月份'); return; }
+  if(end && end<start){ toast('结束月份不能早于起始月份'); return; }
+  if(_dcaEditId){
+    const p=dcaPlans.find(x=>x.id===_dcaEditId);
+    if(p){ p.name=name.trim(); p.account=acc; p.amount=amount; p.day=dayRaw; p.start=start; p.end=end||null; }
+  }else{
+    dcaPlans.push({ id:genId('dca'), name:name.trim(), account:acc, amount:amount, day:dayRaw, start:start, end:end||null, paused:false, createdAt:new Date().toISOString() });
+  }
+  silentSave(); dcaResetForm(); dcaRenderList();
+  toast('已保存，将在下次刷新时自动记账');
+  runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); });
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=document.getElementById('dcaMask'); if(m&&m.classList.contains('show')) closeDcaModal(); } });
+
 // ---------- 导入导出 ----------
 function exportJSON(){
   // 导出弹窗：核心财务数据（ft_data）始终包含，其余按勾选
@@ -5805,6 +5919,30 @@ async function rebuildHistory(){
         <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
         <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
         <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 定投计划管理弹窗 -->
+<div class="dca-mask" id="dcaMask" onclick="if(event.target===this)closeDcaModal()">
+  <div class="dca-modal" role="dialog" aria-label="定投计划">
+    <div class="dca-head"><h2>🗓️ 定投计划</h2><button class="sm-x" onclick="closeDcaModal()" aria-label="关闭">✕</button></div>
+    <div class="dca-body">
+      <div id="dcaList"></div>
+      <div class="dca-form">
+        <h3 id="dcaFormTitle">➕ 新增定投计划</h3>
+        <div class="dca-frow"><label>基金名称</label><input id="dcaName" list="dcaNameList" placeholder="如：易方达蓝筹精选混合"><datalist id="dcaNameList"></datalist></div>
+        <div class="dca-frow"><label>账户</label><select id="dcaAcc"></select></div>
+        <div class="dca-frow"><label>每月金额</label><input id="dcaAmount" type="number" min="0" step="0.01" placeholder="5000"></div>
+        <div class="dca-frow"><label>每月几号</label><input id="dcaDay" type="number" min="1" max="28" step="1" value="1"></div>
+        <div class="dca-frow"><label>起始月份</label><input id="dcaStart" type="month" placeholder="2026-01"></div>
+        <div class="dca-frow"><label>结束月份</label><input id="dcaEnd" type="month" placeholder="留空=无限期"></div>
+        <p class="dca-hint">定投会在每次刷新净值时，用对应月份的<b>真实历史净值</b>自动补记买入；拉不到当月净值的月份会顺延到下个刷新周期自动补（不会虚构数据）。手动删除的定投记录不会复活。</p>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="sm-act" style="flex:1;background:var(--accent);color:#fff;border:none" onclick="dcaSave()"><span>💾</span>保存计划</button>
+          <button class="sm-ghost" id="dcaCancelBtn" onclick="dcaResetForm()">取消编辑</button>
+        </div>
       </div>
     </div>
   </div>

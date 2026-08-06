@@ -1959,9 +1959,9 @@ function filterCat(c){
   renderCatFilter();
   if(activeTab===0) renderHomeList();
 }
-// ---------- 分组（Group-By）：不分组 / 资产大类 / 市场区域 / 账户 ----------
+// ---------- 分组（Group-By）：不分组 / 资产大类 / 市场区域 ----------
 function renderGroupBy(){
-  const opts=[['none','不分组'],['asset','资产大类'],['market','市场区域'],['account','账户']];
+  const opts=[['none','不分组'],['asset','资产大类'],['market','市场区域']];
   const box=document.getElementById('groupByFilter'); if(!box) return;
   box.innerHTML=opts.map(o=>`<button class="cat-chip${o[0]===holdGroupBy?' on':''}" onclick="filterGroupBy('${o[0]}')">${o[1]}</button>`).join('');
 }
@@ -2188,7 +2188,7 @@ function grpLabel(dim,k){
   return k;
 }
 function renderGrouped(list){
-  const dim=(holdGroupBy==='asset')?'asset':(holdGroupBy==='market')?'market':'account';
+  const dim=(holdGroupBy==='asset')?'asset':'market';
   const groups={};
   list.forEach(f=>{ const k=(f[dim]||(dim==='account'?'我的':'其他')); (groups[k]=groups[k]||[]).push(f); });
   const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));

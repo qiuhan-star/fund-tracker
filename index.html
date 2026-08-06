@@ -899,9 +899,12 @@ input[type="number"] { -moz-appearance: textfield; }
   }
 
   /* 5. 选项卡与操作按钮响应式放大（方便手指点击） */
+  .main-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .main-tabs button {
-    padding: 10px 0 !important;
-    font-size: 14px !important;
+    flex: 0 0 auto;
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+    white-space: nowrap;
   }
   
   .btn {
@@ -994,35 +997,6 @@ input[type="number"] { -moz-appearance: textfield; }
 .main-tabs button .ti { margin-right: 4px; }
 .main-tabs button .tl { font-weight: 600; }
 
-@media (max-width: 768px) {
-  .main-tabs {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    top: auto;
-    z-index: 70;
-    margin: 0;
-    border-radius: 0;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -3px 14px rgba(0,0,0,.10);
-    padding: 5px 4px calc(5px + env(safe-area-inset-bottom));
-  }
-  .main-tabs button {
-    flex: 1 1 0;
-    flex-direction: column;
-    gap: 2px;
-    padding: 4px 0 !important;
-    font-size: 11px !important;
-    border-radius: 8px;
-    line-height: 1.2;
-  }
-  .main-tabs button .ti { margin-right: 0; font-size: 19px; line-height: 1.1; }
-  .main-tabs button .tl { font-size: 11px; font-weight: 600; }
-  .main-tabs button.on { background: var(--accent-soft); color: var(--accent-text); box-shadow: none; }
-  /* 内容留出底部导航空间；FAB 抬到导航栏上方 */
-  .wrap { padding-bottom: 92px !important; }
-  .fab { bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
-}
 
 </style>
 <script>

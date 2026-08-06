@@ -2320,7 +2320,6 @@ function renderHomeDense(list, showHead){
   colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   const rows=list.map(f=>{
     const nc=navCache[f.name]||{};
-    const _mkt=isMarketOpen(new Date());
     // 估算涨跌：盘中估值为实时预估(带新鲜度徽标)，休市/收盘回退到已确认「收」涨跌幅并标注「昨日预估」
     const estCell=estCellHtml(f);
     const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
@@ -4778,15 +4777,18 @@ async function refresh(){
   prefetchHoldings();
   const got=Object.keys(navCache).length;
   const now=new Date(), market=isMarketOpen(now), miss=got<names.length;
-  try{ localStorage.setItem('ft_lastSync', now.getTime()); }catch(e){}
   const lk=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
   if(got===0){
-    u.className='closed';
-    u.textContent='⚠ 无法连接天天基金（可能被拦截/离线），已用缓存或手动净值';
+    // 刷新失败：仅记录失败时间，不覆盖 ft_lastSync（保留上一成功时间以计算数据停留时长）
+    try{ localStorage.setItem('ft_lastSyncFail', now.getTime()); }catch(e){}
+    u.className='fr-fail-text'; u.textContent='⚠ 刷新失败 · 已用缓存 / 手动净值';
   } else {
+    try{ localStorage.removeItem('ft_lastSyncFail'); }catch(e){}
+    try{ localStorage.setItem('ft_lastSync', now.getTime()); }catch(e){}
     u.className=market?'live':'closed';
     u.textContent='已刷新 · '+lk+' · '+(market?'盘中实时估值':'历史净值（收盘）')+'（'+got+'/'+names.length+' 只'+(miss?'，部分未拉到已用缓存':'')+'）';
   }
+  renderStatusLine();
   toast(got===0?'刷新失败：已用缓存/手动净值':'已刷新 '+got+' 只 · '+lk);
   fetchIndices();
   if(currentView==='detail' && detailName){ const f=findFund(detailName,detailAcc); if(f) renderIntraday(f); }
@@ -5661,11 +5663,12 @@ async function rebuildHistory(){
   route();
   prefetchHoldings();
   fetchIndices();
-  try{ document.getElementById('updated').textContent=lastUpdatedLabel(); }catch(e){}
+  try{ renderStatusLine(); }catch(e){}
   // 打开即自动拉取最新净值，避免一直显示上次手动刷新（昨天）的净值
   refresh().catch(function(e){ console.error('auto refresh failed', e); });
   renderMktLight();                 // 交易时段状态灯（首屏即显示）
   setInterval(renderMktLight, 30000); // 每 30s 自动切换 🟢/🟡/⚪
+  setInterval(renderStatusLine, 30000); // 每 30s 刷新新鲜度/失败徽标
   refreshSampleBanner();
 })();
 </script>

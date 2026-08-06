@@ -396,13 +396,12 @@
   .bk-prog-head .gap{font-weight:700;font-size:14px}
   .bk-bar{position:relative;height:14px;border-radius:8px;background:linear-gradient(90deg,var(--down-bg),var(--warn-bg) 55%,var(--up-bg));overflow:visible}
   .bk-fill{position:absolute;top:0;left:0;height:100%;border-radius:8px 0 0 8px;background:repeating-linear-gradient(45deg,#f4b6ad,#f4b6ad 6px,#efa89e 6px,#efa89e 12px);opacity:.85}
-  .bk-target{position:absolute;top:-5px;width:3px;height:24px;background:var(--up);border-radius:2px;transform:translateX(-1px)}
-  .bk-target::after{content:"回本";position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--up);white-space:nowrap;font-weight:600}
+  .bk-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .bk-sum-i{display:flex;flex-direction:column;gap:2px}
+  .bk-sum-i span{font-size:11px;color:var(--text-3)}
+  .bk-sum-i b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  .bk-sum-empty{text-align:center;color:var(--text-3);grid-column:1/-1}
   .bk-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:18px}
-  .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0 4px}
-  .cards3 .mcard{background:var(--surface-2);border-radius:10px;padding:10px 9px;text-align:center}
-  .cards3 .mcard .lbl{font-size:11px;color:var(--text-3);margin-bottom:4px}
-  .cards3 .mcard .val{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
   .bk-calc{margin-top:16px;border-top:1px dashed var(--border);padding-top:14px}
   .bk-calc-title{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-2)}
   .bk-input{display:flex;gap:8px;align-items:center;margin-bottom:14px}
@@ -418,7 +417,7 @@
   .bk-line{font-size:12px;color:var(--text-2);margin:5px 0}
   .bk-line b{font-size:15px;font-weight:700;display:block;margin-top:2px;font-variant-numeric:tabular-nums}
   .bk-arrow{text-align:center;color:var(--accent);font-size:20px;font-weight:700}
-  .bk-extra{margin-top:11px;font-size:12px;color:var(--text-3);background:var(--surface-2);border-radius:8px;padding:8px 10px;line-height:1.5}
+  .bk-extra{margin-top:12px;padding-top:11px;border-top:1px dashed var(--border);font-size:12px;color:var(--text-3);line-height:1.5}
   .bk-extra b{color:var(--text)}
   /* ===== 止盈 / 止损 ===== */
   .tp-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;background:var(--warn-bg);color:var(--warn);font-weight:600;margin-left:6px;vertical-align:2px}
@@ -3562,18 +3561,13 @@ function liveSection(f){
 
   const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
   if(f.shares!=null && calcNav){
-    const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(calcNav>0&&curCost)?(curCost-calcNav)/calcNav*100:0;
+    const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(calcNav>0&&curCost)?(curCost-calcNav)/calcNav*100:0, prog=curCost>0?Math.min(100,calcNav/curCost*100):0, gapPct=Math.max(0,100-prog);
     h+=`<div class="card"><h2>回本 / 补仓计算器 <span class="tag">实时模拟</span></h2>
       <p class="hint">基于你的真实持仓成本与最新净值，直观看到离回本还差多少；输入补仓金额即时换算新均价与回本差距。</p>
       <div class="bk-prog">
-        <div class="bk-prog-head"><span class="lbl">回本进度</span><span class="gap ${need>0?'neg':'pos'}">${need>0?'还差 +':''}${need.toFixed(1)}%</span></div>
-        <div class="bk-bar"><div class="bk-fill" style="width:${Math.min(100,calcNav/curCost*100).toFixed(1)}%"></div><div class="bk-target"></div></div>
+        <div class="bk-prog-head"><span class="lbl">回本进度</span><span class="gap ${gapPct>0.05?'pos':'neg'}">已回本 ${prog.toFixed(1)}%${gapPct>0.05?``（还差 ${gapPct.toFixed(1)}`）:''}</span></div>
+        <div class="bk-bar"><div class="bk-fill" style="width:${prog.toFixed(1)}%"></div></div>
         <div class="bk-scale"><span>当前净值 ${calcNav.toFixed(4)}</span><span>回本价 ${curCost.toFixed(4)}</span></div>
-      </div>
-      <div class="cards3">
-        <div class="mcard"><div class="lbl">当前成本</div><div class="val">${curCost.toFixed(4)}</div></div>
-        <div class="mcard"><div class="lbl">最新净值</div><div class="val">${calcNav.toFixed(4)}</div></div>
-        <div class="mcard"><div class="lbl">距回本</div><div class="val ${need>0?'neg':'pos'}">${need>=0?'+':''}${need.toFixed(2)}%</div></div>
       </div>
       <div class="bk-calc">
         <div class="bk-calc-title">补仓模拟</div>
@@ -3583,11 +3577,12 @@ function liveSection(f){
           <span class="unit">元</span>
         </div>
         <div class="bk-compare">
-          <div class="bk-col"><div class="bk-col-title">补仓前</div><div class="bk-line">成本<b>${curCost.toFixed(4)}</b></div><div class="bk-line">需涨<b class="${need>0?'neg':'pos'}">${need>=0?'+':''}${need.toFixed(2)}%</b></div></div>
+          <div class="bk-col"><div class="bk-col-title">补仓前</div><div class="bk-line">成本<b>${curCost.toFixed(4)}</b></div><div class="bk-line">${need>0?'需再涨':'已盈利'}<b class="${need>0?'pos':'neg'}">${need>=0?'+':''}${need.toFixed(2)}%</b></div></div>
           <div class="bk-arrow">→</div>
-          <div class="bk-col after"><div class="bk-col-title">补仓后</div><div class="bk-line">成本<b id="c1cost">—</b></div><div class="bk-line">需涨<b id="c1need" class="neg">—</b></div></div>
+          <div class="bk-col after"><div class="bk-col-title">补仓后</div><div class="bk-line">成本<b id="c1cost">—</b></div><div class="bk-line">${need>0?'需再涨':'已盈利'}<b id="c1need" class="${need>0?'pos':'neg'}">—</b></div>
+            <div class="bk-extra" id="bkExtra"><div class="bk-sum bk-sum-empty"><span>输入补仓金额查看明细</span></div></div>
+          </div>
         </div>
-        <div class="bk-extra" id="bkExtra">输入补仓金额查看预测。</div>
       </div>
     </div>`;
   }
@@ -4880,7 +4875,7 @@ function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked'
 function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alerts));}catch(e){} }
 function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; const v=prompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur); if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ alert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }
 function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
-function bkCalc(enc,val){ const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return; const c1=document.getElementById('c1cost'), c1n=document.getElementById('c1need'), ex=document.getElementById('bkExtra'); if(!c1) return; const nav=f.nav||(f.shares?f.mv/f.shares:0); const curCost=f.costPx||(f.shares?f.cost/f.shares:0); const add=+val||0; if(add<=0||nav<=0||!f.shares){ c1.textContent='—'; if(c1n) c1n.textContent='—'; if(ex) ex.innerHTML='输入补仓金额查看预测。'; return; } const totCost=(f.cost!=null?f.cost:curCost*f.shares)+add, newShares=f.shares+add/nav, newCostPx=newShares>0?totCost/newShares:0, newNeed=nav>0?(newCostPx-nav)/nav*100:0; c1.textContent=newCostPx.toFixed(4); if(c1n){ c1n.textContent=(newNeed>=0?'+':'')+newNeed.toFixed(2)+'%'; c1n.className=newNeed>0?'neg':'pos'; } if(ex) ex.innerHTML=`补仓 <b>${M(add)}</b> → 新增份额 <b>+${fmt(add/nav)}</b> 份，总成本升至 <b>${M(totCost)}</b>，均价从 ${curCost.toFixed(4)} ${(newCostPx<curCost?'降到':newCostPx>curCost?'升到':'持平')} <b>${newCostPx.toFixed(4)}</b>。`; }
+function bkCalc(enc,val){ const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return; const c1=document.getElementById('c1cost'), c1n=document.getElementById('c1need'), ex=document.getElementById('bkExtra'); if(!c1) return; const nav=f.nav||(f.shares?f.mv/f.shares:0); const curCost=f.costPx||(f.shares?f.cost/f.shares:0); const add=+val||0; if(add<=0||nav<=0||!f.shares){ c1.textContent='—'; if(c1n) c1n.textContent='—'; if(ex) ex.innerHTML='<div class="bk-sum bk-sum-empty"><span>输入补仓金额查看明细</span></div>'; return; } const totCost=(f.cost!=null?f.cost:curCost*f.shares)+add, newShares=f.shares+add/nav, newCostPx=newShares>0?totCost/newShares:0, newNeed=nav>0?(newCostPx-nav)/nav*100:0; c1.textContent=newCostPx.toFixed(4); if(c1n){ c1n.textContent=(newNeed>=0?'+':'')+newNeed.toFixed(2)+'%'; c1n.className=newNeed>0?'pos':'neg'; } if(ex){ const dir=newCostPx<curCost?'降到':newCostPx>curCost?'升到':'持平'; ex.innerHTML=`<div class="bk-sum"><div class="bk-sum-i"><span>新增份额</span><b>+${fmt(add/nav)} 份</b></div><div class="bk-sum-i"><span>总成本</span><b>${M(totCost)}</b></div><div class="bk-sum-i"><span>均价</span><b>${curCost.toFixed(4)} ${dir} ${newCostPx.toFixed(4)}</b></div></div>`; }
 function tpSet(enc,field,val,el){ setAlert(enc,field,String(val)); if(el&&el.parentElement){ el.parentElement.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); el.classList.add('on'); } tpRedraw(enc); }
 function tpInput(enc,field,val){ setAlert(enc,field,val); tpRedraw(enc); }
 function tpRedraw(enc){

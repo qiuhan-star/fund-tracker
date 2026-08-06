@@ -5025,29 +5025,46 @@ function renderGrowth(){
   let pts=arr.map(s=>({t:s.date,total:s.totalAssets,profit:s.totalProfit}));
   if(!pts.length && growthSeries.length) pts=growthSeries.slice();
   if(!pts.length) pts.push({t:'示例起点',total:0,profit:0});
-  const th=TH(), W=1000,H=230,padL=8,padR=8,padT=10,padB=18;
+  const th=TH(), W=1000,H=230,padL=54,padR=54,padT=14,padB=26;
   const tot=pts.map(p=>p.total), pro=pts.map(p=>p.profit);
-  const tmin=Math.min.apply(null,tot), tmax=Math.max.apply(null,tot), tr=(tmax-tmin)||1;
-  const pmin=Math.min.apply(null,pro), pmax=Math.max.apply(null,pro), pr=(pmax-pmin)||1;
+  let tmin=Math.min.apply(null,tot), tmax=Math.max.apply(null,tot); if(tmax-tmin<1){ tmin-=1; tmax+=1; }
+  const tr=(tmax-tmin)||1;
+  let pmin=Math.min.apply(null,pro), pmax=Math.max.apply(null,pro); if(pmax-pmin<1){ const m=(pmin+pmax)/2; pmin=m-1; pmax=m+1; }
+  const pr=(pmax-pmin)||1;
   const n=pts.length, X=i=> n===1? W/2 : padL+(i/(n-1))*(W-padL-padR);
   const Yt=v=> H-padB-((v-tmin)/tr)*(H-padT-padB);
   const Yp=v=> H-padB-((v-pmin)/pr)*(H-padT-padB);
+  const fmtK=v=> (Math.abs(v)>=10000? (v/10000).toFixed(1)+'万' : (Math.abs(v)>=1000? (v/1000).toFixed(1)+'k' : Math.round(v)));
   let totP='', proP='', area='';
   pts.forEach((p,i)=>{ const x=X(i).toFixed(1); totP+=(i?'L':'M')+x+' '+Yt(p.total).toFixed(1)+' '; });
   pts.forEach((p,i)=>{ const x=X(i).toFixed(1); proP+=(i?'L':'M')+x+' '+Yp(p.profit).toFixed(1)+' '; });
   const lastX=X(n-1).toFixed(1);
   area='M'+X(0).toFixed(1)+' '+(H-padB)+' '+totP.replace(/^M/,'L')+' L'+lastX+' '+(H-padB)+' Z';
-  const last=i=>pts[i];
-  let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:100%;display:block">';
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:100%;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif">';
+  // 横向网格 + 左轴总资产刻度(3档) + 右轴累计收益刻度(3档)
+  const GY=[0,.5,1].map(f=>(padT+(H-padT-padB)*f).toFixed(1));
+  GY.forEach(function(f,gi){
+    const tv=Math.round(tmax-(tmax-tmin)*[0,.5,1][gi]);
+    const pv=Math.round(pmax-(pmax-pmin)*[0,.5,1][gi]);
+    svg+='<line x1="'+padL+'" y1="'+f+'" x2="'+(W-padR)+'" y2="'+f+'" stroke="'+th.grid+'" stroke-width="1"/>';
+    svg+='<text x="'+(padL-6)+'" y="'+(+f+4)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+fmtK(tv)+'</text>';
+    svg+='<text x="'+(W-padR+6)+'" y="'+(+f+4)+'" text-anchor="start" font-size="11" fill="'+th.up+'">'+fmtK(pv)+'</text>';
+  });
   svg+='<path d="'+area+'" fill="#2f6fed" fill-opacity="0.08"/>';
   svg+='<path d="'+proP+'" fill="none" stroke="'+th.up+'" stroke-width="2" stroke-linejoin="round"/>';
   svg+='<path d="'+totP+'" fill="none" stroke="#2f6fed" stroke-width="2.4" stroke-linejoin="round"/>';
-  if(n===1){ svg+='<circle cx="'+lastX+' cy="'+Yt(last(0).total).toFixed(1)+'" r="3" fill="#2f6fed"/>'; }
+  if(n===1){ svg+='<circle cx="'+lastX+'" cy="'+Yt(pts[0].total).toFixed(1)+'" r="3" fill="#2f6fed"/>'; }
+  // X 轴起止日期
+  if(pts.length>1){
+    svg+='<text x="'+padL+'" y="'+(H-8)+'" text-anchor="start" font-size="11" fill="'+th.text3+'">'+pts[0].t+'</text>';
+    svg+='<text x="'+(W-padR)+'" y="'+(H-8)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+pts[n-1].t+'</text>';
+  }
+  // 图例
+  svg+='<g transform="translate('+(padL+4)+',8)"><rect x="0" y="-8" width="11" height="11" fill="#2f6fed"/><text x="15" y="2" font-size="11" fill="'+th.text+'">总资产(元)</text><rect x="92" y="-8" width="11" height="11" fill="'+th.up+'"/><text x="107" y="2" font-size="11" fill="'+th.text+'">累计收益(元)</text></g>';
   svg+='</svg>';
   box.innerHTML=svg;
-  // 图例（与资产趋势一致的小标识）
   if(info){
-    if(pts.length>1 && pts[0].t!=='示例起点') info.innerHTML='已自动记录 '+pts.length+' 个每日快照 <span style="color:#2f6fed">■</span>总资产 <span style="color:'+th.up+'">■</span>累计收益（每次打开/改数据都会更新当日点）';
+    if(pts.length>1 && pts[0].t!=='示例起点') info.innerHTML='已自动记录 '+pts.length+' 个每日快照 · <span style="color:#2f6fed">■</span>总资产 <span style="color:'+th.up+'">■</span>累计收益（每次打开/改数据都会更新当日点）';
     else if(pts.length===1 && pts[0].t!=='示例起点') info.textContent='今天已记录 1 个快照，多用几天即可连成真实曲线';
     else info.textContent='（尚无记录：每次打开应用会自动记录当日总资产与累计收益）';
   }

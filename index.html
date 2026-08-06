@@ -2055,6 +2055,7 @@ function renderAccountSummary(){
 const TRADE_TYPES=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','拆分'],['convert','转换转入'],['convert_out','转换转出']];
 function typeLabel(t){ const m=TRADE_TYPES.find(x=>x[0]===t); return m?m[1]:(t||'买入'); }
 function navFmt(v){ return v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'; }
+function updStr(f){ const _n=navCache[f.name]||{}; const _open=isMarketOpen(new Date()); if(_n.gztime) return (_open?'估 ':'')+_n.gztime.slice(11,16); const _d=_n.navChgDate||_n.date; if(_d) return (_open?'':'净值 ')+_d.slice(5); return '待刷新'; }
 let openSet=new Set();
 function toggleHold(key){ key=decodeURIComponent(key); if(openSet.has(key)) openSet.delete(key); else openSet.add(key); renderHomeList(); }
 function blurbFor(f){
@@ -2158,7 +2159,6 @@ function renderHomeList(){
   }
   // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
   const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
-  const updStr=f=>{ const _n=navCache[f.name]||{}; const _open=isMarketOpen(new Date()); if(_n.gztime) return (_open?'估 ':'')+_n.gztime.slice(11,16); const _d=_n.navChgDate||_n.date; if(_d) return (_open?'':'净值 ')+_d.slice(5); return '待刷新'; };
   box.innerHTML=(holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list))+obsHtml;
   syncColSetChecks();
 

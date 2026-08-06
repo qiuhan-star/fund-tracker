@@ -781,6 +781,117 @@ input[type="number"] { -moz-appearance: textfield; }
 .sm-danger{ border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); border-radius:10px; padding:10px 14px; font-size:13.5px; cursor:pointer; font-family:inherit; font-weight:600; width:100%; margin-top:6px; }
 .sm-danger:hover{ background:var(--danger); color:#fff; }
 @media (max-width:480px){ .sm-grid{ grid-template-columns:1fr; } }
+
+/* ==================== 手机端 (移动端) 阅读体验深度优化 ==================== */
+@media (max-width: 768px) {
+  /* 1. 容器与字号优化：提升基本可读性 */
+  .wrap { 
+    padding: 12px 10px 100px !important; /* 底部留足空间给 FAB 按钮 */
+  }
+  
+  body { 
+    font-size: 14px; /* 提升全局基础字号 */
+  }
+
+  /* 2. 顶部 Asset Overview (ov-hero) 重构：解决数字换行与拥挤问题 */
+  .ov-hero {
+    padding: 16px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  
+  .ov-hero-value {
+    font-size: 30px !important; /* 调整总资产大字号，防止溢出 */
+  }
+  
+  .ov-hero-right {
+    text-align: left !important; /* 手机端左对齐更符合阅读习惯 */
+    width: 100%;
+    border-top: 1px dashed var(--border-3);
+    padding-top: 8px;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  /* 3. 网格卡片重排：单列/双列优化 */
+  .ov-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  
+  .ov-card {
+    padding: 10px 12px !important;
+  }
+  
+  .ov-val {
+    font-size: 18px !important; /* 缩小指标数值，防止折行 */
+  }
+
+  /* 4. 持仓列表与表格优化：增大触摸热区与字号 */
+  .hl-head {
+    padding: 12px 2px !important;
+  }
+  
+  .hl-name {
+    font-size: 15px !important; /* 突出基金名称 */
+    margin-bottom: 2px;
+  }
+  
+  .hl-sub {
+    font-size: 12px !important;
+  }
+  
+  .hl-mv {
+    font-size: 16px !important;
+  }
+
+  /* 针对极小字号的文本进行全局提字号（防止看不清） */
+  .sub, .sub2, .mcard .lbl, .ov-sub, .hl-shares, th {
+    font-size: 11.5px !important;
+  }
+
+  /* 5. 选项卡与操作按钮响应式放大（方便手指点击） */
+  .main-tabs button {
+    padding: 10px 0 !important;
+    font-size: 14px !important;
+  }
+  
+  .btn {
+    padding: 8px 14px !important; /* 增大触控区域 */
+    font-size: 13px !important;
+  }
+  
+  .cat-chip {
+    padding: 5px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* 6. 弹窗与抽屉（Drawer）适配手机全屏/半屏 */
+  .drawer {
+    width: 100% !important; /* 快捷记账抽屉在手机端撑满屏幕 */
+    max-width: 100% !important;
+  }
+  
+  .at-pop, .sm-modal, .idx-modal-card {
+    width: 95vw !important;
+    max-height: 85vh !important;
+    border-radius: 12px !important;
+  }
+
+  /* 7. 横向滚动表格优化：防止页面被撑爆 */
+  .dense-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 8. 图表容器高度调整，防止占用过多屏幕空间 */
+  .chart-box, .am-chart {
+    height: 180px !important;
+  }
+}
 </style>
 <script>
   try{

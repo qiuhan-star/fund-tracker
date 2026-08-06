@@ -5004,9 +5004,67 @@ function parsePaste(text){
   for(let i=0;i<added.length;i++){ const k=keyOf(added[i]); if(seen.has(k)){ dup++; } else { seen.add(k); fresh.push(added[i]); } }
   return {count:fresh.length, dup:dup, rows:fresh};
 }
-function openImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.add('show'); }
-function closeImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.remove('show'); const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML=''; }
-function switchImpTab(t){ const ft=document.getElementById('impFileTab'); const pt=document.getElementById('impPasteTab'); if(ft) ft.style.display=t==='file'?'':'none'; if(pt) pt.style.display=t==='paste'?'':'none'; const bs=document.querySelectorAll('#impTabSeg button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.t===t); } }
+function openImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.add('show'); fillQuickAccount(); }
+function closeImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.remove('show'); const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML=''; const qc=document.getElementById('impQuickCode'); if(qc) qc.value=''; const qa=document.getElementById('impQuickAmount'); if(qa) qa.value=''; const qi=document.getElementById('impQuickInfo'); if(qi) qi.innerHTML=''; const qp=document.getElementById('impQuickPreview'); if(qp) qp.innerHTML=''; quickFund=null; }
+function switchImpTab(t){ const map={file:'impFileTab', paste:'impPasteTab', quick:'impQuickTab'}; for(const k in map){ const el=document.getElementById(map[k]); if(el) el.style.display=(k===t)?'':'none'; } const bs=document.querySelectorAll('#impTabSeg button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.t===t); } }
+let quickFund=null;
+function fillQuickAccount(){ const sel=document.getElementById('impQuickAccount'); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); const cur=(typeof currentScope!=='undefined' && currentScope && ACCOUNTS.indexOf(currentScope)>=0)?currentScope:'我的'; sel.value=cur; } const dt=document.getElementById('impQuickDate'); if(dt && !dt.value) dt.value=fmtDate(new Date()); }
+function quickResolve(){
+  const code=(document.getElementById('impQuickCode').value||'').trim();
+  const box=document.getElementById('impQuickInfo');
+  if(!/^\d{6}$/.test(code)){ toast('请输入 6 位基金代码'); if(box) box.innerHTML=''; return; }
+  if(box) box.innerHTML='<div style="color:#888">正在解析代码 '+escHtml(code)+' …</div>';
+  const s=document.createElement('script');
+  const to=setTimeout(function(){ if(box) box.innerHTML='<div style="color:#c0392b">解析超时，请检查网络或改用线上版</div>'; quickFund=null; if(s.parentNode) s.parentNode.removeChild(s); }, 12000);
+  s.onload=function(){ clearTimeout(to);
+    try{
+      const name=window.fS_name||'';
+      const raw=window.Data_netWorthTrend||[];
+      if(!Array.isArray(raw)||!raw.length){ if(box) box.innerHTML='<div style="color:#c0392b">未找到该基金，请检查代码</div>'; quickFund=null; s.remove(); return; }
+      const last=raw[raw.length-1];
+      const nav=Array.isArray(last)?(+last[1]):(last&&last.y!=null?+last.y:0);
+      if(!name||!nav){ if(box) box.innerHTML='<div style="color:#c0392b">解析失败，未取到名称或净值</div>'; quickFund=null; s.remove(); return; }
+      quickFund={code:code, name:name, nav:nav};
+      if(box) box.innerHTML='<div style="color:#0a8a3e">✅ 已识别：<b>'+escHtml(name)+'</b>（'+escHtml(code)+'）　最新净值 <b>'+nav+'</b></div>';
+      updateQuickPreview();
+    }catch(e){ if(box) box.innerHTML='<div style="color:#c0392b">解析失败：'+(e&&e.message||e)+'</div>'; quickFund=null; }
+    s.remove();
+  };
+  s.onerror=function(){ clearTimeout(to); if(box) box.innerHTML='<div style="color:#c0392b">网络错误，无法解析代码（请使用线上版）</div>'; quickFund=null; if(s.parentNode) s.parentNode.removeChild(s); };
+  s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
+  document.body.appendChild(s);
+}
+function qkSetDir(d){ const bs=document.querySelectorAll('#impQuickDir button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.d===d); } updateQuickPreview(); }
+function qkGetDir(){ const on=document.querySelector('#impQuickDir button.on'); return on?on.dataset.d:'buy'; }
+function updateQuickPreview(){
+  const box=document.getElementById('impQuickPreview'); if(!box) return;
+  if(!quickFund){ box.innerHTML=''; return; }
+  const amt=parseFloat((document.getElementById('impQuickAmount').value||'').replace(/[^\d.\-]/g,''))||0;
+  const dir=qkGetDir();
+  const shares=amt&&quickFund.nav?(amt/quickFund.nav):0;
+  const verb=dir==='sell'?'卖出':'买入';
+  if(!amt){ box.innerHTML='<div style="color:#888">填金额后自动算份额（'+verb+'，份额 ≈ 金额 ÷ 净值）</div>'; return; }
+  box.innerHTML='<div style="margin:6px 0">将<b>'+verb+'</b> <b>'+escHtml(quickFund.name)+'</b>，金额 <b>¥'+amt+'</b> @ 净值 '+quickFund.nav+' → 份额 ≈ <b>'+shares.toFixed(2)+'</b> 份</div>';
+}
+function doQuickAdd(){
+  if(!quickFund){ toast('请先解析基金代码'); return; }
+  const amt=parseFloat((document.getElementById('impQuickAmount').value||'').replace(/[^\d.\-]/g,''))||0;
+  if(!amt){ toast('请输入金额'); return; }
+  const dir=qkGetDir();
+  const date=document.getElementById('impQuickDate').value||fmtDate(new Date());
+  const account=document.getElementById('impQuickAccount').value||'我的';
+  const nav=quickFund.nav;
+  const shares=amt/nav;
+  const t={name:quickFund.name, date:date, type:dir, amount:amt, nav:nav, fee:0, account:account, shares:shares};
+  const normNum=function(v){ return (v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):''; };
+  const k=t.name+'|'+t.date+'|'+normNum(t.amount)+'|'+normNum(t.nav)+'|'+t.account;
+  if(trades.some(function(x){ return (x.name)+'|'+(x.date)+'|'+normNum(x.amount)+'|'+normNum(x.nav)+'|'+(x.account)===k; })){ toast('该笔已存在，无需重复录入'); return; }
+  trades.push(t);
+  compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('quick add refresh failed', e); });
+  toast('已录入：'+(dir==='sell'?'卖出':'买入')+' '+quickFund.name+' ¥'+amt);
+  closeImportModal();
+}
+
 function doPasteImport(){
   const ta=document.getElementById('impPasteArea'); if(!ta) return;
   const text=ta.value.trim(); if(!text){ toast('请先粘贴交易文本'); return; }
@@ -5629,6 +5687,7 @@ async function rebuildHistory(){
     <div class="sm-seg" id="impTabSeg">
       <button data-t="file" class="on" onclick="switchImpTab('file')">📄 上传文件</button>
       <button data-t="paste" onclick="switchImpTab('paste')">📋 粘贴文本</button>
+          <button data-t="quick" onclick="switchImpTab('quick')">⚡ 快捷录入</button>
     </div>
     <div id="impFileTab" style="margin-top:12px">
       <p class="sm-note">支持 .csv/.txt/.tsv。表头可用「名称,日期,方向,金额,净值,账户」；无表头则按 名称｜日期｜方向｜金额｜净值 顺序解析。</p>
@@ -5642,6 +5701,28 @@ async function rebuildHistory(){
         <button class="sm-ghost" onclick="document.getElementById('impPasteArea').value='';document.getElementById('impPastePreview').innerHTML=''">清空</button>
       </div>
       <div id="impPastePreview" style="margin-top:10px"></div>
+    </div>
+    <div id="impQuickTab" style="margin-top:12px;display:none">
+      <p class="sm-note">输 6 位基金代码，自动联网取基金名与最新净值；填金额即自动算份额。支持买入 / 卖出。</p>
+      <div style="display:flex;gap:8px">
+        <input id="impQuickCode" inputmode="numeric" maxlength="6" placeholder="基金代码，如 011608" style="flex:1;padding:9px 10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;font:14px ui-monospace,monospace;background:var(--input,#fff);color:var(--fg,#222);outline:none">
+        <button class="sm-act" onclick="quickResolve()">🔍 解析</button>
+      </div>
+      <div id="impQuickInfo" style="margin-top:8px;min-height:20px"></div>
+      <div class="sm-seg" id="impQuickDir" style="margin-top:8px">
+        <button data-d="buy" class="on" onclick="qkSetDir('buy')">🟢 买入</button>
+        <button data-d="sell" onclick="qkSetDir('sell')">🔴 卖出</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="impQuickAmount" inputmode="decimal" placeholder="金额（元），如 5000" oninput="updateQuickPreview()" style="flex:1;padding:9px 10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;font:14px ui-monospace,monospace;background:var(--input,#fff);color:var(--fg,#222);outline:none">
+        <input id="impQuickDate" type="date" onchange="updateQuickPreview()" style="padding:9px 10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;background:var(--input,#fff);color:var(--fg,#222);outline:none">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <span style="margin-right:4px">账户</span>
+        <select id="impQuickAccount" style="flex:1;padding:9px 10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;background:var(--input,#fff);color:var(--fg,#222);outline:none"></select>
+      </div>
+      <div id="impQuickPreview" style="margin-top:8px;min-height:20px"></div>
+      <button class="sm-act" style="width:100%;margin-top:8px;background:var(--accent,#2f6fed);color:#fff;border:none" onclick="doQuickAdd()">✅ 确认录入</button>
     </div>
   </div>
 </div>

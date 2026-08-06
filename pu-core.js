@@ -115,7 +115,7 @@
     const months = new Set(buys.map(function (b) { return b.date.slice(0, 7); })).size;
     return {
       empty: false, count: buys.length, months, firstNav, wAvg, diffPct, costDiff,
-      cheaper: diffPct < 0
+      fbDate: fb.date, cheaper: diffPct < 0
     };
   }
 

@@ -3613,7 +3613,7 @@ function liveSection(f){
   const defaultNav=_estNavBk!=null?_estNavBk:calcNav;
   const basisShort=_estNavBk!=null?'估算':'净值';
   if(f.shares!=null && (calcNav||defaultNav)){
-    const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(defaultNav>0&&curCost)?(curCost-defaultNav)/defaultNav*100:0, prog=curCost>0?Math.min(100,defaultNav/curCost*100):0, gapPct=Math.max(0,100-prog);
+    const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(defaultNav>0&&curCost)?(defaultNav-curCost)/curCost*100:0, prog=curCost>0?Math.min(100,defaultNav/curCost*100):0, gapPct=Math.max(0,100-prog);
     h+=`<div class="card"><h2>回本 / 补仓计算器 <span class="tag">实时模拟</span></h2>
       <p class="hint">已算上今日预估净值（${basisShort}）判断加仓后成本与回本差距；补仓价格默认用盘中预估，可手填。</p>
       <div class="bk-prog">
@@ -3634,9 +3634,9 @@ function liveSection(f){
           <span class="unit">${basisShort}</span>
         </div>
         <div class="bk-compare">
-          <div class="bk-col"><div class="bk-col-title">补仓前</div><div class="bk-line">成本<b>${curCost.toFixed(4)}</b></div><div class="bk-line">${need>0?'需再涨':'已盈利'}<b class="${need>0?'pos':'neg'}">${need>=0?'+':''}${need.toFixed(2)}%</b></div></div>
+          <div class="bk-col"><div class="bk-col-title">补仓前</div><div class="bk-line">成本<b>${curCost.toFixed(4)}</b></div><div class="bk-line">${need>=0?'已盈利':'需再涨'}<b class="${need>=0?'pos':'neg'}">${need>=0?'+':''}${Math.abs(need).toFixed(2)}%</b></div></div>
           <div class="bk-arrow">→</div>
-          <div class="bk-col after"><div class="bk-col-title">补仓后</div><div class="bk-line">成本<b id="c1cost">—</b></div><div class="bk-line">${need>0?'需再涨':'已盈利'}<b id="c1need" class="${need>0?'pos':'neg'}">—</b></div>
+          <div class="bk-col after"><div class="bk-col-title">补仓后</div><div class="bk-line">成本<b id="c1cost">—</b></div><div class="bk-line"><span id="c1needLbl">${need>=0?'已盈利':'需再涨'}</span><b id="c1need" class="${need>=0?'pos':'neg'}">—</b></div>
             <div class="bk-extra" id="bkExtra"><div class="bk-sum bk-sum-empty"><span>输入补仓金额查看明细</span></div></div>
           </div>
         </div>
@@ -4972,7 +4972,8 @@ function simulateAddPosition(enc){
   const d=PU.computeAddPosition(f, add, nav);
   if(d.empty){ c1.textContent='—'; if(c1n) c1n.textContent='—'; if(ex) ex.innerHTML='<div class="bk-sum bk-sum-empty"><span>输入补仓金额查看明细</span></div>'; return; }
   c1.textContent=d.newCostPx.toFixed(4);
-  if(c1n){ c1n.textContent=(d.newNeed>=0?'+':'')+d.newNeed.toFixed(2)+'%'; c1n.className=d.newNeed>0?'pos':'neg'; }
+  if(c1n){ const _prof=d.newNeed>=0; c1n.textContent=(_prof?'+':'')+Math.abs(d.newNeed).toFixed(2)+'%'; c1n.className=_prof?'pos':'neg'; }
+  const c1lbl=document.getElementById('c1needLbl'); if(c1lbl){ const _prof=d.newNeed>=0; c1lbl.textContent=_prof?'已盈利':'需再涨'; }
   if(ex){ ex.innerHTML=`<div class="bk-sum"><div class="bk-sum-i"><span>成交价依据</span><b>${basis}</b></div><div class="bk-sum-i"><span>新增份额</span><b>+${fmt(add/nav)} 份</b></div><div class="bk-sum-i"><span>总成本</span><b>${M(d.totCost)}</b></div><div class="bk-sum-i"><span>均价</span><b>${d.curCost.toFixed(4)} ${d.dir} ${d.newCostPx.toFixed(4)}</b></div></div>`; }
 }
 

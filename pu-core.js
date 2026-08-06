@@ -189,7 +189,7 @@
     const totCost = (f.cost != null ? f.cost : curCost * f.shares) + a;
     const newShares = f.shares + a / nav;
     const newCostPx = newShares > 0 ? totCost / newShares : 0;
-    const newNeed = nav > 0 ? (newCostPx - nav) / nav * 100 : 0;
+    const newNeed = nav > 0 && newCostPx > 0 ? (nav - newCostPx) / newCostPx * 100 : 0;
     const dir = newCostPx < curCost ? '降到' : newCostPx > curCost ? '升到' : '持平';
     return { empty: false, nav, curCost, add: a, totCost, newShares, newCostPx, newNeed, dir };
   }

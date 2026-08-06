@@ -4740,7 +4740,66 @@ async function refresh(){
 }
 
 // ---------- 导入导出 ----------
-function exportJSON(){ const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click(); try{ localStorage.setItem('ft_last_export', new Date().toISOString().slice(0,10)); }catch(e){} toast('已导出 fund-data.json'); }
+function exportJSON(){
+  // 导出弹窗：核心财务数据（ft_data）始终包含，其余按勾选
+  var old=document.getElementById('uwExportModal'); if(old) old.remove();
+  var opts=[
+    {grp:'债券', key:'ft_bond', label:'债券买入日/金额'},
+    {grp:'自选', key:'ft_watch', label:'基金自选（含分组标签）'},
+    {grp:'自选', key:'ft_bond_watch', label:'债券自选池'},
+    {grp:'设置', key:'ft_tags', label:'标签'},
+    {grp:'设置', key:'ft_catoverride', label:'分类覆盖'},
+    {grp:'设置', key:'ft_scope', label:'账户口径'},
+    {grp:'设置', key:'ft_profile', label:'个人画像'},
+    {grp:'设置', key:'ft_cols', label:'列布局'},
+    {grp:'设置', key:'ft_sort', label:'排序', extra:['ft_sort_ver']},
+    {grp:'设置', key:'ft_colorder', label:'列顺序', extra:['ft_colorder_ver']},
+    {grp:'设置', key:'ft_theme', label:'主题'},
+    {grp:'设置', key:'ft_accent', label:'强调色'},
+    {grp:'设置', key:'ft_autorefresh', label:'自动刷新'}
+  ];
+  var mask=document.createElement('div'); mask.id='uwExportModal';
+  mask.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--surface);color:var(--text);border-radius:14px;max-width:480px;width:100%;max-height:84vh;overflow:auto;padding:18px';
+  var groups={}; opts.forEach(function(o){ (groups[o.grp]=groups[o.grp]||[]).push(o); });
+  var h='<h3 style="margin:0 0 4px">导出 JSON</h3>';
+  h+='<p class="hint" style="margin:0 0 10px">持仓 / 交易 / 清仓（核心数据）始终包含；下方按需要勾选要一并备份的内容：</p>';
+  Object.keys(groups).forEach(function(g){
+    h+='<div style="font-weight:600;margin:10px 0 4px">'+escHtml(g)+'</div>';
+    groups[g].forEach(function(o){
+      h+='<label style="display:flex;gap:8px;align-items:center;padding:5px 2px;cursor:pointer"><input type="checkbox" class="uwExp" data-key="'+escHtml(o.key)+'"'+(o.extra?(' data-extra="'+escHtml(o.extra.join(','))+'"'):'')+' checked> '+escHtml(o.label)+'</label>';
+    });
+  });
+  h+='<div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="uwExpAll">全选</button><button class="btn" id="uwExpNone">清空</button><span style="flex:1"></span><button class="btn" id="uwExpCancel">取消</button><button class="btn primary" id="uwExpGo">导出选中</button></div>';
+  box.innerHTML=h;
+  mask.appendChild(box);
+  mask.onclick=function(e){ if(e.target===mask) mask.remove(); };
+  document.body.appendChild(mask);
+  function collect(){
+    var local={};
+    box.querySelectorAll('input.uwExp:checked').forEach(function(cb){
+      var k=cb.getAttribute('data-key'); var v=localStorage.getItem(k);
+      if(v!==null) local[k]=v;
+      var ex=cb.getAttribute('data-extra'); if(ex){ ex.split(',').forEach(function(ek){ var ev=localStorage.getItem(ek); if(ev!==null) local[ek]=ev; }); }
+    });
+    return local;
+  }
+  document.getElementById('uwExpAll').onclick=function(){ box.querySelectorAll('input.uwExp').forEach(function(cb){ cb.checked=true; }); };
+  document.getElementById('uwExpNone').onclick=function(){ box.querySelectorAll('input.uwExp').forEach(function(cb){ cb.checked=false; }); };
+  document.getElementById('uwExpCancel').onclick=function(){ mask.remove(); };
+  document.getElementById('uwExpGo').onclick=function(){
+    var local=collect();
+    var obj={schemaVersion:SCHEMA_VERSION, updatedAt:new Date().toISOString(), snaps:snaps, trades:trades, navCache:navCache, daily_snapshots:dailySnapshots};
+    if(Object.keys(local).length) obj._local=local;
+    var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click();
+    try{ localStorage.setItem('ft_last_export', new Date().toISOString().slice(0,10)); }catch(e){}
+    mask.remove();
+    toast('已导出 fund-data.json'+(Object.keys(local).length?('（含 '+Object.keys(local).length+' 项附加内容）'):''));
+  };
+}
+
 function showBackupReminder(){
   const el=document.getElementById('backupReminder'); if(!el) return;
   const today=Math.floor(Date.now()/86400000);
@@ -4756,7 +4815,40 @@ function showBackupReminder(){
 function snoozeBackup(btn){ try{ localStorage.setItem('ft_backup_snooze', Math.floor(Date.now()/86400000)); }catch(e){} if(btn&&btn.parentNode) btn.parentNode.style.display='none'; }
 function exportHoldingsCSV(){ if(!fundsView.length){ toast('暂无可导出的持仓'); return; } const head='基金名称,类别,持有份额,成本单价,最新净值,市值,盈亏,收益率%\n'; const rows=fundsView.map(f=>[f.name,f.cat||'',f.shares!=null?f.shares:'',f.costPx!=null?f.costPx:'',f.nav!=null?f.nav:'',f.mv!=null?f.mv:'',f.profit!=null?f.profit:'',f.ret!=null?f.ret.toFixed(2):''].join(',')).join('\n'); const blob=new Blob(['\ufeff'+head+rows],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click(); toast('已导出持仓 fund-holdings.csv'); }
 function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n汇添富中证芯片产业指数增强C,2026-01-15,买入,10000,1.9500,0\n汇添富中证芯片产业指数增强C,2026-03-20,卖出,5000,2.1000,5\n华夏有色金属ETF联接D,2026-02-01,定投,2000,1.2000,\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板'); }
-function importJSON(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader(); r.onload=()=>{ try{ const d=migrate(JSON.parse(r.result)); snaps=d.snaps; trades=d.trades; navCache=d.navCache; renderTrade(); compute(); saveLocal(); toast('已导入 JSON（已自动升级到 v'+SCHEMA_VERSION+'）'); }catch(e){alert('解析失败');} }; r.readAsText(f); }; inp.click(); }
+function importJSON(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();
+    r.onload=()=>{ try{
+      const d=migrate(JSON.parse(r.result));
+      snaps=d.snaps; trades=d.trades; navCache=d.navCache; dailySnapshots=d.daily_snapshots;
+      silentSave();
+      let n=0;
+      if(d._local && typeof d._local==='object'){ for(const k in d._local){ try{ const v=d._local[k]; localStorage.setItem(k, typeof v==='string'? v : JSON.stringify(v)); n++; }catch(e){} } }
+      refreshSampleBanner();
+      toast('已导入 JSON（已升级到 v'+SCHEMA_VERSION+'）'+(n?('，并恢复 '+n+' 项设置/自选/债券'):''));
+      setTimeout(()=>{ location.reload(); }, 800);
+    }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
+    r.readAsText(f); };
+  inp.click();
+}
+
+function refreshSampleBanner(){
+  try{
+    var dismiss=+(localStorage.getItem('ft_sample_dismiss')||0);
+    var el=document.getElementById('sampleWarn');
+    var isSample=isSampleData({snaps:snaps, trades:trades});
+    if(!isSample || dismiss>Date.now()){ if(el) el.remove(); return; }
+    if(!el){
+      el=document.createElement('div'); el.id='sampleWarn';
+      el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9990;background:#fff7e6;border-bottom:1px solid #ffd591;color:#874d00;padding:9px 14px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center';
+      el.innerHTML='⚠️ <b>当前显示的是内置示例数据，不是你的真实持仓。</b> <button id="sampleImportBtn" style="background:#fa8c16;color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:13px;margin-left:4px">导入我的数据</button> <button id="sampleDismissBtn" style="background:transparent;color:#874d00;border:1px solid #ffd591;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;margin-left:4px">知道了</button>';
+      document.body.appendChild(el);
+      document.getElementById('sampleImportBtn').onclick=function(){ el.remove(); importJSON(); };
+      document.getElementById('sampleDismissBtn').onclick=function(){ try{ localStorage.setItem('ft_sample_dismiss', Date.now()+86400000*7); }catch(e){} el.remove(); };
+      var fw=document.getElementById('fileWarn'); if(fw){ el.style.top=fw.offsetHeight+'px'; }
+    }
+  }catch(e){}
+}
 
 function syncOnline(){
   if(!confirm('将从线上拉取最新数据并合并到本地（同步前会自动备份当前数据到下载）。\n\n· 线上的基金/交易会更新进来\n· 你本地手动新增的基金和交易会保留\n· 实时净值缓存不动\n\n确认同步？')) return;
@@ -4846,7 +4938,7 @@ function parseCSV(text){
   trades=trades.concat(fresh);
   return {count:fresh.length, dup, rows:fresh};
 }
-function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
+function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
 
 
 // ---------- ANALYSIS 数据对象（详情页内联渲染）----------
@@ -5372,6 +5464,7 @@ async function rebuildHistory(){
   refresh().catch(function(e){ console.error('auto refresh failed', e); });
   renderMktLight();                 // 交易时段状态灯（首屏即显示）
   setInterval(renderMktLight, 30000); // 每 30s 自动切换 🟢/🟡/⚪
+  refreshSampleBanner();
 })();
 </script>
   <!-- 大盘走势放大弹窗 -->

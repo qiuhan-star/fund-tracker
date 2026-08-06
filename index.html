@@ -941,7 +941,7 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
       <div class="card">
         <h2>累计收益 / 总资产曲线 <span class="tag">随记录变真实</span></h2>
-        <p class="hint">当前无历史时序数据，下面是一条示意曲线。点「记录此刻」会把当前的<b>总资产</b>与<b>累计收益</b>存为一个数据点；坚持记录，曲线就会变成你账户的真实净值轨迹。</p>
+        <p class="hint">应用会<b>自动</b>在每次打开或改动数据时，把当前<b>总资产</b>与<b>累计收益</b>记为一个每日快照点（按账户口径分开）；曲线实时展示你账户的真实净值轨迹。也可点「记录此刻」立即补记今天。</p>
         <div class="chart-box"><canvas id="growth" role="img" aria-label="累计收益曲线"></canvas></div>
         <div style="margin-top:10px"><button class="btn sm primary" onclick="recordGrowth()">📍 记录此刻为快照点</button><span id="growthInfo" class="hint" style="margin-left:8px"></span></div>
       </div>
@@ -4792,23 +4792,30 @@ function renderSector(){
 let growthChart=null;
 function renderGrowth(){
   const box=document.getElementById('growth'), info=document.getElementById('growthInfo'); if(!box) return;
-  const total=fundsView.reduce((a,f)=>a+f.mv,0), cost=fundsView.reduce((a,f)=>a+f.cost,0), profit=total-cost;
-  const pts=growthSeries.slice();
-  if(!pts.length) pts.push({t:'示例起点',total,profit});
+  const scope=currentScope||'personal';
+  // 优先用「每日快照」：app 在每次打开/改数据时已自动把总资产与累计收益写入 dailySnapshots[scope]，
+  // 这是账户的真实净值轨迹；仅当无任何自动记录时才退回手记 growthSeries，再无则显示示意。
+  const arr=(dailySnapshots&&dailySnapshots[scope])||[];
+  let pts=arr.map(s=>({t:s.date,total:s.totalAssets,profit:s.totalProfit}));
+  if(!pts.length && growthSeries.length) pts=growthSeries.slice();
+  if(!pts.length) pts.push({t:'示例起点',total:0,profit:0});
   const labels=pts.map(p=>p.t), totData=pts.map(p=>Math.round(p.total)), profData=pts.map(p=>Math.round(p.profit));
   if(growthChart) growthChart.destroy();
   growthChart=new Chart(box,{type:'line',data:{labels,datasets:[
     {label:'总资产(元)',data:totData,borderColor:'#2f6fed',backgroundColor:'rgba(47,111,237,.08)',fill:true,tension:.3,pointRadius:3},
     {label:'累计收益(元)',data:profData,borderColor:TH().up,backgroundColor:'transparent',tension:.3,pointRadius:3,yAxisID:'y2'}
   ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{font:{size:10}}},tooltip:{titleFont:{family:CH_FONT,size:12,weight:'600'},bodyFont:{family:CH_FONT,size:12},padding:8,cornerRadius:8}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{color:TH().grid}},y2:{position:'right',ticks:{font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v},grid:{display:false}}}}});
-  if(info) info.textContent=growthSeries.length?('已记录 '+growthSeries.length+' 个快照点'):'（示意：点「记录此刻」开始积累真实曲线）';
+  if(info){
+    if(pts.length>1 && pts[0].t!=='示例起点') info.textContent='已自动记录 '+pts.length+' 个每日快照（每次打开/改数据都会更新当日点）';
+    else if(pts.length===1 && pts[0].t!=='示例起点') info.textContent='今天已记录 1 个快照，多用几天即可连成真实曲线';
+    else info.textContent='（尚无记录：每次打开应用会自动记录当日总资产与累计收益）';
+  }
 }
 function recordGrowth(){
-  const total=fundsView.reduce((a,f)=>a+f.mv,0), cost=fundsView.reduce((a,f)=>a+f.cost,0), profit=total-cost;
+  // 立即把当前账户快照写入每日快照（与自动记录同一份真实数据），再重绘
+  recordSnapshot(); renderGrowth();
   const d=new Date(), t=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  growthSeries.push({t,total,profit});
-  try{ localStorage.setItem('ft_growth',JSON.stringify(growthSeries)); }catch(e){}
-  renderGrowth(); toast('已记录 '+t+' 的账户快照');
+  toast('已记录 '+t+' 的账户快照');
 }
 
 // ---------- 启动 ----------

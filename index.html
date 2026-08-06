@@ -659,6 +659,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
     <div class="sm-modal">
       <div class="sm-head"><h2>＋ 记一笔交易</h2><button class="sm-x" onclick="closeTradePicker()">✕</button></div>
       <div class="sm-body">
+        <div class="draft-pill" id="tqDraftPill">已恢复未保存草稿 <button type="button" onclick="draftClear('ft_draft_tq',DRAFT_TQ_IDS);document.getElementById('tqDraftPill').classList.remove('show')">清除</button></div>
         <div class="nf-field">
           <label>基金名称</label>
           <input id="tq-fund" list="tq-fund-list" placeholder="选或填基金" />
@@ -756,134 +757,31 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 <script>
 // ---------- 示例数据 ----------
 const SAMPLE_SNAP = [
-  {name:'汇添富中证芯片产业指数增强发起式C', code:'014194', cat:'芯片', mv:15507.63, ret:-14.06, shares:9167.03, costPx:2.0647},
-  {name:'华夏有色金属ETF联接D', code:'021534', cat:'周期资源', mv:8230.93, ret:-5.53, shares:4877.01, costPx:1.7866},
-  {name:'华富恒盛纯债债券E', code:'019445', cat:'债基', mv:10001.8, ret:0.00, shares:9009.82, costPx:1.1099},
-  {name:'摩根瑞益纯债债券C', code:'007330', cat:'债基', mv:10000.0, ret:0.00, shares:8674.53, costPx:1.1528},
-  {name:'富国全球科技互联网股票(QDII)C', code:'022184', cat:'芯片', tags:['QDII','全球'], mv:7117.22, ret:-9.94, shares:1362.20, costPx:5.7787},
-  {name:'中欧医疗创新股票C', code:'006229', cat:'医药', mv:6730.44, ret:1.98, shares:4596.04, costPx:1.4360},
-  {name:'广发中证军工ETF联接C', code:'005693', cat:'制造', mv:5377.25, ret:-9.03, shares:4956.90, costPx:1.1925},
-  {name:'招商中证煤炭等权指数(LOF)E', code:'016347', cat:'周期资源', mv:5096.44, ret:1.93, shares:2306.50, costPx:2.1678},
-  {name:'广发工程机械ETF联接C', code:'020904', cat:'制造', mv:4953.03, ret:-0.94, shares:3558.72, costPx:1.4050},
-  {name:'嘉实中证细分化工产业主题ETF发起联接C', code:'013528', cat:'周期资源', mv:4072.85, ret:-1.02, shares:4255.41, costPx:0.9670},
-  {name:'上银丰益混合C', code:'011505', cat:'混合', mv:3994.45, ret:0.00, shares:2644.28, costPx:1.5127},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', code:'017731', cat:'芯片', tags:['QDII','全球'], mv:3989.87, ret:-1.80, shares:1091.80, costPx:3.6573},
-  {name:'招商国证生物医药指数C', code:'012417', cat:'医药', mv:3744.31, ret:-0.55, shares:9367.80, costPx:0.4019},
-  {name:'易方达科创芯片ETF联接C', code:'020671', cat:'芯片', mv:3376.77, ret:-6.11, shares:1006.76, costPx:3.5724},
-  {name:'广发港股创新药ETF联接(QDII)C', code:'019671', cat:'医药', tags:['QDII','港股'], mv:2961.04, ret:-1.20, shares:2399.55, costPx:1.2490},
-  {name:'华宝中证港股通信息技术ETF发起联接', code:'026755', cat:'芯片', tags:['QDII','港股'], mv:2009.89, ret:-6.33, shares:1794.22, costPx:1.1959},
-  {name:'南方恒生科技ETF发起联接(QDII)C', code:'020989', cat:'科技', tags:['QDII','港股'], mv:1179.53, ret:2.57, shares:1024.16, costPx:1.1229},
-  {name:'华夏中证金融科技主题ETF发起式联接C', code:'023885', cat:'科技', mv:604.49, ret:0.00, shares:678.67, costPx:0.8907},
-  {name:'摩根日本精选股票(QDII)C', code:'019449', cat:'海外', tags:['QDII','日本'], mv:504.1, ret:0.82, shares:230.70, costPx:2.1673},
-  {name:'天弘中证计算机ETF联接C', code:'001630', cat:'科技', mv:397.97, ret:-0.51, shares:494.07, costPx:0.8096},
-  {name:'南方纳斯达克100指数发起(QDII)C', code:'016453', cat:'海外', tags:['QDII','美股'], mv:10.01, ret:1.70, shares:4.49, costPx:2.2293},
-  {name:'嘉实稳和6个月持有期纯债债券A', account:'小号', code:'012279', cat:'债基', mv:1.65, ret:4.43, shares:1.47, costPx:1.0721},
-  {name:'摩根瑞享纯债C', account:'小号', code:'016211', cat:'债基', mv:50000, ret:0, shares:45558.09, costPx:1.0975},
-  {name:'易方达供给改革灵活配置混合', account:'小号', code:'002910', cat:'混合', mv:5000, ret:0, shares:624.95, costPx:8.0006},
-  {name:'南方宁元债券A', account:'小号', code:'018665', cat:'债基', mv:50000, ret:0, shares:45533.19, costPx:1.0981},
-  {name:'景顺长城价值边际灵活配置混合A', account:'小号', code:'008060', cat:'混合', mv:15, ret:0, shares:9.11, costPx:1.6461},
-  {name:'广发全球精选股票(QDII)A', account:'小号', code:'270023', cat:'海外', mv:600, ret:0, shares:95.46, costPx:6.2858},
-  {name:'嘉实全球产业升级股票(QDII)C', account:'小号', code:'017731', cat:'海外', mv:2387.62, ret:0, shares:612.68, costPx:3.8963},
-  {name:'国泰信瑞纯债', account:'小号', code:'016426', cat:'债基', mv:50000, ret:0, shares:47384.38, costPx:1.0552},
-  {name:'易方达国防军工混合C', account:'小号', code:'015945', cat:'制造', mv:4400, ret:0, shares:2154.12, costPx:2.0425},
-  {name:'建信新兴市场优选混合(QDII)C', account:'小号', code:'018147', cat:'科技', mv:2000, ret:0, shares:893.29, costPx:2.2389},
-  {name:'广发全球精选股票(QDII)C', account:'小号', code:'021277', cat:'海外', mv:600, ret:0, shares:101.68, costPx:5.9002}
+  {name:'示例成长混合C', code:'900001', cat:'科技', mv:12560.32, ret:8.42, shares:6820.11, costPx:1.4920},
+  {name:'演示稳健债券A', code:'900002', cat:'债基', mv:10000.00, ret:2.15, shares:9650.43, costPx:1.0362},
+  {name:'样例消费指数C', code:'900003', cat:'消费', mv:8421.77, ret:-3.60, shares:5240.88, costPx:1.6703},
+  {name:'示例医疗健康C', code:'900004', cat:'医药', mv:6310.45, ret:5.21, shares:4102.30, costPx:1.4562},
+  {name:'演示红利低波A', code:'900005', cat:'红利', mv:5577.20, ret:1.93, shares:3920.55, costPx:1.4208},
+  {name:'样例科创创业C', code:'900006', cat:'制造', mv:4988.03, ret:-6.74, shares:3540.12, costPx:1.6552},
+  {name:'示例全球配置(QDII)C', code:'900007', cat:'海外', tags:['QDII'], mv:7120.66, ret:4.08, shares:3201.40, costPx:2.2208},
+  {name:'演示黄金ETF联接C', code:'900008', cat:'商品', mv:2980.54, ret:9.87, shares:1980.22, costPx:1.4201},
+  {name:'样例沪深300C', code:'900009', cat:'宽基', mv:4010.33, ret:0.52, shares:2950.40, costPx:1.3600},
+  {name:'示例新能源C', code:'900010', cat:'制造', mv:2360.18, ret:-11.20, shares:3010.55, costPx:1.0872},
+  {name:'演示稳健债券B', code:'900011', account:'小号', cat:'债基', mv:50000.00, ret:2.40, shares:48220.11, costPx:1.0367},
+  {name:'样例红利低波B', code:'900012', account:'小号', cat:'红利', mv:12000.00, ret:1.10, shares:8450.33, costPx:1.4201}
 ];
 const SAMPLE_TRADE = [
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-01-22', time:'00:53', type:'buy', amount:100, shares:35.5063, nav:2.8164, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-01-22', time:'19:16', type:'buy', amount:100, shares:35.9997, nav:2.7778, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-01-27', time:'12:17', type:'buy', amount:100, shares:35.2883, nav:2.8338, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-02-02', time:'14:59', type:'buy', amount:10, shares:3.5737, nav:2.7982, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-02-04', time:'14:31', type:'buy', amount:10, shares:3.7586, nav:2.6606, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-02-05', time:'14:54', type:'buy', amount:100, shares:37.8974, nav:2.6387, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-02-09', time:'14:24', type:'buy', amount:100, shares:36.0049, nav:2.7774, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-02-11', time:'14:38', type:'buy', amount:50, shares:18.0362, nav:2.7722, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-06', time:'14:49', type:'buy', amount:100, shares:37.2940, nav:2.6814, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-10', time:'14:55', type:'buy', amount:100, shares:36.0464, nav:2.7742, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-11', time:'14:58', type:'buy', amount:100, shares:36.0659, nav:2.7727, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-12', time:'14:46', type:'sell', amount:219.61, shares:81.1207, nav:2.7072, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-16', time:'14:56', type:'buy', amount:100, shares:36.1677, nav:2.7649, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-19', time:'14:58', type:'buy', amount:100, shares:36.3465, nav:2.7513, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-24', time:'10:07', type:'buy', amount:100, shares:36.5764, nav:2.7340, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-25', time:'14:35', type:'buy', amount:100, shares:36.0062, nav:2.7773, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-03-30', time:'14:56', type:'buy', amount:100, shares:38.6862, nav:2.5849, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-04-01', time:'14:57', type:'buy', amount:100, shares:36.7202, nav:2.7233, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-04-02', time:'14:57', type:'buy', amount:100, shares:37.3385, nav:2.6782, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-04-30', time:'14:54', type:'buy', amount:10, shares:2.8221, nav:3.5435, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-05-08', time:'14:28', type:'buy', amount:50, shares:13.2478, nav:3.7742, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-05-13', time:'14:36', type:'buy', amount:10, shares:2.5275, nav:3.9565, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-05-15', time:'14:49', type:'buy', amount:10, shares:2.6070, nav:3.8358, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-05-18', time:'13:57', type:'buy', amount:10, shares:2.6246, nav:3.8101, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-05-22', time:'14:58', type:'buy', amount:100, shares:24.7359, nav:4.0427, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-05-26', time:'11:30', type:'convert', amount:87.88, shares:21.0149, nav:4.1818, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-05-26', time:'14:47', type:'buy', amount:100, shares:23.9131, nav:4.1818, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-04', time:'14:38', type:'buy', amount:100, shares:23.2926, nav:4.2932, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-17', time:'14:45', type:'buy', amount:100, shares:22.4075, nav:4.4628, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-18', time:'14:49', type:'buy', amount:100, shares:21.5438, nav:4.6417, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-22', time:'14:56', type:'buy', amount:100, shares:21.1560, nav:4.7268, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-23', time:'14:39', type:'buy', amount:100, shares:22.0133, nav:4.5427, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-24', time:'13:09', type:'buy', amount:100, shares:21.4763, nav:4.6563, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-26', time:'13:42', type:'buy', amount:100, shares:21.2748, nav:4.7004, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-06-30', time:'14:55', type:'buy', amount:100, shares:19.8421, nav:5.0398, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-02', time:'13:04', type:'buy', amount:100, shares:22.1450, nav:4.5157, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-03', time:'17:41', type:'buy', amount:100, shares:22.1303, nav:4.5187, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-07', time:'10:04', type:'buy', amount:100, shares:22.5810, nav:4.4285, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-08', time:'14:49', type:'buy', amount:100, shares:22.3549, nav:4.4733, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-09', time:'13:14', type:'buy', amount:100, shares:21.2035, nav:4.7162, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-10', time:'14:46', type:'buy', amount:100, shares:21.9409, nav:4.5577, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-21', time:'13:22', type:'buy', amount:100, shares:23.7006, nav:4.2193, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-22', time:'13:01', type:'buy', amount:100, shares:23.9837, nav:4.1695, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-23', time:'14:54', type:'buy', amount:200, shares:48.8639, nav:4.0930, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-24', time:'14:35', type:'buy', amount:200, shares:49.9139, nav:4.0069, locked:true},
-  {name:'嘉实全球产业升级股票发起式(QDII)C', account:'我的', date:'2026-07-29', time:'14:39', type:'buy', amount:200, shares:54.4929, nav:3.6702, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-01-29', time:'14:59', type:'buy', amount:200.0, shares:141.08, nav:1.4176, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-02-02', time:'14:50', type:'buy', amount:100.0, shares:73.04, nav:1.3691, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-02-04', time:'14:38', type:'buy', amount:50.0, shares:36.41, nav:1.3733, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-02-05', time:'14:58', type:'buy', amount:10.0, shares:7.38, nav:1.3546, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-02-09', time:'14:16', type:'buy', amount:200.0, shares:143.51, nav:1.3936, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-02-11', time:'14:34', type:'buy', amount:100.0, shares:72.2, nav:1.385, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-03', time:'12:44', type:'buy', amount:100.0, shares:74.4, nav:1.3441, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-05', time:'14:56', type:'buy', amount:300.0, shares:219.67, nav:1.3657, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-06', time:'14:57', type:'buy', amount:100.0, shares:73.64, nav:1.3579, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-09', time:'14:59', type:'buy', amount:100.0, shares:75.83, nav:1.3187, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-10', time:'14:47', type:'buy', amount:500.0, shares:369.71, nav:1.3524, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-11', time:'14:31', type:'buy', amount:50.0, shares:37.65, nav:1.3281, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-12', time:'14:42', type:'buy', amount:50.0, shares:38.33, nav:1.3045, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-13', time:'14:58', type:'buy', amount:50.0, shares:38.81, nav:1.2882, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-16', time:'14:52', type:'buy', amount:1000.0, shares:764.47, nav:1.3081, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-18', time:'14:42', type:'buy', amount:50.0, shares:38.24, nav:1.3077, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-19', time:'14:57', type:'convert', amount:254.56, shares:199.58, nav:1.2755, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-03-25', time:'14:33', type:'convert', amount:501.53, shares:397.63, nav:1.2613, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-04-14', time:'11:11', type:'sell', amount:1278.55, shares:933.86, nav:1.3691, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-04-16', time:'14:30', type:'buy', amount:100.0, shares:72.52, nav:1.379, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-04-20', time:'14:36', type:'buy', amount:100.0, shares:71.5, nav:1.3986, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-04-21', time:'14:59', type:'buy', amount:100.0, shares:72.64, nav:1.3766, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-04-29', time:'14:03', type:'buy', amount:100.0, shares:66.68, nav:1.4997, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-06', time:'14:44', type:'buy', amount:10.0, shares:6.05, nav:1.6531, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-06', time:'14:44', type:'buy', amount:1000.0, shares:604.92, nav:1.6531, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-08', time:'14:27', type:'buy', amount:50.0, shares:30.78, nav:1.6244, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-13', time:'14:31', type:'buy', amount:50.0, shares:28.13, nav:1.7773, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-15', time:'14:54', type:'buy', amount:1000.0, shares:578.1, nav:1.7298, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-18', time:'13:56', type:'buy', amount:50.0, shares:28.65, nav:1.7455, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-19', time:'14:51', type:'buy', amount:50.0, shares:27.23, nav:1.8361, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-20', time:'14:52', type:'buy', amount:1000.0, shares:519.26, nav:1.9258, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-22', time:'14:59', type:'buy', amount:250.0, shares:131.71, nav:1.8981, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-05-26', time:'14:44', type:'buy', amount:3000.0, shares:1498.5, nav:2.002, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-06-05', time:'15:00', type:'buy', amount:200.0, shares:113.03, nav:1.7695, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-06-17', time:'14:55', type:'buy', amount:1000.0, shares:493.12, nav:2.0279, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-06-23', time:'14:57', type:'buy', amount:1000.0, shares:466.37, nav:2.1442, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-06-29', time:'14:59', type:'buy', amount:1000.0, shares:405.17, nav:2.4681, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-01', time:'14:41', type:'sell', amount:5898.66, shares:2359.56, nav:2.4999, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-02', time:'14:39', type:'sell', amount:3575.52, shares:1573.04, nav:2.273, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-07', time:'14:55', type:'convert', amount:3696.97, shares:1634.89, nav:2.2613, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-15', time:'14:53', type:'buy', amount:1000.0, shares:462.13, nav:2.1639, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-16', time:'14:47', type:'convert', amount:1303.71, shares:633.45, nav:2.0581, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-17', time:'14:48', type:'convert', amount:2227.1, shares:1157.18, nav:1.9246, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-22', time:'14:55', type:'buy', amount:1800.0, shares:836.86, nav:2.1509, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-29', time:'14:37', type:'buy', amount:1500.0, shares:798.21, nav:1.8792, locked:true},
-  {name:'汇添富中证芯片产业指数增强发起式C', account:'我的', date:'2026-07-31', time:'14:49', type:'buy', amount:900.0, shares:494.83, nav:1.8188, locked:true},
-  {name:'广发工程机械ETF联接C', account:'我的', date:'2026-08-03', time:'14:50:01', type:'buy', amount:5000, shares:3558.72, nav:1.4050, fee:0, locked:true},
-  {name:'上银丰益混合C', account:'我的', date:'2026-08-03', time:'14:57:17', type:'buy', amount:4000, shares:2644.28, nav:1.5127, fee:0, locked:true}
+  {name:'示例成长混合C', account:'我的', date:'2026-01-15', time:'14:30', type:'buy', amount:2000, shares:1339.10, nav:1.4934, locked:true},
+  {name:'示例成长混合C', account:'我的', date:'2026-03-20', time:'10:15', type:'buy', amount:1000, shares:642.05, nav:1.5574, locked:true},
+  {name:'示例成长混合C', account:'我的', date:'2026-06-10', time:'15:00', type:'sell', amount:1500, shares:880.12, nav:1.7042, locked:true},
+  {name:'演示稳健债券A', account:'我的', date:'2026-02-01', time:'09:40', type:'buy', amount:5000, shares:4825.21, nav:1.0362, locked:true},
+  {name:'演示稳健债券A', account:'我的', date:'2026-05-08', time:'14:22', type:'buy', amount:5000, shares:4825.22, nav:1.0362, locked:true},
+  {name:'样例消费指数C', account:'我的', date:'2026-02-18', time:'13:50', type:'buy', amount:3000, shares:1789.61, nav:1.6763, locked:true},
+  {name:'示例医疗健康C', account:'我的', date:'2026-04-02', time:'11:05', type:'buy', amount:2000, shares:1351.10, nav:1.4804, locked:true},
+  {name:'示例全球配置(QDII)C', account:'我的', date:'2026-01-22', time:'16:10', type:'buy', amount:3000, shares:1350.22, nav:2.2219, locked:true},
+  {name:'示例全球配置(QDII)C', account:'我的', date:'2026-07-15', time:'14:30', type:'sell', amount:2000, shares:870.40, nav:2.2985, locked:true},
+  {name:'演示稳健债券B', account:'小号', date:'2026-03-01', time:'10:00', type:'buy', amount:50000, shares:48220.11, nav:1.0367, locked:true},
+  {name:'样例红利低波B', account:'小号', date:'2026-04-10', time:'14:00', type:'buy', amount:12000, shares:8450.33, nav:1.4201, locked:true}
 ];
 
 let snaps=[], trades=[], navCache={}, dailySnapshots=[], dcaPlans=[];
@@ -3411,6 +3309,7 @@ function addTradeMenu(){
   const dt=document.getElementById('tq-date'); if(dt && !dt.value) dt.value=new Date().toISOString().slice(0,10);
   const ty=document.getElementById('tq-type'); if(ty && !ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
   const m=document.getElementById('tradeQuickMask'); if(m){ m.classList.add('show'); const el=document.getElementById('tq-fund'); if(el) setTimeout(()=>{ try{ el.focus(); }catch(e){} },60); }
+  draftRestore('ft_draft_tq', DRAFT_TQ_IDS, 'tqDraftPill');
 }
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
 function tradeQuickSave(){
@@ -3429,6 +3328,7 @@ function tradeQuickSave(){
   trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
   silentSave(); compute(); recordSnapshot();
   closeTradePicker();
+  draftClear('ft_draft_tq', DRAFT_TQ_IDS); const _tq=document.getElementById('tqDraftPill'); if(_tq) _tq.classList.remove('show');
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
   toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
 }
@@ -3446,6 +3346,7 @@ function openDrawer(){
   document.getElementById('drawerMask').style.display='block';
   const d=document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden','false');
   setTimeout(()=>{ const el=document.getElementById('dr-fund'); if(el) el.focus(); },90);
+  draftRestore('ft_draft_drawer', DRAFT_DR_IDS, 'drDraftPill');
 }
 function closeDrawer(e){ if(e&&e.target&&!e.target.classList.contains('drawer-mask')) return; const m=document.getElementById('drawerMask'); if(m) m.style.display='none'; const d=document.getElementById('drawer'); if(d){ d.classList.remove('open'); d.setAttribute('aria-hidden','true'); } }
 function drawerSave(){
@@ -3466,7 +3367,79 @@ function drawerSave(){
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
   toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
   g('dr-amount').value=''; g('dr-nav').value=''; g('dr-fee').value=''; g('dr-shares').value=''; g('dr-fund').value='';
+  draftClear('ft_draft_drawer', DRAFT_DR_IDS); const _dp=document.getElementById('drDraftPill'); if(_dp) _dp.classList.remove('show');
   closeDrawer();
+}
+
+// ---------- 草稿自动保存（移动端防丢失） ----------
+const DRAFT_DR_IDS=['dr-fund','dr-acc','dr-type','dr-date','dr-time','dr-amount','dr-nav','dr-fee','dr-shares'];
+const DRAFT_TQ_IDS=['tq-fund','tq-type','tq-acc','tq-date','tq-time','tq-amount','tq-nav','tq-fee','tq-shares'];
+function draftSave(key, ids){
+  try{ const o={}; ids.forEach(function(id){ const el=document.getElementById(id); if(el) o[id]=el.value; }); localStorage.setItem(key, JSON.stringify(o)); }catch(e){}
+}
+function draftRestore(key, ids, pillId){
+  try{
+    const raw=localStorage.getItem(key); if(!raw) return false;
+    const o=JSON.parse(raw); let any=false;
+    ids.forEach(function(id){ const el=document.getElementById(id); if(el && o[id]!=null && o[id]!==''){ el.value=o[id]; any=true; } });
+    if(any && pillId){ const p=document.getElementById(pillId); if(p) p.classList.add('show'); }
+    return any;
+  }catch(e){ return false; }
+}
+function draftClear(key, ids){
+  try{ localStorage.removeItem(key); }catch(e){}
+  if(ids){ ids.forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; }); }
+}
+function bindDraftAutoSave(key, ids){
+  ids.forEach(function(id){
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input', function(){ draftSave(key, ids); });
+    el.addEventListener('change', function(){ draftSave(key, ids); });
+  });
+}
+// 弹窗 / 抽屉打开时锁 body 滚动，防背景穿透
+function ftOverlayOpen(){
+  if(document.querySelector('.sm-mask.show')) return true;
+  if(document.querySelector('.drawer.open')) return true;
+  if(document.querySelector('.idx-modal.show')) return true;
+  if(document.querySelector('.dca-mask.show')) return true;
+  const at=document.getElementById('allTradesModal'); if(at && getComputedStyle(at).display!=='none') return true;
+  const tp=document.getElementById('tradePicker'); if(tp && getComputedStyle(tp).display!=='none') return true;
+  return false;
+}
+let _ftLockRAF=0;
+function ftApplyBodyLock(){
+  if(_ftLockRAF) cancelAnimationFrame(_ftLockRAF);
+  _ftLockRAF=requestAnimationFrame(function(){
+    const want=ftOverlayOpen()?'hidden':'';
+    if(document.body.style.overflow!==want){ document.body.style.overflow=want; }
+  });
+}
+function setupOverlayScrollLock(){
+  try{
+    const obs=new MutationObserver(function(){ ftApplyBodyLock(); });
+    obs.observe(document.body, { attributes:true, attributeFilter:['class','style'], subtree:true });
+    ftApplyBodyLock();
+  }catch(e){}
+}
+// 抽屉 touch 左滑关闭（仅横向手势，不影响内部纵向滚动与输入）
+function setupDrawerSwipeClose(){
+  const d=document.getElementById('drawer'); if(!d) return;
+  let sx=0, sy=0, active=false, swipe=false, lastMx=0;
+  d.addEventListener('touchstart', function(e){
+    if(!d.classList.contains('open')) return;
+    const t=e.touches[0]; sx=t.clientX; sy=t.clientY; active=true; swipe=false; lastMx=0;
+  }, { passive:true });
+  d.addEventListener('touchmove', function(e){
+    if(!active) return;
+    const t=e.touches[0]; const mx=t.clientX-sx, my=t.clientY-sy; lastMx=mx;
+    if(!swipe && (Math.abs(mx)>6 || Math.abs(my)>6)){ swipe=Math.abs(mx)>Math.abs(my)*1.6; }
+  }, { passive:true });
+  d.addEventListener('touchend', function(){
+    if(!active) return; active=false;
+    if(swipe && lastMx<-50){ closeDrawer(); }
+    swipe=false; lastMx=0;
+  });
 }
 
 function openAllTrades(){
@@ -5439,6 +5412,10 @@ function renderSyncCfg(){
   setInterval(renderStatusLine, 30000); // 每 30s 刷新新鲜度/失败徽标
   refreshSampleBanner();
   if(_cfgCorrupt) setTimeout(function(){ try{ toast('⚠ 本地配置(分类/标签/账户)数据损坏，已重置为默认'); }catch(e){} }, 500);
+  try{ bindDraftAutoSave('ft_draft_drawer', DRAFT_DR_IDS); }catch(e){}
+  try{ bindDraftAutoSave('ft_draft_tq', DRAFT_TQ_IDS); }catch(e){}
+  try{ setupOverlayScrollLock(); }catch(e){}
+  try{ setupDrawerSwipeClose(); }catch(e){}
 })();
 </script>
   <!-- 大盘走势放大弹窗 -->

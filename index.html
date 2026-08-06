@@ -3160,7 +3160,10 @@ function goLiq(el){ goDetail(el.dataset.nm, el.dataset.acc); }
 function setLiqSort(s){ liqSort=s; renderLiquidated(); }
 function renderLiquidated(){
   const box=document.getElementById('tp2'); if(!box) return;
-  const list=buildLiquidatedView();
+  let list=buildLiquidatedView();
+  // 按当前账户口径过滤（与持仓列表逻辑一致：scopeMatches 判大口径，curAccount 判子账户）
+  if(currentScope!=='all') list=list.filter(function(f){ return scopeMatches(f.account); });
+  if(curAccount && curAccount!=='全部') list=list.filter(function(f){ return (f.account||'我的')===curAccount; });
   let sumR=0, sumB=0, sumS=0, wins=0, sumD=0, sumRetPct=0; const catMap={};
   list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; sumRetPct+=f.retPct; if(f.win) wins++; catMap[f.cat]=(catMap[f.cat]||0)+f.totalBuy; });
   const cnt=list.length, winRate=cnt?wins/cnt*100:0, avgD=cnt?Math.round(sumD/cnt):0, avgRet=cnt?sumRetPct/cnt:0;
@@ -3523,6 +3526,7 @@ function render(){
     renderOverview(); renderAccFilter(); renderHomeList(); renderCatFilter();
     if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
     if(activeTab===0){ renderBond(); }
+    if(activeTab===2){ renderLiquidated(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
   restoreFocus();
 }

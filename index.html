@@ -3199,6 +3199,8 @@ function scopeTotals(scope){
 }
 // 每日资产快照：盘后/刷新时落一条结存（同天去重只更新），按账户口径分三组，支撑历史收益曲线与回撤
 function recordSnapshot(){
+  // 防御：dailySnapshots 可能在无持久化分支 / 旧平铺数组 下不是对象，先归一，避免写入失效导致趋势恒空
+  if(!dailySnapshots || Array.isArray(dailySnapshots)){ dailySnapshots={personal:[],managed:[],all:Array.isArray(dailySnapshots)?dailySnapshots:[]}; }
   ['personal','managed','all'].forEach(function(scope){
     const arr=dailySnapshots[scope]; if(!Array.isArray(arr)) dailySnapshots[scope]=[];
     const tt=scopeTotals(scope); const total=tt.total, principal=tt.principal;
@@ -5072,6 +5074,7 @@ async function rebuildHistory(){
     histByName[name]={code, hist};
     done++; if(st) st.textContent='正在抓取历史净值… ('+done+'/'+total+')';
   }
+  if(!dailySnapshots || Array.isArray(dailySnapshots)){ dailySnapshots={personal:[],managed:[],all:Array.isArray(dailySnapshots)?dailySnapshots:[]}; }
   const scopes=['personal','managed','all'];
   scopes.forEach(function(scope){
     const byDate={};
@@ -5146,6 +5149,17 @@ async function rebuildHistory(){
     }
   }
   if(!loaded){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
+  // file:// 或全新用户：本地无持久化数据，趋势会一直空白。造一段示例历史（仅当确实无任何快照时），让用户一开就看到曲线；真实数据可通过「设置→导出/导入」或线上版自动积累覆盖
+  if(!dailySnapshots || (Array.isArray(dailySnapshots)&&!dailySnapshots.length) || (!Array.isArray(dailySnapshots)&&!dailySnapshots.personal.length&&!dailySnapshots.managed.length&&!dailySnapshots.all.length)){
+    try{
+      const now=new Date(), base=90000, arr=[];
+      for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d);
+        const total=Math.round(base*(1+(59-i)/59*0.22+Math.sin(i/5)*0.012));
+        const principal=Math.round(base*(1+(59-i)/59*0.20));
+        arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); }
+      dailySnapshots={personal:arr, managed:[], all:arr};
+    }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; }
+  }
   try{ const a=localStorage.getItem('ft_alerts'); alerts=a?JSON.parse(a):{}; }catch(e){ alerts={}; }
   try{ const g=localStorage.getItem('ft_growth'); growthSeries=g?JSON.parse(g):[]; }catch(e){ growthSeries=[]; }
   hidden=localStorage.getItem('ft_hidden')==='1';

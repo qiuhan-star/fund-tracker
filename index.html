@@ -3748,6 +3748,9 @@ function liveSection(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   let h='';
   const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  // 定投快捷入口：进详情即可一键设为/查看定投计划
+  const _plans=dcaPlanOf(f.name);
+  h+=`<div class="card dca-quick"><div class="dca-quick-row"><span class="dca-quick-t">🗓️ 定投计划</span>${_plans.length?('<span class="tag">已设 '+_plans.length+' 个</span>'):('<span class="hint">未设置</span>')}<button class="btn sm" onclick="openDcaModal('${encodeURIComponent(f.name)}')">${_plans.length?'管理':'设为定投'}</button></div></div>`;
   const tdtoday=new Date().toISOString().slice(0,10);
   const defCol = tr.length>12;
   h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>本只基金 · 交易流水（${tr.length} 笔）</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
@@ -4798,7 +4801,73 @@ async function refresh(){
   toast(got===0?'刷新失败：已用缓存/手动净值':'已刷新 '+got+' 只 · '+lk);
   fetchIndices();
   if(currentView==='detail' && detailName){ const f=findFund(detailName,detailAcc); if(f) renderIntraday(f); }
+  // 定投计划自动记账（非阻塞：按计划的年月用历史净值补记买入；拉不到净值则跳过，下次刷新自动补）
+  runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); });
 }
+
+// ---------- 定投计划自动记账 ----------
+// 计划结构：{ id, name, account, amount, day(每月几号), start('YYYY-MM'), end('YYYY-MM'|null 无限), paused, createdAt }
+// 自动生成的买入交易标记：{ dcaId, dcaPeriod:'YYYY-MM' }，便于幂等去重与计划管理展示。
+function genId(p){ return p+(Date.now().toString(36))+Math.random().toString(36).slice(2,6); }
+function pad2(n){ return ('0'+n).slice(-2); }
+// 计算某计划应记账的月份列表（已在 start~end 区间、且 <= 今天）；返回 [{ym,date}]
+function dcaPeriods(plan, today){
+  const out=[]; if(!plan||!plan.start) return out;
+  const [sy,sm]=plan.start.split('-').map(Number);
+  let ey=9999, em=12;
+  if(plan.end){ const e=plan.end.split('-').map(Number); ey=e[0]; em=e[1]; }
+  let y=sy, m=sm;
+  while(y<ey || (y===ey && m<=em)){
+    const dim=new Date(y,m,0).getDate();
+    const day=Math.min(plan.day||1, dim);
+    const ym=y+'-'+pad2(m);
+    const date=ym+'-'+pad2(day);
+    if(date <= today) out.push({ym,date});
+    m++; if(m>12){ m=1; y++; }
+  }
+  return out;
+}
+// 该计划的某月是否已记账（按 dcaId+dcaPeriod 去重，手动删除后不会复活）
+function dcaIsBooked(plan, ym){ return trades.some(t=>t.dcaId===plan.id && t.dcaPeriod===ym); }
+// 历史净值里找目标日期或之前最近一个交易日的净值（找不到返回 null，由调用方跳过）
+function navOnOrBefore(hist, dateStr){
+  if(!hist||!hist.length) return null;
+  const arr=hist.slice().sort((a,b)=>a.t-b.t);
+  let best=null;
+  for(const p of arr){ const ds=p.t.getFullYear()+'-'+pad2(p.t.getMonth()+1)+'-'+pad2(p.t.getDate()); if(ds<=dateStr){ best=p.nav; } else break; }
+  return best;
+}
+let _dcaRunning=false;
+async function runDcaPlans(){
+  if(_dcaRunning) return;
+  const active=dcaPlans.filter(p=>p && !p.paused);
+  if(!active.length) return;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayStr=today.getFullYear()+'-'+pad2(today.getMonth()+1)+'-'+pad2(today.getDate());
+  _dcaRunning=true;
+  let added=0;
+  try{
+    for(const plan of active){
+      const periods=dcaPeriods(plan, todayStr);
+      if(!periods.length) continue;
+      const code=await resolveCode(plan.name);
+      const hist=code? await fetchNavHistory(code) : null;
+      for(const per of periods){
+        if(dcaIsBooked(plan, per.ym)) continue;
+        const nav=hist? navOnOrBefore(hist, per.date) : null;
+        if(nav==null) continue; // 拉不到该日净值：跳过，下次刷新自动补（不伪造）
+        const amt=+(plan.amount||0); if(amt<=0) continue;
+        const sh=amt/nav;
+        trades.push({name:plan.name, account:plan.account||'我的', date:per.date, time:'15:00', type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.ym});
+        added++;
+      }
+    }
+    if(added){ silentSave(); compute(); }
+  }catch(e){ console.error('定投自动记账失败', e); }
+  finally{ _dcaRunning=false; }
+}
+function dcaPlanOf(name){ return dcaPlans.filter(p=>p.name===name); }
+function dcaBookedCount(plan){ return trades.filter(t=>t.dcaId===plan.id).length; }
 
 // ---------- 导入导出 ----------
 function exportJSON(){
@@ -5698,6 +5767,7 @@ async function rebuildHistory(){
         <h3>🚀 常用操作</h3>
         <div class="sm-grid">
           <button class="sm-act" onclick="openAllTrades();closeSettings()"><span>📒</span>全部交易</button>
+          <button class="sm-act" onclick="openDcaModal();closeSettings()"><span>🗓️</span>定投计划</button>
           <button class="sm-act" onclick="saveLocal();closeSettings()"><span>💾</span>保存下载</button>
           <button class="sm-act" onclick="window.print();closeSettings()"><span>🖨</span>导出 PDF</button>
         </div>

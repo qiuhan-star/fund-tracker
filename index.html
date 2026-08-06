@@ -2609,7 +2609,9 @@ function buildFundsView(){
         if(!firstDate||t.date<firstDate) firstDate=t.date;
       });
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
-      if(shares===0 && snap){
+      // 例外：若已有卖出且净份额=0（已清仓），不再回退快照，让它进「清仓」Tab
+      const hasSell = tr.some(function(t){ return t.type==='sell' || t.type==='convert_out'; });
+      if(shares===0 && snap && !hasSell){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
         f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(nav?c0/nav:null)),trades:tr,realized:0};
       } else {
@@ -4577,6 +4579,7 @@ function importJSON(){
     r.onload=()=>{ try{
       const d=migrate(JSON.parse(r.result));
       snaps=d.snaps; trades=d.trades; navCache=d.navCache; dailySnapshots=d.daily_snapshots;
+      removeSampleData(true); // 导入 JSON 后顺手清掉内置示例，避免示例与真实数据共存
       silentSave();
       let n=0;
       if(d._local && typeof d._local==='object'){ for(const k in d._local){ try{ const v=d._local[k]; localStorage.setItem(k, typeof v==='string'? v : JSON.stringify(v)); n++; }catch(e){} } }
@@ -4650,6 +4653,7 @@ function importCSV(){
         const sample=res.rows.slice(0,3).map(t=>`${t.name} | ${t.date} | ${t.type} | ${t.amount}${t.nav?' @'+t.nav:''}`).join('\n');
         const skipNote=res.dup?('（已自动跳过重复 '+res.dup+' 笔）'):'';
         if(!confirm('即将导入 '+added+' 笔交易'+skipNote+'，确认吗？\n\n示例：\n'+sample+'\n\n（可在「交易」Tab 查看并删除错误行）')) return;
+        removeSampleData(true); // 导入即清掉内置示例，避免示例与真实数据共存
         compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('csv import refresh failed', e); }); toast('已导入 '+added+' 笔交易（CSV）· 正在拉取净值…'+(res.dup?(' · 跳过重复 '+res.dup+' 笔'):'')); }
       catch(e){ alert('CSV 解析失败：'+e.message); } };
     r.readAsText(f,'utf-8'); };
@@ -4837,6 +4841,7 @@ function commitPasteImport(){
   if(added===0&&res.dup===0){ toast('未识别到交易行'); return; }
   if(added===0&&res.dup>0){ toast('全部 '+res.dup+' 笔均已存在，无需重复导入'); closeImportModal(); return; }
   trades=trades.concat(res.rows);
+  removeSampleData(true); // 导入即清掉内置示例，避免示例与真实数据共存
   compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('paste import refresh failed', e); });
   toast('已导入 '+added+' 笔交易（粘贴）· 正在拉取净值…'+(res.dup?(' · 跳过重复 '+res.dup+' 笔'):''));
   closeImportModal();
@@ -4844,7 +4849,7 @@ function commitPasteImport(){
 
 function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; seedDemoTrend(); silentSave(); try{ setScopeAcc('all'); }catch(e){} renderTrade(); compute(); switchTab(0); toast('已载入示例数据（已切到「全量」视图；示例归入独立「示例账户」，不污染你的真实账户）'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
 function seedDemoTrend(){ try{ const now=new Date(), base=90000, arr=[]; for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d); const k=(59-i)/59; const total=Math.round(base*(1+0.22*k)); const principal=Math.round(base*(1+0.20*k)); arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); } dailySnapshots={personal:arr, managed:[], all:arr}; }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; } }
-function removeSampleData(){ const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !names.has(s.name);}); trades=trades.filter(function(t){return !names.has(t.name);}); const removed=(bS-snaps.length)+(bT-trades.length); if(removed===0){ toast('未检测到示例数据，无需清理'); return; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); toast('已移除 '+removed+' 条示例数据（真实数据已保留）'); }
+function removeSampleData(silent){ const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !names.has(s.name);}); trades=trades.filter(function(t){return !names.has(t.name);}); const removed=(bS-snaps.length)+(bT-trades.length); if(removed===0){ if(!silent) toast('未检测到示例数据，无需清理'); return removed; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); if(!silent) toast('已移除 '+removed+' 条示例数据（真实数据已保留）'); return removed; }
 window.removeSampleData=removeSampleData;
 
 

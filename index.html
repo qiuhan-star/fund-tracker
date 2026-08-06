@@ -721,6 +721,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
       <button class="drawer-x" onclick="closeDrawer()" title="关闭">✕</button>
     </div>
     <div class="drawer-body">
+      <div class="draft-pill" id="drDraftPill">已恢复未保存草稿 <button type="button" onclick="draftClear('ft_draft_drawer',DRAFT_DR_IDS);document.getElementById('drDraftPill').classList.remove('show')">清除</button></div>
       <label class="fld"><span>基金名称</span>
         <input id="dr-fund" list="drFundList" placeholder="选择或输入基金名称" autocomplete="off">
         <datalist id="drFundList"></datalist>

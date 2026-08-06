@@ -15,7 +15,7 @@
 <script>
 (function(){
   try{
-    var m={name:'我的基金追踪器',short_name:'基金记账',display:'standalone',start_url:'.',
+    var m={name:'本人账户基金追踪器',short_name:'基金记账',display:'standalone',start_url:'.',
       background_color:'#ffffff',theme_color:'#2f6bff',
       icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%232f6bff'/%3E%3Ctext x='96' y='132' font-size='115' text-anchor='middle' fill='white' font-family='sans-serif'%3E%C2%A5%3C/text%3E%3C/svg%3E",sizes:'192x192',type:'image/svg+xml',purpose:'any'}]};
     var b=new Blob([JSON.stringify(m)],{type:'application/manifest+json'});
@@ -23,7 +23,7 @@
   }catch(e){}
 })();
 </script>
-<title>我的基金追踪器 · Fund Tracker</title>
+<title>本人账户基金追踪器 · Fund Tracker</title>
 <script src="pu-core.js"></script>
 <script>
 /* ECharts 改为懒加载：仅在首次用到（板块分布 treemap / 深度分析）时动态注入，避免 ~1MB 阻塞首屏。
@@ -474,7 +474,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
     <div id="backupReminder" class="bk-reminder" style="display:none"></div>
     <div class="topbar">
       <div>
-        <h1>我的基金追踪器</h1>
+        <h1>本人账户基金追踪器</h1>
         <p class="sub"><span id="mktLight" class="mkt-light" title="A股(沪深)交易时段状态"></span><span id="updated" class="loading">数据未刷新</span><span id="freshBadge" class="fresh-badge" style="display:none"></span></p>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start">
@@ -484,7 +484,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
     </div>
 
     <!-- 大盘实时（腾讯财经，独立备用源） -->
-    <!-- 账户切换（我的 / 小号 / 微信债券 / 自定义 / 全量）· 置于最顶，作为整页数据归属上下文 -->
+    <!-- 账户切换（本人账户 / 代管账户 / 投资账户 / 自定义 / 全量）· 置于最顶，作为整页数据归属上下文 -->
     <div class="scope-bar" id="scopeBar">
       <span class="scope-lab">账户</span>
       <div class="scope-seg" id="scopeSeg"></div>
@@ -516,7 +516,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
       <div id="trendSection"></div>
       <div class="card">
         <div class="sec-head">
-          <h2 style="margin:0;font-size:14px" id="holdTitle">我的持仓</h2>
+          <h2 style="margin:0;font-size:14px" id="holdTitle">本人账户持仓</h2>
         </div>
         <div class="filter-row"><span class="filter-lab">分类</span><div class="cat-filter" id="catFilter"></div></div>
         <div class="filter-row"><span class="filter-lab">标签</span><div class="cat-filter" id="tagFilter"></div></div>
@@ -633,7 +633,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
       </div>
 
       <div class="card" id="selfCard">
-        <div class="sec-head"><h2 style="margin:0;font-size:14px">⭐ 我的自选</h2><span class="hint" style="font-size:11px">点榜单基金 → ＋ → 一键加自选</span></div>
+        <div class="sec-head"><h2 style="margin:0;font-size:14px">⭐ 本人账户自选</h2><span class="hint" style="font-size:11px">点榜单基金 → ＋ → 一键加自选</span></div>
         <ul id="watch-list" class="watch-list"></ul>
         <p id="watch-empty" class="hint" style="font-size:11px;margin-top:6px">还没有自选。在上方榜单点任意基金，选「👁 加自选」即可加入。</p>
       </div>
@@ -755,7 +755,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
       </label>
       <div class="fld-row">
         <label class="fld"><span>账户</span>
-          <select id="dr-acc" onchange="autoFee('dr')"><option>我的</option><option>小号</option><option>微信债券</option><option>天天基金</option><option>券商</option><option>其他</option></select>
+          <select id="dr-acc" onchange="autoFee('dr')"><option>本人账户</option><option>代管账户</option><option>投资账户</option><option>天天基金</option><option>券商</option><option>其他</option></select>
         </label>
         <label class="fld"><span>类型</span>
           <select id="dr-type" onchange="autoFee('dr')"></select>
@@ -802,16 +802,16 @@ const SAMPLE_TRADE = [
 
 let snaps=[], trades=[], navCache={}, dailySnapshots=[], dcaPlans=[];
 let fundsView=[], _allHoldings=[], _allRaw=[];
-const BUILTIN_ACCOUNTS=['我的','小号','微信债券'];
+const BUILTIN_ACCOUNTS=['本人账户','代管账户','投资账户'];
 // 账户归属：isPersonal=false 表示非本人账户，不计入个人总资产 / 个人仓位
 const ACCOUNT_META={
-  '我的':{isPersonal:true, owner:'本人'},
-  '微信债券':{isPersonal:true, owner:'本人'},
-  '小号':{isPersonal:false, owner:'小号'},
-  // 旧名兼容（存量 localStorage 数据归一化前的兜底；2026-08-05 改名：支付宝→我的 / 微信→微信债券）
-  '支付宝':{isPersonal:true, owner:'本人'},
-  '微信':{isPersonal:true, owner:'本人'},
-  // 演示账户：仅供「载入示例数据」使用，刻意独立于用户真实账户（不计入本人/小号，不出现在账户下拉），避免污染真实账本
+  '本人账户':{isPersonal:true, owner:'本人'},
+  '投资账户':{isPersonal:true, owner:'本人'},
+  '代管账户':{isPersonal:false, owner:'代管账户'},
+  // 旧名兼容（存量 localStorage 数据归一化前的兜底；2026-08-05 改名：本人账户→本人账户 / 投资账户→投资账户）
+  '本人账户':{isPersonal:true, owner:'本人'},
+  '投资账户':{isPersonal:true, owner:'本人'},
+  // 演示账户：仅供「载入示例数据」使用，刻意独立于用户真实账户（不计入本人/代管账户，不出现在账户下拉），避免污染真实账本
   '示例账户':{isPersonal:false, owner:'示例'}
 };
 // 用户自定义账户（持久化于 localStorage ft_accounts）：在内置账户之外自行添加，默认计入本人个人资产
@@ -826,9 +826,9 @@ function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function accIsPersonal(acc){ const m=ACCOUNT_META[acc]; return m? (m.isPersonal!==false) : true; }
 function accOwner(acc){ const m=ACCOUNT_META[acc]; return m? m.owner : '本人'; }
-// 账户（账户级）：我的 / 小号 / 微信债券 / 自定义 / all(全量)；兼容旧值 personal→我的、managed→小号
-let scopeAcc='我的'; // 默认资产口径就是「我的」：每次打开都从「我的」开始，不恢复上次所选账户
-let currentScope = scopeAcc==='all'?'all':(scopeAcc==='小号'?'managed':'personal');
+// 账户（账户级）：本人账户 / 代管账户 / 投资账户 / 自定义 / all(全量)；兼容旧值 personal→本人账户、managed→代管账户
+let scopeAcc='本人账户'; // 默认资产口径就是「本人账户」：每次打开都从「本人账户」开始，不恢复上次所选账户
+let currentScope = scopeAcc==='all'?'all':(scopeAcc==='代管账户'?'managed':'personal');
 function scopeMatches(acc){
   const personal=accIsPersonal(acc);
   if(currentScope==='personal') return personal;
@@ -836,17 +836,17 @@ function scopeMatches(acc){
   return true; // all
 }
 function setScope(s){ // 兼容旧调用（设置弹窗）→ 同步到账户口径
-  scopeAcc = s==='all'?'all':(s==='managed'?'小号':'我的');
+  scopeAcc = s==='all'?'all':(s==='managed'?'代管账户':'本人账户');
   currentScope=s;
   curAccount = scopeAcc==='all'?'全部':scopeAcc;
   try{ localStorage.setItem('ft_scope', scopeAcc==='all'?'all':scopeAcc); }catch(e){}
   updateScopeUI();
   compute();
 }
-// 账户（账户级）：我的 / 小号 / 微信债券 / 自定义 / all
+// 账户（账户级）：本人账户 / 代管账户 / 投资账户 / 自定义 / all
 function setScopeAcc(acc){
   scopeAcc=acc;
-  currentScope = acc==='all'?'all':(acc==='小号'?'managed':'personal');
+  currentScope = acc==='all'?'all':(acc==='代管账户'?'managed':'personal');
   curAccount = acc==='all'?'全部':acc;
   try{ localStorage.setItem('ft_scope', acc==='all'?'all':acc); }catch(e){}
   updateScopeUI();
@@ -857,7 +857,7 @@ function renderScopeBar(){
   const seg=document.getElementById('scopeSeg'); if(!seg) return;
   const cntOf=a=> (a==='all')? _allRaw.length : _allRaw.filter(f=>f.account===a).length;
   let html='';
-  ['我的','小号','微信债券'].forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a))+'</button>'; });
+  ['本人账户','代管账户','投资账户'].forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a))+'</button>'; });
   CUSTOM_ACCOUNTS.forEach(a=>{ html+='<button data-acc="'+a+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\''+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a))+'<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span></button>'; });
   html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(\'all\')">全量'+cntSpan(cntOf('all'))+'</button>';
   html+='<button class="add" onclick="addAccount()" title="添加账户">＋</button>';
@@ -879,16 +879,16 @@ function removeAccount(name){
   CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.filter(a=>a!==name);
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
   loadCustomAccounts();
-  if(scopeAcc===name) setScopeAcc('我的'); else { renderScopeBar(); compute(); }
+  if(scopeAcc===name) setScopeAcc('本人账户'); else { renderScopeBar(); compute(); }
   toast('已删除账户「'+name+'」');
 }
 function updateScopeUI(){ renderScopeBar(); }
 let curAccount='全部', pendingAcc=null;
 const GROUP_OBS_MV=700;
-function accOf(x){ return (x&&x.account)?x.account:'我的'; }
+function accOf(x){ return (x&&x.account)?x.account:'本人账户'; }
 function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
-function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'我的'; }
+function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:'本人账户'; }
 let flashMap={}, todayGain=null;
 const DEFAULT_SORT={key:'est',dir:'desc'}; const SORT_VER='2';
 let holdSort=DEFAULT_SORT.key, holdSortDir=DEFAULT_SORT.dir, holdCatFilter='全部', holdSearch='', holdGroupBy='none';
@@ -897,7 +897,7 @@ let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catover
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){ console.warn('标签数据损坏，已重置为默认', e); _cfgCorrupt=true; }
 let homeView='dense';
 try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
-let currentView='home', detailName=null, detailAcc='我的', detailChartFund=null;
+let currentView='home', detailName=null, detailAcc='本人账户', detailChartFund=null;
 let _focusFld=null, _focusPos=0;
 let hidden=false; let alerts={}; let growthSeries=[];
 
@@ -1005,8 +1005,8 @@ function migrate(raw){
   if(!data.navCache || typeof data.navCache!=='object') data.navCache = {};
   data.daily_snapshots = normDailySnap(data.daily_snapshots);
   if(!Array.isArray(data.dcaPlans)) data.dcaPlans = [];
-  // 账户名归一化（2026-08-05：支付宝→我的 / 微信→微信债券；幂等）
-  const _accNorm=a=>{ if(!a) return '我的'; a=String(a).trim(); return (a==='支付宝')?'我的':((a==='微信')?'微信债券':a); };
+  // 账户名归一化（2026-08-05：本人账户→本人账户 / 投资账户→投资账户；幂等）
+  const _accNorm=a=>{ if(!a) return '本人账户'; a=String(a).trim(); return (a==='本人账户')?'本人账户':((a==='投资账户')?'投资账户':a); };
   (data.trades||[]).forEach(t=>{ t.account=_accNorm(t.account); });
   (data.snaps||[]).forEach(s=>{ if(s.account) s.account=_accNorm(s.account); });
   (data.daily_snapshots||[]).forEach(d=>{ if(d.account) d.account=_accNorm(d.account); });
@@ -1619,12 +1619,12 @@ function renderHomeList(){
   var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
   let list=[...fundsView];
   // 最终防线：确保列表严格匹配当前账户（防御上游 fundsView 意外混入）
-  if(curAccount && curAccount!=='全部') list=list.filter(f=> (f.account||'我的')===curAccount || (f.acc||'我的')===curAccount);
+  if(curAccount && curAccount!=='全部') list=list.filter(f=> (f.account||'本人账户')===curAccount || (f.acc||'本人账户')===curAccount);
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   // 已清仓（净份额=0 且无市值）不进活跃持仓列表，只在「清仓」Tab 展示
   list=list.filter(f=> !(f.shares===0 && !f.isBond && !(f.mv>0)) );
   // 动态标题：跟随当前账户
-  const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=curAccount==='全部'?'全部持仓':(curAccount==='我的'?'我的持仓':curAccount+'的持仓');
+  const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=curAccount==='全部'?'全部持仓':(curAccount==='本人账户'?'本人账户持仓':curAccount+'的持仓');
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
   // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }
@@ -1691,7 +1691,7 @@ function renderHomeDense(list, showHead){
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}</div><div class="dt-sub">
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
-        ${f.account&&f.account!=='我的'?`<span class="tag">${f.account}</span>`:''}${ownerTag}
+        ${f.account&&f.account!=='本人账户'?`<span class="tag">${f.account}</span>`:''}${ownerTag}
         ${code?`<span>#${code}</span>`:''}
         ${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
       </div></td>`;
@@ -1752,7 +1752,7 @@ function grpLabel(dim,k){
 function renderGrouped(list){
   const dim=(holdGroupBy==='asset')?'asset':'market';
   const groups={};
-  list.forEach(f=>{ const k=(f[dim]||(dim==='account'?'我的':'其他')); (groups[k]=groups[k]||[]).push(f); });
+  list.forEach(f=>{ const k=(f[dim]||(dim==='account'?'本人账户':'其他')); (groups[k]=groups[k]||[]).push(f); });
   const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));
   return order.map((k,idx)=>{
     const sub=groups[k];
@@ -1836,7 +1836,7 @@ function renderOverview(){
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const updLine=lastSyncLabel();
-  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'小号':'个人');
+  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'代管账户':'个人');
   const trendSvg=overviewTrendSvg();
   const trendNote=trendArr().length;
   const mask=v=>hidden?'****':v;
@@ -1897,7 +1897,7 @@ function renderTrendSection(){
   const estPct=_pw>0?(_wsum/_pw):null;
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
-  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'小号':'个人');
+  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'代管账户':'个人');
   const updLine=lastSyncLabel();
   const mask=v=>hidden?'****':v;
   box.innerHTML=`
@@ -2122,16 +2122,16 @@ function renderAdvice(){
     wrap.innerHTML=`<div class="cmp-leg2"><span><i class="sw cur"></i>当前配置</span><span><i class="sw sug"></i>建议配置</span><span class="cbr-diff-note">右列=变动</span></div>${rows}`;
   }
 }
-// ---------- 债券板块：我的债基（不看 10Y、不看温度计） ----------
+// ---------- 债券板块：本人账户债基（不看 10Y、不看温度计） ----------
 let bondState={dates:{},amts:{}};
 function loadBond(){ try{const s=localStorage.getItem('ft_bond'); if(s){const b=JSON.parse(s); if(b&&typeof b==='object'){ bondState={...bondState,...b}; if(!bondState.dates) bondState.dates={}; if(!bondState.amts) bondState.amts={}; }} }catch(e){} }
 function saveBond(){ try{localStorage.setItem('ft_bond',JSON.stringify(bondState));}catch(e){} }
 
 // 演示债券清单（公开模板默认值）；你的真实债基请通过「恢复债基+分析」导入到浏览器本地 ft_bond_list
 const BOND_FUNDS=[
-  {code:'900002',name:'演示稳健债券A',company:'演示',acc:'我的',amt:10000,y1:2.15,since:5.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-30'},
-  {code:'900011',name:'演示稳健债券B',company:'演示',acc:'小号',amt:50000,y1:2.40,since:8.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-10'},
-  {code:'900013',name:'样例纯债C',company:'样例',acc:'我的',amt:20000,y1:1.93,since:3.50,risk:'中低',dur:'中短债',credit:'高等级',lock:0,mix:false,date:'2026-08-01'}
+  {code:'900002',name:'演示稳健债券A',company:'演示',acc:'本人账户',amt:10000,y1:2.15,since:5.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-30'},
+  {code:'900011',name:'演示稳健债券B',company:'演示',acc:'代管账户',amt:50000,y1:2.40,since:8.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-10'},
+  {code:'900013',name:'样例纯债C',company:'样例',acc:'本人账户',amt:20000,y1:1.93,since:3.50,risk:'中低',dur:'中短债',credit:'高等级',lock:0,mix:false,date:'2026-08-01'}
 ];
 const BOND_DEF_DATES={'900002':'2026-07-30','900011':'2026-07-10','900013':'2026-08-01'};
 // 债券清单读取：优先用浏览器本地 ft_bond_list（用户真实债基），否则用上方演示数据
@@ -2169,7 +2169,7 @@ function autoFee(prefix){
   if(typeEl.value!=='sell'){ feeEl.removeAttribute('_auto'); if(h) h.textContent=''; return; }
   let name, acc;
   if(prefix==='nf'){ name=window.detailName; acc=g('acc').value; }
-  else { name=(g('fund').value||'').trim(); acc=g('acc').value||'我的'; }
+  else { name=(g('fund').value||'').trim(); acc=g('acc').value||'本人账户'; }
   if(!name) return;
   const date=g('date').value, amount=+g('amount').value||0;
   if(!date||!amount) return;
@@ -2340,7 +2340,7 @@ function renderBond(){
   const segHtml=['all','hold','watch'].map(function(f){ return '<button data-f="'+f+'"'+(f===bondCmpFilter?' class="on"':'')+' onclick="setBondCmp('+escJs(f)+',this)">'+({'all':'全部','hold':'仅持仓','watch':'仅自选'})[f]+'</button>'; }).join('');
 
   bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:13px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid #eef0f3;padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:#8a909a;font-weight:600;white-space:nowrap}.bond-tbl .nm{color:#9aa0aa;font-size:11.5px}.tag-mix{display:inline-block;background:#fff3e0;color:#c77700;border:1px solid #ffd9a0;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-lock{display:inline-block;background:#eef2ff;color:#3a5bd9;border:1px solid #c7d2fe;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:#9aa0aa}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:13px;color:#3a3f47}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12.5px}.mcard.hl{background:#f3f7ff;border-color:#c7d2fe}.tbl-wrap{overflow-x:auto}.tag-dur{display:inline-block;background:#eef6ff;color:#3a6ea5;border:1px solid #cfe2f5;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-credit{display:inline-block;background:#f0f2f5;color:#5a6270;border:1px solid #e2e5ea;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.cmp-bar{height:6px;background:#eef1f6;border-radius:3px;margin-top:5px;overflow:hidden}.cmp-bar .fill{height:100%;border-radius:3px}.bar-green{background:#1f9d55}.bar-amber{background:#e0962a}.bar-blue{background:#3a5bd9}.addbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.addbar input{border:1px solid #d0d3d9;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;width:200px}.mini-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12px;width:74px}.mini-in.num{width:58px}.seg{display:inline-flex;border:1px solid #d0d3d9;border-radius:8px;overflow:hidden;margin-bottom:8px}.seg button{border:none;background:#fff;padding:6px 14px;font-size:12.5px;cursor:pointer;color:#5a6270;font-family:inherit}.seg button.on{background:#2f6fed;color:#fff}.pool-h{display:inline-block;background:#eaf2ff;color:#2f6fed;padding:1px 7px;border-radius:6px;font-size:11px}.pool-w{display:inline-block;background:#fff3e0;color:#c77700;padding:1px 7px;border-radius:6px;font-size:11px}.alert{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13px;line-height:1.6}.alert.red{background:#fdeceb;border:1px solid #f6c9c4;color:#b4281c}.alert.amber{background:#fff7e8;border:1px solid #ffe2a8;color:#8a5a00}.alert.ok{background:#eafaf0;border:1px solid #bfe9cd;color:#1f7a45}.alert .ttl{font-weight:700}.suggest{border-left:3px solid #2f6fed;background:#f7faff;padding:8px 12px;margin:6px 0;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6}.suggest b{color:#2f6fed}.placeholder{background:#fafbfc;border:1px dashed #dcdfe4;border-radius:10px;padding:14px;color:#9aa0aa;font-size:12.5px}.btn.tiny{padding:2px 8px;font-size:11px}.btn.tiny.danger{background:#fff;color:#d8453a;border:1px solid #f6c9c4}</style>'
-    +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+    +'<div class="card"><h2>本人账户债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
     ''
     +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
     +'<div class="card"><h2>同质化预警 <span class="hint">（持仓 + 自选，防不知不觉买成同一类）</span></h2>'+warnHtml+'</div>'
@@ -2406,7 +2406,7 @@ function openBondDrawer(code){
     +'</div>'
     +'<div class="bd-sec"><div class="bd-k">赎回费阶梯</div><div class="bd-v">'+feeLadder+'</div></div>'
     +'<div class="bd-sec"><div class="bd-k">卖出状态</div><div class="bd-v '+(st.cls||'')+'">'+st.txt+(st.sub?('<br><span class="sub2">'+st.sub+'</span>'):'')+'</div></div>'
-    +'<div class="bd-sec"><div class="bd-k">备注</div><textarea class="bd-note" id="bdNote" placeholder="记点什么（如：这只是小号里的、目标收益 3% 就卖…）" oninput="setBondNote(\''+escJs(code)+'\',this.value)">'+escHtml(note)+'</textarea></div>';
+    +'<div class="bd-sec"><div class="bd-k">备注</div><textarea class="bd-note" id="bdNote" placeholder="记点什么（如：这只是代管账户里的、目标收益 3% 就卖…）" oninput="setBondNote(\''+escJs(code)+'\',this.value)">'+escHtml(note)+'</textarea></div>';
   d.classList.add('open');
 }
 function closeBondDrawer(){ const d=document.getElementById('bondDrawer'); if(d) d.classList.remove('open'); }
@@ -2518,7 +2518,7 @@ function renderLiquidated(){
   let list=buildLiquidatedView();
   // 按当前账户口径过滤（与持仓列表逻辑一致：scopeMatches 判大口径，curAccount 判子账户）
   if(currentScope!=='all') list=list.filter(function(f){ return scopeMatches(f.account); });
-  if(curAccount && curAccount!=='全部') list=list.filter(function(f){ return (f.account||'我的')===curAccount; });
+  if(curAccount && curAccount!=='全部') list=list.filter(function(f){ return (f.account||'本人账户')===curAccount; });
   let sumR=0, sumB=0, sumS=0, wins=0, sumD=0, sumRetPct=0; const catMap={};
   list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; sumRetPct+=f.retPct; if(f.win) wins++; catMap[f.cat]=(catMap[f.cat]||0)+f.totalBuy; });
   const cnt=list.length, winRate=cnt?wins/cnt*100:0, avgD=cnt?Math.round(sumD/cnt):0, avgRet=cnt?sumRetPct/cnt:0;
@@ -2738,7 +2738,7 @@ let _dupChecked=false;
 function detectCrossAccountDups(){
   try{
     const byName={};
-    fundsView.forEach(f=>{ (byName[f.name]=byName[f.name]||new Set()).add(f.account||'我的'); });
+    fundsView.forEach(f=>{ (byName[f.name]=byName[f.name]||new Set()).add(f.account||'本人账户'); });
     const dups=Object.keys(byName).filter(n=>byName[n].size>1).map(n=>n+'：'+[...byName[n]].join(' / '));
     if(dups.length && !_dupChecked){
       _dupChecked=true;
@@ -2896,7 +2896,7 @@ function route(){
 function showHome(){ currentView='home'; detailName=null; document.getElementById('homeView').style.display='block'; document.getElementById('detailView').style.display='none'; render(); }
 function showDetail(name){
   currentView='detail'; detailName=name;
-  detailAcc = pendingAcc || (_allHoldings.find(x=>x.name===name)?.account) || '我的'; pendingAcc=null;
+  detailAcc = pendingAcc || (_allHoldings.find(x=>x.name===name)?.account) || '本人账户'; pendingAcc=null;
   document.getElementById('homeView').style.display='none'; document.getElementById('detailView').style.display='block';
   const f=findFund(name,detailAcc), c=document.getElementById('detailContent');
   if(!f){ c.innerHTML=`<div class="card"><h2>未找到「${esc(name)}」</h2><p class="hint">可能已删除或数据未加载。点上方「← 返回首页」返回。</p></div>`; return; }
@@ -2904,7 +2904,7 @@ function showDetail(name){
 }
 
 function enterDetail(f){
-  detailAcc=f.account||'我的';
+  detailAcc=f.account||'本人账户';
   const a=getAnalysis(f.name), c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
     +`<div id="detailIntraday"></div>`
@@ -3058,7 +3058,7 @@ function renderDetailLive(arg){
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=getAnalysis(f.name);
   return `<div class="card detail-head">
-    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'我的'}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
+    <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'本人账户'}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn btn-danger" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
     <div class="dh-main">
       <div class="dh-primary">
@@ -3264,7 +3264,7 @@ function addSnapRow(){ openAddFund(); }
 function openAddFund(){
   const accSel=document.getElementById('af-acc');
   if(accSel){
-    const cur=accSel.value||'我的';
+    const cur=accSel.value||'本人账户';
     accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join('');
     const dl=document.getElementById('af-name');
     if(dl){ const names=(_allHoldings.length?_allHoldings:fundsView).map(f=>f.name).filter(Boolean); dl.innerHTML=[...new Set(names)].map(n=>`<option value="${esc(n)}">`).join(''); }
@@ -3276,14 +3276,14 @@ function addFundSave(){
   const g=id=>document.getElementById(id);
   const raw=(g('af-input').value||'').trim();
   if(!raw){ toast('请填写基金名称或 6 位代码'); g('af-input').focus(); return; }
-  const acc=g('af-acc').value||'我的';
+  const acc=g('af-acc').value||'本人账户';
   const mvRaw=g('af-mv').value, mv=(mvRaw===''||mvRaw==null)?null:+mvRaw;
   let name=raw;
   // 若输入像 6 位代码，尝试解析成基金名（失败则直接用原值）
   if(/^\d{6}$/.test(raw)){ const nm=syncNameByCode(raw); if(nm) name=nm; }
   if(snaps.some(s=>s.name===name && accOf(s)===acc)){ toast('该基金在当前账户已存在'); return; }
   const snap={name,cat:'',mv:(mv!=null && !isNaN(mv))?mv:0,ret:0,account:acc};
-  if(acc!=='我的') snap.account=acc;
+  if(acc!=='本人账户') snap.account=acc;
   snaps.push(snap);
   silentSave(); compute();
   closeAddFund();
@@ -3296,7 +3296,7 @@ function syncNameByCode(code){ // 从已载入的 snaps/trades 反查名称
   const _an=analysisNameByCode(code); if(_an) return _an;
   return null;
 }
-function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:'我的',locked:true}); }
+function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:'本人账户',locked:true}); }
 function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',time:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name),locked:true}); compute(); }
 function addTradeForForm(enc){
   const name=decodeURIComponent(enc);
@@ -3322,7 +3322,7 @@ function addTradeMenu(){
   const dl=document.getElementById('tq-fund');
   if(dl) dl.innerHTML=[...new Set(list.map(f=>f.name))].map(n=>`<option value="${esc(n)}">`).join('');
   const accSel=document.getElementById('tq-acc');
-  if(accSel){ const cur=accSel.value||'我的'; accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
+  if(accSel){ const cur=accSel.value||'本人账户'; accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
   const dt=document.getElementById('tq-date'); if(dt && !dt.value) dt.value=new Date().toISOString().slice(0,10);
   const ty=document.getElementById('tq-type'); if(ty && !ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
   const m=document.getElementById('tradeQuickMask'); if(m){ m.classList.add('show'); const el=document.getElementById('tq-fund'); if(el) setTimeout(()=>{ try{ el.focus(); }catch(e){} },60); }
@@ -3335,7 +3335,7 @@ function tradeQuickSave(){
   if(!name){ toast('请选择或填写基金名称'); return; }
   const date=g('tq-date').value; if(!date){ toast('请选择日期'); return; }
   const amount=+g('tq-amount').value||0; if(!amount){ toast('请填写金额'); g('tq-amount').focus(); return; }
-  const acc=g('tq-acc').value||'我的';
+  const acc=g('tq-acc').value||'本人账户';
   const type=g('tq-type').value||'buy';
   const time=g('tq-time').value||'';
   const navRaw=g('tq-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
@@ -3359,7 +3359,7 @@ function openDrawer(){
   const ty=document.getElementById('dr-type');
   if(!ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
   const accSel=document.getElementById('dr-acc');
-  if(accSel){ const cur=accSel.value||'我的'; accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
+  if(accSel){ const cur=accSel.value||'本人账户'; accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
   document.getElementById('drawerMask').style.display='block';
   const d=document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden','false');
   setTimeout(()=>{ const el=document.getElementById('dr-fund'); if(el) el.focus(); },90);
@@ -3373,7 +3373,7 @@ function drawerSave(){
   const date=g('dr-date').value; if(!date){ toast('请选择日期'); g('dr-date').focus(); return; }
   const amount=+g('dr-amount').value||0; if(!amount){ toast('请填写金额'); g('dr-amount').focus(); return; }
   const time=g('dr-time').value||'';
-  const acc=g('dr-acc').value||'我的';
+  const acc=g('dr-acc').value||'本人账户';
   const type=g('dr-type').value||'buy';
   const navRaw=g('dr-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
   const fee=+g('dr-fee').value||0;
@@ -4373,7 +4373,7 @@ async function runDcaPlans(){
         if(nav==null) continue; // 拉不到该日净值：跳过，下次刷新自动补（不伪造）
         const amt=+(plan.amount||0); if(amt<=0) continue;
         const sh=amt/nav;
-        trades.push({name:plan.name, account:plan.account||'我的', date:per.date, time:'15:00', type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.ym});
+        trades.push({name:plan.name, account:plan.account||'本人账户', date:per.date, time:'15:00', type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.ym});
         added++;
       }
     }
@@ -4391,7 +4391,7 @@ function openDcaModal(name){
   dcaResetForm();
   // 账户下拉
   const acc=document.getElementById('dcaAcc');
-  if(acc){ try{ const list=Array.isArray(ACCOUNTS)?ACCOUNTS:['我的','小号','微信债券']; acc.innerHTML=list.map(a=>'<option>'+escHtml(a)+'</option>').join(''); }catch(e){ acc.innerHTML='<option>我的</option>'; } }
+  if(acc){ try{ const list=Array.isArray(ACCOUNTS)?ACCOUNTS:['本人账户','代管账户','投资账户']; acc.innerHTML=list.map(a=>'<option>'+escHtml(a)+'</option>').join(''); }catch(e){ acc.innerHTML='<option>本人账户</option>'; } }
   // 基金名 datalist（持仓 + 交易里出现过的名称）
   try{
     const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean).sort();
@@ -4424,7 +4424,7 @@ function dcaRenderList(){
       +'<button class="btn sm" onclick="dcaToggle(\''+escHtml(p.id)+'\')">'+(p.paused?'恢复':'暂停')+'</button>'
       +'<button class="btn sm danger-text" onclick="dcaDelete(\''+escHtml(p.id)+'\')">删除</button>'
       +'</div></div>'
-      +'<div class="dca-card-meta">账户：'+(p.account||'我的')+' · 每月 '+escHtml(String(p.day||1))+' 号投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期。</div>'
+      +'<div class="dca-card-meta">账户：'+(p.account||'本人账户')+' · 每月 '+escHtml(String(p.day||1))+' 号投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期。</div>'
       +'</div>';
   }).join('');
 }
@@ -4453,7 +4453,7 @@ function dcaSave(){
   const dayRaw=parseInt((document.getElementById('dcaDay')||{}).value||'1',10);
   const start=(document.getElementById('dcaStart')||{}).value||'';
   const end=(document.getElementById('dcaEnd')||{}).value||'';
-  const acc=(document.getElementById('dcaAcc')||{}).value||'我的';
+  const acc=(document.getElementById('dcaAcc')||{}).value||'本人账户';
   if(!name.trim()){ toast('请填写基金名称'); return; }
   if(!(amount>0)){ toast('请填写有效的每月金额'); return; }
   if(!(dayRaw>=1 && dayRaw<=28)){ toast('每月几号请填 1~28'); return; }
@@ -4551,13 +4551,13 @@ function snoozeBackup(btn){ try{ localStorage.setItem('ft_backup_snooze', Math.f
 function exportHoldingsCSV(){
   const esc=function(v){ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const head=['基金名称','类别','账户','持有份额','成本单价','最新净值','市值','盈亏','收益率%'].map(esc).join(',');
-  const hRows=_allRaw.map(f=>[f.name,f.cat||'',f.account||'我的',f.shares!=null?f.shares:'',f.costPx!=null?f.costPx:'',f.nav!=null?f.nav:'',f.mv!=null?f.mv:'',f.profit!=null?f.profit:'',f.ret!=null?f.ret.toFixed(2):''].map(esc).join(',')).join('\n');
+  const hRows=_allRaw.map(f=>[f.name,f.cat||'',f.account||'本人账户',f.shares!=null?f.shares:'',f.costPx!=null?f.costPx:'',f.nav!=null?f.nav:'',f.mv!=null?f.mv:'',f.profit!=null?f.profit:'',f.ret!=null?f.ret.toFixed(2):''].map(esc).join(',')).join('\n');
   const liq=buildLiquidatedView();
   let out=head+'\n'+hRows;
   if(liq.length){
     out+='\n\n'+esc('=== 清仓（已全部赎回）===')+'\n';
     out+=['基金名称','类别','账户','总投入','总赎回','已实现盈亏','收益率%','持有天数','首次买入','最后卖出'].map(esc).join(',')+'\n';
-    out+=liq.map(f=>[f.name,f.cat||'',f.account||'我的',f.totalBuy!=null?f.totalBuy:'',f.totalSell!=null?f.totalSell:'',f.realized!=null?f.realized:'',f.retPct!=null?f.retPct.toFixed(2):'',f.days!=null?f.days:'',f.firstBuy||'',f.lastSell||''].map(esc).join(',')).join('\n');
+    out+=liq.map(f=>[f.name,f.cat||'',f.account||'本人账户',f.totalBuy!=null?f.totalBuy:'',f.totalSell!=null?f.totalSell:'',f.realized!=null?f.realized:'',f.retPct!=null?f.retPct.toFixed(2):'',f.days!=null?f.days:'',f.firstBuy||'',f.lastSell||''].map(esc).join(',')).join('\n');
   }
   if(!_allRaw.length && !liq.length){ toast('暂无可导出的数据'); return; }
   const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
@@ -4605,7 +4605,7 @@ function refreshSampleBanner(){
     if(!el){
       el=document.createElement('div'); el.id='sampleWarn';
       el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9990;background:#fff7e6;border-bottom:1px solid #ffd591;color:#874d00;padding:9px 14px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center';
-      el.innerHTML='⚠️ <b>当前显示的是内置示例数据，不是你的真实持仓。</b> <button id="sampleImportBtn" style="background:#fa8c16;color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:13px;margin-left:4px">导入我的数据</button> <button id="sampleDismissBtn" style="background:transparent;color:#874d00;border:1px solid #ffd591;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;margin-left:4px">知道了</button>';
+      el.innerHTML='⚠️ <b>当前显示的是内置示例数据，不是你的真实持仓。</b> <button id="sampleImportBtn" style="background:#fa8c16;color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:13px;margin-left:4px">导入本人账户数据</button> <button id="sampleDismissBtn" style="background:transparent;color:#874d00;border:1px solid #ffd591;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;margin-left:4px">知道了</button>';
       document.body.appendChild(el);
       document.getElementById('sampleImportBtn').onclick=function(){ el.remove(); importJSON(); };
       document.getElementById('sampleDismissBtn').onclick=function(){ try{ localStorage.setItem('ft_sample_dismiss', Date.now()+86400000*7); }catch(e){} el.remove(); };
@@ -4687,8 +4687,8 @@ function parseCSV(text){
     const nav=col.nav>=0?parseFloat(String(c[col.nav]).replace(/[^\d.\-]/g,''))||0:0;
     const fee=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
     const sh=col.shares>=0?parseFloat(String(c[col.shares]).replace(/[^\d.\-]/g,''))||0:0;
-    let accRaw=col.account>=0?c[col.account]:''; if(accRaw==='支付宝') accRaw='我的'; else if(accRaw==='微信') accRaw='微信债券';
-    const account=accRaw?(ACCOUNTS.includes(accRaw)?accRaw:'我的'):'我的';
+    let accRaw=col.account>=0?c[col.account]:''; if(accRaw==='本人账户') accRaw='本人账户'; else if(accRaw==='投资账户') accRaw='投资账户';
+    const account=accRaw?(ACCOUNTS.includes(accRaw)?accRaw:'本人账户'):'本人账户';
     if(!(amount||nav)) continue;
     added.push({name,date,type,amount,nav,fee,account,shares:sh});
   }
@@ -4738,8 +4738,8 @@ function parsePaste(text){
     const tType=type?guessType(type):'buy';
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
     const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;
-    let accRaw=account?String(account).trim():''; if(accRaw==='支付宝') accRaw='我的'; else if(accRaw==='微信') accRaw='微信债券';
-    const account2=accRaw?(ACCOUNTS.includes(accRaw)?accRaw:'我的'):'我的';
+    let accRaw=account?String(account).trim():''; if(accRaw==='本人账户') accRaw='本人账户'; else if(accRaw==='投资账户') accRaw='投资账户';
+    const account2=accRaw?(ACCOUNTS.includes(accRaw)?accRaw:'本人账户'):'本人账户';
     if(!(amt||nv)) continue;
     added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:0,account:account2,shares:0});
   }
@@ -4755,7 +4755,7 @@ function openImportModal(){ const m=document.getElementById('importMask'); if(m)
 function closeImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.remove('show'); const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML=''; const qc=document.getElementById('impQuickCode'); if(qc) qc.value=''; const qa=document.getElementById('impQuickAmount'); if(qa) qa.value=''; const qi=document.getElementById('impQuickInfo'); if(qi) qi.innerHTML=''; const qp=document.getElementById('impQuickPreview'); if(qp) qp.innerHTML=''; quickFund=null; }
 function switchImpTab(t){ const map={file:'impFileTab', paste:'impPasteTab', quick:'impQuickTab'}; for(const k in map){ const el=document.getElementById(map[k]); if(el) el.style.display=(k===t)?'':'none'; } const bs=document.querySelectorAll('#impTabSeg button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.t===t); } }
 let quickFund=null;
-function fillQuickAccount(){ const sel=document.getElementById('impQuickAccount'); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); const cur=(typeof currentScope!=='undefined' && currentScope && ACCOUNTS.indexOf(currentScope)>=0)?currentScope:'我的'; sel.value=cur; } const dt=document.getElementById('impQuickDate'); if(dt && !dt.value) dt.value=fmtDate(new Date()); }
+function fillQuickAccount(){ const sel=document.getElementById('impQuickAccount'); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); const cur=(typeof currentScope!=='undefined' && currentScope && ACCOUNTS.indexOf(currentScope)>=0)?currentScope:'本人账户'; sel.value=cur; } const dt=document.getElementById('impQuickDate'); if(dt && !dt.value) dt.value=fmtDate(new Date()); }
 function quickResolve(){
   const code=(document.getElementById('impQuickCode').value||'').trim();
   const box=document.getElementById('impQuickInfo');
@@ -4799,7 +4799,7 @@ function doQuickAdd(){
   if(!amt){ toast('请输入金额'); return; }
   const dir=qkGetDir();
   const date=document.getElementById('impQuickDate').value||fmtDate(new Date());
-  const account=document.getElementById('impQuickAccount').value||'我的';
+  const account=document.getElementById('impQuickAccount').value||'本人账户';
   const nav=quickFund.nav;
   const shares=amt/nav;
   const t={name:quickFund.name, date:date, type:dir, amount:amt, nav:nav, fee:0, account:account, shares:shares};
@@ -5452,7 +5452,7 @@ function renderSyncCfg(){
         <div class="sm-row"><div class="sm-rt">强调色 (Accent)<div class="sm-rd">用于按钮、开关与高亮</div></div>
           <div class="sm-sw" id="smSwatches"></div></div>
         <div class="sm-row"><div class="sm-rt">默认资产口径<div class="sm-rd">打开应用时的初始口径</div></div>
-          <div class="sm-seg" id="smScopeSeg"><button data-s="我的">我的</button><button data-s="小号">小号</button><button data-s="微信债券">微信债券</button><button data-s="all">全量</button></div></div>
+          <div class="sm-seg" id="smScopeSeg"><button data-s="本人账户">本人账户</button><button data-s="代管账户">代管账户</button><button data-s="投资账户">投资账户</button><button data-s="all">全量</button></div></div>
         <div class="sm-row"><div class="sm-rt">自动刷新净值<div class="sm-rd">每 3 分钟后台刷新一次行情</div></div>
           <label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div>
       </div>
@@ -5497,7 +5497,7 @@ function renderSyncCfg(){
         <h3>ℹ️ 关于</h3>
         <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
         <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
-        <button class="sm-ghost" onclick="removeSampleData()">仅清除示例数据（保留我的真实数据）</button>
+        <button class="sm-ghost" onclick="removeSampleData()">仅清除示例数据（保留本人账户真实数据）</button>
         <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
       </div>
     </div>
@@ -5543,7 +5543,7 @@ function renderSyncCfg(){
     </div>
     <div id="impPasteTab" style="margin-top:12px;display:none">
       <p class="sm-note">从基金 App 复制交易记录或手打，每行一条。支持 逗号 / 制表符 / 空格 分隔；方向可写 buy 或 买入/卖出/转换；金额带「元」也能识别。粘贴后点「解析并预览」。</p>
-      <textarea id="impPasteArea" style="width:100%;height:170px;resize:vertical;box-sizing:border-box;padding:10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--input,#fff);color:var(--fg,#222);outline:none" placeholder="每行一条：名称,日期,方向,金额,净值,账户（例：易方达蓝筹,2026-08-03,buy,5000,2.3456,我的）"></textarea>
+      <textarea id="impPasteArea" style="width:100%;height:170px;resize:vertical;box-sizing:border-box;padding:10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--input,#fff);color:var(--fg,#222);outline:none" placeholder="每行一条：名称,日期,方向,金额,净值,账户（例：易方达蓝筹,2026-08-03,buy,5000,2.3456,本人账户）"></textarea>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="sm-act" style="flex:1;background:var(--accent,#2f6fed);color:#fff;border:none" onclick="doPasteImport()"><span>🔍</span>解析并预览</button>
         <button class="sm-ghost" onclick="document.getElementById('impPasteArea').value='';document.getElementById('impPastePreview').innerHTML=''">清空</button>
@@ -5867,7 +5867,7 @@ function renderWatchTab(){
   const items=[];
   fWatch.forEach(function(x){
     const held=_allHoldings.find(function(f){ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
-    items.push({isBond:false, code:x.code||'', name:x.name, acc:'我的', typeLabel:'<span class="pool-f">基金</span>', quoteCode:x.code||'', y1:'—', status:(held?'<span class="tag">已持有</span>':'<span class="tag">未持仓</span>'), grp:x.grp||'', key:x.name});
+    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', typeLabel:'<span class="pool-f">基金</span>', quoteCode:x.code||'', y1:'—', status:(held?'<span class="tag">已持有</span>':'<span class="tag">未持仓</span>'), grp:x.grp||'', key:x.name});
   });
   bWatch.forEach(function(f){
     items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', typeLabel:(f.mix?'<span class="pool-m">混合</span>':'<span class="pool-b">纯债</span>'), quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), status:'<span class="tag">自选</span>', grp:f.grp||'', key:f.code});

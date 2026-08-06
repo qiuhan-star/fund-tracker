@@ -802,18 +802,23 @@ const SAMPLE_TRADE = [
 
 let snaps=[], trades=[], navCache={}, dailySnapshots=[], dcaPlans=[];
 let fundsView=[], _allHoldings=[], _allRaw=[];
-const BUILTIN_ACCOUNTS=['本人账户','代管账户','投资账户'];
+const BUILTIN_ACCOUNTS=['本人账户','投资账户','代管账户'];
 // 账户归属：isPersonal=false 表示非本人账户，不计入个人总资产 / 个人仓位
 const ACCOUNT_META={
   '本人账户':{isPersonal:true, owner:'本人'},
   '投资账户':{isPersonal:true, owner:'本人'},
-  '代管账户':{isPersonal:false, owner:'代管账户'},
-  // 旧名兼容（存量 localStorage 数据归一化前的兜底；2026-08-05 改名：本人账户→本人账户 / 投资账户→投资账户）
-  '本人账户':{isPersonal:true, owner:'本人'},
-  '投资账户':{isPersonal:true, owner:'本人'},
+  '代管账户':{isPersonal:false, owner:'代管'},
   // 演示账户：仅供「载入示例数据」使用，刻意独立于用户真实账户（不计入本人/代管账户，不出现在账户下拉），避免污染真实账本
-  '示例账户':{isPersonal:false, owner:'示例'}
+  '示例账户':{isPersonal:false, owner:'示例'},
+  // 旧名兼容（存量 localStorage 数据归一化前的兜底；改名：我的/支付宝→本人账户、微信债券/微信→投资账户、小号→代管账户）
+  '我的':{isPersonal:true, owner:'本人'},
+  '支付宝':{isPersonal:true, owner:'本人'},
+  '微信债券':{isPersonal:true, owner:'本人'},
+  '微信':{isPersonal:true, owner:'本人'},
+  '小号':{isPersonal:false, owner:'代管'}
 };
+// 旧账户名 → 当前统一模板账户名（迁移幂等；运行时归一化用，避免公开模板泄露真实账户名）
+const ACCOUNT_RENAME={'我的':'本人账户','支付宝':'本人账户','微信债券':'投资账户','微信':'投资账户','小号':'代管账户'};
 // 用户自定义账户（持久化于 localStorage ft_accounts）：在内置账户之外自行添加，默认计入本人个人资产
 let ACCOUNTS=[...BUILTIN_ACCOUNTS];
 let CUSTOM_ACCOUNTS=[];
@@ -1005,11 +1010,12 @@ function migrate(raw){
   if(!data.navCache || typeof data.navCache!=='object') data.navCache = {};
   data.daily_snapshots = normDailySnap(data.daily_snapshots);
   if(!Array.isArray(data.dcaPlans)) data.dcaPlans = [];
-  // 账户名归一化（2026-08-05：本人账户→本人账户 / 投资账户→投资账户；幂等）
-  const _accNorm=a=>{ if(!a) return '本人账户'; a=String(a).trim(); return (a==='本人账户')?'本人账户':((a==='投资账户')?'投资账户':a); };
+  // 账户名归一化（统一模板话术：旧名 → 当前账户名；幂等，仅作用于内存，落盘在下一次保存）
+  const _accNorm=a=>{ if(!a) return '本人账户'; a=String(a).trim(); return ACCOUNT_RENAME[a]||a; };
   (data.trades||[]).forEach(t=>{ t.account=_accNorm(t.account); });
   (data.snaps||[]).forEach(s=>{ if(s.account) s.account=_accNorm(s.account); });
   (data.daily_snapshots||[]).forEach(d=>{ if(d.account) d.account=_accNorm(d.account); });
+  (data.dcaPlans||[]).forEach(p=>{ if(p&&p.account) p.account=_accNorm(p.account); });
   return data;
 }
 
@@ -1043,7 +1049,7 @@ function backupMeta(raw){
 
 let _quotaWarned=false;
 function lsSafeSet(key,val){ try{ localStorage.setItem(key,val); return true; }catch(e){ const name=(e&&e.name)||'', msg=(e&&e.message)||'', code=e&&e.code; const quota = name==='QuotaExceededError' || code===22 || code===1014 || name.indexOf('Quota')>=0 || msg.toLowerCase().indexOf('quota')>=0; if(quota && !_quotaWarned){ _quotaWarned=true; showQuotaBanner(); } else if(!quota){ console.error('localStorage 写入失败:',e); } return false; } }
-async function silentSave(){ lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots,dcaPlans})); }
+async function silentSave(){ (snaps||[]).forEach(s=>{ if(s&&s.account&&ACCOUNT_RENAME[s.account]) s.account=ACCOUNT_RENAME[s.account]; }); (trades||[]).forEach(t=>{ if(t&&t.account&&ACCOUNT_RENAME[t.account]) t.account=ACCOUNT_RENAME[t.account]; }); (dcaPlans||[]).forEach(p=>{ if(p&&p.account&&ACCOUNT_RENAME[p.account]) p.account=ACCOUNT_RENAME[p.account]; }); lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots,dcaPlans})); }
 function showQuotaBanner(){
   let b=document.getElementById('quotaBar');
   if(!b){ b=document.createElement('div'); b.id='quotaBar'; b.className='quota-bar'; document.body.appendChild(b); }
@@ -2136,7 +2142,7 @@ const BOND_FUNDS=[
 const BOND_DEF_DATES={'900002':'2026-07-30','900011':'2026-07-10','900013':'2026-08-01'};
 // 债券清单读取：优先用浏览器本地 ft_bond_list（用户真实债基），否则用上方演示数据
 let _bondListCache=null;
-function getBondFunds(){ if(_bondListCache) return _bondListCache; try{ const s=localStorage.getItem('ft_bond_list'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)&&a.length){ _bondListCache=a; return a; } } }catch(e){} _bondListCache=BOND_FUNDS; return BOND_FUNDS; }
+function getBondFunds(){ if(_bondListCache) return _bondListCache; let arr=null; try{ const s=localStorage.getItem('ft_bond_list'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)&&a.length) arr=a; } }catch(e){} if(!arr) arr=BOND_FUNDS; (arr||[]).forEach(b=>{ if(b&&b.acc&&ACCOUNT_RENAME[b.acc]) b.acc=ACCOUNT_RENAME[b.acc]; }); _bondListCache=arr; return arr; }
 function pad2(n){return n<10?'0'+n:''+n;}
 function fmtDate(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
 function addDays(d,n){const x=new Date(d); x.setDate(x.getDate()+n); return x;}

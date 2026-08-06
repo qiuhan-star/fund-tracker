@@ -5009,8 +5009,12 @@ async function rebuildHistory(){
   hidden=localStorage.getItem('ft_hidden')==='1';
   document.body.classList.toggle('masked',hidden);
   document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁');
-  // 恢复上次排序（默认=多级：当日收益→估算→官方→持仓金额→净值→持有收益）
-  try{ const _s=JSON.parse(localStorage.getItem('ft_sort')||'null'); if(_s&&typeof _s.key==='string'){ holdSort=_s.key; holdSortDir=_s.dir||'desc'; } }catch(e){}
+  // 恢复排序：默认按「估算涨跌」降序；版本号不匹配时重置为默认（列顺序升级时自动同步）
+  try{
+    const _s=JSON.parse(localStorage.getItem('ft_sort')||'null');
+    if(localStorage.getItem('ft_sort_ver')===SORT_VER && _s&&typeof _s.key==='string'){ holdSort=_s.key; holdSortDir=_s.dir||'desc'; }
+    else { holdSort=DEFAULT_SORT.key; holdSortDir=DEFAULT_SORT.dir; try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); localStorage.setItem('ft_sort_ver',SORT_VER); }catch(e){} }
+  }catch(e){}
   try{ const _ss=document.getElementById('sortSelect'); if(_ss) _ss.value=holdSort; }catch(e){}
   buildFundsView();
   renderColSet();

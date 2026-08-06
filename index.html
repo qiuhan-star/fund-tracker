@@ -1432,7 +1432,7 @@ const SAMPLE_TRADE = [
 let snaps=[], trades=[], navCache={}, dailySnapshots=[];
 let fundsView=[], _allHoldings=[], _allRaw=[];
 const BUILTIN_ACCOUNTS=['我的','小号','微信债券'];
-// 账户归属：isPersonal=false 表示代管（如帮家人理财），不计入个人总资产 / 个人仓位
+// 账户归属：isPersonal=false 表示非本人账户，不计入个人总资产 / 个人仓位
 const ACCOUNT_META={
   '我的':{isPersonal:true, owner:'本人'},
   '微信债券':{isPersonal:true, owner:'本人'},
@@ -2972,7 +2972,7 @@ function openBondDrawer(code){
     +'</div>'
     +'<div class="bd-sec"><div class="bd-k">赎回费阶梯</div><div class="bd-v">'+feeLadder+'</div></div>'
     +'<div class="bd-sec"><div class="bd-k">卖出状态</div><div class="bd-v '+(st.cls||'')+'">'+st.txt+(st.sub?('<br><span class="sub2">'+st.sub+'</span>'):'')+'</div></div>'
-    +'<div class="bd-sec"><div class="bd-k">备注</div><textarea class="bd-note" id="bdNote" placeholder="记点什么（如：这只是在小号代管、目标收益 3% 就卖…）" oninput="setBondNote(\''+escJs(code)+'\',this.value)">'+escHtml(note)+'</textarea></div>';
+    +'<div class="bd-sec"><div class="bd-k">备注</div><textarea class="bd-note" id="bdNote" placeholder="记点什么（如：这只是小号里的、目标收益 3% 就卖…）" oninput="setBondNote(\''+escJs(code)+'\',this.value)">'+escHtml(note)+'</textarea></div>';
   d.classList.add('open');
 }
 function closeBondDrawer(){ const d=document.getElementById('bondDrawer'); if(d) d.classList.remove('open'); }

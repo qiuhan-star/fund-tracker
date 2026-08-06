@@ -2348,7 +2348,7 @@ function renderBond(){
     const durTxt=(f.dur&&f.dur!=='—')?'<span class="tag-dur">'+f.dur+'</span>':'';
     const creTxt=(f.credit&&f.credit!=='—')?'<span class="tag-credit">'+f.credit+'</span>':'';
     const bar=(st.barPct!=null)?('<div class="cmp-bar"><div class="fill bar-'+st.barCls+'" style="width:'+st.barPct+'%"></div></div>'):'';
-    const ownerTag = (currentScope==='all' && accOwner(f.acc)!==f.acc) ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
+    const ownerTag = (currentScope==='all' && accOwner(f.acc)!=='本人' && accOwner(f.acc)!==f.acc) ? ('<span class="tag-owner">'+accOwner(f.acc)+'</span>') : '';
     return '<tr style="cursor:pointer" onclick="openBondDrawer(\''+f.code+'\')" title="点开看买入日 / 持有天数 / 赎回费阶梯">'
       +'<td><b>'+f.code+'</b><br><span class="nm">'+f.name+'</span></td>'
       +'<td>'+f.acc+ownerTag+'</td>'
@@ -2408,7 +2408,7 @@ function renderBondCmp(){
   const comp=list.filter(x=>!x.f.mix).map(x=>x.f.y1).filter(v=>v!=null);
   const best=comp.length?Math.max.apply(null,comp):null;
   const worst=comp.length?Math.min.apply(null,comp):null;
-  body.innerHTML=list.map(x=>{ const f=x.f; const yc=(!f.mix&&f.y1!=null&&best!=null&&f.y1===best)?'cmp-best':((!f.mix&&f.y1!=null&&worst!=null&&f.y1===worst)?'cmp-worst':''); const poolTag=x.pool==='持仓'?'<span class="pool-h">持仓</span>':'<span class="pool-w">自选</span>'; const mc=f.mix?'<span class="tag-mix">混合</span>':''; const ownerTag=(x.pool==='持仓'&&currentScope==='all'&&accOwner(f.acc)!==f.acc)?('<span class="tag-owner">'+accOwner(f.acc)+'</span>'):''; return '<tr>'
+  body.innerHTML=list.map(x=>{ const f=x.f; const yc=(!f.mix&&f.y1!=null&&best!=null&&f.y1===best)?'cmp-best':((!f.mix&&f.y1!=null&&worst!=null&&f.y1===worst)?'cmp-worst':''); const poolTag=x.pool==='持仓'?'<span class="pool-h">持仓</span>':'<span class="pool-w">自选</span>'; const mc=f.mix?'<span class="tag-mix">混合</span>':''; const ownerTag=(x.pool==='持仓'&&currentScope==='all'&&accOwner(f.acc)!=='本人'&&accOwner(f.acc)!==f.acc)?('<span class="tag-owner">'+accOwner(f.acc)+'</span>'):''; return '<tr>'
     +'<td><b>'+escHtml(f.code)+'</b><br><span class="nm">'+escHtml(f.name)+'</span>'+mc+ownerTag+'</td>'
     +'<td>'+poolTag+'</td>'
     +'<td>'+(f.mix?'混合':(f.type||'纯债'))+'</td>'
@@ -2435,7 +2435,7 @@ function openBondDrawer(code){
     ? '🔒 持有期 '+b.lock+' 个月，期内不可赎回'
     : '&lt;7 天：1.5% 惩罚费 · 7 天–1 年：0.5% · &gt;1 年：免赎回费';
   const note=(bondState.notes&&bondState.notes[code])||'';
-  const ownerTag=(currentScope==='all'&&b.acc&&accOwner(b.acc)!==b.acc)?('<span class="tag-owner">'+accOwner(b.acc)+'</span>'):'';
+  const ownerTag=(currentScope==='all'&&b.acc&&accOwner(b.acc)!=='本人'&&accOwner(b.acc)!==b.acc)?('<span class="tag-owner">'+accOwner(b.acc)+'</span>'):'';
   d.querySelector('.bd-name').innerHTML=escHtml(b.name)+' <span class="bd-code">'+escHtml(b.code)+'</span>';
   d.querySelector('.bd-sub').innerHTML=(b.company||'—')+(b.acc?(' · '+b.acc):'')+ownerTag;
   d.querySelector('.bd-body').innerHTML=
@@ -5619,7 +5619,7 @@ function renderSyncCfg(){
 .bd-note{ width:100%; min-height:64px; margin-top:6px; border:1px solid var(--border-strong); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; background:var(--surface-2); color:var(--text); resize:vertical; }
 .bd-sum{ cursor:pointer; padding:0; list-style:none; outline:none; }
 .bd-sum::-webkit-details-marker{ display:none; }
-.bond-tbl tbody tr[style*="cursor"]:hover{ background:var(--accent-soft); }
+@media (hover: hover){ .bond-tbl tbody tr[style*="cursor"]:hover{ background:var(--accent-soft); } }
 </style>
 
 

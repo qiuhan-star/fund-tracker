@@ -889,6 +889,55 @@ input[type="number"] { -moz-appearance: textfield; }
   .chart-box, .am-chart {
     height: 180px !important;
   }
+
+  /* 9. 市场风向：指数卡片固定双列、增大点击区 */
+  .idx-list { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .idx-chip { padding: 10px 12px !important; min-height: 78px !important; }
+  .idx-name { font-size: 13px !important; }
+  .idx-val { font-size: 15px !important; }
+  .idx-pct { font-size: 12px !important; }
+  .idx-mktstatus { font-size: 11px !important; }
+  .idx-grp-h { font-size: 12px !important; margin-bottom: 8px !important; }
+  .idx-head-right { flex-wrap: wrap !important; gap: 6px !important; justify-content: flex-end !important; }
+  .idx-toggle { padding: 5px 10px !important; font-size: 12px !important; }
+
+  /* 10. 详情页头部：标题与操作按钮上下排，避免标题被挤 */
+  .detail-head .dh-top { flex-direction: column !important; gap: 10px !important; }
+  .detail-head .dh-top > div:last-child { width: 100% !important; display: flex !important; gap: 8px !important; }
+  .detail-head .dh-top button { flex: 1 !important; font-size: 13px !important; padding: 9px 0 !important; }
+  .detail-head h1 { font-size: 17px !important; line-height: 1.35 !important; }
+  .detail-head .sub { font-size: 12px !important; }
+  .back-link { margin-bottom: 10px !important; font-size: 14px !important; }
+
+  /* 11. 手动维护快照：4列表格改卡片式单列 */
+  .am-t, .am-t tbody, .am-t tr, .am-t th, .am-t td { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+  .am-t tr { margin-bottom: 8px !important; background: var(--surface-2) !important; border-radius: 10px !important; padding: 8px 10px !important; }
+  .am-t th { border: none !important; padding: 4px 0 2px !important; font-size: 11px !important; color: var(--text-3) !important; }
+  .am-t td { border: none !important; padding: 2px 0 6px !important; }
+  .am-t td input { width: 100% !important; max-width: none !important; }
+
+  /* 12. 交易流水表单：多列改成单列全宽 */
+  .tr-add-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .tr-add-grid .fee-hint { text-align: left !important; margin-top: -4px !important; }
+  .tr-add-grid button { width: 100% !important; padding: 10px !important; font-size: 14px !important; }
+
+  /* 13. 交易流水列表：强制横向滚动，不折行 */
+  .table-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+  .table-scroll table { min-width: 640px !important; }
+  .table-scroll th, .table-scroll td { white-space: nowrap !important; }
+
+  /* 14. 债基明细/对比/自选表：强制横向滚动 */
+  .tbl-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding-bottom: 4px !important; }
+  .bond-tbl { min-width: 720px !important; }
+  .bond-tbl th, .bond-tbl td { white-space: nowrap !important; vertical-align: middle !important; }
+  .bond-tbl .nm { white-space: normal !important; max-width: 110px !important; line-height: 1.35 !important; }
+  .bond-tbl input.amt-in { width: 72px !important; }
+  .bond-tbl input.date-in { width: 120px !important; }
+  .bond-tbl input.mini-in { width: 64px !important; }
+
+  /* 15. 基金榜单表：横向滚动 */
+  .market-table { min-width: 560px !important; }
+  .market-table th, .market-table td { white-space: nowrap !important; }
 }
 </style>
 <script>
@@ -3889,19 +3938,18 @@ function drawHist(all, f){
     let li=-1;
     for(let k=0;k<labels.length;k++){ if(labels[k]<=t.date) li=k; else break; }
     if(li<0) return; // 超出当前可见区间的交易：不画、也不计入区间统计（避免总数与分项对不上）
-    let symbol='tri-up', good=null;
-    if(t.type==='sell'){ symbol='tri-down'; sellN++; }
-    else if(t.type==='convert'||t.type==='convert_out'){ symbol='diamond'; convN++; }
-    else { symbol='tri-up'; buyN++; }
-    // 入场质量圈：成交净值 vs 成本线。买/转换落在成本线下方=买得便宜(绿)；卖在成本线上方=盈利出(绿)；否则红圈。
+    let color='#1677ff', ring=null, good=null;
+    if(t.type==='sell'){ color='#fa8c16'; sellN++; }
+    else if(t.type==='convert'||t.type==='convert_out'){ color='#722ed1'; convN++; }
+    else { color='#1677ff'; buyN++; }
+    // 仅卖出结清盈亏：外圈绿=止盈(落袋) / 红=割肉(止损)；买入/转换为纯色圆，不干扰视觉
     const costPx=f?f.costPx:0;
-    let color = '#64748b';
-    if(costPx>0){
+    if(t.type==='sell' && costPx>0){
       const navAt=vals[li];
-      good = (t.type==='sell') ? (navAt>=costPx) : (navAt<costPx);
-      color = good ? '#27ae60' : '#e24b4b';
+      good = navAt>=costPx;
+      ring = good ? '#52c41a' : '#ff4d4f';
     }
-    markers.push({idx:li, y:vals[li], color:color, symbol:symbol, ring:null, meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares, good:good}});
+    markers.push({idx:li, y:vals[li], color:color, symbol:'dot', ring:ring, meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares, good:good}});
   });
   const plotted=markers.length; // 区间可见交易笔数（= 分项之和）
   // 月份标注：覆盖可见数据区间的月份，逐月画分隔线 + 标签「M月」（单独成行，不堆统计数）
@@ -3923,7 +3971,7 @@ function drawHist(all, f){
       if(cm===11){ cm=0; cy++; } else cm++;
     }
   }
-  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; if(plotted) aggEl.innerHTML += ' · <span style="color:#64748b;font-size:11px">▲买入 ▼卖出 ◆转换 · 绿=优于成本 / 红=劣于成本</span>'; }
+  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; if(plotted) aggEl.innerHTML += ' · <span style="color:#64748b;font-size:11px">● 买入 · ● 转换 · ● 卖出（绿圈=止盈 / 红圈=割肉）</span>'; }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
     labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:50,
@@ -4667,7 +4715,7 @@ function isTodayTs(ts){ if(!ts) return false; const a=new Date(ts), b=new Date()
 function drawMarker(ctx,x,y,color,symbol,ring){
   ctx.save(); ctx.fillStyle=color; ctx.strokeStyle='#fff'; ctx.lineWidth=1;
   if(symbol==='dot'){
-    if(ring){ ctx.beginPath(); ctx.arc(x,y,6.5,0,Math.PI*2); ctx.lineWidth=2.6; ctx.strokeStyle=ring; ctx.stroke(); }
+    if(ring){ ctx.beginPath(); ctx.arc(x,y,6.5,0,Math.PI*2); ctx.lineWidth=2; ctx.strokeStyle=ring; ctx.stroke(); }
     ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.stroke();
   }
   else if(symbol==='cluster'){ ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle='rgba(37,99,235,0.16)'; ctx.fill(); ctx.lineWidth=1.6; ctx.strokeStyle=color; ctx.stroke(); ctx.beginPath(); ctx.arc(x,y,1.8,0,Math.PI*2); ctx.fillStyle=color; ctx.fill(); ctx.restore(); return; }

@@ -1879,7 +1879,7 @@ function loadNorthSouth(){
 }
 
 function loadMarketData(){
-  try{ fetchIndices(); }catch(e){}
+  try{ fetchIndices(); }catch(e){ console.warn('指数行情加载异常', e); }
   renderFlows(MARKET_FLOW); setFlowTag(false);
   fetchCapitalFlow().then(r=>{ if(r&&r.ok&&(r.inflow.length||r.outflow.length)){ renderFlows(r); setFlowTag(true); } });
   loadNorthSouth().then(r=>{ if(r&&r.ok){ const fmt=v=>{ const yi=v/10000; return (yi>=0?'+':'')+yi.toFixed(2)+'亿'; }; const nb=document.getElementById('nbVal'), sb=document.getElementById('sbVal'); if(nb){ nb.textContent=fmt(r.nb); nb.className='cap-val '+(r.nb>=0?'text-up':'text-down'); } if(sb){ sb.textContent=fmt(r.sb); sb.className='cap-val '+(r.sb>=0?'text-up':'text-down'); } const tg=document.getElementById('capTag'); if(tg){ tg.textContent='实时'; tg.className='tag tag-live'; } } });
@@ -5954,6 +5954,7 @@ function renderSyncCfg(){
   setInterval(renderMktLight, 30000); // 每 30s 自动切换 🟢/🟡/⚪
   setInterval(renderStatusLine, 30000); // 每 30s 刷新新鲜度/失败徽标
   refreshSampleBanner();
+  if(_cfgCorrupt) setTimeout(function(){ try{ toast('⚠ 本地配置(分类/标签/账户)数据损坏，已重置为默认'); }catch(e){} }, 500);
 })();
 </script>
   <!-- 大盘走势放大弹窗 -->
@@ -6143,7 +6144,7 @@ function renderSyncCfg(){
   document.addEventListener('change',function(e){ if(e.target && e.target.id==='smAutoRefresh'){ try{ localStorage.setItem('ft_autorefresh', e.target.checked?'1':'0'); }catch(_){} } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=document.getElementById('settingsMask'); if(m&&m.classList.contains('show')) closeSettings(); } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var bd=document.getElementById('bondDrawer'); if(bd&&bd.classList.contains('open')) closeBondDrawer(); } });
-  try{ if((localStorage.getItem('ft_autorefresh')||'1')!=='0'){ setInterval(function(){ try{ if(document.visibilityState==='visible' && typeof refresh==='function') refresh(); }catch(_){} }, 180000); } }catch(_){}
+  try{ if((localStorage.getItem('ft_autorefresh')||'1')!=='0'){ setInterval(function(){ try{ if(document.visibilityState==='visible' && typeof refresh==='function') refresh(); }catch(e){ console.warn('自动刷新异常', e); } }, 180000); } }catch(_){}
 })();
 </script>
 

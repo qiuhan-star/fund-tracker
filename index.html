@@ -1041,6 +1041,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <button class="btn" onclick="addSnapRow()">＋ 加一只基金</button>
         <button class="btn" onclick="addTradeMenu()">＋ 记一笔交易</button>
       </div>
+      <div id="trendSection"></div>
       <div class="card">
         <div class="sec-head">
           <h2 style="margin:0;font-size:14px" id="holdTitle">我的持仓</h2>
@@ -2351,6 +2352,21 @@ function renderOverview(){
         <div class="ov-sub">${trendNote} 个记录日 · 本金虚线与市值实线之间的缝隙＝真实收益</div>
       </section>
     </div>`;
+  renderTrendSection();
+}
+// 资产首页专用：只渲染「资产趋势」区块（复用 overviewTrendSvg / dailySnapshots），不重复整份总览
+function renderTrendSection(){
+  const box=document.getElementById('trendSection'); if(!box) return;
+  const trendSvg=overviewTrendSvg();
+  const trendNote=(Array.isArray(dailySnapshots)?dailySnapshots:(dailySnapshots[currentScope]||[])).length;
+  box.innerHTML=`
+    <section class="ov-trend">
+      <div class="ov-trend-head">${IC.trend} 资产趋势
+        <span class="ov-legend"><span class="l-mkt"><i></i>总资产市值</span><span class="l-pri"><i></i>累计投入本金</span></span>
+      </div>
+      ${trendSvg||`<p class="ov-zero" style="padding:34px 0;text-align:center">暂无历史记录，刷新后将开始积累走势</p>`}
+      <div class="ov-sub">${trendNote} 个记录日 · 本金虚线与市值实线之间的缝隙＝真实收益</div>
+    </section>`;
 }
 
 let pieChart=null, barChart=null;

@@ -1862,7 +1862,6 @@ function setSort(s){
   if(s==='est'&&!colVis.est){ colVis.est=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='nav'&&!colVis.nav){ colVis.nav=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='ret'&&!colVis.ret){ colVis.ret=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
-  if(s==='tdy'&&!colVis.tdy){ colVis.tdy=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
   try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); localStorage.setItem('ft_sort_ver',SORT_VER); }catch(e){}
   if(currentView==='home'&&activeTab===0) renderHomeList();
@@ -1877,11 +1876,11 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,day:true,mv:true,ret:true,tdy:true};
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,tdy:o.tdy!==false}; } }catch(e){}
-const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'持有收益',tdy:'当日收益'};
-const COL_KEYS=['nav','est','day','mv','ret','tdy'];
-const DEFAULT_COL_ORDER=['est','tdy','day','ret','nav','mv'];
+let colVis={nav:true,est:true,day:true,mv:true,ret:true};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false}; } }catch(e){}
+const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益'};
+const COL_KEYS=['nav','est','day','mv','ret'];
+const DEFAULT_COL_ORDER=['est','day','ret','nav','mv'];
 const COL_ORDER_VER='2';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
@@ -2075,7 +2074,6 @@ function buildObsHtml(){
 }
 function sortKeyVal(f,k){
   const nc=navCache[f.name]||{};
-  if(k==='tdy'){ const chg=nc.navChg!=null?nc.navChg:0; const mv=f.mv||0; return mv-mv/(1+chg/100); }
   if(k==='est') return nc.gszzl||0;
   if(k==='day') return nc.navChg!=null?nc.navChg:0;
   if(k==='mv') return f.mv||0;
@@ -2086,7 +2084,6 @@ function sortKeyVal(f,k){
 
 function sortKeyVal(f,k){
   const nc=navCache[f.name]||{};
-  if(k==='tdy'){ const chg=nc.navChg!=null?nc.navChg:0; const mv=f.mv||0; return mv-mv/(1+chg/100); }
   if(k==='est') return nc.gszzl||0;
   if(k==='day') return nc.navChg!=null?nc.navChg:0;
   if(k==='mv') return f.mv||0;
@@ -2119,10 +2116,9 @@ function renderHomeList(){
     else if(holdSort==='name'){ cmp=a.name.localeCompare(b.name,'zh-CN'); }
     else if(holdSort==='nav'){ av=(navCache[a.name]&&navCache[a.name].nav)||0; bv=(navCache[b.name]&&navCache[b.name].nav)||0; }
     else if(holdSort==='est'){ av=(navCache[a.name]&&navCache[a.name].gszzl)||0; bv=(navCache[b.name]&&navCache[b.name].gszzl)||0; }
-    else if(holdSort==='tdy'){ const da=(navCache[a.name]&&navCache[a.name].navChg!=null)?a.mv-a.mv/(1+navCache[a.name].navChg/100):0; const db=(navCache[b.name]&&navCache[b.name].navChg!=null)?b.mv-b.mv/(1+navCache[b.name].navChg/100):0; av=da; bv=db; }
     else {
-      // 默认多级排序：当日收益→估算→官方→持仓金额→净值→持有收益（名称兜底）
-      const _keys=['tdy','est','day','mv','nav','ret','name'];
+      // 默认多级排序：当日收益→估算→官方→持仓金额→净值（名称兜底）
+      const _keys=['ret','est','day','mv','nav','name'];
       cmp=0;
       for(const _k of _keys){
         const _d=(_k==='name')?a.name.localeCompare(b.name,'zh-CN'):(sortKeyVal(a,_k)-sortKeyVal(b,_k));
@@ -2196,16 +2192,6 @@ function renderHomeDense(list, showHead){
       }
       else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
       else if(c.key==='ret') tds+=`<td class="${rcls}"><div class="dt-big">${profit>=0?'+':''}${M(profit)}</div><div class="dt-sub2">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
-      else if(c.key==='tdy'){
-        const dp=(navCache[f.name]&&navCache[f.name].navChg!=null)?navCache[f.name].navChg:null;
-        if(dp!=null && f.mv!=null){
-          const amt=f.mv-f.mv/(1+dp/100);
-          const acls=amt>=0?'pos':'neg';
-          tds+=`<td class="${acls}"><div class="dt-big">${amt>=0?'+':''}${M(amt)}</div><div class="dt-sub2">${dp>=0?'+':''}${dp.toFixed(2)}%</div></td>`;
-        } else {
-          tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
-        }
-      }
     });
     return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">${tds}</tr>`;
   }).join('');
@@ -5099,6 +5085,19 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 (function init(){
+  if(location.protocol==='file:'){
+    // 本地文件打开：localStorage 在不同浏览器/刷新下不可靠，提醒用户改到线上版操作
+    setTimeout(function(){
+      try{
+        let b=document.getElementById('fileWarn');
+        if(!b){ b=document.createElement('div'); b.id='fileWarn';
+          b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#fff1f0;border-bottom:1px solid #ffccc7;color:#a8071a;padding:10px 14px;font-size:13px;line-height:1.65';
+          b.innerHTML='⚠️ 你正以<b>本地文件</b>方式打开，数据只存在本浏览器且刷新/重开可能丢失。请改用线上版 <code style="background:#ffe7e3;padding:1px 5px;border-radius:4px">https://qiuhan-star.github.io/fund-tracker/</code> 导入与操作（那里刷新不丢）；当前数据可用「设置 → 导出 JSON」先备份。';
+          document.body.insertBefore(b, document.body.firstChild);
+        }
+      }catch(e){}
+    },150);
+  }
   const saved=localStorage.getItem('ft_data');
   let loaded=false;
   if(saved){

@@ -3763,7 +3763,7 @@ function searchCode(name){
   return new Promise(resolve=>{
     const timer=setTimeout(()=>resolve(null),4000);
     const s=document.createElement('script'), cb='s_'+Math.random().toString(36).slice(2);
-    window[cb]=d=>{ clearTimeout(timer); try{const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]);resolve(arr&&arr[0]?arr[0].CODE:null);}catch(e){resolve(null);} window[cb]=null; s.remove(); };
+    window[cb]=d=>{ clearTimeout(timer); try{const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]); let hit=arr&&arr.find(x=>x.NAME===name); if(!hit){ const tail=name.trim().slice(-1); if(tail==='A'||tail==='C'){ hit=arr.find(x=>(x.NAME||'').slice(-1)===tail); } } const pick=hit||(arr&&arr[0]); resolve(pick?pick.CODE:null); }catch(e){resolve(null);} window[cb]=null; s.remove(); };
     s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
     s.src=`https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key=${encodeURIComponent(name)}&callback=${cb}`;
     document.body.appendChild(s);

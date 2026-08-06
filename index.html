@@ -2050,7 +2050,7 @@ function renderHomeDense(list, showHead){
     });
     return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">${tds}</tr>`;
   }).join('');
-  const headHtml = cols.map(c=>{
+  let headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
     const cls = 'sortable'+(active?' sort-on':'')+(c.key==='name'?'':' col-drag');

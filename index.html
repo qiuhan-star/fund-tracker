@@ -3575,6 +3575,10 @@ function liveSection(f){
   h+=`</div>`;
 
   const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
+  const _ncBk=navCache[f.name]||{};
+  const _estNavBk=(_ncBk.gsz!=null)?_ncBk.gsz:null;
+  const defaultNav=_estNavBk!=null?_estNavBk:calcNav;
+  const basisShort=_estNavBk!=null?'估算':'净值';
   if(f.shares!=null && calcNav){
     const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(calcNav>0&&curCost)?(curCost-calcNav)/calcNav*100:0, prog=curCost>0?Math.min(100,calcNav/curCost*100):0, gapPct=Math.max(0,100-prog);
     h+=`<div class="card"><h2>回本 / 补仓计算器 <span class="tag">实时模拟</span></h2>
@@ -3588,8 +3592,13 @@ function liveSection(f){
         <div class="bk-calc-title">补仓模拟</div>
         <div class="bk-input">
           <span>计划补仓</span>
-          <input id="bkAmt" type="number" step="any" inputmode="decimal" placeholder="如 2000" oninput="simulateAddPosition('${encodeURIComponent(f.name)}',this.value)">
+          <input id="bkAmt" type="number" step="any" inputmode="decimal" placeholder="如 2000" oninput="simulateAddPosition('${encodeURIComponent(f.name)}')">
           <span class="unit">元</span>
+        </div>
+        <div class="bk-input">
+          <span>补仓价格</span>
+          <input id="bkNav" type="number" step="any" inputmode="decimal" placeholder="${defaultNav.toFixed(4)}" oninput="simulateAddPosition('${encodeURIComponent(f.name)}')">
+          <span class="unit">${basisShort}</span>
         </div>
         <div class="bk-compare">
           <div class="bk-col"><div class="bk-col-title">补仓前</div><div class="bk-line">成本<b>${curCost.toFixed(4)}</b></div><div class="bk-line">${need>0?'需再涨':'已盈利'}<b class="${need>0?'pos':'neg'}">${need>=0?'+':''}${need.toFixed(2)}%</b></div></div>

@@ -2473,19 +2473,32 @@ function renderOverview(){
     </div>`;
   renderTrendSection();
 }
-// 资产首页专用：只渲染「资产趋势」区块（复用 overviewTrendSvg / dailySnapshots），不重复整份总览
+// 资产首页（Tab 0）顶部：只显示「总资产」精简条，不再重复资产趋势（趋势仅在分析页）；不含不可靠的累计投入本金
 function renderTrendSection(){
   const box=document.getElementById('trendSection'); if(!box) return;
-  const trendSvg=overviewTrendSvg();
-  const trendNote=trendArr().length;
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
+  const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
+  let _wsum=0,_pw=0; fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
+  const estPct=_pw>0?(_wsum/_pw):null;
+  const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
+  const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
+  const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'小号':'个人');
+  const updLine=lastSyncLabel();
+  const mask=v=>hidden?'****':v;
   box.innerHTML=`
-    <section class="ov-trend">
-      <div class="ov-trend-head">${IC.trend} 资产趋势
-        <span class="ov-legend"><span class="l-mkt"><i></i>总资产市值</span><span class="l-pri"><i></i>累计投入本金</span></span>
-      </div>
-      ${trendSvg||`<div class="ov-empty-trend"><div class="ov-empty-trend-title">当前账户还没有走势记录</div><div class="ov-empty-trend-sub">走势靠积累：每次打开会自动记录当日点；也可一键从交易记录重建完整历史曲线。</div><button class="btn sm primary" onclick="rebuildHistory().then(function(){try{renderTrendSection();renderOverview();}catch(e){}}).catch(function(e){toast('重建失败：'+(e&&e.message||e));})">🔄 从交易记录重建历史曲线</button></div>`}
-      <div class="ov-sub">${trendNote} 个记录日 · 本金虚线与市值实线之间的缝隙＝真实收益</div>
-    </section>`;
+    <div class="ov-wrap">
+      <section class="ov-hero">
+        <div class="ov-hero-left">
+          <span class="ov-hero-label">总资产市值 · 账户 ${scopeLabel} <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></span>
+          <span class="ov-hero-value">${mask(M(total))}</span>
+        </div>
+        <div class="ov-hero-right">
+          <div>今日预估 <b class="${tgcls}">${mask(tg)}</b> <span class="${estCls}">${estLine}</span></div>
+          <div class="ov-hero-sub">更新 ${updLine}</div>
+        </div>
+      </section>
+    </div>`;
 }
 
 let pieChart=null, barChart=null;

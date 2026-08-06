@@ -172,7 +172,11 @@ function ensureECharts(cb){
 .draft-pill.show { display:flex; }
 .draft-pill button { margin-left:auto; background:none; border:none; color:#b76e00; font-size:12px; text-decoration:underline; cursor:pointer; }.cb-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12.5px; }.cb-l { width: 58px; color: var(--text-3); flex: 0 0 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.cb-track { flex: 1 1 auto; height: 12px; background: var(--border-2); border-radius: 6px; overflow: hidden; }.cb-fill { height: 100%; background: var(--accent); border-radius: 6px; }.cb-fill.cur { background: var(--up); }.cb-v { width: 84px; text-align: right; flex: 0 0 auto; font-variant-numeric: tabular-nums; }.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }.table-scroll table { min-width: 640px; }@media (max-width: 680px) { .cards4 {grid-template-columns:repeat(2,1fr);}.grid2 {grid-template-columns:1fr;}  }
 @media (max-width: 768px) { .wrap { padding: 12px 10px 24px; }h1 { font-size: 17px; }.topbar .sub { font-size: 11.5px; }.cards4 { grid-template-columns: repeat(2,1fr); gap: 8px; }.mcard { padding: 10px; }.mcard .val { font-size: 17px; }.grid2 { grid-template-columns: 1fr; gap: 12px; }.chart-box { height: 200px !important; }.card { padding: 12px 14px; margin-bottom: 12px; }input, select { font-size: 16px; }.main-tabs button { font-size: 13px; padding: 8px 0; }.hl-name { font-size: 14.5px; }.cat-chip { font-size: 11px; padding: 3px 10px; }
-   }
+  .cb-l { width: 46px; font-size: 11px; } .cb-v { width: 64px; font-size: 10.5px; } .cb-row { font-size: 11.5px; gap: 6px; margin: 4px 0; } .cb-track { height: 10px; } .bar-name { width: 80px; font-size: 11px; } .bar-ret { width: 42px; font-size: 10.5px; } .bar-row { gap: 6px; font-size: 11.5px; }
+  #growthCard { display: none; }
+  #trendSection { display: none; }
+  #sectorHint { font-size: 11.5px; line-height: 1.5; margin-bottom: 8px; } #sectorTree { display: none !important; }
+  }
 @media print { :root {--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}body {background:var(--surface);}.wrap {max-width:none;padding:0;}.more-menu,.main-tabs,.scope-bar,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask {display:none!important;}.card {box-shadow:none;border:1px solid #ddd;break-inside:avoid;}.hint {display:none!important;}td input,td select {border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}.mcard {border:1px solid #eee;}.sub {margin-bottom:6px;}#updated {display:none;}
    }
 /* 隐藏数字输入框原生微调箭头 */
@@ -528,7 +532,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
           <span class="hint" id="sectorTotal"></span>
         </div>
       </div>
-      <div class="card">
+      <div class="card" id="growthCard">
         <h2>累计收益 / 总资产曲线 <span class="tag">随记录变真实</span></h2>
         <p class="hint">应用会<b>自动</b>在每次打开或改动数据时，把当前<b>总资产</b>与<b>累计收益</b>记为一个每日快照点（按账户口径分开）；曲线实时展示你账户的真实净值轨迹。也可点「记录此刻」立即补记今天。<b>若历史点为空（曲线只有最近几天）</b>，点「从交易记录重建」即可用你已有的全部交易流水 + 各基金历史净值，把曲线一路算回到第一笔交易那天（含债基、含三账户口径）。</p>
         <div class="chart-box"><div id="growth" role="img" aria-label="累计收益曲线" style="width:100%;height:100%"></div></div>
@@ -2887,7 +2891,7 @@ function showDetail(name){
 
 function enterDetail(f){
   detailAcc=f.account||'我的';
-  const a=ANALYSIS[f.name], c=document.getElementById('detailContent');
+  const a=getAnalysis(f.name), c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
     +`<div id="detailIntraday"></div>`
     +`<div id="detailHistory"></div>`
@@ -3038,7 +3042,7 @@ function renderDetailLive(arg){
   try{ retroScenarioCards(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
 }
 function headerHtml(f){
-  const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=ANALYSIS[f.name];
+  const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=getAnalysis(f.name);
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size:19px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${f.account||'我的'}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn btn-danger" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
@@ -3092,7 +3096,7 @@ function genericDetail(f){
 // 基金前十大持仓（股票/债券）——借鉴 x2rr/funds 的持仓明细，数据源 pingzhongdata/{code}.js
 function loadFundHoldings(f){
   const body=document.getElementById('holdingsBody'); if(!body) return;
-  const code=f.code||(ANALYSIS[f.name]&&ANALYSIS[f.name].code)||null;
+  const code=f.code||(getAnalysis(f.name)&&getAnalysis(f.name).code)||null;
   if(!code){ body.innerHTML='该基金未记录代码，无法加载持仓；可在「＋ 加一只基金」补全代码后再看。'; return; }
   body.innerHTML='加载中…（天天基金）';
   const s=document.createElement('script');
@@ -3275,7 +3279,7 @@ function addFundSave(){
 function syncNameByCode(code){ // 从已载入的 snaps/trades 反查名称
   const hit=snaps.find(s=>syncCode(s.name)===code) || trades.find(t=>syncCode(t.name)===code);
   if(hit) return hit.name;
-  if(ANALYSIS){ for(const k in ANALYSIS){ if(ANALYSIS[k] && ANALYSIS[k].code===code) return k; } }
+  const _an=analysisNameByCode(code); if(_an) return _an;
   return null;
 }
 function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:'我的',locked:true}); }
@@ -4459,6 +4463,7 @@ function exportJSON(){
   var old=document.getElementById('uwExportModal'); if(old) old.remove();
   var opts=[
     {grp:'债券', key:'ft_bond', label:'债券买入日/金额'},
+    {grp:'债券', key:'ft_bond_list', label:'债券清单'},
     {grp:'自选', key:'ft_watch', label:'基金自选（含分组标签）'},
     {grp:'自选', key:'ft_bond_watch', label:'债券自选池'},
     {grp:'设置', key:'ft_tags', label:'标签'},
@@ -4466,6 +4471,7 @@ function exportJSON(){
     {grp:'设置', key:'ft_scope', label:'账户口径'},
     {grp:'设置', key:'ft_accounts', label:'自定义账户'},
     {grp:'设置', key:'ft_profile', label:'个人画像'},
+    {grp:'设置', key:'ft_analysis', label:'深度分析'},
     {grp:'设置', key:'ft_cols', label:'列布局'},
     {grp:'设置', key:'ft_sort', label:'排序', extra:['ft_sort_ver']},
     {grp:'设置', key:'ft_colorder', label:'列顺序', extra:['ft_colorder_ver']},
@@ -4556,6 +4562,20 @@ function importJSON(){
       if(d._local && typeof d._local==='object'){ for(const k in d._local){ try{ const v=d._local[k]; localStorage.setItem(k, typeof v==='string'? v : JSON.stringify(v)); n++; }catch(e){} } }
       refreshSampleBanner();
       toast('已导入 JSON（已升级到 v'+SCHEMA_VERSION+'）'+(n?('，并恢复 '+n+' 项设置/自选/债券'):''));
+      setTimeout(()=>{ location.reload(); }, 800);
+    }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
+    r.readAsText(f); };
+  inp.click();
+}
+
+function importMyExtras(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();
+    r.onload=()=>{ try{
+      const d=JSON.parse(r.result); let n=0;
+      if(Array.isArray(d.bonds)){ localStorage.setItem('ft_bond_list', JSON.stringify(d.bonds)); n++; }
+      if(d.analysis && typeof d.analysis==='object'){ localStorage.setItem('ft_analysis', JSON.stringify(d.analysis)); n++; }
+      toast('已恢复 '+n+' 项（债基清单 / 深度分析），即将刷新');
       setTimeout(()=>{ location.reload(); }, 800);
     }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
     r.readAsText(f); };
@@ -4815,72 +4835,49 @@ const HOLD022=[
 ];
 const AC022={st:TH().up,eq:'#2f6fed',pcb:'#b8760a',ch:'#0f6e56'};
 const AN022={st:'存储',eq:'半导体设备',pcb:'PCB',ch:'芯片'};
+function analysisCharts022(){
+  const H=HOLD022,AC=AC022,AN=AN022;
+  amChart('amPos',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:function(p){return p[0].name+'：¥'+Number(p[0].value).toLocaleString('zh-CN');}},grid:{left:60,right:24,top:30,bottom:30},xAxis:{type:'category',data:['投入本金','当前市值','昨日反弹','回本还需']},yAxis:{type:'value',name:'元',axisLabel:{formatter:function(v){return v>=1000?(v/1000)+'k':v;}}},series:[{type:'bar',barWidth:'46%',data:[{value:7871.7,itemStyle:{color:'#8a8f99'}},{value:7145.4,itemStyle:{color:'#2f6fed'}},{value:323.9,itemStyle:{color:TH().up}},{value:726.3,itemStyle:{color:TH().down}}],label:{show:true,position:'top',formatter:function(o){return '¥'+o.value.toLocaleString('zh-CN');}}}]});
+  amChart('amHoldBar',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:function(p){var i=p[0].dataIndex;return H[i].n+'（'+AN[H[i].a]+'）<br/>占比 '+H[i].p+'% · 当日 '+H[i].d;}},grid:{left:120,right:40,top:20,bottom:20},xAxis:{type:'value',name:'%'},yAxis:{type:'category',data:H.map(function(h){return h.n;}).reverse()},series:[{type:'bar',data:H.map(function(h){return{value:h.p,itemStyle:{color:AC[h.a]}};}).reverse(),label:{show:true,position:'right',formatter:function(o){return o.value+'%';}}}]});
+  var attrSum={}; H.forEach(function(h){attrSum[h.a]=(attrSum[h.a]||0)+h.p;});
+  var attrData=Object.keys(attrSum).map(function(k){return{name:AN[k],value:+attrSum[k].toFixed(2)};});
+  attrData.push({name:'其他(非前十)',value:+(100-47.46).toFixed(2)});
+  amChart('amAttr',{tooltip:{trigger:'item',formatter:'{b}: {d}%'},legend:{bottom:0},series:[{type:'pie',radius:['42%','70%'],center:['50%','45%'],data:attrData.map(function(d){var k=Object.keys(AN).find(function(kk){return AN[kk]===d.name;});return{name:d.name,value:d.value,itemStyle:{color:AC[k]||'#cfd3da'}};}),label:{formatter:'{b}\n{d}%'}}]});
+  amChart('amPerf',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},grid:{left:60,right:24,top:30,bottom:30},xAxis:{type:'category',data:['本基金(近1年,官方)','同类平均','沪深300']},yAxis:{type:'value',name:'%',axisLabel:{formatter:'{value}%'}},series:[{type:'bar',barWidth:'46%',data:[{value:57.55,itemStyle:{color:TH().up}},{value:8.89,itemStyle:{color:'#8a8f99'}},{value:12.58,itemStyle:{color:'#2f6fed'}}],label:{show:true,position:'top',formatter:function(o){return o.value+'%';}}}]});
+  document.getElementById('amHoldBody').innerHTML=H.map(function(h){var cls=h.d.indexOf('+')===0?'pos':(h.d.indexOf('-')===0?'neg':'');return'<tr><td>'+h.n+'</td><td><span class="am-tag '+h.a+'">'+AN[h.a]+'</span></td><td class="num">'+h.p+'%</td><td class="num '+cls+'">'+h.d+'</td><td>'+h.c+'</td></tr>';}).join('');
+}
+function getAnalysis(name){
+  try{ const s=localStorage.getItem('ft_analysis'); if(s){ const o=JSON.parse(s); if(o && o[name]){ const e=o[name]; if(!e.charts) e.charts=analysisCharts022; return e; } } }catch(e){}
+  const d=ANALYSIS[name]; if(d && !d.charts) d.charts=analysisCharts022; return d;
+}
+function analysisNameByCode(code){
+  try{ const s=localStorage.getItem('ft_analysis'); if(s){ const o=JSON.parse(s); for(const k in o){ if(o[k]&&o[k].code===code) return k; } } }catch(e){}
+  for(const k in ANALYSIS){ if(ANALYSIS[k]&&ANALYSIS[k].code===code) return k; }
+  return null;
+}
 const ANALYSIS={
-  '富国全球科技互联网股票(QDII)C':{
-    code:'022184',
-    body:`<div class="am-tldr"><h4>结论先行（TL;DR）</h4><ul>
-<li>名义"全球科技互联网"，实为"全球存储+半导体设备"基金——前十大 7 只是存储（海力士/三星/铠侠/美光/闪迪/希捷/西数），单一景气高度集中。</li>
-<li>经理赵年珅（2025-03 上任），区间业绩强（近1年官方 +57.55%、跑赢同类 +8.89%），但你买在阶段高位（成本 5.7787）当前浮亏 −9.23%。</li>
-<li>单日 +4.75% 是反弹不是反转；亏损主因是入场时机，非基金变差。</li>
-<li>核心风险：主题集中 + QDII 汇率 + 风格漂移 + 波动大（近1月回撤 14%+）。应按"周期品"而非"成长核心"管理仓位。</li>
-<li>⚠️ 截图"本基金 +66.64%/近1年胜率98%"是 App 内部窗口口径，与公开"近1年 +57.55%"不一致，以公开为准。</li>
+  '示例全球配置(QDII)C':{
+    code:'900007',
+    body:`<div class="am-tldr"><h4>结论先行（示例分析 · 演示数据）</h4><ul>
+<li>这是示例深度分析，用于展示功能。所有数字均为演示，不代表任何真实基金。</li>
+<li>真实分析可通过「恢复债基+分析」导入你自己的研报（按基金名覆盖），导入后本示例条目会被你的内容替换。</li>
 </ul></div>
-<h4 class="am-h"><span class="n">1</span>基金画像</h4><table class="am-t"><tbody>
-<tr><th>名称</th><td>富国全球科技互联网股票型(QDII) C 类</td><th>代码</th><td>022184</td></tr>
-<tr><th>类型/风险</th><td>QDII 股票型 · R4 中高风险</td><th>成立日</th><td>2024-09-18</td></tr>
-<tr><th>基金经理</th><td>赵年珅（2025-03-07 上任）</td><th>规模</th><td>约 116.40 亿元</td></tr>
-<tr><th>业绩基准</th><td colspan="3">中证海外中国互联网(美元)×55% + 纳斯达克100×30% + 中证互联网×5% + 中债国债×10%</td></tr>
-<tr><th>最新净值</th><td>4.9891（2026-07-28，日 −5.35%）</td><th>近1年/成立以来</th><td>+57.55% / +119.42%（官方 07-28）</td></tr>
-</tbody></table><div class="am-note">来源：富国基金官网、新浪财经（检索日 2026-08-04）。经理为赵年珅，非早期张峰/宁君；C 类按日计提销售服务费，长期持有不如 A 类。</div>
-<h4 class="am-h"><span class="n">2</span>你的这笔持仓（截图）</h4><div class="am-kpis">
-<div class="am-kpi"><p class="l">持有市值</p><p class="v">¥7,145</p></div><div class="am-kpi"><p class="l">持有份额</p><p class="v">1,362.20</p></div>
-<div class="am-kpi"><p class="l">持仓成本</p><p class="v">5.7787</p></div><div class="am-kpi"><p class="l">最新净值</p><p class="v">5.2455</p></div>
-<div class="am-kpi"><p class="l">持有收益</p><p class="v neg">−726.26</p></div><div class="am-kpi"><p class="l">持有收益率</p><p class="v neg">−9.23%</p></div>
-<div class="am-kpi"><p class="l">昨日收益</p><p class="v pos">+323.93</p></div><div class="am-kpi"><p class="l">日涨幅</p><p class="v pos">+4.75%</p></div>
-</div><div class="am-chart" id="amPos"></div><div class="am-note">反推投入本金 ≈ ¥7,871.7（市值+浮亏）。成本 5.7787 远高于当前净值 5.2455，买在阶段高位（约 2026-06 存储情绪最热时）。<b>回本需再涨约 +10.2%</b>。</div>
-<h4 class="am-h"><span class="n">3</span>持仓画像：名为"互联网"，实为"存储"</h4><div class="am-toggle">
-<button id="amBtnChart" class="on" onclick="amShowHold('chart')">图 · 占比</button><button id="amBtnTable" onclick="amShowHold('table')">表 · 明细</button>
-</div><div id="amChartHold"><div class="am-chart" id="amHoldBar"></div></div><div id="amTableHold" style="display:none"><table class="am-t"><thead><tr><th>持仓</th><th>属性</th><th class="num">占比</th><th class="num">当日涨跌</th><th>较上季</th></tr></thead><tbody id="amHoldBody"></tbody></table></div>
-<div class="am-chart" id="amAttr" style="height:300px;margin-top:6px"></div><div class="am-note">前十大合计 <b>47.46%</b>。其中<b>存储链条 7 只合计 31.63%</b>（占前十大 66.7%）：海力士、三星、铠侠、美光、闪迪、希捷、西部数据。对比 Q1 2026 前十还是 TSMC/NVIDIA/谷歌/AMD/ASML 等"算力+互联网"，<b>Q2 经理大举调仓到存储</b>——兆易创新、闪迪、生益科技、铠侠、美光、希捷、西数均为"新增"。</div>
-<h4 class="am-h"><span class="n">4</span>业绩归因：基金强，你为何亏？</h4><div class="am-chart" id="amPerf"></div><table class="am-t" style="margin-top:12px"><thead><tr><th>维度</th><th>说明</th></tr></thead><tbody>
-<tr><td>基金长期强</td><td>近1年官方 +57.55%、任期（赵年珅）+109.53%，靠押注 AI 存储超级周期跑赢同类 +8.89%。</td></tr>
-<tr><td>你短期亏</td><td>成本 5.7787 ≈ 阶段顶部（2026-06 NAV 约 5.73+），随后板块回调至 07-28 的 4.9891（−13%），浮亏 −9.23%。</td></tr>
-<tr><td>反弹非反转</td><td>07-31 单日 +4.75%（+323.93）是技术性反弹，需看美光/海力士下季指引与 DRAM 现货价。</td></tr>
-</tbody></table><div class="am-note">⚠️ 截图"本基金 +66.64% / 近1年胜率 98%"为 App 内部统计窗口，与公开"近1年 +57.55%"口径不同，<b>不可直接当作官方近1年收益</b>。本图采用公开口径。</div>
-<h4 class="am-h"><span class="n">5</span>风险体检</h4><table class="am-t"><thead><tr><th>风险点</th><th>说明</th><th>等级</th></tr></thead><tbody>
-<tr><td>主题高度集中</td><td>7/10 重仓是存储，单一景气驱动，涨跌同频无对冲</td><td><span class="am-sev h">高</span></td></tr>
-<tr><td>QDII 汇率风险</td><td>美/韩/日股持仓，人民币升值侵蚀收益</td><td><span class="am-sev m">中</span></td></tr>
-<tr><td>主动风格漂移</td><td>名不副实，经理调仓使"存储 Beta"假设失效</td><td><span class="am-sev m">中</span></td></tr>
-<tr><td>波动/回撤大</td><td>近1月最大回撤 14.39%（仅优于 6% 同类）</td><td><span class="am-sev m">中</span></td></tr>
-<tr><td>单一经理依赖</td><td>赵年珅 2025-03 接手，样本期含牛市</td><td><span class="am-sev l">低-中</span></td></tr>
-<tr><td>C 类费率</td><td>长期持有不如 A 类，按日计提销售服务费</td><td><span class="am-sev l">低</span></td></tr>
+<h4 class="am-h"><span class="n">1</span>基金画像（示例）</h4><table class="am-t"><tbody>
+<tr><th>名称</th><td>示例全球配置(QDII) C 类</td><th>代码</th><td>900007</td></tr>
+<tr><th>类型/风险</th><td>QDII 股票型 · R4 中高风险</td><th>成立日</th><td>2020-01-01</td></tr>
+<tr><th>基金经理</th><td>示例经理</td><th>规模</th><td>约 10.00 亿元</td></tr>
+<tr><th>最新净值</th><td>2.2208（示例）</td><th>近1年</th><td>+4.08%（示例）</td></tr>
+</tbody></table><div class="am-note">来源：示例数据。深度分析支持导入你自己的研报（含持仓、风险、条件化决策框架）。</div>
+<h4 class="am-h"><span class="n">2</span>风险体检（示例）</h4><table class="am-t"><thead><tr><th>风险点</th><th>说明</th><th>等级</th></tr></thead><tbody>
+<tr><td>主题集中</td><td>单一主题或区域暴露，涨跌同频</td><td><span class="am-sev m">中</span></td></tr>
+<tr><td>汇率风险</td><td>海外持仓受人民币汇率影响</td><td><span class="am-sev m">中</span></td></tr>
+<tr><td>波动/回撤</td><td>QDII 波动较大，需关注回撤</td><td><span class="am-sev m">中</span></td></tr>
 </tbody></table>
-<h4 class="am-h"><span class="n">6</span>观点与条件化决策框架</h4>
-<p style="font-size:13px;margin:0 0 6px"><b>市场已充分定价：</b>AI 存储超级周期、HBM 紧缺、美光/海力士业绩暴增——全市场都知道，赵年珅也靠这个做强。</p>
-<p style="font-size:13px;margin:0"><b>尚未充分定价/需警惕：</b>存储是强周期，NAND/DRAM 涨价见顶后回撤极快；"新增 7 只存储股"说明经理在<b>周期后半段加仓</b>，往往是风险最大阶段；你成本 5.78 等于替最乐观预期接盘。</p>
-<table class="am-t" style="margin-top:10px"><thead><tr><th>你的判断</th><th>条件化操作框架（非买卖指令）</th></tr></thead><tbody>
-<tr><td>认同存储周期还能走 1-2 季、能承受 15%+ 回撤</td><td>当前 −9% 比 5.78 成本时风险收益比更好，可持有观察；止损参考净值 5.0 整数关（约再跌 4-5%）。</td></tr>
-<tr><td>怀疑存储见顶/受不了波动</td><td>借反弹到成本附近（5.78）减一部分，比亏损时割肉舒服；降级为"周期品卫星仓"。</td></tr>
-<tr><td>无论哪种</td><td>它本质是存储周期 Beta，按周期品管理，不宜作长期底仓。</td></tr>
-</tbody></table>
-<h4 class="am-h"><span class="n">7</span>数据来源与缺口</h4><div class="am-src">
-<p><b>持仓明细/盈亏/前十大及当日涨跌：</b>来自你的 4 张 App 截图（时点约 2026-07-31）。</p>
-<p><b>经理/规模/基准/近1年·成立以来/回撤：</b>富国基金官网 + 新浪财经，检索日 2026-08-04。</p>
-<p><b>Q1 2026 十大持仓对比：</b>新浪财经，数据日 20260331。</p>
-<p><b>缺口：</b>① neodata 实时 token 过期，未拉今日实时净值；② 截图"本基金 +66.64%/近1年胜率98%"口径与公开"近1年 +57.55%"不一致，已分别标注；③ 截图净值 5.2455(07-31) 与公开 07-28 的 4.9891 跳变较大，建议以天天基金/富国官网每日披露核对；④ 具体买入日期未知，未计入交易流水。</p>
-</div><div class="am-disc"><b>免责声明：</b>以上内容基于公开数据和量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。任何投资决策应结合个人风险承受能力、资金状况和投资目标独立判断，必要时咨询持牌专业机构。过往表现不预示未来收益。</div>
-<div class="am-foot">📄 <a href="022184-analysis.html" target="_blank">查看完整可打印研报（新标签页）</a></div>`,
-    charts:function(){
-      const H=HOLD022,AC=AC022,AN=AN022;
-      amChart('amPos',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:function(p){return p[0].name+'：¥'+Number(p[0].value).toLocaleString('zh-CN');}},grid:{left:60,right:24,top:30,bottom:30},xAxis:{type:'category',data:['投入本金','当前市值','昨日反弹','回本还需']},yAxis:{type:'value',name:'元',axisLabel:{formatter:function(v){return v>=1000?(v/1000)+'k':v;}}},series:[{type:'bar',barWidth:'46%',data:[{value:7871.7,itemStyle:{color:'#8a8f99'}},{value:7145.4,itemStyle:{color:'#2f6fed'}},{value:323.9,itemStyle:{color:TH().up}},{value:726.3,itemStyle:{color:TH().down}}],label:{show:true,position:'top',formatter:function(o){return '¥'+o.value.toLocaleString('zh-CN');}}}]});
-      amChart('amHoldBar',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:function(p){var i=p[0].dataIndex;return H[i].n+'（'+AN[H[i].a]+'）<br/>占比 '+H[i].p+'% · 当日 '+H[i].d;}},grid:{left:120,right:40,top:20,bottom:20},xAxis:{type:'value',name:'%'},yAxis:{type:'category',data:H.map(function(h){return h.n;}).reverse()},series:[{type:'bar',data:H.map(function(h){return{value:h.p,itemStyle:{color:AC[h.a]}};}).reverse(),label:{show:true,position:'right',formatter:function(o){return o.value+'%';}}}]});
-      var attrSum={}; H.forEach(function(h){attrSum[h.a]=(attrSum[h.a]||0)+h.p;});
-      var attrData=Object.keys(attrSum).map(function(k){return{name:AN[k],value:+attrSum[k].toFixed(2)};});
-      attrData.push({name:'其他(非前十)',value:+(100-47.46).toFixed(2)});
-      amChart('amAttr',{tooltip:{trigger:'item',formatter:'{b}: {d}%'},legend:{bottom:0},series:[{type:'pie',radius:['42%','70%'],center:['50%','45%'],data:attrData.map(function(d){var k=Object.keys(AN).find(function(kk){return AN[kk]===d.name;});return{name:d.name,value:d.value,itemStyle:{color:AC[k]||'#cfd3da'}};}),label:{formatter:'{b}\n{d}%'}}]});
-      amChart('amPerf',{tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},grid:{left:60,right:24,top:30,bottom:30},xAxis:{type:'category',data:['本基金(近1年,官方)','同类平均','沪深300']},yAxis:{type:'value',name:'%',axisLabel:{formatter:'{value}%'}},series:[{type:'bar',barWidth:'46%',data:[{value:57.55,itemStyle:{color:TH().up}},{value:8.89,itemStyle:{color:'#8a8f99'}},{value:12.58,itemStyle:{color:'#2f6fed'}}],label:{show:true,position:'top',formatter:function(o){return o.value+'%';}}}]});
-      document.getElementById('amHoldBody').innerHTML=H.map(function(h){var cls=h.d.indexOf('+')===0?'pos':(h.d.indexOf('-')===0?'neg':'');return'<tr><td>'+h.n+'</td><td><span class="am-tag '+h.a+'">'+AN[h.a]+'</span></td><td class="num">'+h.p+'%</td><td class="num '+cls+'">'+h.d+'</td><td>'+h.c+'</td></tr>';}).join('');
-    }
+<h4 class="am-h"><span class="n">3</span>数据来源与缺口</h4><div class="am-src">
+<p><b>本分析为演示：</b>所有净值、持仓、风险描述均为虚构示例，仅供界面展示。</p>
+<p><b>如何替换：</b>在「恢复债基+分析」中上传你自己的分析 JSON（键为基金名，含 body 与 charts 标记），即可覆盖本示例。</p>
+</div><div class="am-disc"><b>免责声明：</b>以上内容基于示例数据，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div>`,
+    charts:function(){}
   }
 };
 
@@ -5462,6 +5459,7 @@ function renderSyncCfg(){
           <button class="sm-act" onclick="exportJSON();closeSettings()"><span>📤</span>导出 JSON</button>
           <button class="sm-act" onclick="exportHoldingsCSV();closeSettings()"><span>📊</span>导出持仓CSV</button>
           <button class="sm-act" onclick="downloadCSVTemplate();closeSettings()"><span>📄</span>CSV 模板</button>
+          <button class="sm-act" onclick="importMyExtras();closeSettings()"><span>📦</span>恢复债基+分析</button>
         </div>
         <p class="sm-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。删除 / 导入前已自动环形备份最近 3 份，可从备份恢复。</p>
       </div>

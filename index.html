@@ -4023,6 +4023,16 @@ function drawHist(all, f){
     }
   });
 }
+// 估值涨跌自洽：优先用「估净值(gsz) − 昨净值(official)」/ 昨净值 反算，
+// 保证与列表/详情里展示的「估净值↔昨净值」严格一致；
+// 东方财富 FundMNFInfo 的 GSZZL 字段偶尔与 GSZ 不同步（滞后），直接显示会裂。
+// 仅当无 gsz（如 QDII 无盘中分时）才退回接口给的 gszzl（此时实为官方当日涨跌）。
+function normGszzl(nc){
+  if(nc && typeof nc.gsz==='number' && isFinite(nc.gsz) && typeof nc.official==='number' && isFinite(nc.official) && nc.official){
+    return (nc.gsz - nc.official)/nc.official*100;
+  }
+  return (nc && typeof nc.gszzl==='number' && isFinite(nc.gszzl)) ? nc.gszzl : null;
+}
 // 批量刷新净值：FundMNFInfo 一次拿全部 → QDII 新浪兜底 → 缺失单只 fundgz 兜底
 async function fetchNavBatch(names){
   const pairs=[];
@@ -4038,8 +4048,9 @@ async function fetchNavBatch(names){
           const _today=t=> t && new Date(t).toDateString()===new Date().toDateString();
           const keepEst=!freshGsz && ex.gszTs && _today(ex.gszTs); // 收盘后保留当日最后一次估值冻结，次日清零
           const gsz=freshGsz?d.gsz:(keepEst?ex.gsz:null);
-          const gszzl=freshGsz?d.gszzl:(keepEst?ex.gszzl:null);
-          navCache[nm]={ nav:(freshGsz?d.gsz:d.nav), date:d.date||ex.date, gsz:gsz, gszTs:freshGsz?Date.now():ex.gszTs, gszzl:gszzl, gztime:d.gztime||ex.gztime, official:d.official!=null?d.official:ex.official, navChg:(d.navChg!=null?d.navChg:ex.navChg), navChgDate:(d.navChgDate||ex.navChgDate) };
+          const _official=d.official!=null?d.official:ex.official;
+          const gszzl=normGszzl({gsz:gsz, official:_official, gszzl:(keepEst?ex.gszzl:null)});
+          navCache[nm]={ nav:(freshGsz?d.gsz:d.nav), date:d.date||ex.date, gsz:gsz, gszTs:freshGsz?Date.now():ex.gszTs, gszzl:gszzl, gztime:d.gztime||ex.gztime, official:_official, navChg:(d.navChg!=null?d.navChg:ex.navChg), navChgDate:(d.navChgDate||ex.navChgDate) };
           ok++;
         }
       });
@@ -4050,11 +4061,11 @@ async function fetchNavBatch(names){
     const need=pairs.filter(([nm])=> !navCache[nm] || navCache[nm].gsz==null );
     await Promise.all(need.map(async ([nm,c])=>{
       const s=await fetchSinaEstimate(c);
-      if(s&&s.gsz!=null){ const ex=navCache[nm]||{}; navCache[nm]={ nav:s.gsz, date:ex.date||s.date, gsz:s.gsz, gszTs:Date.now(), gszzl:s.gszzl, gztime:s.gztime, official:(ex.official!=null?ex.official:(s.official!=null?s.official:ex.nav)), navChg:(ex.navChg!=null?ex.navChg:undefined), navChgDate:(ex.navChgDate||undefined) }; }
+      if(s&&s.gsz!=null){ const ex=navCache[nm]||{}; const _of=ex.official!=null?ex.official:(s.official!=null?s.official:ex.nav); navCache[nm]={ nav:s.gsz, date:ex.date||s.date, gsz:s.gsz, gszTs:Date.now(), gszzl:normGszzl({gsz:s.gsz, official:_of, gszzl:null}), gztime:s.gztime, official:_of, navChg:(ex.navChg!=null?ex.navChg:undefined), navChgDate:(ex.navChgDate||undefined) }; }
     }));
   }
   const missing=names.filter(nm=>!navCache[nm]||navCache[nm].nav==null);
-  await Promise.all(missing.map(async nm=>{ const r=await fetchNav(nm); if(r&&r.nav!=null){ const ex=navCache[nm]||{}; navCache[nm]={ nav:r.nav, date:r.date||ex.date||'', gsz:ex.gsz, gszzl:ex.gszzl, gztime:ex.gztime, official:(ex.official!=null?ex.official:r.nav), navChg:(ex.navChg!=null?ex.navChg:undefined), navChgDate:(ex.navChgDate||undefined) }; } }));
+  await Promise.all(missing.map(async nm=>{ const r=await fetchNav(nm); if(r&&r.nav!=null){ const ex=navCache[nm]||{}; const _of=ex.official!=null?ex.official:r.nav; navCache[nm]={ nav:r.nav, date:r.date||ex.date||'', gsz:ex.gsz, gszzl:normGszzl({gsz:ex.gsz, official:_of, gszzl:ex.gszzl}), gztime:ex.gztime, official:_of, navChg:(ex.navChg!=null?ex.navChg:undefined), navChgDate:(ex.navChgDate||undefined) }; } }));
   return ok;
 }
 function lastUpdatedLabel(){

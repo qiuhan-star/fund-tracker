@@ -5362,15 +5362,26 @@ function uwRow(it){
   +'</tr>';
 }
 var _tessLoading=null;
+var _tessCDN=null;
+// 国内可达 CDN 回退：jsdelivr → unpkg（语言包两者都通；避开被墙的 tessdata.projectnaptha.com）
+var TESS_CDNS=[
+  {main:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js', worker:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js', core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/tesseract-core.wasm.js', lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0/'},
+  {main:'https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js', worker:'https://unpkg.com/tesseract.js@5.1.1/dist/worker.min.js', core:'https://unpkg.com/tesseract.js-core@5.1.1/tesseract-core.wasm.js', lang:'https://unpkg.com/@tesseract.js-data/eng@1.0.0/4.0.0/'}
+];
 function loadTesseract(){
-  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(window.Tesseract && _tessCDN) return Promise.resolve(window.Tesseract);
   if(_tessLoading) return _tessLoading;
   _tessLoading=new Promise(function(res,rej){
-    var s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-    s.onload=function(){ res(window.Tesseract); };
-    s.onerror=function(){ rej(new Error('Tesseract.js 加载失败（检查网络）')); };
-    document.head.appendChild(s);
+    var idx=0;
+    (function tryOne(){
+      if(idx>=TESS_CDNS.length){ rej(new Error('Tesseract.js 加载失败（jsdelivr 与 unpkg 都连不上，可能被网络拦截）')); return; }
+      var cdn=TESS_CDNS[idx]; idx++;
+      var s=document.createElement('script');
+      s.src=cdn.main;
+      s.onload=function(){ _tessCDN=cdn; res(window.Tesseract); };
+      s.onerror=function(){ tryOne(); };
+      document.head.appendChild(s);
+    })();
   });
   return _tessLoading;
 }
@@ -5378,17 +5389,30 @@ function uwPickImage(){ var el=document.getElementById('uwImg'); if(el) el.click
 function uwOcr(input){
   var file=input&&input.files&&input.files[0]; if(!file) return;
   var url=URL.createObjectURL(file);
-  toast('正在识别截图…（首次需联网下载识别模型）');
-  loadTesseract().then(function(T){ return T.recognize(url,'eng'); }).then(function(r){
+  input.value='';
+  toast('正在加载识别引擎…（首次需联网下载模型，约十几秒）');
+  loadTesseract().then(function(T){
+    var cdn=_tessCDN||TESS_CDNS[0];
+    return T.createWorker('eng', 1, {
+      workerPath: cdn.worker,
+      corePath: cdn.core,
+      langPath: cdn.lang,
+      logger: function(m){ if(m&&m.status==='recognizing text'){ toast('识别中… '+Math.round((m.progress||0)*100)+'%'); } }
+    }).then(function(worker){
+      return worker.recognize(url, { tessedit_char_whitelist: '0123456789' }).then(function(r){
+        return worker.terminate().then(function(){ return r; });
+      });
+    });
+  }).then(function(r){
     URL.revokeObjectURL(url);
     var txt=(r&&r.data&&r.data.text)||'';
     var codes=Array.from(new Set((txt.match(/\d{6}/g)||[])));
     showOcrCandidates(codes);
   }).catch(function(e){
     URL.revokeObjectURL(url);
-    toast('识别失败：'+(e&&e.message?e.message:e));
+    if(window.console) console.error('OCR 失败:', e);
+    toast('识别失败：'+(e&&e.message?e.message:e)+'（可看浏览器控制台或换网络重试）');
   });
-  input.value='';
 }
 function showOcrCandidates(codes){
   var old=document.getElementById('uwOcrModal'); if(old) old.remove();

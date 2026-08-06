@@ -4815,7 +4815,22 @@ function showBackupReminder(){
   } else { el.style.display='none'; }
 }
 function snoozeBackup(btn){ try{ localStorage.setItem('ft_backup_snooze', Math.floor(Date.now()/86400000)); }catch(e){} if(btn&&btn.parentNode) btn.parentNode.style.display='none'; }
-function exportHoldingsCSV(){ if(!fundsView.length){ toast('暂无可导出的持仓'); return; } const head='基金名称,类别,持有份额,成本单价,最新净值,市值,盈亏,收益率%\n'; const rows=fundsView.map(f=>[f.name,f.cat||'',f.shares!=null?f.shares:'',f.costPx!=null?f.costPx:'',f.nav!=null?f.nav:'',f.mv!=null?f.mv:'',f.profit!=null?f.profit:'',f.ret!=null?f.ret.toFixed(2):''].join(',')).join('\n'); const blob=new Blob(['\ufeff'+head+rows],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click(); toast('已导出持仓 fund-holdings.csv'); }
+function exportHoldingsCSV(){
+  const esc=function(v){ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const head=['基金名称','类别','账户','持有份额','成本单价','最新净值','市值','盈亏','收益率%'].map(esc).join(',');
+  const hRows=_allRaw.map(f=>[f.name,f.cat||'',f.account||'我的',f.shares!=null?f.shares:'',f.costPx!=null?f.costPx:'',f.nav!=null?f.nav:'',f.mv!=null?f.mv:'',f.profit!=null?f.profit:'',f.ret!=null?f.ret.toFixed(2):''].map(esc).join(',')).join('\n');
+  const liq=buildLiquidatedView();
+  let out=head+'\n'+hRows;
+  if(liq.length){
+    out+='\n\n'+esc('=== 清仓（已全部赎回）===')+'\n';
+    out+=['基金名称','类别','账户','总投入','总赎回','已实现盈亏','收益率%','持有天数','首次买入','最后卖出'].map(esc).join(',')+'\n';
+    out+=liq.map(f=>[f.name,f.cat||'',f.account||'我的',f.totalBuy!=null?f.totalBuy:'',f.totalSell!=null?f.totalSell:'',f.realized!=null?f.realized:'',f.retPct!=null?f.retPct.toFixed(2):'',f.days!=null?f.days:'',f.firstBuy||'',f.lastSell||''].map(esc).join(',')).join('\n');
+  }
+  if(!_allRaw.length && !liq.length){ toast('暂无可导出的数据'); return; }
+  const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click();
+  toast('已导出 持仓+清仓 fund-holdings.csv（含全部账户）');
+}
 function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n汇添富中证芯片产业指数增强C,2026-01-15,买入,10000,1.9500,0\n汇添富中证芯片产业指数增强C,2026-03-20,卖出,5000,2.1000,5\n华夏有色金属ETF联接D,2026-02-01,定投,2000,1.2000,\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';

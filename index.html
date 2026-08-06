@@ -3914,7 +3914,6 @@ function drawHist(all, f){
       good = (t.type==='sell') ? (navAt>=costPx) : (navAt<costPx);
       color = good ? '#27ae60' : '#e24b4b';
     }
-    }
     markers.push({idx:li, y:vals[li], color:color, symbol:symbol, ring:null, meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares, good:good}});
   });
   const plotted=markers.length; // 区间可见交易笔数（= 分项之和）

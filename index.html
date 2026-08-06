@@ -514,8 +514,16 @@
   .sec-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
   .mini-toggle { font-size: 12px; color: var(--text-2); display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
   .mini-toggle input { width: auto; margin: 0; }
-  /* 条形图按盈亏着色 */
-  .cb-fill.pos { background: var(--up); } .cb-fill.neg { background: var(--down); } .cb-fill.zero { background: var(--text-3); }
+  /* 板块配置：占比条用中性品牌色，盈亏仅通过 cb-ret 文字色表达 */
+  .cb-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .bar-list { display:flex; flex-direction:column; gap:6px; }
+  .bar-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .bar-name { width:140px; flex:0 0 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
+  .bar-track { flex:1 1 auto; height:10px; background:var(--border-2); border-radius:5px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:5px; transition:width .3s ease; }
+  .bar-fill.pos { background:var(--up); } .bar-fill.neg { background:var(--down); } .bar-fill.zero { background:var(--text-3); }
+  .bar-ret { width:54px; flex:0 0 auto; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+  @media(max-width:680px){ .bar-name{ width:96px; } .bar-ret{ width:48px; font-size:11px; } }
   .cb-ret { font-size: 11px; margin-left: 6px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .cb-ret.pos { color: var(--up); } .cb-ret.neg { color: var(--down); } .cb-ret.zero { color: var(--text-3); }
   /* 空状态引导 */
@@ -2384,13 +2392,24 @@ function renderPie(){
 function drillToCat(c){ filterCat(c); switchTab(0); }
 function renderBar(){
   const sorted=[...fundsView].sort((a,b)=>a.ret-b.ret);
-  const labels=sorted.map(f=>f.name.length>9?f.name.slice(0,9)+'…':f.name);
-  const data=sorted.map(f=>+f.ret.toFixed(2));
-  const colors=sorted.map(f=>f.ret>=0?TH().up:TH().down);
+  const maxAbs=Math.max(0.1, ...sorted.map(f=>Math.abs(f.ret||0)));
   const box=document.getElementById('bar').parentElement;
-  box.style.height=Math.max(200, sorted.length*18+12)+'px';
-  if(barChart) barChart.destroy();
-  barChart=new Chart(document.getElementById('bar'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,barThickness:13}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{titleFont:{family:CH_FONT,size:12,weight:'600'},bodyFont:{family:CH_FONT,size:12},padding:8,cornerRadius:8}},scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:TH().grid}},y:{ticks:{font:{size:10}},grid:{display:false}}}}});
+  const canvas=document.getElementById('bar');
+  box.style.height='auto';
+  if(barChart){ barChart.destroy(); barChart=null; }
+  if(canvas) canvas.style.display='none';
+  const old=box.querySelector('.bar-list'); if(old) old.remove();
+  box.insertAdjacentHTML('beforeend', `<div class="bar-list">
+    ${sorted.map(f=>{
+      const ret=+(f.ret||0).toFixed(2); const cls=ret>0?'pos':ret<0?'neg':'zero';
+      const label=esc(f.name); const width=Math.min(100, Math.abs(ret)/maxAbs*100).toFixed(1);
+      return `<div class="bar-row" title="${label}｜收益率 ${ret>=0?'+':''}${ret}%">
+        <div class="bar-name">${label}</div>
+        <div class="bar-track"><div class="bar-fill ${cls}" style="width:${width}%"></div></div>
+        <div class="bar-ret ${cls}">${ret>=0?'+':''}${ret}%</div>
+      </div>`;
+    }).join('')}
+  </div>`);
 }
 
 // ---------- 个性化配置建议（当前/建议对比 + 优先级 + 分阶段计划）----------
@@ -4969,7 +4988,8 @@ function renderSector(){
   const rows=catPct.filter(([k,p])=> p>0 && (!collapseMicro || p>=2));
   const maxPct=rows.length?rows[0][1]:0;
   box.innerHTML=rows.map(([k,p])=>{ const w=wretOf(k), cls=w>0?'pos':w<0?'neg':'zero';
-    return `<div class="cb-row"><span class="cb-l">${k}</span><div class="cb-track"><div class="cb-fill ${cls}${p>45?' warn':''}" style="width:${Math.min(100,p)}%"></div></div><span class="cb-v ${p>45?'neg':''}">${p.toFixed(1)}%<span class="cb-ret ${cls}">${w>=0?'+':''}${w.toFixed(1)}%</span></span></div>`;
+    const dotColor=CAT_COLORS[k]||'#9aa0a6';
+    return `<div class="cb-row"><span class="cb-l"><i class="cb-dot" style="background:${dotColor}"></i>${k}</span><div class="cb-track"><div class="cb-fill${p>45?' warn':''}" style="width:${Math.min(100,p)}%"></div></div><span class="cb-v">${p.toFixed(1)}%<span class="cb-ret ${cls}">${w>=0?'+':''}${w.toFixed(1)}%</span></span></div>`;
   }).join('');
   const w=document.getElementById('sectorWarn');
   if(maxPct>45){ w.innerHTML=`<div class="advice danger">⚠️ 单一板块「${rows[0][0]}」占比 <b>${maxPct.toFixed(1)}%</b>，集中度过高，回撤时会同涨同跌、缺乏对冲。</div>`; } else w.innerHTML='';

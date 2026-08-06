@@ -3902,19 +3902,20 @@ function drawHist(all, f){
     let li=-1;
     for(let k=0;k<labels.length;k++){ if(labels[k]<=t.date) li=k; else break; }
     if(li<0) return; // 超出当前可见区间的交易：不画、也不计入区间统计（避免总数与分项对不上）
-    let color='#2563eb';
-    if(t.type==='sell'){ color='#ea580c'; sellN++; }
-    else if(t.type==='convert'||t.type==='convert_out'){ color='#7c3aed'; convN++; }
-    else { buyN++; }
+    let symbol='tri-up', good=null;
+    if(t.type==='sell'){ symbol='tri-down'; sellN++; }
+    else if(t.type==='convert'||t.type==='convert_out'){ symbol='diamond'; convN++; }
+    else { symbol='tri-up'; buyN++; }
     // 入场质量圈：成交净值 vs 成本线。买/转换落在成本线下方=买得便宜(绿)；卖在成本线上方=盈利出(绿)；否则红圈。
-    let ring=null;
     const costPx=f?f.costPx:0;
+    let color = '#64748b';
     if(costPx>0){
       const navAt=vals[li];
-      const good = (t.type==='sell') ? (navAt>=costPx) : (navAt<costPx);
-      ring = good ? '#27ae60' : '#e24b4b';
+      good = (t.type==='sell') ? (navAt>=costPx) : (navAt<costPx);
+      color = good ? '#27ae60' : '#e24b4b';
     }
-    markers.push({idx:li, y:vals[li], color:color, symbol:'dot', ring:ring, meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares}});
+    }
+    markers.push({idx:li, y:vals[li], color:color, symbol:symbol, ring:null, meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares, good:good}});
   });
   const plotted=markers.length; // 区间可见交易笔数（= 分项之和）
   // 月份标注：覆盖可见数据区间的月份，逐月画分隔线 + 标签「M月」（单独成行，不堆统计数）
@@ -3936,7 +3937,7 @@ function drawHist(all, f){
       if(cm===11){ cm=0; cy++; } else cm++;
     }
   }
-  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; }
+  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; if(plotted) aggEl.innerHTML += ' · <span style="color:#64748b;font-size:11px">▲买入 ▼卖出 ◆转换 · 绿=优于成本 / 红=劣于成本</span>'; }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
     labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:50,
@@ -3949,7 +3950,11 @@ function drawHist(all, f){
       const d=data[idx];
       let s=labels[idx]+'<br/>单位净值 '+(d.nav!=null?d.nav.toFixed(4):'—')+(d.ret!=null?'<br/>当日 '+(d.ret>=0?'+':'')+d.ret+'%':'')+'<br/>区间涨跌 '+(((d.nav-first)/first)*100).toFixed(2)+'%';
       markersAt.forEach(function(m){
-        const x=m.meta; if(!x) return; s+='<br/><b>'+typeLabel[x.type]+'</b> '+x.date+'<br/>金额 ¥'+x.amount+' · 净值 '+x.nav+' · 份额 '+x.shares;
+        const x=m.meta; if(!x) return;
+                let vd='';
+                if(x.good===true) vd = (x.type==='sell') ? '（盈利落袋）' : '（买得便宜）';
+                else if(x.good===false) vd = (x.type==='sell') ? '（割肉）' : '（买贵了）';
+                s+='<br/><b>'+typeLabel[x.type]+'</b> '+x.date+vd+'<br/>金额 ¥'+x.amount+' · 净值 '+x.nav+' · 份额 '+x.shares;
       });
       return s;
     }

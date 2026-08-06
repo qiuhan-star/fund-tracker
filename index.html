@@ -1763,7 +1763,7 @@ function principalUpTo(dateStr, scope){
       if(ty==='buy'||ty==='convert') p+=amt; else if(ty==='sell'||ty==='convert_out') p-=amt;
     }
   });
-  BOND_FUNDS.forEach(b=>{ const inScope = scope==='all'?true:(scope==='managed'? !accIsPersonal(b.acc) : accIsPersonal(b.acc)); if(inScope && b.since && b.since<=dateStr) p+=bondAmt(b); });
+  getBondFunds().forEach(b=>{ const inScope = scope==='all'?true:(scope==='managed'? !accIsPersonal(b.acc) : accIsPersonal(b.acc)); if(inScope && b.since && b.since<=dateStr) p+=bondAmt(b); });
   return p;
 }
 // 口径兜底：当前口径桶空但全量桶有数据（旧迁移/仅看全量口径时积累），回退展示全量，避免空白
@@ -2109,17 +2109,16 @@ let bondState={dates:{},amts:{}};
 function loadBond(){ try{const s=localStorage.getItem('ft_bond'); if(s){const b=JSON.parse(s); if(b&&typeof b==='object'){ bondState={...bondState,...b}; if(!bondState.dates) bondState.dates={}; if(!bondState.amts) bondState.amts={}; }} }catch(e){} }
 function saveBond(){ try{localStorage.setItem('ft_bond',JSON.stringify(bondState));}catch(e){} }
 
-// 静态资料（已核实，截至 2026-08-04）；买入日 / 金额可在工具内编辑
+// 演示债券清单（公开模板默认值）；你的真实债基请通过「恢复债基+分析」导入到浏览器本地 ft_bond_list
 const BOND_FUNDS=[
-  {code:'019445',name:'华富恒盛纯债E',company:'华富',acc:'我的',amt:10000,y1:2.47,since:8.88,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
-  {code:'007330',name:'摩根瑞益纯债C',company:'摩根',acc:'我的',amt:10000,y1:2.25,since:18.50,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
-  {code:'011505',name:'上银丰益混合C',company:'上银',acc:'我的',amt:4000,y1:29.58,since:50.30,risk:'中',dur:'—',credit:'—',lock:0,mix:true},
-  {code:'016211',name:'摩根瑞享纯债C',company:'摩根',acc:'小号',amt:50000,y1:3.04,since:13.68,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
-  {code:'018665',name:'南方宁元债券A',company:'南方',acc:'小号',amt:50000,y1:3.02,since:9.91,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
-  {code:'016426',name:'国泰信瑞纯债',company:'国泰',acc:'小号',amt:50000,y1:5.32,since:14.40,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
-  {code:'012279',name:'嘉实稳和6个月持有纯债A',company:'嘉实',acc:'小号',amt:1.65,y1:1.63,since:12.29,risk:'中低',dur:'中短债',credit:'高等级',lock:6,mix:false},
+  {code:'900002',name:'演示稳健债券A',company:'演示',acc:'我的',amt:10000,y1:2.15,since:5.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-30'},
+  {code:'900011',name:'演示稳健债券B',company:'演示',acc:'小号',amt:50000,y1:2.40,since:8.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-10'},
+  {code:'900013',name:'样例纯债C',company:'样例',acc:'我的',amt:20000,y1:1.93,since:3.50,risk:'中低',dur:'中短债',credit:'高等级',lock:0,mix:false,date:'2026-08-01'}
 ];
-const BOND_DEF_DATES={'019445':'2026-07-25','007330':'2026-07-30','011505':'2026-08-03','016211':'2026-07-28','018665':'2026-07-10','016426':'2026-07-31','012279':'2026-07-20'};
+const BOND_DEF_DATES={'900002':'2026-07-30','900011':'2026-07-10','900013':'2026-08-01'};
+// 债券清单读取：优先用浏览器本地 ft_bond_list（用户真实债基），否则用上方演示数据
+let _bondListCache=null;
+function getBondFunds(){ if(_bondListCache) return _bondListCache; try{ const s=localStorage.getItem('ft_bond_list'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)&&a.length){ _bondListCache=a; return a; } } }catch(e){} _bondListCache=BOND_FUNDS; return BOND_FUNDS; }
 function pad2(n){return n<10?'0'+n:''+n;}
 function fmtDate(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
 function addDays(d,n){const x=new Date(d); x.setDate(x.getDate()+n); return x;}
@@ -2187,7 +2186,7 @@ function sellPreviewConfirm(name, acc, amount, nav, fee, shares, date){
   return confirm(msg);
 }
 function bondAmt(f){ return (bondState.amts&&bondState.amts[f.code]!=null)?bondState.amts[f.code]:f.amt; }
-function bondDate(f){  if(bondState.dates&&bondState.dates[f.code]) return bondState.dates[f.code];  const fb=firstBuyDate(f.name, f.acc);  if(fb) return fb;  return BOND_DEF_DATES[f.code]||'';}
+function bondDate(f){  if(bondState.dates&&bondState.dates[f.code]) return bondState.dates[f.code];  const fb=firstBuyDate(f.name, f.acc);  if(fb) return fb;  return (f.date||BOND_DEF_DATES[f.code])||'';}
 function bondStatus(f,today){
   const pd=bondDate(f);
   if(!pd) return {txt:'未填买入日',cls:'st-none',sub:'点表格「买入日」填写',barPct:null,barCls:''};
@@ -2277,7 +2276,7 @@ function renderBond(){
   const bc=document.getElementById('bondContent'); if(!bc) return;
   loadBond();
   const today=new Date(); today.setHours(0,0,0,0);
-  const scopedBonds=BOND_FUNDS.filter(f=>scopeMatches(f.acc));
+  const scopedBonds=getBondFunds().filter(f=>scopeMatches(f.acc));
   const wsBonds=bondWatch.filter(bondWsInScope);
   if(scopedBonds.length===0 && wsBonds.length===0){ bc.innerHTML=''; return; }
 
@@ -2339,7 +2338,7 @@ function renderBond(){
 let bondCmpFilter='all';
 function renderBondCmp(){
   const body=document.getElementById('bondCmpBody'); if(!body) return;
-  const scopedBonds=BOND_FUNDS.filter(f=>scopeMatches(f.acc));
+  const scopedBonds=getBondFunds().filter(f=>scopeMatches(f.acc));
   const wsBonds=bondWatch.filter(bondWsInScope);
   let list=[];
   if(bondCmpFilter==='all') list=scopedBonds.map(f=>({f:f,pool:'持仓'})).concat(wsBonds.map(f=>({f:f,pool:'自选'})));
@@ -2365,7 +2364,7 @@ function setBondCmp(f,el){ bondCmpFilter=f; document.querySelectorAll('#bondCmpS
 // ---------- 债基抽屉（Plan C：点债基行 / 资产列表债基行 → 抽屉看深度信息）----------
 function openBondDrawer(code){
   loadBond();
-  let b=BOND_FUNDS.find(x=>x.code===code); const isWatch=!b; if(!b) b=bondWatch.find(x=>x.code===code);
+  let b=getBondFunds().find(x=>x.code===code); const isWatch=!b; if(!b) b=bondWatch.find(x=>x.code===code);
   const d=document.getElementById('bondDrawer'); if(!d||!b) return;
   const today=new Date(); today.setHours(0,0,0,0);
   const pd=bondDate(b), p=new Date(pd);
@@ -2613,7 +2612,7 @@ function buildFundsView(){
   // 精确名匹配会失效导致同一债基在持仓里出现两次。按归一化名（去「债券」）判定是否为同一只，避免双计。
   const _normBondName = n => (n||'').replace(/债券/g,'');
   const _fundNames = new Set(all.map(f=> _normBondName(f.name)));
-  const _bondHold = BOND_FUNDS.filter(f=> !_fundNames.has(_normBondName(f.name))).map(f=>{
+  const _bondHold = getBondFunds().filter(f=> !_fundNames.has(_normBondName(f.name))).map(f=>{
     const _amt = bondAmt(f);
     return { name:f.name, cat:'债基', account:f.acc, asset:'债券', market:guessMarket(f.name), tags:undefined, shares:0, cost:_amt, mv:_amt, profit:0, ret:0, days:null, nav:null, costPx:1, trades:[], realized:0, currency:'CNY', isBond:true, code:f.code };
   });
@@ -5201,7 +5200,7 @@ function _histPrincipalUpTo(dateStr, scope){
   let p=0;
   trades.forEach(t=>{ if((t.type||'fund')==='stock') return; if(!_tradeInScope(t,scope)) return;
     if(t.date && t.date<=dateStr){ const ty=t.type||'buy', amt=+t.amount||0; if(ty==='buy'||ty==='convert') p+=amt; else if(ty==='sell'||ty==='convert_out') p-=amt; } });
-  BOND_FUNDS.forEach(b=>{ if(!_bondInScope(b,scope)) return; const since=BOND_DEF_DATES[b.code]; if(since && since<=dateStr) p+=bondAmt(b); });
+  getBondFunds().forEach(b=>{ if(!_bondInScope(b,scope)) return; const since=BOND_DEF_DATES[b.code]; if(since && since<=dateStr) p+=bondAmt(b); });
   return p;
 }
 async function rebuildHistory(){
@@ -5209,7 +5208,7 @@ async function rebuildHistory(){
   if(st) st.textContent='正在从交易记录重建历史曲线（抓取各基金历史净值）…';
   const names=new Set();
   trades.forEach(t=>{ if((t.type||'fund')!=='stock') names.add(t.name); });
-  BOND_FUNDS.forEach(b=> names.add(b.name));
+  getBondFunds().forEach(b=> names.add(b.name));
   const histByName={}; let done=0, total=names.size;
   for(const name of names){
     const code=await resolveCode(name);
@@ -5237,7 +5236,7 @@ async function rebuildHistory(){
         if(shares>1e-6){ if(!byDate[nv.d]) byDate[nv.d]={mv:0}; byDate[nv.d].mv+=shares*nv.nav; }
       });
     });
-    BOND_FUNDS.forEach(function(b){
+    getBondFunds().forEach(function(b){
       if(!_bondInScope(b,scope)) return; const since=BOND_DEF_DATES[b.code]; if(!since) return;
       const amt=bondAmt(b); let d=new Date(since.replace(/-/g,'/')), end=new Date();
       while(d<=end){ const ds=fmtDate(d); if(!byDate[ds]) byDate[ds]={mv:0}; byDate[ds].mv+=amt; d.setDate(d.getDate()+1); }
@@ -5708,7 +5707,7 @@ function calcWatchBuy(){
   const total=+(document.getElementById('uwTotal').value)||1;
   const body=document.getElementById('buyBody'); if(!body) return;
   const catSum={}; _allHoldings.forEach(function(f){ const c=f.cat||guessCat(f.name); catSum[c]=(catSum[c]||0)+(f.mv||0); });
-  const bondSum={}; BOND_FUNDS.filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ const t=bondTypeOf(f); bondSum[t]=(bondSum[t]||0)+bondAmt(f); });
+  const bondSum={}; getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ const t=bondTypeOf(f); bondSum[t]=(bondSum[t]||0)+bondAmt(f); });
   const rows=[];
   loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const after=Math.round((catSum[c]+sug)/total*1000)/10; rows.push({name:x.name,type:'基金',cat:c,sug:sug,after:after}); });
   loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const after=Math.round((bondSum[t]+sug)/total*1000)/10; rows.push({name:f.name,type:f.mix?'混合':(f.type||'纯债'),cat:t,sug:sug,after:after}); });
@@ -5857,7 +5856,7 @@ function renderWatchTab(){
   loadBond();
   const fWatch=loadWatch();
   const bWatch=loadBondWatch().filter(bondWsInScope);
-  const scopedBonds=BOND_FUNDS.filter(function(f){ return scopeMatches(f.acc); });
+  const scopedBonds=getBondFunds().filter(function(f){ return scopeMatches(f.acc); });
 
   // 自选清单（合并为统一 items 数组）
   const items=[];
@@ -5878,7 +5877,7 @@ function renderWatchTab(){
   if(!fundWarn) fundWarn='<div class="alert ok">✅ 基金自选与现有持仓暂无明显同类重复。</div>';
 
   // 买多少：默认总市值
-  let total=0; _allHoldings.forEach(function(f){ total+=(f.mv||0); }); BOND_FUNDS.filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ total+=bondAmt(f); });
+  let total=0; _allHoldings.forEach(function(f){ total+=(f.mv||0); }); getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ total+=bondAmt(f); });
 
   const STYLE='<style>.wt-tbl{width:100%;border-collapse:collapse;font-size:13px}.wt-tbl th,.wt-tbl td{border-bottom:1px solid var(--border-2);padding:8px 7px;text-align:left;vertical-align:top}.wt-tbl th{color:var(--text-3);font-weight:600;white-space:nowrap;font-size:11.5px}.wt-tbl td:nth-child(1){max-width:140px;min-width:0}.wt-tbl td:nth-child(1) b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;line-height:1.3}.wt-tbl td:nth-child(1) .hint{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.wt-tbl td:nth-child(3){white-space:nowrap;font-size:12px;width:40px}@media(max-width:560px){.wt-tbl{font-size:12px}.wt-tbl th,.wt-tbl td{padding:6px 4px}.wt-tbl td:nth-child(1){max-width:90px}.wt-tbl td:nth-child(1) b{font-size:11.5px}.wt-tbl td:nth-child(5),.wt-tbl td:nth-child(6){display:none}.wt-grp{width:70px;padding:4px 5px;font-size:11px}}</style>';
 

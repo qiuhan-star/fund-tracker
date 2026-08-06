@@ -982,6 +982,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <button id="mt0" class="on" onclick="switchTab(0)">💼 资产</button>
       <button id="mt1" onclick="switchTab(1)">分析</button>
       <button id="mt2" onclick="switchTab(2)">清仓</button>
+      <button id="mt3" onclick="switchTab(3)">自选</button>
       <button id="mt5" onclick="switchTab(5)">🏛️ 市场风向</button>
     </div>
 
@@ -1065,6 +1066,7 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
 
     <div class="tab-panel" id="tp2"></div>
+    <div class="tab-panel" id="tp3"></div>
     <!-- Tab 2（交易）已并入各基金持仓 / 详情，不再单独成页 -->
     <!-- Tab 3 已并入「资产」Tab：债券富内容（债基研究与决策工作台）整体移至资产页底部 #bondContent -->
 
@@ -1578,7 +1580,7 @@ function calcXIRR(){ const box=document.getElementById('xirrOut'); if(!box) retu
 
 function switchTab(i){
   activeTab=i;
-  [0,1,2,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
+  [0,1,2,3,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
   // 资产口径栏仅对账户相关数据生效；市场风向为公共市场数据，切换为"数据源/刷新状态"栏
   const sb=document.getElementById('scopeBar'), ms=document.getElementById('marketStatus');
   if(sb) sb.style.display = (i===5)?'none':'flex';
@@ -1586,6 +1588,7 @@ function switchTab(i){
   if(i===0){ renderHomeList(); renderBond(); }
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); }
   if(i===2){ renderLiquidated(); }
+  if(i===3){ renderWatchTab(); }
   if(i===5){ loadMarketData(); renderWatch(); refreshWatchQuotes(); }
 }
 
@@ -2665,31 +2668,15 @@ function renderBond(){
   }).join('');
   if(!bwRows) bwRows='<tr><td colspan="10" class="sub2" style="color:#9aa0aa">暂无自选，用上方输入框加一只（手动补全资料，应用内暂不支持自动拉取）。</td></tr>';
 
-  let warnHtml='';
-  const allB=scopedBonds.concat(wsBonds);
-  const codeTag=function(f){ return f.isWatch?('自选'+f.code):f.code; };
-  const byType={}; allB.forEach(f=>{const t=bondTypeOf(f); (byType[t]=byType[t]||[]).push(f);});
-  Object.keys(byType).forEach(t=>{ if(byType[t].length>=3){ warnHtml+='<div class="alert red"><span class="ttl">⚠️ 同一类型集中：</span>'+byType[t].length+' 只都是「'+t+'」('+byType[t].map(codeTag).join('、')+')。利率/信用暴露高度相似，利率上行时同跌，建议搭配其他类型分散。</div>'; }});
-  const byCo={}; allB.forEach(f=>{(byCo[f.company]=byCo[f.company]||[]).push(f);});
-  Object.keys(byCo).forEach(c=>{ if(byCo[c].length>=2){ warnHtml+='<div class="alert amber"><span class="ttl">🔁 同一公司集中：</span>'+byCo[c].length+' 只来自「'+c+'」('+byCo[c].map(codeTag).join('、')+')。同公司转换免赎回费方便，但公司风控/信用事件会一损俱损，建议跨公司分散。</div>'; }});
-  const byDC={}; allB.forEach(f=>{const k=(f.dur==='—'?'—':f.dur)+'/'+(f.credit==='—'?'—':f.credit); (byDC[k]=byDC[k]||[]).push(f);});
-  Object.keys(byDC).forEach(k=>{ if(byDC[k].length>=3){ warnHtml+='<div class="alert amber"><span class="ttl">📉 久期/信用相近：</span>'+byDC[k].length+' 只都是「'+k+'」('+byDC[k].map(codeTag).join('、')+')，对利率环境变化同涨同跌，分散效果有限。</div>'; }});
-  if(!warnHtml) warnHtml='<div class="alert ok">✅ 持仓/自选暂未检测到明显同质化集中。</div>';
-
-  let sugHtml='';
-  const byCo2={}; scopedBonds.forEach(f=>{(byCo2[f.company]=byCo2[f.company]||[]).push(f);});
-  Object.keys(byCo2).forEach(c=>{ const g=byCo2[c]; if(g.length>=2){ sugHtml+='<div class="suggest"><b>同公司互转：</b>'+c+' 的 '+g.map(f=>f.code).join(' ↔ ')+' 可在同公司内互转（免赎回费），想换时优先，省 1.5% 惩罚。</div>'; }});
-  wsBonds.forEach(w=>{ if(w.mix) return; const alts=scopedBonds.filter(h=>!h.mix && bondTypeOf(h)===bondTypeOf(w) && h.risk===w.risk && w.y1!=null && h.y1!=null && w.y1>h.y1+0.3); alts.forEach(h=>{ sugHtml+='<div class="suggest"><b>更优替代：</b>自选 '+escHtml(w.code)+'(近1年 '+(w.y1==null?'—':w.y1.toFixed(2))+'%) 优于同类型持仓 '+h.code+'(近1年 '+h.y1.toFixed(2)+'%)。调仓时'+(w.company===h.company?'同公司可互转':'需赎 '+h.code+' 再申 '+escHtml(w.code)+'，注意 <7 天 1.5% 费 / 012279 锁6个月')+'。</div>'; });});
-  const pure=scopedBonds.filter(f=>!f.mix);
-  for(let i=0;i<pure.length;i++)for(let j=i+1;j<pure.length;j++){ const a=pure[i],b=pure[j]; if(a.company===b.company&&a.dur===b.dur&&a.credit===b.credit&&Math.abs(a.y1-b.y1)<1){ sugHtml+='<div class="suggest"><b>近似重复：</b>'+a.code+' 与 '+b.code+'(同为 '+a.company+a.dur+a.credit+'，近1年差 '+Math.abs(a.y1-b.y1).toFixed(2)+'%)功能重叠，保留其一即可，避免资金分散在雷同产品。</div>'; }}
-  scopedBonds.filter(f=>f.lock>0).forEach(f=>{ sugHtml+='<div class="suggest"><b>锁定期提醒：</b>'+f.code+' 每笔买入锁定 '+f.lock+' 个月，期内不可赎回，调仓前先算好到期日。</div>'; });
-  if(!sugHtml) sugHtml='<div class="placeholder">纳入自选后，这里会自动给出转换/替代/近似重复建议。</div>';
+  const ba=bondAnalysis(scopedBonds, wsBonds);
+  const warnHtml=ba.warnHtml;
+  const sugHtml=ba.sugHtml;
 
   const segHtml=['all','hold','watch'].map(function(f){ return '<button data-f="'+f+'"'+(f===bondCmpFilter?' class="on"':'')+' onclick="setBondCmp('+escJs(f)+',this)">'+({'all':'全部','hold':'仅持仓','watch':'仅自选'})[f]+'</button>'; }).join('');
 
   bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:13px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid #eef0f3;padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:#8a909a;font-weight:600;white-space:nowrap}.bond-tbl .nm{color:#9aa0aa;font-size:11.5px}.tag-mix{display:inline-block;background:#fff3e0;color:#c77700;border:1px solid #ffd9a0;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-lock{display:inline-block;background:#eef2ff;color:#3a5bd9;border:1px solid #c7d2fe;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:#9aa0aa}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:13px;color:#3a3f47}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12.5px}.mcard.hl{background:#f3f7ff;border-color:#c7d2fe}.tbl-wrap{overflow-x:auto}.tag-dur{display:inline-block;background:#eef6ff;color:#3a6ea5;border:1px solid #cfe2f5;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.tag-credit{display:inline-block;background:#f0f2f5;color:#5a6270;border:1px solid #e2e5ea;padding:0 6px;border-radius:6px;font-size:11px;margin-left:4px}.cmp-bar{height:6px;background:#eef1f6;border-radius:3px;margin-top:5px;overflow:hidden}.cmp-bar .fill{height:100%;border-radius:3px}.bar-green{background:#1f9d55}.bar-amber{background:#e0962a}.bar-blue{background:#3a5bd9}.addbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.addbar input{border:1px solid #d0d3d9;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;width:200px}.mini-in{border:1px solid #dcdfe4;border-radius:6px;padding:3px 5px;font-size:12px;width:74px}.mini-in.num{width:58px}.seg{display:inline-flex;border:1px solid #d0d3d9;border-radius:8px;overflow:hidden;margin-bottom:8px}.seg button{border:none;background:#fff;padding:6px 14px;font-size:12.5px;cursor:pointer;color:#5a6270;font-family:inherit}.seg button.on{background:#2f6fed;color:#fff}.pool-h{display:inline-block;background:#eaf2ff;color:#2f6fed;padding:1px 7px;border-radius:6px;font-size:11px}.pool-w{display:inline-block;background:#fff3e0;color:#c77700;padding:1px 7px;border-radius:6px;font-size:11px}.alert{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13px;line-height:1.6}.alert.red{background:#fdeceb;border:1px solid #f6c9c4;color:#b4281c}.alert.amber{background:#fff7e8;border:1px solid #ffe2a8;color:#8a5a00}.alert.ok{background:#eafaf0;border:1px solid #bfe9cd;color:#1f7a45}.alert .ttl{font-weight:700}.suggest{border-left:3px solid #2f6fed;background:#f7faff;padding:8px 12px;margin:6px 0;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6}.suggest b{color:#2f6fed}.placeholder{background:#fafbfc;border:1px dashed #dcdfe4;border-radius:10px;padding:14px;color:#9aa0aa;font-size:12.5px}.btn.tiny{padding:2px 8px;font-size:11px}.btn.tiny.danger{background:#fff;color:#d8453a;border:1px solid #f6c9c4}</style>'
     +'<div class="card"><h2>我的债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
-    +'<details class="card" open><summary class="bd-sum"><h2 style="margin:0;font-size:14px">自选池</h2> <span class="hint">（没买，纯围观研究·点标题展开/收起）</span></summary><div class="addbar"><input id="bwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addBondWatch()">加自选</button><span class="hint">输 6 位代码自动拉名称/近1年/成立以来/类型；名称或拉取失败则手动补全（久期/信用/风险接口没有，需手填）</span></div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>类型</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th></th></tr></thead><tbody>'+bwRows+'</tbody></table></div></details>'
+    ''
     +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
     +'<div class="card"><h2>同质化预警 <span class="hint">（持仓 + 自选，防不知不觉买成同一类）</span></h2>'+warnHtml+'</div>'
     +'<div class="card"><h2>决策建议 <span class="hint">（基于持仓 + 自选）</span></h2>'+sugHtml+'</div>'
@@ -5166,5 +5153,177 @@ async function rebuildHistory(){
 .bond-tbl tbody tr[style*="cursor"]:hover{ background:var(--accent-soft); }
 </style>
 
+
+<script>
+// ===== 统一自选 Tab 相关函数（基金 + 债基自选合并；截图识别/是否买/买多少） =====
+
+// 债券同质化预警 + 决策建议（从 renderBond 抽出，债券 Tab 与自选 Tab 共用）
+function bondAnalysis(scopedBonds, wsBonds){
+  let warnHtml='';
+  const allB=scopedBonds.concat(wsBonds);
+  const codeTag=function(f){ return f.isWatch?('自选'+f.code):f.code; };
+  const byType={}; allB.forEach(f=>{const t=bondTypeOf(f); (byType[t]=byType[t]||[]).push(f);});
+  Object.keys(byType).forEach(t=>{ if(byType[t].length>=3){ warnHtml+='<div class="alert red"><span class="ttl">⚠️ 同一类型集中：</span>'+byType[t].length+' 只都是「'+t+'」('+byType[t].map(codeTag).join('、')+')。利率/信用暴露高度相似，利率上行时同跌，建议搭配其他类型分散。</div>'; }});
+  const byCo={}; allB.forEach(f=>{(byCo[f.company]=byCo[f.company]||[]).push(f);});
+  Object.keys(byCo).forEach(c=>{ if(byCo[c].length>=2){ warnHtml+='<div class="alert amber"><span class="ttl">🔁 同一公司集中：</span>'+byCo[c].length+' 只来自「'+c+'」('+byCo[c].map(codeTag).join('、')+')。同公司转换免赎回费方便，但公司风控/信用事件会一损俱损，建议跨公司分散。</div>'; }});
+  const byDC={}; allB.forEach(f=>{const k=(f.dur==='—'?'—':f.dur)+'/'+(f.credit==='—'?'—':f.credit); (byDC[k]=byDC[k]||[]).push(f);});
+  Object.keys(byDC).forEach(k=>{ if(byDC[k].length>=3){ warnHtml+='<div class="alert amber"><span class="ttl">📉 久期/信用相近：</span>'+byDC[k].length+' 只都是「'+k+'」('+byDC[k].map(codeTag).join('、')+')，对利率环境变化同涨同跌，分散效果有限。</div>'; }});
+  if(!warnHtml) warnHtml='<div class="alert ok">✅ 持仓/债基自选暂未检测到明显同质化集中。</div>';
+
+  let sugHtml='';
+  const byCo2={}; scopedBonds.forEach(f=>{(byCo2[f.company]=byCo2[f.company]||[]).push(f);});
+  Object.keys(byCo2).forEach(c=>{ const g=byCo2[c]; if(g.length>=2){ sugHtml+='<div class="suggest"><b>同公司互转：</b>'+c+' 的 '+g.map(f=>f.code).join(' ↔ ')+' 可在同公司内互转（免赎回费），想换时优先，省 1.5% 惩罚。</div>'; }});
+  wsBonds.forEach(w=>{ if(w.mix) return; const alts=scopedBonds.filter(h=>!h.mix && bondTypeOf(h)===bondTypeOf(w) && h.risk===w.risk && w.y1!=null && h.y1!=null && w.y1>h.y1+0.3); alts.forEach(h=>{ sugHtml+='<div class="suggest"><b>更优替代：</b>自选 '+escHtml(w.code)+'(近1年 '+(w.y1==null?'—':w.y1.toFixed(2))+'%) 优于同类型持仓 '+h.code+'(近1年 '+h.y1.toFixed(2)+'%)。调仓时'+(w.company===h.company?'同公司可互转':'需赎 '+h.code+' 再申 '+escHtml(w.code)+'，注意 <7 天 1.5% 费 / 012279 锁6个月')+'。</div>'; });});
+  const pure=scopedBonds.filter(f=>!f.mix);
+  for(let i=0;i<pure.length;i++)for(let j=i+1;j<pure.length;j++){ const a=pure[i],b=pure[j]; if(a.company===b.company&&a.dur===b.dur&&a.credit===b.credit&&Math.abs(a.y1-b.y1)<1){ sugHtml+='<div class="suggest"><b>近似重复：</b>'+a.code+' 与 '+b.code+'(同为 '+a.company+a.dur+a.credit+'，近1年差 '+Math.abs(a.y1-b.y1).toFixed(2)+'%)功能重叠，保留其一即可，避免资金分散在雷同产品。</div>'; }}
+  scopedBonds.filter(f=>f.lock>0).forEach(f=>{ sugHtml+='<div class="suggest"><b>锁定期提醒：</b>'+f.code+' 每笔买入锁定 '+f.lock+' 个月，期内不可赎回，调仓前先算好到期日。</div>'; });
+  if(!sugHtml) sugHtml='<div class="placeholder">纳入自选后，这里会自动给出转换/替代/近似重复建议。</div>';
+  return {warnHtml:warnHtml, sugHtml:sugHtml};
+}
+
+// 统一加自选：输 6 位代码→识别基金/债基并自动拉数据；输名称→加基金自选
+function addUnifiedWatch(){
+  const el=document.getElementById('uwInput'); if(!el) return;
+  const v=(el.value||'').trim(); if(!v){ alert('请输入基金代码或名称'); return; }
+  if(/^\d{6}$/.test(v)){ fetchFundInfoUnified(v); el.value=''; return; }
+  const w=loadWatch();
+  if(w.some(function(x){ return x.name===v; })){ alert('已在自选'); return; }
+  w.push({code:'', name:v}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+  renderWatchTab();
+}
+function fetchFundInfoUnified(code){
+  const s=document.createElement('script');
+  const timer=setTimeout(function(){
+    const w=loadWatch();
+    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全'}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
+    renderWatchTab(); toast('自动拉取失败，已加入基金自选，请手动补全名称');
+  }, 10000);
+  s.onload=function(){
+    clearTimeout(timer);
+    try{
+      const nm=window.fS_name||''; const tn=window.Data_fundTypeName||'';
+      const isBond=/债/.test(tn);
+      if(isBond){
+        const y1=parseFloat(window.syl_1n); const since=parseFloat(window.syl_fromstart);
+        let mix=false, type='待分类', dur='—';
+        if(/混合/.test(tn)){ mix=true; type='混合'; } else if(/债/.test(tn)){ type='纯债'; }
+        const dm=tn.match(/(超长债|长债|中长债|中短债|短债)/); if(dm) dur=dm[1];
+        const co=(typeof window.fund_company==='string'&&window.fund_company)?window.fund_company:'待定';
+        const f={code:code, name:nm||('（'+code+'）待补全'), acc:'—', type:type, dur:dur, credit:'—', y1:isNaN(y1)?null:y1, since:isNaN(since)?null:since, risk:'—', lock:0, mix:mix, company:co, isWatch:true};
+        if(bondWatch.some(function(x){ return x.code===code; })){ toast('已在债基自选'); return; }
+        bondWatch.push(f); saveBondWatch(); renderWatchTab();
+        toast(nm?('已加债基自选 '+nm):'已建卡，请补全资料');
+      } else {
+        const w=loadWatch();
+        if(w.some(function(x){ return x.code===code; })){ toast('已在自选'); return; }
+        w.push({code:code, name:nm||('（'+code+'）待补全')}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+        renderWatchTab(); toast(nm?('已加基金自选 '+nm):'已建卡，请补全名称');
+      }
+    }catch(e){
+      const w=loadWatch();
+      if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全'}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
+      renderWatchTab(); toast('自动拉取异常，已加入基金自选');
+    }
+    s.remove();
+  };
+  s.onerror=function(){
+    clearTimeout(timer);
+    const w=loadWatch();
+    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全'}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
+    renderWatchTab(); toast('自动拉取失败，已加入基金自选');
+  };
+  s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
+  document.body.appendChild(s);
+}
+
+// 买多少：仓位测算
+function calcWatchBuy(){
+  const cap=+(document.getElementById('uwCap').value)||0;
+  const pct=+(document.getElementById('uwPct').value)||0;
+  const total=+(document.getElementById('uwTotal').value)||1;
+  const body=document.getElementById('buyBody'); if(!body) return;
+  const catSum={}; _allHoldings.forEach(function(f){ const c=f.cat||guessCat(f.name); catSum[c]=(catSum[c]||0)+(f.mv||0); });
+  const bondSum={}; BOND_FUNDS.filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ const t=bondTypeOf(f); bondSum[t]=(bondSum[t]||0)+bondAmt(f); });
+  const rows=[];
+  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const after=Math.round((catSum[c]+sug)/total*1000)/10; rows.push({name:x.name,type:'基金',cat:c,sug:sug,after:after}); });
+  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const after=Math.round((bondSum[t]+sug)/total*1000)/10; rows.push({name:f.name,type:f.mix?'混合':(f.type||'纯债'),cat:t,sug:sug,after:after}); });
+  if(!rows.length){ body.innerHTML='<tr><td colspan="5" class="sub2">暂无自选可测算</td></tr>'; return; }
+  body.innerHTML=rows.map(function(r){
+    const flag=r.after>30?'<span class="tag warn" style="background:#fdeceb;color:#d8453a;border:1px solid #f6c9c4">该类占比过高</span>'
+      :(r.type==='纯债'||r.type==='混合'?'<span class="tag">防御仓·控比例</span>':'<span class="tag">ok</span>');
+    return '<tr><td>'+escHtml(r.name)+'</td><td>'+r.type+'</td><td><b>¥'+r.sug.toLocaleString()+'</b></td><td>'+r.after+'%</td><td>'+flag+'</td></tr>';
+  }).join('');
+}
+
+function renderWatchTab(){
+  const bc=document.getElementById('tp3'); if(!bc) return;
+  loadBond();
+  const fWatch=loadWatch();
+  const bWatch=loadBondWatch().filter(bondWsInScope);
+  const scopedBonds=BOND_FUNDS.filter(function(f){ return scopeMatches(f.acc); });
+
+  // 自选清单（合并）
+  let listHtml='';
+  fWatch.forEach(function(x){
+    const held=_allHoldings.find(function(f){ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
+    listHtml+='<tr>'
+      +'<td><b>'+escHtml(x.name)+'</b><br><span class="hint">'+escHtml(x.code||'')+'</span></td>'
+      +'<td><span class="pool-f">基金</span></td>'
+      +'<td>我的</td>'
+      +'<td><span class="watch-quote" data-code="'+escHtml(x.code||'')+'">…</span></td>'
+      +'<td>—</td>'
+      +'<td>'+(held?'<span class="tag">已持有</span>':'<span class="tag">未持仓</span>')+'</td>'
+      +'<td><button class="btn sm" onclick="openDrawerPrefill(\''+escJs(x.name)+'\')">记账</button> <button class="btn sm danger" onclick="removeWatch(\''+escJs(x.code||'')+'\')">✕</button></td>'
+    +'</tr>';
+  });
+  bWatch.forEach(function(f){
+    listHtml+='<tr>'
+      +'<td><b>'+escHtml(f.code)+'</b><br><span class="nm">'+escHtml(f.name)+'</span></td>'
+      +'<td>'+(f.mix?'<span class="pool-m">混合</span>':'<span class="pool-b">纯债</span>')+'</td>'
+      +'<td>'+escHtml(f.acc||'—')+'</td>'
+      +'<td>—</td>'
+      +'<td>'+(f.y1!=null?f.y1.toFixed(2)+'%':'—')+'</td>'
+      +'<td><span class="tag">自选</span></td>'
+      +'<td><button class="btn sm danger" onclick="delBondWatch(\''+escJs(f.code)+'\')">✕</button></td>'
+    +'</tr>';
+  });
+  if(!listHtml) listHtml='<tr><td colspan="7" class="sub2" style="color:#9aa0aa">暂无自选，用上方输入框加，或在持仓页把基金标为自选。</td></tr>';
+
+  // 是否买：债券部分复用 bondAnalysis；基金侧按分类查同类重复
+  const ban=bondAnalysis(scopedBonds, bWatch);
+  let fundWarn='';
+  const heldCats={}; _allHoldings.forEach(function(f){ const c=f.cat||guessCat(f.name); heldCats[c]=(heldCats[c]||0)+1; });
+  const watchCats={}; fWatch.forEach(function(x){ const c=guessCat(x.name); watchCats[c]=(watchCats[c]||0)+1; });
+  Object.keys(watchCats).forEach(function(c){ if(heldCats[c]){ fundWarn+='<div class="alert amber"><span class="ttl">📉 基金同类重复：</span>「'+c+'」已持有 '+heldCats[c]+' 只 + 自选 '+watchCats[c]+' 只，加仓前先想清楚是不是真要双持。</div>'; } });
+  if(!fundWarn) fundWarn='<div class="alert ok">✅ 基金自选与现有持仓暂无明显同类重复。</div>';
+
+  // 买多少：默认总市值
+  let total=0; _allHoldings.forEach(function(f){ total+=(f.mv||0); }); BOND_FUNDS.filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ total+=bondAmt(f); });
+
+  const STYLE='<style>.wt-tbl{width:100%;border-collapse:collapse;font-size:13px}.wt-tbl th,.wt-tbl td{border-bottom:1px solid var(--border-2);padding:8px 7px;text-align:left;vertical-align:top}.wt-tbl th{color:var(--text-3);font-weight:600;white-space:nowrap;font-size:11.5px}.pool-f{background:#eaf2ff;color:#2f6fed;padding:1px 7px;border-radius:6px;font-size:11px}.pool-b{background:#fff3e0;color:#c77700;padding:1px 7px;border-radius:6px;font-size:11px}.pool-m{background:#f0eaff;color:#7b4fd6;padding:1px 7px;border-radius:6px;font-size:11px}.wt-addbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.wt-addbar input{border:1px solid var(--border-strong);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;width:220px;background:var(--surface);color:var(--text)}.wt-calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:10px 0 6px}.wt-field{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}.wt-field label{display:block;font-size:11.5px;color:var(--text-3);margin-bottom:5px}.wt-field input{width:100%;border:1px solid var(--border-strong);border-radius:7px;padding:6px 8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text)}</style>';
+
+  bc.innerHTML=STYLE
+    +'<div class="card"><h2>加自选 <span class="hint">（基金 + 债基通用）</span></h2>'
+    +'<div class="wt-addbar"><input id="uwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addUnifiedWatch()">加自选</button><span class="hint">输代码自动识别基金/债基并拉名称/类型/近1年；名称则加入基金自选</span></div>'
+    +'<p class="hint">说明：基金自选（首页底部区块）+ 债基自选（原资产页债基池）已合并到此；资产页的债基自选池已撤掉。截图识别（📷）即将接入。</p></div>'
+    +'<div class="card"><h2>自选清单 <span class="hint">（未持仓 · 基金 + 债基合并）</span></h2><div class="tbl-wrap"><table class="wt-tbl"><thead><tr><th>基金</th><th>类型</th><th>账户</th><th>最新净值/估算</th><th>近1年</th><th>状态</th><th></th></tr></thead><tbody>'+listHtml+'</tbody></table></div></div>'
+    +'<div class="card"><h2>是否买 <span class="hint">（买入决策 · 防不知不觉买重）</span></h2>'
+    +'<h3 style="font-size:13px;margin:10px 0 4px">同质化预警 <span class="hint">（债基持仓 + 债基自选）</span></h3>'+ban.warnHtml
+    +'<h3 style="font-size:13px;margin:14px 0 4px">基金同类重复 <span class="hint">（基金自选 vs 现有持仓）</span></h3>'+fundWarn
+    +'<h3 style="font-size:13px;margin:14px 0 4px">决策建议 <span class="hint">（债基持仓 + 债基自选）</span></h3>'+ban.sugHtml
+    +'</div>'
+    +'<div class="card"><h2>买多少 <span class="hint">（仓位测算 · 按账户）</span></h2>'
+    +'<p class="hint">输入预备买入资金与单只上限，按「可用资金 × 上限%」给每只自选一个建议金额，并提示买入后该类占比是否过高。</p>'
+    +'<div class="wt-calc"><div class="wt-field"><label>预备买入资金（¥）</label><input id="uwCap" type="number" value="5000"></div>'
+    +'<div class="wt-field"><label>单只目标上限（%）</label><input id="uwPct" type="number" value="15"></div>'
+    +'<div class="wt-field"><label>组合当前总市值（¥）</label><input id="uwTotal" type="number" value="'+Math.round(total)+'"></div>'
+    +'<div class="wt-field" style="display:flex;align-items:flex-end"><button class="btn" onclick="calcWatchBuy()">测算</button></div></div>'
+    +'<div class="tbl-wrap"><table class="wt-tbl"><thead><tr><th>自选</th><th>类型</th><th>建议买入</th><th>买入后该类占比</th><th>提示</th></tr></thead><tbody id="buyBody"></tbody></table></div>'
+    +'<p class="hint" style="margin-top:8px">模型：债基（防御仓）单只上限建议 ≤10%，基金可到 15%；「买入后该类占比」&gt;30% 标红。实际买入仍由你在 App 记账决定，这里只给参考。</p></div>';
+
+  calcWatchBuy();
+  fillWatchQuotes();
+}
+</script>
 </body>
 </html>

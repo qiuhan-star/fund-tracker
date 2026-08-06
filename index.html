@@ -2647,7 +2647,7 @@ const BOND_FUNDS=[
   {code:'016426',name:'国泰信瑞纯债',company:'国泰',acc:'小号',amt:50000,y1:5.32,since:14.40,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false},
   {code:'012279',name:'嘉实稳和6个月持有纯债A',company:'嘉实',acc:'小号',amt:1.65,y1:1.63,since:12.29,risk:'中低',dur:'中短债',credit:'高等级',lock:6,mix:false},
 ];
-const BOND_DEF_DATES={'019445':'2026-07-25','007330':'2026-07-30','011505':'2026-06-15','016211':'2026-07-28','018665':'2026-07-10','016426':'2026-07-31','012279':'2026-07-20'};
+const BOND_DEF_DATES={'019445':'2026-07-25','007330':'2026-07-30','011505':'2026-08-03','016211':'2026-07-28','018665':'2026-07-10','016426':'2026-07-31','012279':'2026-07-20'};
 function pad2(n){return n<10?'0'+n:''+n;}
 function fmtDate(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
 function addDays(d,n){const x=new Date(d); x.setDate(x.getDate()+n); return x;}
@@ -2715,7 +2715,7 @@ function sellPreviewConfirm(name, acc, amount, nav, fee, shares, date){
   return confirm(msg);
 }
 function bondAmt(f){ return (bondState.amts&&bondState.amts[f.code]!=null)?bondState.amts[f.code]:f.amt; }
-function bondDate(f){ return (bondState.dates&&bondState.dates[f.code])?bondState.dates[f.code]:(BOND_DEF_DATES[f.code]||''); }
+function bondDate(f){  if(bondState.dates&&bondState.dates[f.code]) return bondState.dates[f.code];  const fb=firstBuyDate(f.name, f.acc);  if(fb) return fb;  return BOND_DEF_DATES[f.code]||'';}
 function bondStatus(f,today){
   const pd=bondDate(f);
   if(!pd) return {txt:'未填买入日',cls:'st-none',sub:'点表格「买入日」填写',barPct:null,barCls:''};

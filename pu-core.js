@@ -181,8 +181,8 @@
   }
 
   // ---------- F. 补仓模拟（回本 / 补仓算法） ----------
-  function computeAddPosition(f, add) {
-    const nav = f.nav || (f.shares ? f.mv / f.shares : 0);
+  function computeAddPosition(f, add, nav) {
+    if (nav == null) nav = f.nav || (f.shares ? f.mv / f.shares : 0);
     const curCost = f.costPx || (f.shares ? f.cost / f.shares : 0);
     const a = +add || 0;
     if (a <= 0 || nav <= 0 || !f.shares) return { empty: true, reason: 'invalid' };

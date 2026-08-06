@@ -3942,12 +3942,12 @@ function drawHist(all, f){
     if(t.type==='sell'){ color='#fa8c16'; sellN++; }
     else if(t.type==='convert'||t.type==='convert_out'){ color='#722ed1'; convN++; }
     else { color='#1677ff'; buyN++; }
-    // 仅卖出结清盈亏：外圈绿=止盈(落袋) / 红=割肉(止损)；买入/转换为纯色圆，不干扰视觉
+    // 仅卖出结清盈亏：外圈红=止盈(落袋) / 绿=割肉(止损)；买入/转换为纯色圆，不干扰视觉
     const costPx=f?f.costPx:0;
     if(t.type==='sell' && costPx>0){
       const navAt=vals[li];
       good = navAt>=costPx;
-      ring = good ? '#52c41a' : '#ff4d4f';
+      ring = good ? '#ff4d4f' : '#52c41a';
     }
     markers.push({idx:li, y:vals[li], color:color, symbol:'dot', ring:ring, meta:{date:t.date,type:t.type,amount:t.amount,nav:t.nav,shares:t.shares, good:good}});
   });
@@ -3971,7 +3971,7 @@ function drawHist(all, f){
       if(cm===11){ cm=0; cy++; } else cm++;
     }
   }
-  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; if(plotted) aggEl.innerHTML += ' · <span style="color:#64748b;font-size:11px">● 买入 · ● 转换 · ● 卖出（绿圈=止盈 / 红圈=割肉）</span>'; }
+  const aggEl=document.getElementById('histAgg'); if(aggEl){ aggEl.innerHTML = plotted ? ('<span style="color:#B45309">交易笔数：</span>共 <b>'+plotted+'</b> 笔（买入 '+buyN+' · 卖出 '+sellN+' · 转换 '+convN+'）· 图下方按月标注') : ''; if(plotted) aggEl.innerHTML += ' · <span style="color:#64748b;font-size:11px">● 买入 · ● 转换 · ● 卖出（红圈=止盈 / 绿圈=割肉）</span>'; }
   const hc=document.getElementById('histChart');
   if(hc) canvasLineChart(hc,{
     labels:labels, vals:vals, line:line, area:false,     padL:52, padR:16, padT:18, padB:50,

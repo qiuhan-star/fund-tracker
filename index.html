@@ -185,6 +185,8 @@ function ensureECharts(cb){
   .home-actions { gap: 6px; } .home-actions .btn { padding: 7px 10px; font-size: 12.5px; white-space: nowrap; }
   /* 自选清单行末「记账」按钮在窄屏上更紧凑，避免被挤到两行 */
   .wt-tbl td:nth-child(8) .btn { padding: 3px 5px; font-size: 11px; }
+  /* 总览 4 张指标卡：移动端数值缩小 + 卡片加 overflow:hidden，避免 "+¥25,050.23" 被截断 */
+  .ov-card { overflow: hidden; } .ov-val { font-size: 19px !important; } .ov-grid { gap: 8px !important; } .ov-card { padding: 11px 12px !important; }
   #growthCard { display: none; }
   #trendSection { display: none; }
   .ov-trend { display: none; }

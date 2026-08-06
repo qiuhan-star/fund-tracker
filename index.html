@@ -988,6 +988,42 @@ input[type="number"] { -moz-appearance: textfield; }
   .market-table { min-width: 560px !important; }
   .market-table th, .market-table td { white-space: nowrap !important; }
 }
+
+/* ===== 手机端底部导航（App 式）：图标在上、文字在下 ===== */
+.main-tabs button .ti, .main-tabs button .tl { font-style: normal; display: inline; }
+.main-tabs button .ti { margin-right: 4px; }
+.main-tabs button .tl { font-weight: 600; }
+
+@media (max-width: 768px) {
+  .main-tabs {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    top: auto;
+    z-index: 70;
+    margin: 0;
+    border-radius: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -3px 14px rgba(0,0,0,.10);
+    padding: 5px 4px calc(5px + env(safe-area-inset-bottom));
+  }
+  .main-tabs button {
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0 !important;
+    font-size: 11px !important;
+    border-radius: 8px;
+    line-height: 1.2;
+  }
+  .main-tabs button .ti { margin-right: 0; font-size: 19px; line-height: 1.1; }
+  .main-tabs button .tl { font-size: 11px; font-weight: 600; }
+  .main-tabs button.on { background: var(--accent-soft); color: var(--accent-text); box-shadow: none; }
+  /* 内容留出底部导航空间；FAB 抬到导航栏上方 */
+  .wrap { padding-bottom: 92px !important; }
+  .fab { bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+}
+
 </style>
 <script>
   try{
@@ -1084,11 +1120,11 @@ input[type="number"] { -moz-appearance: textfield; }
 
     <!-- 主 Tab 导航 -->
     <div class="main-tabs">
-      <button id="mt0" class="on" onclick="switchTab(0)">💼 资产</button>
-      <button id="mt1" onclick="switchTab(1)">分析</button>
-      <button id="mt2" onclick="switchTab(2)">清仓</button>
-      <button id="mt3" onclick="switchTab(3)">自选</button>
-      <button id="mt5" onclick="switchTab(5)">🏛️ 市场风向</button>
+      <button id="mt0" class="on" onclick="switchTab(0)"><i class="ti">💼</i><i class="tl">资产</i></button>
+      <button id="mt1" onclick="switchTab(1)"><i class="ti">📊</i><i class="tl">分析</i></button>
+      <button id="mt2" onclick="switchTab(2)"><i class="ti">📋</i><i class="tl">清仓</i></button>
+      <button id="mt3" onclick="switchTab(3)"><i class="ti">⭐</i><i class="tl">自选</i></button>
+      <button id="mt5" onclick="switchTab(5)"><i class="ti">🏛️</i><i class="tl">市场风向</i></button>
     </div>
 
     <!-- Tab 0: 持仓 -->

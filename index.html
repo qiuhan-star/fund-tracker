@@ -635,7 +635,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
         <p class="hint" style="margin:0 0 14px">填基金名称或 6 位代码（代码会自动识别名称），加好后可点开补录交易 / 市值。</p>
         <div class="nf-field">
           <label>基金名称 / 代码</label>
-          <input id="af-input" list="af-name" placeholder="如：摩根瑞益纯债C 或 017847" />
+          <input id="af-input" list="af-name" placeholder="如：演示稳健债券A 或 017847" />
           <datalist id="af-name"></datalist>
         </div>
         <div class="nf-field">
@@ -940,13 +940,13 @@ const MIGRATIONS = [
         '016453': {cat:'海外', tags:['QDII','美股']}
       };
       const byName = {
-        '富国全球科技互联网股票(QDII)C': '022184',
-        '嘉实全球产业升级股票发起式(QDII)C': '017731',
-        '广发港股创新药ETF联接(QDII)C': '019671',
-        '华宝中证港股通信息技术ETF发起联接': '026755',
-        '南方恒生科技ETF发起联接(QDII)C': '020989',
-        '摩根日本精选股票(QDII)C': '019449',
-        '南方纳斯达克100指数发起(QDII)C': '016453'
+        '示例成长混合C': '900001',
+        '演示稳健债券A': '900002',
+        '样例消费指数C': '900003',
+        '示例医疗健康C': '900004',
+        '演示红利低波A': '900005',
+        '示例全球配置(QDII)C': '900007',
+        '样例沪深300C': '900009'
       };
       function remap(s){
         const code=(s.code||'').toString();
@@ -2330,8 +2330,8 @@ function renderBond(){
     +'<div class="card"><h2>决策建议 <span class="hint">（基于持仓 + 自选）</span></h2>'+sugHtml+'</div>'
     +'<div class="card"><h2>债基规则速记 <span class="hint">（小白必看）</span></h2><ul class="rules">'
     +'<li><b>赎回费：</b>多数债基持有 <b>＜7 天</b>赎回收 <b>1.5%</b> 惩罚费；满 7 天通常免赎回费（具体看基金合同）。</li>'
-    +'<li><b>锁定期：</b><b>012279 嘉实稳和</b>有 <b>6 个月持有期</b>，买入后 6 个月内<b>不能卖</b>，期满后才可赎。</li>'
-    +'<li><b>含股票：</b><b>011505 上银丰益混合C</b> 是<b>混合基金（含股票）</b>，不是纯债，波动更大、收益更高，不属于稳健防御仓。</li>'
+    +'<li><b>锁定期：</b>部分债基设有<b>持有期限制</b>，买入后一段时间内<b>不能卖</b>，期满后才可赎，买入前注意查看。</li>'
+    +'<li><b>含股票：</b>部分<b>混合基金（含股票）</b>不是纯债，波动更大、收益更高，不属于稳健防御仓，需单独识别。</li>'
     +'<li><b>债基 vs 单只债券：</b>你买的是<b>债基（基金）</b>，随时可向基金公司赎回（受上述规则约束），不是交易所上市债券。</li>'
     +'</ul></div>';
   renderBondCmp();
@@ -2817,7 +2817,7 @@ function reviewNew(){ reviewEditing=null; reviewDraft={date:reviewToday(),fund:r
 function reviewEdit(id){ const n=reviewNotes.find(x=>x.id===id); if(!n) return; reviewEditing=id; reviewDraft={date:n.date,fund:n.fund||'',tags:(n.tags||[]).join(' '),body:n.body,expect:n.expect?n.expect.text:'',due:n.expect?n.expect.due:''}; reviewEditorRender(); }
 function reviewEditorRender(){
   const e=document.getElementById('rvEditor'); if(!e) return;
-  e.innerHTML='<div class="rv-ed"><div class="rv-row"><div class="rv-f"><label>日期</label><input type="date" id="rvDate" value="'+reviewDraft.date+'"></div><div class="rv-f"><label>关联标的（留空=全局笔记）</label><input type="text" id="rvFund" value="'+rvEsc(reviewDraft.fund)+'" placeholder="如 富国全球科技互联网(QDII)C"></div></div><div class="rv-f" style="margin:8px 0"><label>标签（空格分隔，自动加 #）</label><input type="text" id="rvTags" value="'+rvEsc(reviewDraft.tags)+'" placeholder="止盈 抄底 追高警告"></div><label>复盘笔记</label><textarea id="rvBody" placeholder="记录这次买卖的逻辑、当时的判断、后续计划…">'+rvEsc(reviewDraft.body)+'</textarea><div class="rv-f" style="margin:8px 0"><label>预期（可选）</label><input type="text" id="rvExpect" value="'+rvEsc(reviewDraft.expect)+'" placeholder="我预期__会发生"></div><div class="rv-f" style="margin-bottom:8px"><label>回看日期（可选）</label><input type="date" id="rvDue" value="'+reviewDraft.due+'"></div><div class="rv-acts"><button class="btn" onclick="reviewCommit()">'+(reviewEditing?'保存修改':'添加笔记')+'</button><button class="btn ghost" onclick="reviewCancel()">取消</button></div></div>';
+  e.innerHTML='<div class="rv-ed"><div class="rv-row"><div class="rv-f"><label>日期</label><input type="date" id="rvDate" value="'+reviewDraft.date+'"></div><div class="rv-f"><label>关联标的（留空=全局笔记）</label><input type="text" id="rvFund" value="'+rvEsc(reviewDraft.fund)+'" placeholder="如 示例全球配置(QDII)C"></div></div><div class="rv-f" style="margin:8px 0"><label>标签（空格分隔，自动加 #）</label><input type="text" id="rvTags" value="'+rvEsc(reviewDraft.tags)+'" placeholder="止盈 抄底 追高警告"></div><label>复盘笔记</label><textarea id="rvBody" placeholder="记录这次买卖的逻辑、当时的判断、后续计划…">'+rvEsc(reviewDraft.body)+'</textarea><div class="rv-f" style="margin:8px 0"><label>预期（可选）</label><input type="text" id="rvExpect" value="'+rvEsc(reviewDraft.expect)+'" placeholder="我预期__会发生"></div><div class="rv-f" style="margin-bottom:8px"><label>回看日期（可选）</label><input type="date" id="rvDue" value="'+reviewDraft.due+'"></div><div class="rv-acts"><button class="btn" onclick="reviewCommit()">'+(reviewEditing?'保存修改':'添加笔记')+'</button><button class="btn ghost" onclick="reviewCancel()">取消</button></div></div>';
   const ta=document.getElementById('rvBody'); if(ta) ta.focus();
 }
 function reviewCommit(){
@@ -4545,7 +4545,7 @@ function exportHoldingsCSV(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click();
   toast('已导出 持仓+清仓 fund-holdings.csv（含全部账户）');
 }
-function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n汇添富中证芯片产业指数增强C,2026-01-15,买入,10000,1.9500,0\n汇添富中证芯片产业指数增强C,2026-03-20,卖出,5000,2.1000,5\n华夏有色金属ETF联接D,2026-02-01,定投,2000,1.2000,\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板'); }
+function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n示例成长混合C,2026-01-15,买入,10000,1.4934,0\n示例成长混合C,2026-03-20,卖出,5000,1.5574,5\n演示稳健债券A,2026-02-01,定投,2000,1.0362,\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();

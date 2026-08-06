@@ -4107,7 +4107,7 @@ function fetchNavHistory(code){
   });
 }
 const HIST_BUY_PRE_DAYS=10;
-let histRange=90;
+let histRange='buy';
 function setHistRange(d){ histRange=d; const f=fundsView.find(x=>x.name===detailName); if(f) renderNavHistory(f); }
 async function renderNavHistory(f){
   const box=document.getElementById('detailHistory'); if(!box) return;

@@ -2412,7 +2412,8 @@ function renderOverview(){
   const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length, flat=fundsView.filter(f=>f.ret===0).length;
   const cnt=fundsView.length;
   let principal=0;
-  fundsView.forEach(f=>{ if(f.isBond) principal+=f.cost; (f.trades||[]).forEach(t=>{ const ty=t.type||'buy', amt=+t.amount||0; if(ty==='buy'||ty==='convert') principal+=amt; else if(ty==='sell'||ty==='convert_out') principal-=amt; }); });
+  // f.cost 已是正确成本基准：有逐笔交易走 FIFO，纯快照回退 costPx×份额（buildFundsView 算好），直接求和即可，勿用交易流重算（会漏掉无交易流的快照基金）
+  fundsView.forEach(f=>{ principal+=(f.cost||0); });
   const holdGain=total-principal, holdPct=principal>0?holdGain/principal*100:0;
   const top3=getCatAllocation().slice(0,3).reduce((a,b)=>a+b[1],0);
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
@@ -3313,7 +3314,8 @@ function scopeTotals(scope){
   const list=_allHoldings.filter(f=> scope==='all'?true:(scope==='managed'? !accIsPersonal(f.account) : accIsPersonal(f.account)));
   const total=list.reduce((a,f)=>a+f.mv,0);
   let principal=0;
-  list.forEach(f=>{ if(f.isBond) principal+=f.cost; (f.trades||[]).forEach(t=>{ const ty=t.type||'buy', amt=+t.amount||0; if(ty==='buy'||ty==='convert') principal+=amt; else if(ty==='sell'||ty==='convert_out') principal-=amt; }); });
+  // 与 renderOverview 一致：用 f.cost（FIFO 或快照回退）作为成本基准，勿用交易流重算
+  list.forEach(f=>{ principal+=(f.cost||0); });
   return {total, principal:+principal.toFixed(2)};
 }
 // 每日资产快照：盘后/刷新时落一条结存（同天去重只更新），按账户口径分三组，支撑历史收益曲线与回撤
@@ -4938,6 +4940,82 @@ function parseCSV(text){
   trades=trades.concat(fresh);
   return {count:fresh.length, dup, rows:fresh};
 }
+function escHtml(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){ return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;'; }); }
+// 粘贴文本导入：解析但不写入，返回 {count,dup,rows}（fresh 行），由 commitPasteImport 负责追加，避免预览时重复写入
+function parsePaste(text){
+  const lines=text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+  if(!lines.length) return {count:0,dup:0,rows:[]};
+  // 跳过表头行（无真实日期数字却含 名称/日期/金额 关键词）
+  if(/^名称/.test(lines[0]) || (/日期/.test(lines[0]) && /金额/.test(lines[0]) && !/\d{4}[-/]\d/.test(lines[0]))) lines.shift();
+  const guessType=function(s){ const v=String(s||'').toLowerCase(); if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'sell'; if(/买|申购|定投/.test(v)) return 'buy'; if(/卖|赎|清|撤/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; return 'buy'; };
+  const added=[];
+  for(let i=0;i<lines.length;i++){
+    const raw=lines[i];
+    let name='',date='',type='',amount='',nav='',account='';
+    if(raw.includes('\t')){
+      const p=raw.split(/\t+/).map(function(s){return s.trim().replace(/^"|"$/g,'');});
+      name=p[0]||''; date=p[1]||''; type=p[2]||''; amount=p[3]||''; nav=p[4]||''; account=p[5]||'';
+    } else if(/[,，]/.test(raw)){
+      const p=raw.split(/[,，]/).map(function(s){return s.trim().replace(/^"|"$/g,'');});
+      const idx={}; const kwm={name:['名称','基金','代码','标的'],date:['日期','时间','买入日','成交日'],type:['方向','类型','买卖','操作'],amount:['金额','份额金额','成交金额','资金'],nav:['净值','单价','成交净值','单位净值'],account:['账户','账号','平台','来源']};
+      p.forEach(function(pp,ii){ for(const k in kwm){ if(kwm[k].some(function(kw){return pp.includes(kw);})){ if(idx[k]==null) idx[k]=ii; break; } } });
+      const hasHeader = idx.name!=null || idx.date!=null || idx.amount!=null;
+      const get=function(k,pos){ return hasHeader ? (idx[k]!=null?p[idx[k]]:'') : (p[pos]||''); };
+      name=get('name',0); date=get('date',1); type=get('type',2); amount=get('amount',3); nav=get('nav',4); account=get('account',5);
+    } else {
+      // 空格语义解析：按 日期/方向 关键字与数字定位，其余归名称（兼容带空格的基金名）
+      const t=raw.split(/\s+/).filter(Boolean);
+      date=t.find(function(x){ return /^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(x); })||'';
+      type=t.find(function(x){ return /买|卖|赎|申|转|定投|清仓|分红|再投|配|拆|convert|buy|sell|dividend|reinvest/i.test(x); })||'';
+      const nums=t.filter(function(x){ return /^\d+(\.\d+)?$/.test(String(x).replace(/[元¥]/g,'')); });
+      amount=nums.length?nums[0]:'';
+      nav=nums.length>1?nums[1]:'';
+      name=t.filter(function(x){ return x!==date && x!==type && x!==amount && x!==nav; }).join(' ');
+    }
+    if(!name) continue;
+    const tType=type?guessType(type):'buy';
+    const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
+    const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;
+    let accRaw=account?String(account).trim():''; if(accRaw==='支付宝') accRaw='我的'; else if(accRaw==='微信') accRaw='微信债券';
+    const account2=accRaw?(ACCOUNTS.includes(accRaw)?accRaw:'我的'):'我的';
+    if(!(amt||nv)) continue;
+    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:0,account:account2,shares:0});
+  }
+  if(!added.length) return {count:0,dup:0,rows:[]};
+  const normNum=function(v){ return (v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):''; };
+  const keyOf=function(t){ return (t.name||'')+'|'+(t.date||'')+'|'+normNum(t.amount)+'|'+normNum(t.nav)+'|'+((t.account)||''); };
+  const seen=new Set(trades.map(keyOf));
+  let dup=0; const fresh=[];
+  for(let i=0;i<added.length;i++){ const k=keyOf(added[i]); if(seen.has(k)){ dup++; } else { seen.add(k); fresh.push(added[i]); } }
+  return {count:fresh.length, dup:dup, rows:fresh};
+}
+function openImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.add('show'); }
+function closeImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.remove('show'); const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML=''; }
+function switchImpTab(t){ const ft=document.getElementById('impFileTab'); const pt=document.getElementById('impPasteTab'); if(ft) ft.style.display=t==='file'?'':'none'; if(pt) pt.style.display=t==='paste'?'':'none'; const bs=document.querySelectorAll('#impTabSeg button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.t===t); } }
+function doPasteImport(){
+  const ta=document.getElementById('impPasteArea'); if(!ta) return;
+  const text=ta.value.trim(); if(!text){ toast('请先粘贴交易文本'); return; }
+  let res; try{ res=parsePaste(text); }catch(e){ const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML='<div style="color:#c0392b">解析失败：'+(e&&e.message||e)+'</div>'; return; }
+  const box=document.getElementById('impPastePreview');
+  if(!res.count && !res.dup){ box.innerHTML='<div style="color:#c0392b">未识别到交易行，请检查格式（每行：名称,日期,方向,金额,净值,账户）。</div>'; return; }
+  const rowsHtml=res.rows.slice(0,30).map(function(t){ return '<li style="padding:4px 0;border-bottom:1px dashed var(--bd,#eee)"><b>'+escHtml(t.name)+'</b> · '+escHtml(t.date)+' · '+t.type+' · '+t.amount+(t.nav?(' @'+t.nav):'')+' · '+escHtml(t.account)+'</li>'; }).join('');
+  const more=res.rows.length>30?('<li style="padding:4px 0;color:#888">…还有 '+(res.rows.length-30)+' 笔</li>'):'';
+  const dupNote=res.dup?('<div style="margin:6px 0;color:#b8860b">已自动跳过重复 '+res.dup+' 笔</div>'):'';
+  box.innerHTML='<div style="margin:6px 0;font-weight:600">将导入 <b>'+res.count+'</b> 笔'+dupNote+'</div><ul style="list-style:none;margin:0;padding:0;max-height:200px;overflow:auto">'+rowsHtml+more+'</ul><button class="sm-act" style="width:100%;margin-top:10px;background:var(--accent,#2f6fed);color:#fff;border:none" onclick="commitPasteImport()">✅ 确认导入 '+res.count+' 笔</button>';
+}
+function commitPasteImport(){
+  const ta=document.getElementById('impPasteArea'); if(!ta) return;
+  const text=ta.value.trim(); if(!text){ toast('请先粘贴交易文本'); return; }
+  let res; try{ res=parsePaste(text); }catch(e){ toast('解析失败'); return; }
+  const added=res.count;
+  if(added===0&&res.dup===0){ toast('未识别到交易行'); return; }
+  if(added===0&&res.dup>0){ toast('全部 '+res.dup+' 笔均已存在，无需重复导入'); closeImportModal(); return; }
+  trades=trades.concat(res.rows);
+  compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('paste import refresh failed', e); });
+  toast('已导入 '+added+' 笔交易（粘贴）· 正在拉取净值…'+(res.dup?(' · 跳过重复 '+res.dup+' 笔'):''));
+  closeImportModal();
+}
+
 function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
 
 
@@ -5507,7 +5585,7 @@ async function rebuildHistory(){
         <div class="sm-grid">
           <button class="sm-act" onclick="syncOnline();closeSettings()"><span>🔄</span>从线上同步</button>
           <button class="sm-act" onclick="importJSON();closeSettings()"><span>📥</span>导入 JSON</button>
-          <button class="sm-act" onclick="importCSV();closeSettings()"><span>📥</span>导入 CSV</button>
+          <button class="sm-act" onclick="openImportModal();closeSettings()"><span>📥</span>导入交易</button>
           <button class="sm-act" onclick="exportJSON();closeSettings()"><span>📤</span>导出 JSON</button>
           <button class="sm-act" onclick="exportHoldingsCSV();closeSettings()"><span>📊</span>导出持仓CSV</button>
           <button class="sm-act" onclick="downloadCSVTemplate();closeSettings()"><span>📄</span>CSV 模板</button>
@@ -5525,6 +5603,30 @@ async function rebuildHistory(){
         <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
         <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 导入交易弹窗：上传文件 / 粘贴文本 双页签 -->
+<div class="sm-mask" id="importMask" onclick="if(event.target===this)closeImportModal()">
+  <div class="sm-card" style="max-width:580px;width:94%;margin:auto">
+    <div class="sm-head"><h2>📥 导入交易</h2><button class="sm-x" onclick="closeImportModal()" aria-label="关闭">✕</button></div>
+    <div class="sm-seg" id="impTabSeg">
+      <button data-t="file" class="on" onclick="switchImpTab('file')">📄 上传文件</button>
+      <button data-t="paste" onclick="switchImpTab('paste')">📋 粘贴文本</button>
+    </div>
+    <div id="impFileTab" style="margin-top:12px">
+      <p class="sm-note">支持 .csv/.txt/.tsv。表头可用「名称,日期,方向,金额,净值,账户」；无表头则按 名称｜日期｜方向｜金额｜净值 顺序解析。</p>
+      <button class="sm-act" style="width:100%" onclick="importCSV();closeImportModal()"><span>📂</span>选择文件并解析</button>
+    </div>
+    <div id="impPasteTab" style="margin-top:12px;display:none">
+      <p class="sm-note">从基金 App 复制交易记录或手打，每行一条。支持 逗号 / 制表符 / 空格 分隔；方向可写 buy 或 买入/卖出/转换；金额带「元」也能识别。粘贴后点「解析并预览」。</p>
+      <textarea id="impPasteArea" style="width:100%;height:170px;resize:vertical;box-sizing:border-box;padding:10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--input,#fff);color:var(--fg,#222);outline:none" placeholder="每行一条：名称,日期,方向,金额,净值,账户（例：易方达蓝筹,2026-08-03,buy,5000,2.3456,我的）"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="sm-act" style="flex:1;background:var(--accent,#2f6fed);color:#fff;border:none" onclick="doPasteImport()"><span>🔍</span>解析并预览</button>
+        <button class="sm-ghost" onclick="document.getElementById('impPasteArea').value='';document.getElementById('impPastePreview').innerHTML=''">清空</button>
+      </div>
+      <div id="impPastePreview" style="margin-top:10px"></div>
     </div>
   </div>
 </div>

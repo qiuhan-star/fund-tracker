@@ -4562,7 +4562,7 @@ function exportHoldingsCSV(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click();
   toast('已导出 持仓+清仓 fund-holdings.csv（含全部账户）');
 }
-function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n示例成长混合C,2026-01-15,买入,10000,1.4934,0\n示例成长混合C,2026-03-20,卖出,5000,1.5574,5\n演示稳健债券A,2026-02-01,定投,2000,1.0362,\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板'); }
+function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n说明：删除本说明行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投；费用可留空）\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板（仅含表头，填真实交易即可）'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();
@@ -4834,7 +4834,10 @@ function commitPasteImport(){
   closeImportModal();
 }
 
-function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
+function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; seedDemoTrend(); renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
+function seedDemoTrend(){ try{ const now=new Date(), base=90000, arr=[]; for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d); const k=(59-i)/59; const total=Math.round(base*(1+0.22*k)); const principal=Math.round(base*(1+0.20*k)); arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); } dailySnapshots={personal:arr, managed:[], all:arr}; }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; } }
+function removeSampleData(){ const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !names.has(s.name);}); trades=trades.filter(function(t){return !names.has(t.name);}); const removed=(bS-snaps.length)+(bT-trades.length); if(removed===0){ toast('未检测到示例数据，无需清理'); return; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); toast('已移除 '+removed+' 条示例数据（真实数据已保留）'); }
+window.removeSampleData=removeSampleData;
 
 
 // ---------- ANALYSIS 数据对象（详情页内联渲染）----------
@@ -5369,7 +5372,7 @@ function renderSyncCfg(){
   }
   if(!loaded){
     const bk=findValidBackup();
-    if(bk && confirm('本地数据为空或已损坏，但检测到历史备份（'+backupMeta(bk)+'）。\n\n点「确定」从备份恢复；点「取消」载入示例数据。')){
+    if(bk && confirm('本地数据为空或已损坏，但检测到历史备份（'+backupMeta(bk)+'）。\n\n点「确定」从备份恢复；点「取消」开始空白账本（可稍后从首页「载入示例数据」体验）。')){
       try{
         const migrated=migrate(JSON.parse(bk));
         snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots); dcaPlans=migrated.dcaPlans||[];
@@ -5379,20 +5382,9 @@ function renderSyncCfg(){
       }catch(e){}
     }
   }
-  if(!loaded){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; }
-  // file:// 或全新用户：本地无持久化数据，趋势会一直空白。造一段示例历史（仅当确实无任何快照时），让用户一开就看到曲线；真实数据可通过「设置→导出/导入」或线上版自动积累覆盖
-  if(!dailySnapshots || (Array.isArray(dailySnapshots)&&!dailySnapshots.length) || (!Array.isArray(dailySnapshots)&&!dailySnapshots.personal.length&&!dailySnapshots.managed.length&&!dailySnapshots.all.length)){
-    try{
-      const now=new Date(), base=90000, arr=[];
-      // 示例：平滑上涨的总资产 + 与其正相关的累计收益（无噪音、无怪异波浪，仅作占位演示）
-      for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d);
-        const k=(59-i)/59; // 0 -> 1
-        const total=Math.round(base*(1+0.22*k));
-        const principal=Math.round(base*(1+0.20*k));
-        arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); }
-      dailySnapshots={personal:arr, managed:[], all:arr};
-    }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; }
-  }
+  if(!loaded){ snaps=[]; trades=[]; navCache={}; }
+  // 全新用户默认空白账本：不再自动塞入示例基金，避免与真实数据混淆。
+  // 示例改为手动：首页「载入示例数据」按钮 / 设置；演示趋势也只在主动载入示例时生成（见 loadSample→seedDemoTrend）。
   try{ const a=localStorage.getItem('ft_alerts'); alerts=a?JSON.parse(a):{}; }catch(e){ alerts={}; }
   try{ const g=localStorage.getItem('ft_growth'); growthSeries=g?JSON.parse(g):[]; }catch(e){ growthSeries=[]; }
   hidden=localStorage.getItem('ft_hidden')==='1';
@@ -5503,6 +5495,7 @@ function renderSyncCfg(){
         <h3>ℹ️ 关于</h3>
         <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
         <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
+        <button class="sm-ghost" onclick="removeSampleData()">仅清除示例数据（保留我的真实数据）</button>
         <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
       </div>
     </div>

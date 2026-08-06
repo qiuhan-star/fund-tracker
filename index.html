@@ -4996,11 +4996,20 @@ function toast(msg){
 function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function M(n){ if(hidden) return '••••'; const s=fmt(Math.abs(n||0)); return (n||0)<0?'-¥'+s:'¥'+s; }
 function mask4(v){ return hidden ? '••••' : (v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'); }
-function isMarketOpen(d){ const day=d.getDay(); if(day===0||day===6) return false; const t=d.getHours()*60+d.getMinutes(); return t>=570 && t<=900; }
+// ---------- 交易日历（借鉴 x2rr/funds 的 holiday.json 思路，本地内置，无网络依赖）----------
+// 仅收录已确认的法定节假日；其他年份按「周末休市」兜底。makeup=周末补班(仍交易)。
+const TRADING_CALENDAR={'2026':{
+  holidays:{'01-01':'元旦','01-02':'元旦','01-03':'元旦','02-15':'春节','02-16':'除夕','02-17':'初一','02-18':'初二','02-19':'初三','02-20':'初四','02-21':'初五','02-22':'初六','02-23':'初七','04-04':'清明节','04-05':'清明节','04-06':'清明节','05-01':'劳动节','05-02':'劳动节','05-03':'劳动节','05-04':'劳动节','05-05':'劳动节','06-19':'端午节','06-20':'端午节','06-21':'端午节','09-25':'中秋节','09-26':'中秋节','09-27':'中秋节','10-01':'国庆节','10-02':'国庆节','10-03':'国庆节','10-04':'国庆节','10-05':'国庆节','10-06':'国庆节','10-07':'国庆节'},
+  makeup:{'01-04':1,'02-14':1,'02-28':1,'05-09':1,'09-20':1,'10-10':1}
+}};
+function calOf(y){ return TRADING_CALENDAR[String(y)]||null; }
+function isTradingDay(d){ const y=d.getFullYear(), md=pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); const cal=calOf(y); const dow=d.getDay(); const weekend=(dow===0||dow===6); if(!cal) return !weekend; if(weekend) return !!cal.makeup[md]; return !cal.holidays[md]; }
+function holidayName(d){ const y=d.getFullYear(), md=pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); const cal=calOf(y); if(cal&&cal.holidays[md]) return cal.holidays[md]; return ''; }
+function isMarketOpen(d){ if(!isTradingDay(d)) return false; const t=d.getHours()*60+d.getMinutes(); return t>=570 && t<=900; }
 // 交易时段状态灯：A股(沪深) 三态 —— 🟢交易中 / 🟡午休或盘前 / ⚪收盘或周末
 function marketSession(d){
   const day=d.getDay(); const t=d.getHours()*60+d.getMinutes();
-  if(day===0||day===6) return {state:'closed', emoji:'⚪', label:'休市(周末)'};
+  if(!isTradingDay(d)){ const hn=holidayName(d); const dow=d.getDay(); const lbl=(dow===0||dow===6)?(hn?('休市('+hn+')'):'休市(周末)'):('休市('+(hn||'非交易日')+')'); return {state:'closed', emoji:'⚪', label:lbl}; }
   if(t>=570 && t<=690) return {state:'open', emoji:'🟢', label:'交易中'};   // 09:30–11:30
   if(t>690 && t<780) return {state:'lunch', emoji:'🟡', label:'午间休市'};   // 11:30–13:00
   if(t>=780 && t<=900) return {state:'open', emoji:'🟢', label:'交易中'};   // 13:00–15:00

@@ -1881,11 +1881,11 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true,upd:true};
+let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true};
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false}; } }catch(e){}
-const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益',upd:'更新时间'};
-const COL_KEYS=['nav','est','day','mv','ret','hold','upd'];
-const DEFAULT_COL_ORDER=['est','day','ret','hold','nav','mv','upd'];
+const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益'};
+const COL_KEYS=['nav','est','day','mv','ret','hold'];
+const DEFAULT_COL_ORDER=['est','day','ret','hold','nav','mv'];
 const COL_ORDER_VER='2';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
@@ -2172,7 +2172,7 @@ function renderHomeDense(list, showHead){
     const _mkt=isMarketOpen(new Date());
     // 估算涨跌：盘中估值为预估，收盘后若估值缺失（如 QDII）仍标注「估·预估」，明确其非确认值
     const estCell=(nc.gszzl!=null)
-      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${_mkt?(nc.gsz!=null?('估 '+navFmt(nc.gsz)):'估·预估'):'上次估'}</div>`
+      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${updStr(f)||'—'}</div>`
       : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'无预估'}</div>`;
     const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
@@ -2201,7 +2201,6 @@ function renderHomeDense(list, showHead){
       }
       else if(c.key==='hold') tds+=`<td class="${f.profit>=0?'pos':'neg'}"><div class="dt-big">${f.profit>=0?'+':''}${M(f.profit)}</div><div class="dt-sub2">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
       else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
-      else if(c.key==='upd') tds+=`<td><div class="dt-sub2 upd-time">${updStr(f)}</div></td>`;
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：优先用盘中估算涨跌(gszzl)，无估算(QDII等)退回官方当日涨跌(navChg)
         const _chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null);

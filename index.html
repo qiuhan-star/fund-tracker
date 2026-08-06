@@ -3618,14 +3618,14 @@ function liveSection(f){
   const _estNavBk=(_ncBk.gsz!=null)?_ncBk.gsz:null;
   const defaultNav=_estNavBk!=null?_estNavBk:calcNav;
   const basisShort=_estNavBk!=null?'估算':'净值';
-  if(f.shares!=null && calcNav){
-    const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(calcNav>0&&curCost)?(curCost-calcNav)/calcNav*100:0, prog=curCost>0?Math.min(100,calcNav/curCost*100):0, gapPct=Math.max(0,100-prog);
+  if(f.shares!=null && (calcNav||defaultNav)){
+    const curCost=f.costPx||(f.shares?f.cost/f.shares:0), need=(defaultNav>0&&curCost)?(curCost-defaultNav)/defaultNav*100:0, prog=curCost>0?Math.min(100,defaultNav/curCost*100):0, gapPct=Math.max(0,100-prog);
     h+=`<div class="card"><h2>回本 / 补仓计算器 <span class="tag">实时模拟</span></h2>
-      <p class="hint">基于你的真实持仓成本与最新净值，直观看到离回本还差多少；输入补仓金额即时换算新均价与回本差距。</p>
+      <p class="hint">已算上今日预估净值（${basisShort}）判断加仓后成本与回本差距；补仓价格默认用盘中预估，可手填。</p>
       <div class="bk-prog">
         <div class="bk-prog-head"><span class="lbl">回本进度</span><span class="gap ${gapPct>0.05?'pos':'neg'}">已回本 ${prog.toFixed(1)}%${gapPct>0.05?'（还差 '+gapPct.toFixed(1)+'%）':''}</span></div>
         <div class="bk-bar"><div class="bk-fill" style="width:${prog.toFixed(1)}%"></div></div>
-        <div class="bk-scale"><span>当前净值 ${calcNav.toFixed(4)}</span><span>回本价 ${curCost.toFixed(4)}</span></div>
+        <div class="bk-scale"><span>当前净值 ${defaultNav.toFixed(4)} <i class="nk ${_estNavBk!=null?'nk-est':'nk-off'}">${basisShort}</i></span><span>回本价 ${curCost.toFixed(4)}</span></div>
       </div>
       <div class="bk-calc">
         <div class="bk-calc-title">补仓模拟</div>

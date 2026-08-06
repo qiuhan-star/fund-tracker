@@ -423,6 +423,9 @@
   .dt-sub2.est-stale .est-tag { font-weight: 600; }
   .dt-sub2.est-stale .est-dot { color: var(--text-3); margin: 0 4px; }
   .dt-sub2.est-nodata { color: var(--text-3); }
+  /* 官方涨跌：今晚已更新净值（收盘日期=今天）高亮，区别于仍用昨日净值的滞后基金 */
+  .day-fresh .dt-sub2 { color: var(--accent-text); font-weight: 600; }
+  .day-fresh .day-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--accent); margin-right:4px; vertical-align: middle; }
   /* Toast 轻提示 */
   .toast { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); box-shadow: var(--shadow); font-size: 13px; padding: 9px 18px; border-radius: 22px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 999; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -2346,6 +2349,7 @@ function renderHomeList(){
 function renderHomeDense(list, showHead){
   const cols=[{key:'name',label:'基金 / 标签'}];
   colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
+  const todayStr=fmtDate(new Date()); // 今晚已更新净值的判定基准：收盘日期==今天
   const rows=list.map(f=>{
     const nc=navCache[f.name]||{};
     // 估算涨跌：盘中估值为实时预估(带新鲜度徽标)，休市/收盘回退到已确认「收」涨跌幅并标注该收盘日期(非"预估")
@@ -2368,9 +2372,10 @@ function renderHomeDense(list, showHead){
         // 当日涨跌 = 收盘后最后确认的官方涨跌幅（navChg = NAVCHGRT），不再用两次刷新差值(flashMap)冒充
         const dp=(navCache[f.name]&&navCache[f.name].navChg!=null)?navCache[f.name].navChg:null;
         const dpDate=(navCache[f.name]&&navCache[f.name].navChgDate)?navCache[f.name].navChgDate:'';
+        const fresh=dpDate&&dpDate===todayStr; // 今晚刚更新的净值才标亮，区别于仍用昨日净值的滞后基金
         if(dp!=null && f.mv!=null){
           const amt=f.mv-f.mv/(1+dp/100);
-          tds+=`<td class="${dp>=0?'pos':'neg'}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">收 ${dpDate?dpDate.slice(5):''}</div></td>`;
+          tds+=`<td class="${dp>=0?'pos':'neg'}${fresh?' day-fresh':''}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">${fresh?'<span class="day-dot"></span>':''}收 ${dpDate?dpDate.slice(5):''}</div></td>`;
         } else {
           tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
         }

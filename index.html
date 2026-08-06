@@ -935,13 +935,13 @@ const MIGRATIONS = [
     up: function(d){
       // 第1项三维解耦：旧数据把跨境工具 QDII 误当行业分类，重分类为行业 cat + tags 属性
       const byCode = {
-        '022184': {cat:'芯片', tags:['QDII','全球']},
-        '017731': {cat:'芯片', tags:['QDII','全球']},
-        '019671': {cat:'医药', tags:['QDII','港股']},
-        '026755': {cat:'芯片', tags:['QDII','港股']},
-        '020989': {cat:'科技', tags:['QDII','港股']},
-        '019449': {cat:'海外', tags:['QDII','日本']},
-        '016453': {cat:'海外', tags:['QDII','美股']}
+        '900007': {cat:'芯片', tags:['QDII','全球']},
+        '900001': {cat:'芯片', tags:['QDII','全球']},
+        '900003': {cat:'医药', tags:['QDII','港股']},
+        '900006': {cat:'芯片', tags:['QDII','港股']},
+        '900005': {cat:'科技', tags:['QDII','港股']},
+        '900004': {cat:'海外', tags:['QDII','日本']},
+        '900009': {cat:'海外', tags:['QDII','美股']}
       };
       const byName = {
         '示例成长混合C': '900001',
@@ -2269,7 +2269,7 @@ function bondAnalysis(scopedBonds, wsBonds){
   let sugHtml='';
   const byCo2={}; scopedBonds.forEach(f=>{(byCo2[f.company]=byCo2[f.company]||[]).push(f);});
   Object.keys(byCo2).forEach(c=>{ const g=byCo2[c]; if(g.length>=2){ sugHtml+='<div class="suggest"><b>同公司互转：</b>'+c+' 的 '+g.map(f=>f.code).join(' ↔ ')+' 可在同公司内互转（免赎回费），想换时优先，省 1.5% 惩罚。</div>'; }});
-  wsBonds.forEach(w=>{ if(w.mix) return; const alts=scopedBonds.filter(h=>!h.mix && bondTypeOf(h)===bondTypeOf(w) && h.risk===w.risk && w.y1!=null && h.y1!=null && w.y1>h.y1+0.3); alts.forEach(h=>{ sugHtml+='<div class="suggest"><b>更优替代：</b>自选 '+escHtml(w.code)+'(近1年 '+(w.y1==null?'—':w.y1.toFixed(2))+'%) 优于同类型持仓 '+h.code+'(近1年 '+h.y1.toFixed(2)+'%)。调仓时'+(w.company===h.company?'同公司可互转':'需赎 '+h.code+' 再申 '+escHtml(w.code)+'，注意 <7 天 1.5% 费 / 012279 锁6个月')+'。</div>'; });});
+  wsBonds.forEach(w=>{ if(w.mix) return; const alts=scopedBonds.filter(h=>!h.mix && bondTypeOf(h)===bondTypeOf(w) && h.risk===w.risk && w.y1!=null && h.y1!=null && w.y1>h.y1+0.3); alts.forEach(h=>{ sugHtml+='<div class="suggest"><b>更优替代：</b>自选 '+escHtml(w.code)+'(近1年 '+(w.y1==null?'—':w.y1.toFixed(2))+'%) 优于同类型持仓 '+h.code+'(近1年 '+h.y1.toFixed(2)+'%)。调仓时'+(w.company===h.company?'同公司可互转':'需赎 '+h.code+' 再申 '+escHtml(w.code)+'，注意 <7 天 1.5% 费（6 个月持有期品种同理）')+'。</div>'; });});
   const pure=scopedBonds.filter(f=>!f.mix);
   for(let i=0;i<pure.length;i++)for(let j=i+1;j<pure.length;j++){ const a=pure[i],b=pure[j]; if(a.company===b.company&&a.dur===b.dur&&a.credit===b.credit&&Math.abs(a.y1-b.y1)<1){ sugHtml+='<div class="suggest"><b>近似重复：</b>'+a.code+' 与 '+b.code+'(同为 '+a.company+a.dur+a.credit+'，近1年差 '+Math.abs(a.y1-b.y1).toFixed(2)+'%)功能重叠，保留其一即可，避免资金分散在雷同产品。</div>'; }}
   scopedBonds.filter(f=>f.lock>0).forEach(f=>{ sugHtml+='<div class="suggest"><b>锁定期提醒：</b>'+f.code+' 每笔买入锁定 '+f.lock+' 个月，期内不可赎回，调仓前先算好到期日。</div>'; });
@@ -2612,7 +2612,7 @@ function buildFundsView(){
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
   all.forEach(f=>{ if(catOverride[f.name]) f.cat=catOverride[f.name]; });
-  // 债基去重：snaps 存的是全名（如「摩根瑞益纯债债券C」），BOND_FUNDS 存的是短名（「摩根瑞益纯债C」），
+  // 债基去重：snaps 存的是全名（如「演示稳健债券债券C」），BOND_FUNDS 存的是短名（「演示稳健债券C」），
   // 精确名匹配会失效导致同一债基在持仓里出现两次。按归一化名（去「债券」）判定是否为同一只，避免双计。
   const _normBondName = n => (n||'').replace(/债券/g,'');
   const _fundNames = new Set(all.map(f=> _normBondName(f.name)));

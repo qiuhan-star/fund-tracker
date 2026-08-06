@@ -344,6 +344,7 @@
   .dt-sub { font-size: 0.72rem; color: var(--text-3); margin-top: 4px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
   .dt-big { font-weight: 700; font-size: 0.92rem; }
   .dt-sub2 { font-size: 0.72rem; color: var(--text-3); margin-top: 3px; }
+  .upd-time { color:#9aa3b2; font-variant-numeric:tabular-nums; }
   /* 持仓手风琴展开 */
   .hl-body { display: none; padding: 4px 14px 16px; border-top: 1px dashed var(--border-3); }
   .hl.open .hl-body { display: block; }
@@ -1233,7 +1234,7 @@ const SAMPLE_SNAP = [
   {name:'华富恒盛纯债债券E', code:'019445', cat:'债基', mv:10001.8, ret:0.00, shares:9009.82, costPx:1.1099},
   {name:'摩根瑞益纯债债券C', code:'007330', cat:'债基', mv:10000.0, ret:0.00, shares:8674.53, costPx:1.1528},
   {name:'富国全球科技互联网股票(QDII)C', code:'022184', cat:'芯片', tags:['QDII','全球'], mv:7117.22, ret:-9.94, shares:1362.20, costPx:5.7787},
-  {name:'中欧医疗创新股票C', code:'006229', cat:'医药', mv:6421.27, ret:-2.71, shares:4449.02, costPx:1.4835},
+  {name:'中欧医疗创新股票C', code:'006229', cat:'医药', mv:6730.44, ret:1.98, shares:4596.04, costPx:1.4360},
   {name:'广发中证军工ETF联接C', code:'005693', cat:'制造', mv:5377.25, ret:-9.03, shares:4956.90, costPx:1.1925},
   {name:'招商中证煤炭等权指数(LOF)E', code:'016347', cat:'周期资源', mv:5096.44, ret:1.93, shares:2306.50, costPx:2.1678},
   {name:'广发工程机械ETF联接C', code:'020904', cat:'制造', mv:4953.03, ret:-0.94, shares:3558.72, costPx:1.4050},
@@ -1879,11 +1880,11 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true};
+let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true,upd:true};
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false}; } }catch(e){}
-const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益'};
-const COL_KEYS=['nav','est','day','mv','ret','hold'];
-const DEFAULT_COL_ORDER=['est','day','ret','hold','nav','mv'];
+const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益',upd:'更新时间'};
+const COL_KEYS=['nav','est','day','mv','ret','hold','upd'];
+const DEFAULT_COL_ORDER=['est','day','ret','hold','nav','mv','upd'];
 const COL_ORDER_VER='2';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
@@ -2156,6 +2157,7 @@ function renderHomeList(){
   }
   // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
   const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
+  const updStr=f=>{ const _n=navCache[f.name]||{}; const _open=isMarketOpen(new Date()); if(_n.gztime) return (_open?'估 ':'')+_n.gztime.slice(11,16); const _d=_n.navChgDate||_n.date; if(_d) return (_open?'':'净值 ')+_d.slice(5); return '待刷新'; };
   box.innerHTML=(holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list))+obsHtml;
   syncColSetChecks();
 
@@ -2198,6 +2200,7 @@ function renderHomeDense(list, showHead){
       }
       else if(c.key==='hold') tds+=`<td class="${f.profit>=0?'pos':'neg'}"><div class="dt-big">${f.profit>=0?'+':''}${M(f.profit)}</div><div class="dt-sub2">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
       else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
+      else if(c.key==='upd') tds+=`<td><div class="dt-sub2 upd-time">${updStr(f)}</div></td>`;
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：优先用盘中估算涨跌(gszzl)，无估算(QDII等)退回官方当日涨跌(navChg)
         const _chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null);

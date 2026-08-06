@@ -3784,7 +3784,9 @@ function liveSection(f){
   h+=`<div class="card dca-quick"><div class="dca-quick-row"><span class="dca-quick-t">🗓️ 定投计划</span>${_plans.length?('<span class="tag">已设 '+_plans.length+' 个</span>'):('<span class="hint">未设置</span>')}<button class="btn sm" onclick="openDcaModal('${encodeURIComponent(f.name)}')">${_plans.length?'管理':'设为定投'}</button></div></div>`;
   const tdtoday=new Date().toISOString().slice(0,10);
   const defCol = tr.length>12;
-  h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>本只基金 · 交易流水（${tr.length} 笔）</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
+  const _tc={buy:0,sell:0,conv:0,oth:0};
+  tr.forEach(function(t){ const k=t.type; if(k==='buy')_tc.buy++; else if(k==='sell')_tc.sell++; else if(k==='convert'||k==='convert_out')_tc.conv++; else _tc.oth++; });
+  h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>本只基金 · 交易流水（${tr.length} 笔 · 买入${_tc.buy} 卖出${_tc.sell}${_tc.conv?(' 转换'+_tc.conv):''}${_tc.oth?(' 其他'+_tc.oth):''}）</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
   h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
   h+=`<p class="hint" style="margin:0 0 8px">每笔「保存并锁定」后自动 🔒 防误改；点 🔓 可临时解锁编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
   h+=`<div class="tr-add"><div class="tr-add-grid">

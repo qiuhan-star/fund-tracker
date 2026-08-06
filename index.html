@@ -181,6 +181,10 @@ function ensureECharts(cb){
   /* 顶部右上 主题/设置 按钮：移动端只留 emoji，文字标签裁掉（防止「暗色」「设置」换行成两行） */
   #themeBtn, button[onclick="openSettings()"] { width: 38px; min-width: 38px; padding: 6px 0; font-size: 16px; line-height: 1; overflow: hidden; white-space: nowrap; text-overflow: clip; text-align: center; }
   .scope-bar { flex-wrap: wrap; gap: 6px; } .scope-bar button { font-size: 12.5px; padding: 5px 9px; }
+  /* 首页三按钮：禁止文字内部换行（「＋记一笔交易」变两行很丑），整体缩紧 */
+  .home-actions { gap: 6px; } .home-actions .btn { padding: 7px 10px; font-size: 12.5px; white-space: nowrap; }
+  /* 自选清单行末「记账」按钮在窄屏上更紧凑，避免被挤到两行 */
+  .wt-tbl td:nth-child(8) .btn { padding: 3px 5px; font-size: 11px; }
   #growthCard { display: none; }
   #trendSection { display: none; }
   .ov-trend { display: none; }
@@ -777,31 +781,31 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 <script>
 // ---------- 示例数据 ----------
 const SAMPLE_SNAP = [
-  {name:'示例成长混合C', code:'900001', cat:'科技', mv:12560.32, ret:8.42, shares:6820.11, costPx:1.4920},
-  {name:'演示稳健债券A', code:'900002', cat:'债基', mv:10000.00, ret:2.15, shares:9650.43, costPx:1.0362},
-  {name:'样例消费指数C', code:'900003', cat:'消费', mv:8421.77, ret:-3.60, shares:5240.88, costPx:1.6703},
-  {name:'示例医疗健康C', code:'900004', cat:'医药', mv:6310.45, ret:5.21, shares:4102.30, costPx:1.4562},
-  {name:'演示红利低波A', code:'900005', cat:'红利', mv:5577.20, ret:1.93, shares:3920.55, costPx:1.4208},
-  {name:'样例科创创业C', code:'900006', cat:'制造', mv:4988.03, ret:-6.74, shares:3540.12, costPx:1.6552},
-  {name:'示例全球配置(QDII)C', code:'900007', cat:'海外', tags:['QDII'], mv:7120.66, ret:4.08, shares:3201.40, costPx:2.2208},
-  {name:'演示黄金ETF联接C', code:'900008', cat:'商品', mv:2980.54, ret:9.87, shares:1980.22, costPx:1.4201},
-  {name:'样例沪深300C', code:'900009', cat:'宽基', mv:4010.33, ret:0.52, shares:2950.40, costPx:1.3600},
-  {name:'示例新能源C', code:'900010', cat:'制造', mv:2360.18, ret:-11.20, shares:3010.55, costPx:1.0872},
-  {name:'演示稳健债券B', code:'900011', account:'小号', cat:'债基', mv:50000.00, ret:2.40, shares:48220.11, costPx:1.0367},
-  {name:'样例红利低波B', code:'900012', account:'小号', cat:'红利', mv:12000.00, ret:1.10, shares:8450.33, costPx:1.4201}
+  {name:'示例成长混合C', code:'900001', account:'示例账户', cat:'科技', mv:12560.32, ret:8.42, shares:6820.11, costPx:1.4920},
+  {name:'演示稳健债券A', code:'900002', account:'示例账户', cat:'债基', mv:10000.00, ret:2.15, shares:9650.43, costPx:1.0362},
+  {name:'样例消费指数C', code:'900003', account:'示例账户', cat:'消费', mv:8421.77, ret:-3.60, shares:5240.88, costPx:1.6703},
+  {name:'示例医疗健康C', code:'900004', account:'示例账户', cat:'医药', mv:6310.45, ret:5.21, shares:4102.30, costPx:1.4562},
+  {name:'演示红利低波A', code:'900005', account:'示例账户', cat:'红利', mv:5577.20, ret:1.93, shares:3920.55, costPx:1.4208},
+  {name:'样例科创创业C', code:'900006', account:'示例账户', cat:'制造', mv:4988.03, ret:-6.74, shares:3540.12, costPx:1.6552},
+  {name:'示例全球配置(QDII)C', code:'900007', account:'示例账户', cat:'海外', tags:['QDII'], mv:7120.66, ret:4.08, shares:3201.40, costPx:2.2208},
+  {name:'演示黄金ETF联接C', code:'900008', account:'示例账户', cat:'商品', mv:2980.54, ret:9.87, shares:1980.22, costPx:1.4201},
+  {name:'样例沪深300C', code:'900009', account:'示例账户', cat:'宽基', mv:4010.33, ret:0.52, shares:2950.40, costPx:1.3600},
+  {name:'示例新能源C', code:'900010', account:'示例账户', cat:'制造', mv:2360.18, ret:-11.20, shares:3010.55, costPx:1.0872},
+  {name:'演示稳健债券B', code:'900011', account:'示例账户', cat:'债基', mv:50000.00, ret:2.40, shares:48220.11, costPx:1.0367},
+  {name:'样例红利低波B', code:'900012', account:'示例账户', cat:'红利', mv:12000.00, ret:1.10, shares:8450.33, costPx:1.4201}
 ];
 const SAMPLE_TRADE = [
-  {name:'示例成长混合C', account:'我的', date:'2026-01-15', time:'14:30', type:'buy', amount:2000, shares:1339.10, nav:1.4934, locked:true},
-  {name:'示例成长混合C', account:'我的', date:'2026-03-20', time:'10:15', type:'buy', amount:1000, shares:642.05, nav:1.5574, locked:true},
-  {name:'示例成长混合C', account:'我的', date:'2026-06-10', time:'15:00', type:'sell', amount:1500, shares:880.12, nav:1.7042, locked:true},
-  {name:'演示稳健债券A', account:'我的', date:'2026-02-01', time:'09:40', type:'buy', amount:5000, shares:4825.21, nav:1.0362, locked:true},
-  {name:'演示稳健债券A', account:'我的', date:'2026-05-08', time:'14:22', type:'buy', amount:5000, shares:4825.22, nav:1.0362, locked:true},
-  {name:'样例消费指数C', account:'我的', date:'2026-02-18', time:'13:50', type:'buy', amount:3000, shares:1789.61, nav:1.6763, locked:true},
-  {name:'示例医疗健康C', account:'我的', date:'2026-04-02', time:'11:05', type:'buy', amount:2000, shares:1351.10, nav:1.4804, locked:true},
-  {name:'示例全球配置(QDII)C', account:'我的', date:'2026-01-22', time:'16:10', type:'buy', amount:3000, shares:1350.22, nav:2.2219, locked:true},
-  {name:'示例全球配置(QDII)C', account:'我的', date:'2026-07-15', time:'14:30', type:'sell', amount:2000, shares:870.40, nav:2.2985, locked:true},
-  {name:'演示稳健债券B', account:'小号', date:'2026-03-01', time:'10:00', type:'buy', amount:50000, shares:48220.11, nav:1.0367, locked:true},
-  {name:'样例红利低波B', account:'小号', date:'2026-04-10', time:'14:00', type:'buy', amount:12000, shares:8450.33, nav:1.4201, locked:true}
+  {name:'示例成长混合C', account:'示例账户', date:'2026-01-15', time:'14:30', type:'buy', amount:2000, shares:1339.10, nav:1.4934, locked:true},
+  {name:'示例成长混合C', account:'示例账户', date:'2026-03-20', time:'10:15', type:'buy', amount:1000, shares:642.05, nav:1.5574, locked:true},
+  {name:'示例成长混合C', account:'示例账户', date:'2026-06-10', time:'15:00', type:'sell', amount:1500, shares:880.12, nav:1.7042, locked:true},
+  {name:'演示稳健债券A', account:'示例账户', date:'2026-02-01', time:'09:40', type:'buy', amount:5000, shares:4825.21, nav:1.0362, locked:true},
+  {name:'演示稳健债券A', account:'示例账户', date:'2026-05-08', time:'14:22', type:'buy', amount:5000, shares:4825.22, nav:1.0362, locked:true},
+  {name:'样例消费指数C', account:'示例账户', date:'2026-02-18', time:'13:50', type:'buy', amount:3000, shares:1789.61, nav:1.6763, locked:true},
+  {name:'示例医疗健康C', account:'示例账户', date:'2026-04-02', time:'11:05', type:'buy', amount:2000, shares:1351.10, nav:1.4804, locked:true},
+  {name:'示例全球配置(QDII)C', account:'示例账户', date:'2026-01-22', time:'16:10', type:'buy', amount:3000, shares:1350.22, nav:2.2219, locked:true},
+  {name:'示例全球配置(QDII)C', account:'示例账户', date:'2026-07-15', time:'14:30', type:'sell', amount:2000, shares:870.40, nav:2.2985, locked:true},
+  {name:'演示稳健债券B', account:'示例账户', date:'2026-03-01', time:'10:00', type:'buy', amount:50000, shares:48220.11, nav:1.0367, locked:true},
+  {name:'样例红利低波B', account:'示例账户', date:'2026-04-10', time:'14:00', type:'buy', amount:12000, shares:8450.33, nav:1.4201, locked:true}
 ];
 
 let snaps=[], trades=[], navCache={}, dailySnapshots=[], dcaPlans=[];
@@ -814,7 +818,9 @@ const ACCOUNT_META={
   '小号':{isPersonal:false, owner:'小号'},
   // 旧名兼容（存量 localStorage 数据归一化前的兜底；2026-08-05 改名：支付宝→我的 / 微信→微信债券）
   '支付宝':{isPersonal:true, owner:'本人'},
-  '微信':{isPersonal:true, owner:'本人'}
+  '微信':{isPersonal:true, owner:'本人'},
+  // 演示账户：仅供「载入示例数据」使用，刻意独立于用户真实账户（不计入本人/小号，不出现在账户下拉），避免污染真实账本
+  '示例账户':{isPersonal:false, owner:'示例'}
 };
 // 用户自定义账户（持久化于 localStorage ft_accounts）：在内置账户之外自行添加，默认计入本人个人资产
 let ACCOUNTS=[...BUILTIN_ACCOUNTS];
@@ -4838,7 +4844,7 @@ function commitPasteImport(){
   closeImportModal();
 }
 
-function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; seedDemoTrend(); renderTrade(); compute(); silentSave(); switchTab(0); toast('已载入示例数据'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
+function loadSample(){ snaps=JSON.parse(JSON.stringify(SAMPLE_SNAP)); trades=JSON.parse(JSON.stringify(SAMPLE_TRADE)); navCache={}; seedDemoTrend(); silentSave(); try{ setScopeAcc('all'); }catch(e){} renderTrade(); compute(); switchTab(0); toast('已载入示例数据（已切到「全量」视图；示例归入独立「示例账户」，不污染你的真实账户）'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); }); }
 function seedDemoTrend(){ try{ const now=new Date(), base=90000, arr=[]; for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d); const k=(59-i)/59; const total=Math.round(base*(1+0.22*k)); const principal=Math.round(base*(1+0.20*k)); arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); } dailySnapshots={personal:arr, managed:[], all:arr}; }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; } }
 function removeSampleData(){ const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !names.has(s.name);}); trades=trades.filter(function(t){return !names.has(t.name);}); const removed=(bS-snaps.length)+(bT-trades.length); if(removed===0){ toast('未检测到示例数据，无需清理'); return; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); toast('已移除 '+removed+' 条示例数据（真实数据已保留）'); }
 window.removeSampleData=removeSampleData;

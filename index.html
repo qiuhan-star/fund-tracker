@@ -22,8 +22,30 @@
 </script>
 <title>我的基金追踪器 · Fund Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://lib.baomitu.com/echarts/5.4.3/echarts.min.js" onerror="(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';document.head.appendChild(s);})()"></script>
 <script src="pu-core.js"></script>
+<script>
+/* ECharts 改为懒加载：仅在首次用到（板块分布 treemap / 深度分析）时动态注入，避免 ~1MB 阻塞首屏。
+   baomitu 主源 + jsdelivr 回退；两家都失败则置 _failed，调用方走既有降级（CSS 静态条 / “未加载”提示）。 */
+function ensureECharts(cb){
+  if(window.echarts){ cb(); return; }
+  if(ensureECharts._failed){ cb(); return; }
+  if(ensureECharts._p){ ensureECharts._p.then(cb); return; }
+  ensureECharts._p=new Promise(function(resolve){
+    var s=document.createElement('script');
+    s.src='https://lib.baomitu.com/echarts/5.4.3/echarts.min.js';
+    s.onload=function(){ resolve(true); };
+    s.onerror=function(){
+      var f=document.createElement('script');
+      f.src='https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
+      f.onload=function(){ resolve(true); };
+      f.onerror=function(){ ensureECharts._failed=true; resolve(false); };
+      document.head.appendChild(f);
+    };
+    document.head.appendChild(s);
+  });
+  ensureECharts._p.then(function(){ cb(); });
+}
+</script>
 <style>  :root, [data-theme="light"] {
     --bg:#f5f6f8; --surface:#ffffff; --surface-2:#f7f8fa; --surface-3:#fafbfc;
     --border:#ebedf0; --border-2:#f0f1f3; --border-3:#eef1f6; --border-strong:#d0d3d9;
@@ -3436,6 +3458,8 @@ function renderSectorTree(){
   rows=rows.filter(r=> r.pct>0 && (!collapseMicro || r.pct>=2));
   if(!rows.length){ box.innerHTML='<p class="hint">暂无持仓（或微量已全部折叠）。</p>'; return; }
   if(typeof echarts==='undefined'){
+    // 先显示 CSS 静态降级条，同时懒加载 ECharts；加载成功后重渲染成 treemap（失败则不重试，避免死循环）
+    if(!ensureECharts._failed) ensureECharts(function(){ renderSectorTree(); });
     // CSS 纯静态降级：横向条按市值占比，颜色按加权收益（红涨绿跌）
     box.innerHTML='<div class="tree-fallback">'+rows.map(r=>{
       const cc=r.wret>0?TH().up:r.wret<0?TH().down:'#999';
@@ -5569,7 +5593,7 @@ const ANALYSIS={
   }
 };
 
-function amChart(id,opt){ const el=document.getElementById(id); if(!el)return; if(typeof echarts==='undefined'){ el.innerHTML='<p class="hint" style="padding:24px;text-align:center">图表库（ECharts）未加载，请检查网络后刷新页面。</p>'; return; } try{ const inst=echarts.getInstanceByDom(el); if(inst)inst.dispose(); echarts.init(el).setOption(opt); }catch(e){ el.innerHTML='<p class="hint" style="padding:24px;text-align:center">图表渲染失败：'+((e&&e.message)||e)+'</p>'; console.error('amChart error:',e); } }
+function amChart(id,opt){ const el=document.getElementById(id); if(!el)return; ensureECharts(function(){ if(typeof echarts==='undefined'){ el.innerHTML='<p class="hint" style="padding:24px;text-align:center">图表库（ECharts）未加载，请检查网络后刷新页面。</p>'; return; } try{ const inst=echarts.getInstanceByDom(el); if(inst)inst.dispose(); echarts.init(el).setOption(opt); }catch(e){ el.innerHTML='<p class="hint" style="padding:24px;text-align:center">图表渲染失败：'+((e&&e.message)||e)+'</p>'; console.error('amChart error:',e); } }); }
 function amShowHold(mode){ document.getElementById('amChartHold').style.display=mode==='chart'?'block':'none'; document.getElementById('amTableHold').style.display=mode==='table'?'block':'none'; document.getElementById('amBtnChart').className=mode==='chart'?'on':''; document.getElementById('amBtnTable').className=mode==='table'?'on':''; }
 // ---------- 自包含 Canvas 折线图（不依赖任何 CDN，离线可渲染） ----------
 function isTodayTs(ts){ if(!ts) return false; const a=new Date(ts), b=new Date(); return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate(); }

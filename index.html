@@ -714,6 +714,14 @@ input[type="number"] { -moz-appearance: textfield; }
   @media (max-width: 600px) { .flow-grid { grid-template-columns: 1fr; } }
   .flow-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
   .inflow-bg { background: rgba(192,57,43,.05); } .outflow-bg { background: rgba(39,174,96,.05); }
+  .cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  @media (max-width: 600px) { .cap-grid { grid-template-columns: 1fr; } }
+  .cap-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
+  .nb-bg { background: rgba(31,157,85,.06); } .sb-bg { background: rgba(58,90,217,.06); }
+  .cap-title { margin: 0 0 6px; font-size: 13px; font-weight: 600; }
+  .cap-val { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .cap-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .holdings-tbl td.code, .holdings-tbl th { font-variant-numeric: tabular-nums; }
   .flow-title { font-size: .9rem; margin: 0 0 8px; font-weight: 600; }
   .flow-list { list-style: none; padding: 0; margin: 0; }
   .flow-list li { display: flex; justify-content: space-between; padding: 6px 0; font-size: .85rem; border-bottom: 1px dashed var(--border-2); }
@@ -1205,6 +1213,14 @@ input[type="number"] { -moz-appearance: textfield; }
         <div class="flow-grid">
           <div class="flow-col inflow-bg"><h4 class="flow-title text-up">▲ 主力净流入 Top 5</h4><ul id="inflow-list" class="flow-list"></ul></div>
           <div class="flow-col outflow-bg"><h4 class="flow-title text-down">▼ 主力净流出 Top 5</h4><ul id="outflow-list" class="flow-list"></ul></div>
+        </div>
+      </div>
+
+      <div class="card" id="capCard">
+        <div class="sec-head"><h2 style="margin:0;font-size:14px">💱 北向 / 南向资金 <span class="tag tag-sample" id="capTag">示例</span></h2><span class="hint" id="capHint" style="font-size:11px">东方财富·沪深港通</span></div>
+        <div class="cap-grid">
+          <div class="cap-col nb-bg"><h4 class="cap-title">🟢 北向资金（陆股通）</h4><div id="nbVal" class="cap-val">—</div><div class="cap-sub">净买额 · 当日</div></div>
+          <div class="cap-col sb-bg"><h4 class="cap-title">🔵 南向资金（港股通）</h4><div id="sbVal" class="cap-val">—</div><div class="cap-sub">净买额 · 当日</div></div>
         </div>
       </div>
 
@@ -1788,10 +1804,35 @@ function setFlowTag(live){
   const h=document.getElementById('flowHint');
   if(h){ h.textContent=live?'东方财富实时行业板块主力资金流（A股盘中/收盘）':'实时接口拉取失败，暂用示例数据'; }
 }
+// 北向/南向资金（沪深港通净买额）——东方财富 kamt 接口，JSONP 绕过 CORS
+function loadNorthSouth(){
+  return new Promise(resolve=>{
+    const timer=setTimeout(()=>resolve(null),6000);
+    const cb='ns_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    window[cb]=d=>{
+      clearTimeout(timer);
+      try{
+        const data=d&&d.data; if(!data){ resolve(null); return; }
+        const wan=v=>(v==null?'0':String(v)).replace(/,/g,'');
+        const g=data.gt||{};
+        const nb=+(wan(g.f52)) || ( (data.hk2sh?+(wan(data.hk2sh.f52)):0) + (data.hk2sz?+(wan(data.hk2sz.f52)):0) );
+        const sb=(data.sh2hk?+(wan(data.sh2hk.f52)):0) + (data.sz2hk?+(wan(data.sz2hk.f52)):0);
+        resolve({nb:nb, sb:sb, ok:true});
+      }catch(e){ resolve(null); }
+      window[cb]=null; s.remove();
+    };
+    s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
+    s.src='https://push2.eastmoney.com/api/qt/kamt/get?fields1=f1,f3&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65&cb='+cb+'&_='+Date.now();
+    document.body.appendChild(s);
+  });
+}
+
 function loadMarketData(){
   try{ fetchIndices(); }catch(e){}
   renderFlows(MARKET_FLOW); setFlowTag(false);
   fetchCapitalFlow().then(r=>{ if(r&&r.ok&&(r.inflow.length||r.outflow.length)){ renderFlows(r); setFlowTag(true); } });
+  loadNorthSouth().then(r=>{ if(r&&r.ok){ const fmt=v=>{ const yi=v/10000; return (yi>=0?'+':'')+yi.toFixed(2)+'亿'; }; const nb=document.getElementById('nbVal'), sb=document.getElementById('sbVal'); if(nb){ nb.textContent=fmt(r.nb); nb.className='cap-val '+(r.nb>=0?'text-up':'text-down'); } if(sb){ sb.textContent=fmt(r.sb); sb.className='cap-val '+(r.sb>=0?'text-up':'text-down'); } const tg=document.getElementById('capTag'); if(tg){ tg.textContent='实时'; tg.className='tag tag-live'; } } });
   loadFundRank('top');
   renderWatch();
   const mr=document.getElementById('marketRefresh');
@@ -3557,6 +3598,8 @@ function renderDetailLive(arg){
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
   live.innerHTML += reviewCardHtml(f.name);
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
+  live.innerHTML += `<div class="card" id="holdingsCard"><div class="sec-head"><h2>📦 前十大持仓（股票/债券）</h2></div><div id="holdingsBody" class="hint">加载中…</div></div>`;
+  try{ loadFundHoldings(f); }catch(e){ console.error(e); }
   try{ retroScenarioCards(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
   if(window._autoTrade){ window._autoTrade=false; const d=document.getElementById('nf-date'); if(d){ d.focus(); toast('填写交易信息后点「💾 保存并锁定」（净值可留空，T+1 自动填）'); } }
 }
@@ -3612,6 +3655,30 @@ function genericDetail(f){
     <p class="hint">无交易流水，数值为手动维护；一旦记录交易流水，此处自动隐藏，改由「交易流水」精确计算（FIFO 先进先出）。</p></div>`;
   return h;
 }
+// 基金前十大持仓（股票/债券）——借鉴 x2rr/funds 的持仓明细，数据源 pingzhongdata/{code}.js
+function loadFundHoldings(f){
+  const body=document.getElementById('holdingsBody'); if(!body) return;
+  const code=f.code||(ANALYSIS[f.name]&&ANALYSIS[f.name].code)||null;
+  if(!code){ body.innerHTML='该基金未记录代码，无法加载持仓；可在「＋ 加一只基金」补全代码后再看。'; return; }
+  body.innerHTML='加载中…（天天基金）';
+  const s=document.createElement('script');
+  const done=function(){
+    try{
+      const raw=(window.Data_holderNew||[]);
+      const stocks=raw.map(x=>({name:x.name, code:x.code, p:parseFloat(x.proportion)||0, v:parseFloat((x.value||'').replace(/,/g,''))||0})).filter(x=>x.name);
+      const mgr=(window.Data_fundManager&&window.Data_fundManager[0]&&window.Data_fundManager[0].name)||(window.Data_currentFundManager&&window.Data_currentFundManager[0]&&window.Data_currentFundManager[0].name)||'';
+      let rows=stocks.slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name||'—')}</td><td class=\"code\">${x.code||'—'}</td><td class=\"num\">${x.p.toFixed(2)}%</td></tr>`).join('');
+      if(!rows) rows='<tr><td colspan=\"4\" class=\"hint\">未获取到持仓（可能为纯债/货币，或接口未返回）</td></tr>';
+      body.innerHTML=`<table class=\"am-t holdings-tbl\"><thead><tr><th>#</th><th>名称</th><th>代码</th><th>占比</th></tr></thead><tbody>${rows}</tbody></table>`+(mgr?`<p class=\"hint\" style=\"margin:6px 0 0\">基金经理：${esc(mgr)}</p>`:'');
+    }catch(e){ body.innerHTML='持仓解析失败'; }
+    s.remove();
+  };
+  s.onload=done;
+  s.onerror=function(){ body.innerHTML='持仓接口未连接（天天基金），可稍后重试'; s.remove(); };
+  s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
+  document.body.appendChild(s);
+}
+
 function liveSection(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   let h='';

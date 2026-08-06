@@ -408,6 +408,21 @@
   .at-foot { text-align:right; margin-top:10px; }
   /* 刷新状态指示 */
   #updated.live { color: #0f8a63; } #updated.closed { color: var(--text-3); }
+  /* 数据新鲜度徽标：顶部状态条 + 估值格副标题 */
+  #updated.fr-fail-text { color: #c0392b; font-weight: 600; }
+  .fresh-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 8px; white-space: nowrap; vertical-align: middle; }
+  .fresh-badge.fr-now  { background: rgba(15,138,99,.12);  color: #0f8a63; }
+  .fresh-badge.fr-warn { background: rgba(214,158,46,.16); color: #b07d12; }
+  .fresh-badge.fr-old  { background: rgba(200,90,40,.16);  color: #bd5a2a; }
+  .fresh-badge.fr-fail { background: rgba(200,40,40,.14);  color: #c0392b; }
+  .dt-sub2.est-fresh { color: var(--text-3); }
+  .dt-sub2.est-fresh .est-tag { font-weight: 600; }
+  .dt-sub2.est-fresh .est-dot { color: var(--text-3); margin: 0 4px; }
+  .dt-sub2.est-fresh .est-age { color: #0f8a63; font-weight: 600; }
+  .dt-sub2.est-stale { color: var(--text-3); }
+  .dt-sub2.est-stale .est-tag { font-weight: 600; }
+  .dt-sub2.est-stale .est-dot { color: var(--text-3); margin: 0 4px; }
+  .dt-sub2.est-nodata { color: var(--text-3); }
   /* Toast 轻提示 */
   .toast { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); box-shadow: var(--shadow); font-size: 13px; padding: 9px 18px; border-radius: 22px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 999; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -1078,7 +1093,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="topbar">
       <div>
         <h1>我的基金追踪器</h1>
-        <p class="sub"><span id="updated" class="loading">数据未刷新</span><span id="mktLight" class="mkt-light" title="A股(沪深)交易时段状态"></span></p>
+        <p class="sub"><span id="mktLight" class="mkt-light" title="A股(沪深)交易时段状态"></span><span id="updated" class="loading">数据未刷新</span><span id="freshBadge" class="fresh-badge" style="display:none"></span></p>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start">
         <button class="btn sm" id="themeBtn" onclick="toggleTheme()" title="切换亮色 / 暗色">🌓 主题</button>
@@ -2151,6 +2166,47 @@ const TRADE_TYPES=[['buy','买入'],['sell','卖出'],['dividend','现金分红'
 function typeLabel(t){ const m=TRADE_TYPES.find(x=>x[0]===t); return m?m[1]:(t||'买入'); }
 function navFmt(v){ return v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'; }
 function updStr(f){ const _n=navCache[f.name]||{}; const _open=isMarketOpen(new Date()); if(_n.gztime) return (_open?'估 ':'')+_n.gztime.slice(11,16); const _d=_n.navChgDate||_n.date; if(_d) return (_open?'':'净值 ')+_d.slice(5); return '待刷新'; }
+// 数据新鲜度：距上次成功刷新的时长（短文本）
+function freshAgeShort(){ const d=localStorage.getItem('ft_lastSync'); if(!d) return ''; const diff=Math.floor((Date.now()-(+d))/1000); if(diff<60) return '刚刚'; if(diff<3600) return '停留'+Math.floor(diff/60)+'分'; return '停留'+Math.floor(diff/3600)+'时'; }
+// 顶部状态条：市场时段 + 上次成功刷新时间 + 新鲜度/失败徽标
+function renderStatusLine(){
+  const u=document.getElementById('updated'); if(!u) return;
+  const ml=document.getElementById('mktLight');
+  const sess=marketSession(new Date());
+  if(ml){ ml.className='mkt-light ms-'+sess.state; ml.textContent=sess.emoji+' '+sess.label; }
+  const fb=document.getElementById('freshBadge');
+  const df=localStorage.getItem('ft_lastSyncFail'), ds=localStorage.getItem('ft_lastSync');
+  if(df && (!ds || (+df)>(+ds))){
+    const diff=Math.floor((Date.now()-(+df))/1000);
+    const stale=diff<3600?Math.floor(diff/60)+' 分钟':Math.floor(diff/3600)+' 小时+';
+    u.className='fr-fail-text'; u.textContent='刷新失败 · 数据停留 '+stale;
+    if(fb){ fb.style.display='inline-block'; fb.className='fresh-badge fr-fail'; fb.textContent='🔴 刷新失败'; }
+    return;
+  }
+  if(!ds){ u.className='loading'; u.textContent='数据未刷新'; if(fb) fb.style.display='none'; return; }
+  const diff=Math.floor((Date.now()-(+ds))/1000), t=new Date(+ds);
+  const hh=t.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  u.className=sess.state==='open'?'live':'closed'; u.textContent='上次成功刷新 '+hh;
+  if(fb){
+    fb.style.display='inline-block';
+    if(diff<60){ fb.className='fresh-badge fr-now'; fb.textContent='🟢 刚刚'; }
+    else if(diff<3600){ fb.className='fresh-badge fr-warn'; fb.textContent='🟡 停留'+Math.floor(diff/60)+'分钟'; }
+    else { fb.className='fresh-badge fr-old'; fb.textContent='🟠 停留'+Math.floor(diff/3600)+'小时+'; }
+  }
+}
+// 持仓估值格：盘中显示实时估值(带新鲜度)，休市/收盘回退到已确认「收」涨跌幅并标注「昨日预估」
+function estCellHtml(f){
+  const nc=navCache[f.name]||{}; const mkt=isMarketOpen(new Date()); const age=freshAgeShort();
+  if(mkt && nc.gszzl!=null){
+    const gt=nc.gztime?nc.gztime.slice(11):'';
+    const ageHtml=age?`<span class="est-dot">·</span><span class="est-age">${age}</span>`:'';
+    return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 est-fresh"><span class="est-tag">估 ${gt}</span>${ageHtml}</div>`;
+  }
+  if(nc.navChg!=null){
+    return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-stale"><span class="est-tag">收</span><span class="est-dot">·</span>${mkt?'无盘中估值':'昨日预估'}</div>`;
+  }
+  return `<div class="dt-big zero">—</div><div class="dt-sub2 est-nodata">${mkt?'无估算':'无预估'}</div>`;
+}
 let openSet=new Set();
 function toggleHold(key){ key=decodeURIComponent(key); if(openSet.has(key)) openSet.delete(key); else openSet.add(key); renderHomeList(); }
 function blurbFor(f){
@@ -2265,12 +2321,8 @@ function renderHomeDense(list, showHead){
   const rows=list.map(f=>{
     const nc=navCache[f.name]||{};
     const _mkt=isMarketOpen(new Date());
-    // 估算涨跌：盘中估值为预估，收盘后若估值缺失（如 QDII）仍标注「估·预估」，明确其非确认值
-    const estCell=(nc.gszzl!=null)
-      ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${updStr(f)||'—'}</div>`
-      : (nc.navChg!=null
-        ? `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2">${updStr(f)||''}</div>`
-        : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'无预估'}</div>`);
+    // 估算涨跌：盘中估值为实时预估(带新鲜度徽标)，休市/收盘回退到已确认「收」涨跌幅并标注「昨日预估」
+    const estCell=estCellHtml(f);
     const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
@@ -4693,7 +4745,8 @@ async function renderFundHoldings(f){
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size:11px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 async function refresh(){
-  const u=document.getElementById('updated'); u.textContent='正在拉取最新净值…'; u.className='loading';
+  const u=document.getElementById('updated'); u.textContent='⏳ 正在刷新…'; u.className='loading';
+  const _fb0=document.getElementById('freshBadge'); if(_fb0){ _fb0.style.display='inline-block'; _fb0.className='fresh-badge fr-warn'; _fb0.textContent='⏳ 刷新中'; }
   Object.keys(intradayCache).forEach(k=>delete intradayCache[k]);
   const prev={}; Object.keys(navCache).forEach(k=>prev[k]=navCache[k].nav);
   const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);

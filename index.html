@@ -5172,9 +5172,11 @@ async function rebuildHistory(){
   if(!dailySnapshots || (Array.isArray(dailySnapshots)&&!dailySnapshots.length) || (!Array.isArray(dailySnapshots)&&!dailySnapshots.personal.length&&!dailySnapshots.managed.length&&!dailySnapshots.all.length)){
     try{
       const now=new Date(), base=90000, arr=[];
+      // 示例：平滑上涨的总资产 + 与其正相关的累计收益（无噪音、无怪异波浪，仅作占位演示）
       for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d);
-        const total=Math.round(base*(1+(59-i)/59*0.22+Math.sin(i/5)*0.012));
-        const principal=Math.round(base*(1+(59-i)/59*0.20));
+        const k=(59-i)/59; // 0 -> 1
+        const total=Math.round(base*(1+0.22*k));
+        const principal=Math.round(base*(1+0.20*k));
         arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); }
       dailySnapshots={personal:arr, managed:[], all:arr};
     }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; }

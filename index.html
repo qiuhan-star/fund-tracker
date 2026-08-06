@@ -843,6 +843,12 @@ input[type="number"] { -moz-appearance: textfield; }
 .sm-switch input:checked + .sm-slider{ background:var(--accent); }
 .sm-switch input:checked + .sm-slider:before{ transform:translateX(19px); }
 .sm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.nf-field{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.nf-field > label{ font-size:12.5px; color:var(--text-2); font-weight:500; }
+.nf-field input, .nf-field select{ width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface); color:var(--text); font-size:14px; font-family:inherit; }
+.nf-field input:focus, .nf-field select:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+.nf-row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
 .sm-act{ display:flex; align-items:center; gap:9px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:10px; padding:11px 13px; font-size:13.5px; cursor:pointer; text-align:left; font-family:inherit; }
 .sm-act:hover{ border-color:var(--accent); color:var(--accent); }
 /* 详情页定投快捷卡 */
@@ -1303,6 +1309,91 @@ input[type="number"] { -moz-appearance: textfield; }
   <!-- 交易选择器弹窗 -->
   <div id="tradePicker"></div>
   <div id="allTradesModal"></div>
+
+  <!-- 加一只基金弹窗 -->
+  <div class="sm-mask" id="addFundMask" onclick="if(event.target===this)closeAddFund()">
+    <div class="sm-modal">
+      <div class="sm-head"><h2>＋ 加一只基金</h2><button class="sm-x" onclick="closeAddFund()">✕</button></div>
+      <div class="sm-body">
+        <p class="hint" style="margin:0 0 14px">填基金名称或 6 位代码（代码会自动识别名称），加好后可点开补录交易 / 市值。</p>
+        <div class="nf-field">
+          <label>基金名称 / 代码</label>
+          <input id="af-input" list="af-name" placeholder="如：摩根瑞益纯债C 或 017847" />
+          <datalist id="af-name"></datalist>
+        </div>
+        <div class="nf-field">
+          <label>账户</label>
+          <select id="af-acc"></select>
+        </div>
+        <div class="nf-field">
+          <label>当前市值（元，可留空）</label>
+          <input id="af-mv" class="num" type="number" step="any" inputmode="decimal" placeholder="留空则记 0，之后补" />
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+          <button class="btn" onclick="closeAddFund()">取消</button>
+          <button class="btn primary" onclick="addFundSave()">添加并打开</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 记一笔交易弹窗 -->
+  <div class="sm-mask" id="tradeQuickMask" onclick="if(event.target===this)closeTradePicker()">
+    <div class="sm-modal">
+      <div class="sm-head"><h2>＋ 记一笔交易</h2><button class="sm-x" onclick="closeTradePicker()">✕</button></div>
+      <div class="sm-body">
+        <div class="nf-field">
+          <label>基金名称</label>
+          <input id="tq-fund" list="tq-fund-list" placeholder="选或填基金" />
+          <datalist id="tq-fund-list"></datalist>
+        </div>
+        <div class="nf-row2">
+          <div class="nf-field">
+            <label>方向</label>
+            <select id="tq-type"></select>
+          </div>
+          <div class="nf-field">
+            <label>账户</label>
+            <select id="tq-acc"></select>
+          </div>
+        </div>
+        <div class="nf-row2">
+          <div class="nf-field">
+            <label>日期</label>
+            <input id="tq-date" type="date" />
+          </div>
+          <div class="nf-field">
+            <label>时间</label>
+            <input id="tq-time" type="time" value="15:00" />
+          </div>
+        </div>
+        <div class="nf-row2">
+          <div class="nf-field">
+            <label>金额（元）</label>
+            <input id="tq-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="如 1000" />
+          </div>
+          <div class="nf-field">
+            <label>净值（留空=T+1）</label>
+            <input id="tq-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="可留空" />
+          </div>
+        </div>
+        <div class="nf-row2">
+          <div class="nf-field">
+            <label>费用（元）</label>
+            <input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0" />
+          </div>
+          <div class="nf-field">
+            <label>确认份额（可选）</label>
+            <input id="tq-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="可选" />
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+          <button class="btn" onclick="closeTradePicker()">取消</button>
+          <button class="btn primary" onclick="tradeQuickSave()">保存并记账</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 快捷记账抽屉 -->
   <button class="fab" id="quickFab" onclick="openDrawer()" title="快捷记账">＋</button>
@@ -3706,7 +3797,6 @@ function renderDetailLive(arg){
   live.innerHTML += reviewCardHtml(f.name);
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   try{ retroScenarioCards(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
-  if(window._autoTrade){ window._autoTrade=false; const d=document.getElementById('nf-date'); if(d){ d.focus(); toast('填写交易信息后点「💾 保存并锁定」（净值可留空，T+1 自动填）'); } }
 }
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=ANALYSIS[f.name];
@@ -3913,7 +4003,42 @@ function liveSection(f){
 }
 
 // ---------- 新增 / 删除 ----------
-function addSnapRow(){ snaps.push({name:'新基金',cat:'',mv:0,ret:0}); compute(); }
+function addSnapRow(){ openAddFund(); }
+function openAddFund(){
+  const accSel=document.getElementById('af-acc');
+  if(accSel){
+    const cur=accSel.value||'我的';
+    accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join('');
+    const dl=document.getElementById('af-name');
+    if(dl){ const names=(_allHoldings.length?_allHoldings:fundsView).map(f=>f.name).filter(Boolean); dl.innerHTML=[...new Set(names)].map(n=>`<option value="${esc(n)}">`).join(''); }
+  }
+  const m=document.getElementById('addFundMask'); if(m){ m.classList.add('show'); const el=document.getElementById('af-input'); if(el) setTimeout(()=>el.focus(),60); }
+}
+function closeAddFund(){ const m=document.getElementById('addFundMask'); if(m) m.classList.remove('show'); const i=document.getElementById('af-input'); if(i) i.value=''; const v=document.getElementById('af-mv'); if(v) v.value=''; }
+function addFundSave(){
+  const g=id=>document.getElementById(id);
+  const raw=(g('af-input').value||'').trim();
+  if(!raw){ toast('请填写基金名称或 6 位代码'); g('af-input').focus(); return; }
+  const acc=g('af-acc').value||'我的';
+  const mvRaw=g('af-mv').value, mv=(mvRaw===''||mvRaw==null)?null:+mvRaw;
+  let name=raw;
+  // 若输入像 6 位代码，尝试解析成基金名（失败则直接用原值）
+  if(/^\d{6}$/.test(raw)){ const nm=syncNameByCode(raw); if(nm) name=nm; }
+  if(snaps.some(s=>s.name===name && accOf(s)===acc)){ toast('该基金在当前账户已存在'); return; }
+  const snap={name,cat:'',mv:(mv!=null && !isNaN(mv))?mv:0,ret:0,account:acc};
+  if(acc!=='我的') snap.account=acc;
+  snaps.push(snap);
+  silentSave(); compute();
+  closeAddFund();
+  toast('已添加「'+name+'」，可点开补录交易或市值');
+  goDetail(encodeURIComponent(name), acc);
+}
+function syncNameByCode(code){ // 从已载入的 snaps/trades 反查名称
+  const hit=snaps.find(s=>syncCode(s.name)===code) || trades.find(t=>syncCode(t.name)===code);
+  if(hit) return hit.name;
+  if(ANALYSIS){ for(const k in ANALYSIS){ if(ANALYSIS[k] && ANALYSIS[k].code===code) return k; } }
+  return null;
+}
 function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:'我的',locked:true}); }
 function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',time:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name),locked:true}); compute(); }
 function addTradeForForm(enc){
@@ -3936,19 +4061,35 @@ function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compu
 function delTrade(i){ if(trades[i]&&confirm('确定删除这笔交易？')){ trades.splice(i,1); silentSave(); compute(); } }
 function addTradeMenu(){
   const list=(_allHoldings.length?_allHoldings:fundsView).slice().sort((a,b)=>b.mv-a.mv);
-  if(!list.length){ toast('还没有基金，先在「⋯ 更多 → 加一只基金」添加'); return; }
-  const box=document.getElementById('tradePicker');
-  box.innerHTML=`<div class="tp-mask" onclick="closeTradePicker(event)"></div><div class="tp-pop">
-    <div class="tp-title">选择要记交易的基金</div>
-    <input id="tpSearch" class="tp-search" placeholder="搜索基金名称…" oninput="tpFilter(this.value)">
-    <div class="tp-list" id="tpList">${list.map(f=>`<button class="tp-item" onclick="tpPick('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">${esc(f.name)} <span class="tag">${f.account||'我的'}</span></button>`).join('')}</div>
-    <div style="text-align:right;margin-top:10px"><button class="btn" onclick="closeTradePicker()">取消</button></div>
-  </div>`;
-  box.style.display='flex';
+  if(!list.length){ toast('还没有基金，先点「＋ 加一只基金」添加'); return; }
+  const dl=document.getElementById('tq-fund');
+  if(dl) dl.innerHTML=[...new Set(list.map(f=>f.name))].map(n=>`<option value="${esc(n)}">`).join('');
+  const accSel=document.getElementById('tq-acc');
+  if(accSel){ const cur=accSel.value||'我的'; accSel.innerHTML=ACCOUNTS.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
+  const dt=document.getElementById('tq-date'); if(dt && !dt.value) dt.value=new Date().toISOString().slice(0,10);
+  const ty=document.getElementById('tq-type'); if(ty && !ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
+  const m=document.getElementById('tradeQuickMask'); if(m){ m.classList.add('show'); const el=document.getElementById('tq-fund'); if(el) setTimeout(()=>{ try{ el.focus(); }catch(e){} },60); }
 }
-function closeTradePicker(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; }
-function tpFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#tpList .tp-item').forEach(b=>{ b.style.display=(!q||b.textContent.includes(q))?'':'none'; }); }
-function tpPick(nm,acc){ const b=document.getElementById('tradePicker'); if(b) b.style.display='none'; window._autoTrade=true; goDetail(nm,decodeURIComponent(acc)); }
+function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
+function tradeQuickSave(){
+  const g=id=>document.getElementById(id);
+  const name=(g('tq-fund').value||'').trim();
+  if(!name){ toast('请选择或填写基金名称'); return; }
+  const date=g('tq-date').value; if(!date){ toast('请选择日期'); return; }
+  const amount=+g('tq-amount').value||0; if(!amount){ toast('请填写金额'); g('tq-amount').focus(); return; }
+  const acc=g('tq-acc').value||'我的';
+  const type=g('tq-type').value||'buy';
+  const time=g('tq-time').value||'';
+  const navRaw=g('tq-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
+  const fee=+g('tq-fee').value||0;
+  const shRaw=g('tq-shares').value, shares=(shRaw===''||shRaw==null)?null:+shRaw;
+  if(type==='sell' && !sellPreviewConfirm(name, acc, amount, nav, fee, shares, date)) return;
+  trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
+  silentSave(); compute(); recordSnapshot();
+  closeTradePicker();
+  if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+  toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
+}
 
 // ---------- 快捷记账抽屉 ----------
 function openDrawer(){

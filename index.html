@@ -3565,7 +3565,7 @@ function liveSection(f){
     h+=`<div class="card"><h2>回本 / 补仓计算器 <span class="tag">实时模拟</span></h2>
       <p class="hint">基于你的真实持仓成本与最新净值，直观看到离回本还差多少；输入补仓金额即时换算新均价与回本差距。</p>
       <div class="bk-prog">
-        <div class="bk-prog-head"><span class="lbl">回本进度</span><span class="gap ${gapPct>0.05?'pos':'neg'}">已回本 ${prog.toFixed(1)}%${gapPct>0.05?``（还差 ${gapPct.toFixed(1)}`）:''}</span></div>
+        <div class="bk-prog-head"><span class="lbl">回本进度</span><span class="gap ${gapPct>0.05?'pos':'neg'}">已回本 ${prog.toFixed(1)}%${gapPct>0.05?'（还差 '+gapPct.toFixed(1)+'%）':''}</span></div>
         <div class="bk-bar"><div class="bk-fill" style="width:${prog.toFixed(1)}%"></div></div>
         <div class="bk-scale"><span>当前净值 ${calcNav.toFixed(4)}</span><span>回本价 ${curCost.toFixed(4)}</span></div>
       </div>

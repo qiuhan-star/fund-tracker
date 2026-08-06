@@ -1444,7 +1444,7 @@ const SAMPLE_TRADE = [
   {name:'上银丰益混合C', account:'我的', date:'2026-08-03', time:'14:57:17', type:'buy', amount:4000, shares:2644.28, nav:1.5127, fee:0, locked:true}
 ];
 
-let snaps=[], trades=[], navCache={}, dailySnapshots=[];
+let snaps=[], trades=[], navCache={}, dailySnapshots=[], dcaPlans=[];
 let fundsView=[], _allHoldings=[], _allRaw=[];
 const BUILTIN_ACCOUNTS=['我的','小号','微信债券'];
 // 账户归属：isPersonal=false 表示非本人账户，不计入个人总资产 / 个人仓位
@@ -1645,6 +1645,7 @@ function migrate(raw){
   if(!Array.isArray(data.trades)) data.trades = [];
   if(!data.navCache || typeof data.navCache!=='object') data.navCache = {};
   data.daily_snapshots = normDailySnap(data.daily_snapshots);
+  if(!Array.isArray(data.dcaPlans)) data.dcaPlans = [];
   // 账户名归一化（2026-08-05：支付宝→我的 / 微信→微信债券；幂等）
   const _accNorm=a=>{ if(!a) return '我的'; a=String(a).trim(); return (a==='支付宝')?'我的':((a==='微信')?'微信债券':a); };
   (data.trades||[]).forEach(t=>{ t.account=_accNorm(t.account); });
@@ -1683,7 +1684,7 @@ function backupMeta(raw){
 
 let _quotaWarned=false;
 function lsSafeSet(key,val){ try{ localStorage.setItem(key,val); return true; }catch(e){ const name=(e&&e.name)||'', msg=(e&&e.message)||'', code=e&&e.code; const quota = name==='QuotaExceededError' || code===22 || code===1014 || name.indexOf('Quota')>=0 || msg.toLowerCase().indexOf('quota')>=0; if(quota && !_quotaWarned){ _quotaWarned=true; showQuotaBanner(); } else if(!quota){ console.error('localStorage 写入失败:',e); } return false; } }
-async function silentSave(){ lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots})); }
+async function silentSave(){ lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots,dcaPlans})); }
 function showQuotaBanner(){
   let b=document.getElementById('quotaBar');
   if(!b){ b=document.createElement('div'); b.id='quotaBar'; b.className='quota-bar'; document.body.appendChild(b); }
@@ -4881,8 +4882,8 @@ function exportHoldingsCSV(){
   let out=head+'\n'+hRows;
   if(liq.length){
     out+='\n\n'+esc('=== 清仓（已全部赎回）===')+'\n';
-    out+=['基金名称','类别','账户','总投入','总赎回','已实现盈亏','收益率%','持有天数','首次买入','最后卖出'].map(esc).join(',')+'\n';
-    out+=liq.map(f=>[f.name,f.cat||'',f.account||'我的',f.totalBuy!=null?f.totalBuy:'',f.totalSell!=null?f.totalSell:'',f.realized!=null?f.realized:'',f.retPct!=null?f.retPct.toFixed(2):'',f.days!=null?f.days:'',f.firstBuy||'',f.lastSell||''].map(esc).join(',')).join('\n');
+    out+=['基金名称','类别','账户','总投入','总赎回','已实现盈亏','收益率%','年化%','持有天数','首次买入','最后卖出'].map(esc).join(',')+'\n';
+    out+=liq.map(f=>{ const ann=(f.days&&f.days>0&&f.retPct!=null)?(Math.pow(1+f.retPct/100,365/f.days)-1)*100:''; return [f.name,f.cat||'',f.account||'我的',f.totalBuy!=null?f.totalBuy:'',f.totalSell!=null?f.totalSell:'',f.realized!=null?f.realized:'',f.retPct!=null?f.retPct.toFixed(2):'',ann!==''?ann.toFixed(2):'',f.days!=null?f.days:'',f.firstBuy||'',f.lastSell||''].map(esc).join(','); }).join('\n');
   }
   if(!_allRaw.length && !liq.length){ toast('暂无可导出的数据'); return; }
   const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
@@ -5618,7 +5619,7 @@ async function rebuildHistory(){
   if(saved){
     try{
       const migrated=migrate(JSON.parse(saved));
-      snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots);
+      snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots); dcaPlans=migrated.dcaPlans||[];
       try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){} // 升级后立即回写，下次即为新模式
       loaded=true;
     }catch(e){ /* 损坏，下面尝试从历史备份恢复 */ }
@@ -5628,7 +5629,7 @@ async function rebuildHistory(){
     if(bk && confirm('本地数据为空或已损坏，但检测到历史备份（'+backupMeta(bk)+'）。\n\n点「确定」从备份恢复；点「取消」载入示例数据。')){
       try{
         const migrated=migrate(JSON.parse(bk));
-        snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots);
+        snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots); dcaPlans=migrated.dcaPlans||[];
         try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){}
         loaded=true;
         setTimeout(function(){ toast('已从历史备份恢复数据'); },400);

@@ -2173,7 +2173,9 @@ function renderHomeDense(list, showHead){
     // 估算涨跌：盘中估值为预估，收盘后若估值缺失（如 QDII）仍标注「估·预估」，明确其非确认值
     const estCell=(nc.gszzl!=null)
       ? `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2">${updStr(f)||'—'}</div>`
-      : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'无预估'}</div>`;
+      : (nc.navChg!=null
+        ? `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2">${updStr(f)||''}</div>`
+        : `<div class="dt-big zero">—</div><div class="dt-sub2">${_mkt?'无估算':'无预估'}</div>`);
     const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');

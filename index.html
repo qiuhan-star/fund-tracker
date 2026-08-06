@@ -1492,7 +1492,8 @@ const ACCOUNT_META={
 // 用户自定义账户（持久化于 localStorage ft_accounts）：在内置账户之外自行添加，默认计入本人个人资产
 let ACCOUNTS=[...BUILTIN_ACCOUNTS];
 let CUSTOM_ACCOUNTS=[];
-try{ CUSTOM_ACCOUNTS=JSON.parse(localStorage.getItem('ft_accounts')||'[]'); }catch(e){}
+let _cfgCorrupt=false;
+try{ CUSTOM_ACCOUNTS=JSON.parse(localStorage.getItem('ft_accounts')||'[]'); }catch(e){ console.warn('账户配置数据损坏，已重置为默认', e); _cfgCorrupt=true; }
 CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNT_META[a]) ACCOUNT_META[a]={isPersonal:true, owner:'本人'}; });
 function loadCustomAccounts(){ ACCOUNTS=[...BUILTIN_ACCOUNTS]; CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNTS.includes(a)) ACCOUNTS.push(a); }); }
 loadCustomAccounts();
@@ -1567,8 +1568,8 @@ let flashMap={}, todayGain=null;
 const DEFAULT_SORT={key:'est',dir:'desc'}; const SORT_VER='2';
 let holdSort=DEFAULT_SORT.key, holdSortDir=DEFAULT_SORT.dir, holdCatFilter='全部', holdSearch='', holdGroupBy='none';
 let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
-let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){}
-let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){}
+let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){ console.warn('分类覆盖数据损坏，已重置为默认', e); _cfgCorrupt=true; }
+let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){ console.warn('标签数据损坏，已重置为默认', e); _cfgCorrupt=true; }
 let homeView='dense';
 try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
 let currentView='home', detailName=null, detailAcc='我的', detailChartFund=null;

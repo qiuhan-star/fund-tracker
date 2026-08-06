@@ -5352,6 +5352,75 @@ function uwRow(it){
     +'<td>'+acts+'</td>'
   +'</tr>';
 }
+var _tessLoading=null;
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(_tessLoading) return _tessLoading;
+  _tessLoading=new Promise(function(res,rej){
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload=function(){ res(window.Tesseract); };
+    s.onerror=function(){ rej(new Error('Tesseract.js 加载失败（检查网络）')); };
+    document.head.appendChild(s);
+  });
+  return _tessLoading;
+}
+function uwPickImage(){ var el=document.getElementById('uwImg'); if(el) el.click(); }
+function uwOcr(input){
+  var file=input&&input.files&&input.files[0]; if(!file) return;
+  var url=URL.createObjectURL(file);
+  toast('正在识别截图…（首次需联网下载识别模型）');
+  loadTesseract().then(function(T){ return T.recognize(url,'eng'); }).then(function(r){
+    URL.revokeObjectURL(url);
+    var txt=(r&&r.data&&r.data.text)||'';
+    var codes=Array.from(new Set((txt.match(/\d{6}/g)||[])));
+    showOcrCandidates(codes);
+  }).catch(function(e){
+    URL.revokeObjectURL(url);
+    toast('识别失败：'+(e&&e.message?e.message:e));
+  });
+  input.value='';
+}
+function showOcrCandidates(codes){
+  var old=document.getElementById('uwOcrModal'); if(old) old.remove();
+  if(!codes.length){ toast('没识别出 6 位数字，换个清晰截图试试'); return; }
+  var mask=document.createElement('div'); mask.id='uwOcrModal';
+  mask.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--surface);color:var(--text);border-radius:14px;max-width:460px;width:100%;max-height:82vh;overflow:auto;padding:18px';
+  box.innerHTML='<h3 style="margin:0 0 6px">截图识别结果</h3><p class="hint" style="margin:0 0 12px">勾选要加入自选的基金代码（已尝试自动匹配名称，匹配不到的请手动确认）：</p>';
+  var list=document.createElement('div');
+  codes.forEach(function(c){
+    var row=document.createElement('label');
+    row.style.cssText='display:flex;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--border-2);cursor:pointer';
+    row.innerHTML='<input type="checkbox" checked data-code="'+escHtml(c)+'"> <b>'+escHtml(c)+'</b> <span class="ocrnm hint" data-nm="'+escHtml(c)+'">匹配中…</span>';
+    list.appendChild(row);
+    (function(code){
+      var s=document.createElement('script');
+      var to=setTimeout(function(){ var sp=document.querySelector('[data-nm="'+code+'"]'); if(sp) sp.textContent='（未匹配，仍加入基金自选）'; }, 8000);
+      s.onload=function(){ clearTimeout(to); var nm=window.fS_name||''; var sp=document.querySelector('[data-nm="'+code+'"]'); if(sp) sp.textContent=nm?('✅ '+nm):'（未匹配，仍加入基金自选）'; s.remove(); };
+      s.onerror=function(){ clearTimeout(to); var sp=document.querySelector('[data-nm="'+code+'"]'); if(sp) sp.textContent='（未匹配，仍加入基金自选）'; s.remove(); };
+      s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
+      document.body.appendChild(s);
+    })(c);
+  });
+  box.appendChild(list);
+  var bar=document.createElement('div');
+  bar.style.cssText='display:flex;gap:10px;justify-content:flex-end;margin-top:14px';
+  bar.innerHTML='<button class="btn" id="uwOcrCancel">取消</button><button class="btn primary" id="uwOcrAdd">添加选中</button>';
+  box.appendChild(bar);
+  mask.appendChild(box);
+  mask.onclick=function(e){ if(e.target===mask) mask.remove(); };
+  document.body.appendChild(mask);
+  document.getElementById('uwOcrCancel').onclick=function(){ mask.remove(); };
+  document.getElementById('uwOcrAdd').onclick=function(){
+    var sel=box.querySelectorAll('input[type=checkbox]:checked');
+    sel.forEach(function(cb){ fetchFundInfoUnified(cb.getAttribute('data-code')); });
+    mask.remove();
+    toast('已提交 '+sel.length+' 只到自选（自动拉取名称中）');
+  };
+}
+
 function renderWatchTab(){
   const bc=document.getElementById('tp3'); if(!bc) return;
   loadBond();
@@ -5400,8 +5469,8 @@ function renderWatchTab(){
 
   bc.innerHTML=STYLE
     +'<div class="card"><h2>加自选 <span class="hint">（基金 + 债基通用）</span></h2>'
-    +'<div class="wt-addbar"><input id="uwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addUnifiedWatch()">加自选</button><span class="hint">输代码自动识别基金/债基并拉名称/类型/近1年；名称则加入基金自选</span></div>'
-    +'<p class="hint">说明：基金自选（首页底部区块）+ 债基自选（原资产页债基池）已合并到此；资产页的债基自选池已撤掉。截图识别（📷）即将接入。</p></div>'
+    +'<div class="wt-addbar"><input id="uwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addUnifiedWatch()">加自选</button><button class="btn" onclick="uwPickImage()">📷 截图识别</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"><span class="hint">输代码自动识别基金/债基并拉名称/类型/近1年；名称则加入基金自选</span></div>'
+    +'<p class="hint">说明：基金自选（首页底部区块）+ 债基自选（原资产页债基池）已合并到此；资产页的债基自选池已撤掉。点「📷 截图识别」可上传持仓截图，自动提取 6 位基金代码并加入自选（首次需联网下载识别模型）。</p></div>'
     +'<div class="card"><div class="wt-addbar" style="justify-content:space-between;margin-bottom:8px"><span><b>自选清单</b> <span class="hint">（未持仓 · 基金 + 债基合并）</span></span><button class="btn sm" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'🗂 按分组')+'</button></div>'
     +'<datalist id="uwGrps"><option value="想上车"></option><option value="等待中"></option><option value="观察"></option><option value="已定投"></option><option value="其他"></option></datalist>'
     +'<div class="tbl-wrap"><table class="wt-tbl"><thead><tr><th>基金</th><th>类型</th><th>账户</th><th>最新净值/估算</th><th>近1年</th><th>状态</th><th>分组</th><th></th></tr></thead><tbody>'+listHtml+'</tbody></table></div></div>'

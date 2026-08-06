@@ -68,6 +68,9 @@
   .ov-legend i{ display:inline-block; width:14px; height:0; border-top:2px solid; margin-right:5px; vertical-align:middle; }
   .ov-legend .l-mkt i{ border-color:#7c93c9; } .ov-legend .l-pri i{ border-color:var(--text-3); border-top-style:dashed; }
   .ov-spark{ width:100%; height:170px; display:block; }
+  .ov-empty-trend{ display:flex; flex-direction:column; gap:8px; padding:18px 0; text-align:center; }
+  .ov-empty-trend-title{ font-size:13px; font-weight:600; color:var(--text-2); }
+  .ov-empty-trend-sub{ font-size:12px; color:var(--text-3); line-height:1.6; }
   @media (max-width:680px){ .ov-grid{ grid-template-columns:repeat(2,1fr); } .ov-hero-value{ font-size:34px; } }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -2255,8 +2258,16 @@ function principalUpTo(dateStr, scope){
   BOND_FUNDS.forEach(b=>{ const inScope = scope==='all'?true:(scope==='managed'? !accIsPersonal(b.acc) : accIsPersonal(b.acc)); if(inScope && b.since && b.since<=dateStr) p+=bondAmt(b); });
   return p;
 }
+// 口径兜底：当前口径桶空但全量桶有数据（旧迁移/仅看全量口径时积累），回退展示全量，避免空白
+function trendArr(){
+  if(!dailySnapshots) return [];
+  if(Array.isArray(dailySnapshots)) return dailySnapshots;
+  const a=(dailySnapshots[currentScope]||[]);
+  if(a.length) return a;
+  return (dailySnapshots.all||[]);
+}
 function overviewTrendSvg(){
-  const arr=(Array.isArray(dailySnapshots)?dailySnapshots:(dailySnapshots[currentScope]||[]));
+  const arr=trendArr();
   if(!arr.length) return '';
   const W=1000,H=170,pad=10,n=arr.length;
   const mkt=arr.map(s=>s.totalAssets);
@@ -2300,7 +2311,7 @@ function renderOverview(){
   const updLine=lastSyncLabel();
   const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?'小号':'个人');
   const trendSvg=overviewTrendSvg();
-  const trendNote=(Array.isArray(dailySnapshots)?dailySnapshots:(dailySnapshots[currentScope]||[])).length;
+  const trendNote=trendArr().length;
   const mask=v=>hidden?'****':v;
   document.getElementById('overview').innerHTML=`
     <div class="ov-wrap">
@@ -2343,7 +2354,7 @@ function renderOverview(){
         <div class="ov-trend-head">${IC.trend} 资产趋势
           <span class="ov-legend"><span class="l-mkt"><i></i>总资产市值</span><span class="l-pri"><i></i>累计投入本金</span></span>
         </div>
-        ${trendSvg||`<p class="ov-zero" style="padding:34px 0;text-align:center">暂无历史记录，刷新后将开始积累走势</p>`}
+        ${trendSvg||`<div class="ov-empty-trend"><div class="ov-empty-trend-title">当前账户还没有走势记录</div><div class="ov-empty-trend-sub">走势靠积累：每次打开会自动记录当日点；也可一键从交易记录重建完整历史曲线。</div><button class="btn sm primary" onclick="rebuildHistory().then(function(){try{renderTrendSection();renderOverview();}catch(e){}}).catch(function(e){toast('重建失败：'+(e&&e.message||e));})">🔄 从交易记录重建历史曲线</button></div>`}
         <div class="ov-sub">${trendNote} 个记录日 · 本金虚线与市值实线之间的缝隙＝真实收益</div>
       </section>
     </div>`;
@@ -2353,13 +2364,13 @@ function renderOverview(){
 function renderTrendSection(){
   const box=document.getElementById('trendSection'); if(!box) return;
   const trendSvg=overviewTrendSvg();
-  const trendNote=(Array.isArray(dailySnapshots)?dailySnapshots:(dailySnapshots[currentScope]||[])).length;
+  const trendNote=trendArr().length;
   box.innerHTML=`
     <section class="ov-trend">
       <div class="ov-trend-head">${IC.trend} 资产趋势
         <span class="ov-legend"><span class="l-mkt"><i></i>总资产市值</span><span class="l-pri"><i></i>累计投入本金</span></span>
       </div>
-      ${trendSvg||`<p class="ov-zero" style="padding:34px 0;text-align:center">暂无历史记录，刷新后将开始积累走势</p>`}
+      ${trendSvg||`<div class="ov-empty-trend"><div class="ov-empty-trend-title">当前账户还没有走势记录</div><div class="ov-empty-trend-sub">走势靠积累：每次打开会自动记录当日点；也可一键从交易记录重建完整历史曲线。</div><button class="btn sm primary" onclick="rebuildHistory().then(function(){try{renderTrendSection();renderOverview();}catch(e){}}).catch(function(e){toast('重建失败：'+(e&&e.message||e));})">🔄 从交易记录重建历史曲线</button></div>`}
       <div class="ov-sub">${trendNote} 个记录日 · 本金虚线与市值实线之间的缝隙＝真实收益</div>
     </section>`;
 }

@@ -187,6 +187,111 @@
       "nav": 2.1673,
       "fee": 0,
       "time": "14:24"
+    },
+    {
+      "name": "永赢国证商用卫星通信产业ETF联接C",
+      "account": "我的",
+      "date": "2026-01-23",
+      "type": "buy",
+      "amount": 6859.03,
+      "nav": 2.5907,
+      "shares": 2647.52,
+      "locked": true
+    },
+    {
+      "name": "永赢国证商用卫星通信产业ETF联接C",
+      "account": "我的",
+      "date": "2026-06-24",
+      "type": "sell",
+      "amount": 5958.44,
+      "nav": 2.2506,
+      "shares": 2647.52,
+      "fee": 0,
+      "locked": true
+    },
+    {
+      "name": "国泰A股电网设备ETF联接C",
+      "account": "我的",
+      "date": "2026-05-19",
+      "type": "buy",
+      "amount": 1750.0,
+      "nav": 3.1222,
+      "shares": 560.5,
+      "locked": true
+    },
+    {
+      "name": "国泰A股电网设备ETF联接C",
+      "account": "我的",
+      "date": "2026-07-20",
+      "type": "sell",
+      "amount": 1433.38,
+      "nav": 2.5573,
+      "shares": 560.5,
+      "fee": 0,
+      "locked": true
+    },
+    {
+      "name": "大成睿景灵活配置混合C",
+      "account": "我的",
+      "date": "2026-03-06",
+      "type": "buy",
+      "amount": 1700.0,
+      "nav": 5.8407,
+      "shares": 291.06,
+      "locked": true
+    },
+    {
+      "name": "大成睿景灵活配置混合C",
+      "account": "我的",
+      "date": "2026-06-11",
+      "type": "sell",
+      "amount": 1433.1,
+      "nav": 4.9237,
+      "shares": 291.06,
+      "fee": 0,
+      "locked": true
+    },
+    {
+      "name": "交银施罗德中证海外中国互联网指数(QDII-LOF)C",
+      "account": "我的",
+      "date": "2026-01-23",
+      "type": "buy",
+      "amount": 6400.0,
+      "nav": 2.1115,
+      "shares": 3031.07,
+      "locked": true
+    },
+    {
+      "name": "交银施罗德中证海外中国互联网指数(QDII-LOF)C",
+      "account": "我的",
+      "date": "2026-05-28",
+      "type": "sell",
+      "amount": 5403.03,
+      "nav": 1.7825,
+      "shares": 3031.07,
+      "fee": 0,
+      "locked": true
+    },
+    {
+      "name": "东方人工智能主题混合C",
+      "account": "我的",
+      "date": "2026-07-21",
+      "type": "buy",
+      "amount": 3010.33,
+      "nav": 14.0992,
+      "shares": 213.51,
+      "locked": true
+    },
+    {
+      "name": "东方人工智能主题混合C",
+      "account": "我的",
+      "date": "2026-07-21",
+      "type": "sell",
+      "amount": 2398.46,
+      "nav": 11.2335,
+      "shares": 213.51,
+      "fee": 0,
+      "locked": true
     }
   ],
   "navCache": {}

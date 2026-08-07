@@ -66,7 +66,7 @@ function ensureECharts(cb){
     --up:#f6465d; --down:#0ecb81; --danger:#ff5d6c; --warn:#e0a83b;
     --up-bg:rgba(246,70,93,.15); --down-bg:rgba(14,203,129,.15); --warn-bg:rgba(224,168,59,.12); --good-bg:rgba(14,203,129,.12); --danger-bg:rgba(255,93,108,.12);
     --axis:#31405c; --grid:rgba(255,255,255,.06); --shadow:0 6px 22px rgba(0,0,0,.5);
-  }* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; line-height: 1.55; }.wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 80px; }h1 { font-size: 18px; margin: 0 0 2px; font-weight: 600; }.sub { color: var(--text-3); font-size: 14px; margin: 0; }.card { background:var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }.card h2 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }.cards4 { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 10px; }.mcard { background: var(--surface-2); border-radius: 10px; padding: 12px; }.mcard .lbl { font-size: 12px; color: var(--text-3); margin: 0 0 5px; }.mcard .val { font-size: 18px; font-weight: 600; margin: 0; }:root { --ov-up:#c0696b; --ov-down:#4f9d86; --ov-accent:#aeb7c2; --ov-warn:#c9a86a; }.ov-wrap { display:flex; flex-direction:column; gap:14px; }.ov-hero { background:linear-gradient(135deg,#eef3fb 0%,#f7f9fc 100%); border:1px solid #e3e9f3; border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.05); padding:22px 26px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; }.ov-hero-left { display:flex; flex-direction:column; gap:6px; min-width:0; }.ov-hero-label { font-size: 14px; color:var(--text-3); }.ov-hero-label .eye-inline { border:none; background:transparent; cursor:pointer; font-size: 14px; padding:0 2px; }.ov-hero-value { font-size: 42px; font-weight:700; letter-spacing:-.5px; line-height:1.05; font-variant-numeric:tabular-nums; }.ov-hero-sub { font-size: 14px; color:var(--text-3); }.ov-hero-right { display:flex; flex-direction:column; gap:7px; text-align:right; font-size: 14px; color:var(--text-3); }.ov-hero-right b { font-size: 18px; font-weight:700; margin-left:6px; font-variant-numeric:tabular-nums; }.ov-pos { color:var(--ov-up); }.ov-neg { color:var(--ov-down); }.ov-zero { color:var(--text-3); }.ov-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }.ov-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.045); padding:14px 16px; display:flex; flex-direction:column; gap:9px; min-width:0; }.ov-head { display:flex; align-items:center; gap:6px; color:var(--text-3); font-size: 14px; }.ov-head svg { width:16px; height:16px; color:var(--ov-accent); flex:none; }.ov-val { font-size: 24px; font-weight:700; letter-spacing:-.3px; white-space:nowrap; font-variant-numeric:tabular-nums; }.ov-sub { font-size: 14px; color:var(--text-3); }.ov-sub.warn { color:var(--ov-warn); font-weight:600; }.ov-bar { height:8px; border-radius:6px; background:#eef0f3; overflow:hidden; display:flex; }.ov-bar > span { display:block; height:100%; }.ov-bar-pos { background:var(--ov-up); }.ov-bar-neg { background:var(--ov-down); }.ov-bar-c { background:#7c93c9; }.ov-trend { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.045); padding:14px 16px; display:flex; flex-direction:column; gap:9px; }.ov-trend-head { display:flex; align-items:center; gap:6px; color:var(--text-3); font-size: 14px; }.ov-trend-head svg { width:16px; height:16px; color:var(--ov-accent); }.ov-legend { margin-left:auto; display:flex; gap:14px; font-size: 14px; color:var(--text-3); }.ov-legend i { display:inline-block; width:14px; height:0; border-top:2px solid; margin-right:5px; vertical-align:middle; }.ov-legend .l-mkt i { border-color:#7c93c9; }.ov-legend .l-pri i { border-color:var(--text-3); border-top-style:dashed; }.ov-spark { width:100%; height:170px; display:block; }.ov-empty-trend { display:flex; flex-direction:column; gap:8px; padding:18px 0; text-align:center; }.ov-empty-trend-title { font-size: 14px; font-weight:600; color:var(--text-2); }.ov-empty-trend-sub { font-size: 14px; color:var(--text-3); line-height:1.6; }@media (max-width:680px) { .ov-grid { grid-template-columns:repeat(2,1fr); }.ov-hero-value { font-size: 34px; }  }
+  }* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; line-height: 1.55; }.wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 80px; }h1 { font-size: 18px; margin: 0 0 2px; font-weight: 600; }.sub { color: var(--text-3); font-size: 14px; margin: 0; }.card { background:var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }.card h2 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }.cards4 { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 10px; }.mcard { background: var(--surface-2); border-radius: 10px; padding: 12px; }.mcard .lbl { font-size: 12px; color: var(--text-3); margin: 0 0 5px; }.mcard .val { font-size: 18px; font-weight: 600; margin: 0; }:root { --ov-up:#c0696b; --ov-down:#4f9d86; --ov-accent:#aeb7c2; --ov-warn:#c9a86a; }.ov-wrap { display:flex; flex-direction:column; gap:14px; }.ov-hero { background:linear-gradient(135deg,var(--surface-2) 0%,var(--surface-3) 100%); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:22px 22px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; }.ov-hero-left { display:flex; flex-direction:column; gap:6px; min-width:0; }.ov-hero-label { font-size: 14px; color:var(--text-3); }.ov-hero-label .eye-inline { border:none; background:transparent; cursor:pointer; font-size: 14px; padding:0 2px; }.ov-hero-value { font-size: 42px; font-weight:700; letter-spacing:-.5px; line-height:1.05; font-variant-numeric:tabular-nums; color:var(--text); }.ov-hero-sub { font-size: 14px; color:var(--text-3); }.ov-hero-right { display:flex; flex-direction:column; gap:7px; text-align:right; font-size: 14px; color:var(--text-3); }.ov-hero-right b { font-size: 18px; font-weight:700; margin-left:6px; font-variant-numeric:tabular-nums; }.ov-pos { color:var(--ov-up); }.ov-neg { color:var(--ov-down); }.ov-zero { color:var(--text-3); }.ov-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }.ov-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.045); padding:14px 16px; display:flex; flex-direction:column; gap:9px; min-width:0; }.ov-head { display:flex; align-items:center; gap:6px; color:var(--text-3); font-size: 14px; }.ov-head svg { width:16px; height:16px; color:var(--ov-accent); flex:none; }.ov-val { font-size: 24px; font-weight:700; letter-spacing:-.3px; white-space:nowrap; font-variant-numeric:tabular-nums; }.ov-sub { font-size: 14px; color:var(--text-3); }.ov-sub.warn { color:var(--ov-warn); font-weight:600; }.ov-bar { height:8px; border-radius:6px; background:#eef0f3; overflow:hidden; display:flex; }.ov-bar > span { display:block; height:100%; }.ov-bar-pos { background:var(--ov-up); }.ov-bar-neg { background:var(--ov-down); }.ov-bar-c { background:#7c93c9; }.ov-trend { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 1px 3px rgba(20,30,50,.045); padding:14px 16px; display:flex; flex-direction:column; gap:9px; }.ov-trend-head { display:flex; align-items:center; gap:6px; color:var(--text-3); font-size: 14px; }.ov-trend-head svg { width:16px; height:16px; color:var(--ov-accent); }.ov-legend { margin-left:auto; display:flex; gap:14px; font-size: 14px; color:var(--text-3); }.ov-legend i { display:inline-block; width:14px; height:0; border-top:2px solid; margin-right:5px; vertical-align:middle; }.ov-legend .l-mkt i { border-color:#7c93c9; }.ov-legend .l-pri i { border-color:var(--text-3); border-top-style:dashed; }.ov-spark { width:100%; height:170px; display:block; }.ov-empty-trend { display:flex; flex-direction:column; gap:8px; padding:18px 0; text-align:center; }.ov-empty-trend-title { font-size: 14px; font-weight:600; color:var(--text-2); }.ov-empty-trend-sub { font-size: 14px; color:var(--text-3); line-height:1.6; }@media (max-width:680px) { .ov-grid { grid-template-columns:repeat(2,1fr); }.ov-hero-value { font-size: 34px; }  }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }table { width: 100%; border-collapse: collapse; font-size: 14px; }th, td { padding: 7px 7px; text-align: left; border-bottom: 1px solid var(--border-2); }th { color: var(--text-3); font-weight: 500; font-size: 12px; }td input { width: 100%; border: none; background: transparent; font-size: 16px; font-family: inherit; padding: 2px 0; color: var(--text); }td input:focus { outline: none; }.num { text-align: right; font-variant-numeric: tabular-nums; }.pos { color: var(--up); }.neg { color: var(--down); }.zero { color: var(--text-3); }/* 按钮 */
   .btn { border: 1px solid var(--border-strong); background:var(--surface); border-radius: 8px; padding: 6px 13px; font-size: 14px; cursor: pointer; font-family: inherit; }.btn-danger { color: var(--up); border-color: var(--up); background: transparent; }@media (hover: hover) { .btn-danger:hover {  background: rgba(226,75,75,.10);  } }
 @media (hover: hover) { .btn:hover {  background: var(--bg);  } }
@@ -82,7 +82,7 @@ function ensureECharts(cb){
   .fab { position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 80; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 28px; line-height: 1; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.22); transition: transform .15s, box-shadow .15s; }@media (hover: hover) { .fab:hover {  transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,.28);  } }@media (max-width: 768px) { .fab { display: none; } }
 .fab:active { transform: translateY(0); }.drawer-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 90; }.drawer { position: fixed; top: 0; right: 0; height: 100%; width: 340px; max-width: 88vw; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 28px rgba(0,0,0,.14); z-index: 95; transform: translateX(100%); transition: transform .22s ease; display: flex; flex-direction: column; }.drawer.open { transform: translateX(0); }.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-2); }.drawer-head h3 { margin: 0; font-size: 15px; }.drawer-x { border: none; background: none; font-size: 18px; cursor: pointer; color: var(--text-2); padding: 4px 8px; border-radius: 6px; }@media (hover: hover) { .drawer-x:hover {  background: var(--bg);  } }
 .drawer-body { padding: 16px 18px; overflow-y: auto; flex: 1; }.drawer-body .fld { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; font-size: 14px; color: var(--text-2); }.drawer-body .fld > span { font-weight: 600; color: var(--text); }.drawer-body .fld input, .drawer-body .fld select { border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 9px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); }.drawer-body .fld input:focus, .drawer-body .fld select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-on); }.drawer-body .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }.fee-hint { grid-column: 1 / -1; font-size: 12px; color: var(--text-3); margin: -8px 0 6px; line-height: 1.4; }.drawer-foot { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border-2); }.drawer-foot .btn { flex: 1; }.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }@media (hover: hover) { .btn.primary:hover {  filter: brightness(1.05);  } }
-.btn.ghost { background: var(--surface-2); color: var(--text-2); border-color: var(--border-strong); }.tl { width: 100%; }/* ===== 债券板块 ===== */
+.btn.ghost { background: var(--surface-2); color: var(--text-2); border-color: var(--border-strong); }.btn.secondary { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; font-weight: 600; }.tl { width: 100%; }/* ===== 债券板块 ===== */
   .sub2 { font-size: 12px; color: var(--text-3); margin: 3px 0 0; }.thermo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }.yield-box { background: var(--surface-3); border: 1px solid var(--border-3); border-radius: 10px; padding: 12px; }.yield-box .lbl { font-size: 12px; color: var(--text-3); }.yield-input { display: flex; align-items: baseline; gap: 4px; margin: 6px 0; }.yield-input input { width: 92px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 8px; font-size: 24px; font-weight: 600; font-family: inherit; color: var(--text); }.yield-input .pct { font-size: 18px; color: var(--text-2); }.thermo-status { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 14px; font-weight: 600; }.ts-low { background: var(--up-bg); color: #d23b3b; }.ts-mid { background: var(--accent-soft); color: var(--accent); }.ts-high { background: var(--warn-bg); color: #b9791a; }.cmp-bar { height: 26px; border-radius: 8px; background: var(--border-3); position: relative; overflow: hidden; margin: 8px 0 4px; }.cmp-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; }.cmp-bar .target { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--accent); }.cmp-legend { display: flex; gap: 16px; font-size: 14px; color: var(--text-2); margin-top: 4px; }.cmp-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: 0; }.roadmap { opacity: .72; }.roadmap .rh { display: flex; align-items: center; gap: 8px; }.pill { font-size: 12px; padding: 1px 8px; border-radius: 4px; background: var(--border-3); color: var(--text-3); white-space:nowrap; }.adv-toggle { cursor: pointer; color: var(--accent); font-size: 14px; font-weight: 600; margin-top: 14px; user-select: none; }@media (hover: hover) { .adv-toggle:hover {  text-decoration: underline;  } }
 .loading { font-size: 14px; color: var(--text-3); }.chart-box { position: relative; height: 230px; }.tree-fallback { display: flex; flex-direction: column; gap: 6px; padding: 4px 2px; }.tf-row { position: relative; display: flex; align-items: center; min-height: 22px; }.tf-bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; max-width: 100%; }.tf-cap { position: relative; z-index: 1; font-size: 12px; padding-left: 6px; line-height: 1.3; }.tf-cap b { font-weight: 600; }/* ===== 顶部栏 ===== */
   .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }.topbar .sub { margin-top: 3px; }
@@ -661,7 +661,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
         <button class="btn" onclick="addTradeMenu()">＋ 记一笔交易</button>
       </div>
       <div id="trendSection"></div>
-      <div class="card">
+      <div class="card" id="holdCard">
         <div class="sec-head">
           <h2 style="margin:0;font-size: 14px" id="holdTitle">本人账户持仓</h2>
         </div>
@@ -2064,7 +2064,7 @@ function renderStatusLine(){
   const line=document.getElementById('statusLine'), dot=document.getElementById('statusDot'), text=document.getElementById('statusText');
   const df=localStorage.getItem('ft_lastSyncFail'), ds=localStorage.getItem('ft_lastSync');
   const fail=df && (!ds || (+df)>(+ds));
-  if(fail){
+  if(fail && fundsView && fundsView.length){
     const diff=Math.floor((Date.now()-(+df))/1000);
     const stale=diff<3600?Math.floor(diff/60)+' 分钟':Math.floor(diff/3600)+' 小时+';
     const msg='刷新失败（数据停留 '+stale+'）· 点击重试';
@@ -2194,15 +2194,20 @@ function renderHomeList(){
     return holdSortDir==='asc' ? -cmp : cmp;
   });
   const box=document.getElementById('homeList');
+  // 空账户（无持仓）：隐藏顶部操作按钮 + 筛选器 + 搜索框 + 标题，仅留总资产卡 + 空状态引导
+  const _empty=!fundsView.length;
+  const _ha=document.getElementById('homeActions'); if(_ha) _ha.style.display=_empty?'none':'';
+  const _hc=document.getElementById('holdCard');
+  if(_hc){ const _hd=_hc.querySelector('.sec-head'); if(_hd) _hd.style.display=_empty?'none':''; _hc.querySelectorAll('.filter-row, .hold-search').forEach(el=> el.style.display=_empty?'none':''); }
   if(!list.length){
     if(!fundsView.length){
       box.innerHTML=`<div class="empty-state">
         <div class="es-emoji">📈</div>
         <div class="es-title">还没有任何基金</div>
-        <div class="es-desc">第一步：载入示例数据快速体验，或从「⋯ 更多」记第一笔交易。</div>
+        <div class="es-desc">第一步：载入示例数据快速体验，或从「手动记第一笔」开始建立你的真实账本。</div>
         <div class="es-actions">
-          <button class="btn primary" onclick="loadSample()">载入示例数据</button>
-          <button class="btn" onclick="addTradeMenu()">+ 记第一笔交易</button>
+          <button class="btn secondary" onclick="loadSample()">载入示例数据</button>
+          <button class="btn primary" onclick="addTradeMenu()">＋ 手动记第一笔</button>
         </div>
       </div>`;
     } else {
@@ -5167,12 +5172,29 @@ function openDcaModal(name){
   dcaRenderList();
 }
 function closeDcaModal(){ const m=document.getElementById('dcaMask'); if(m) m.classList.remove('show'); }
+function dcaSetPeriod(p){
+  const wrap=document.getElementById('dcaTimeField');
+  if(!wrap) return;
+  if(p==='day'){
+    wrap.className='field';
+    wrap.innerHTML='<span class="static-time">每个交易日</span>';
+    return;
+  }
+  wrap.className='field has-chevron';
+  if(p==='month'){
+    let opts=''; for(let i=1;i<=28;i++) opts+='<option'+(i===1?' selected':'')+'>'+i+'日</option>';
+    wrap.innerHTML='<select id="dcaDay">'+opts+'</select>';
+  } else {
+    wrap.innerHTML='<select id="dcaWeekday">'+_WD.map(function(w,i){ return '<option'+(i===0?' selected':'')+'>'+w+'</option>'; }).join('')+'</select>';
+  }
+}
 function dcaResetForm(){
   _dcaEditId=null;
   const t=document.getElementById('dcaSheetTitle'); if(t) t.textContent='新增定投计划';
-  ['dcaName','dcaAmount','dcaDay','dcaStart','dcaEnd'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
-  const day=document.getElementById('dcaDay'); if(day) day.value='1';
+  ['dcaName','dcaAmount','dcaStart','dcaEnd'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
   const acc=document.getElementById('dcaAcc'); if(acc && acc.options.length) acc.selectedIndex=0;
+  const per=document.getElementById('dcaPeriod'); if(per) per.value='month';
+  dcaSetPeriod('month');
 }
 function dcaRenderList(){
   const box=document.getElementById('dcaList'); if(!box) return;
@@ -5180,7 +5202,12 @@ function dcaRenderList(){
   box.innerHTML=dcaPlans.map(function(p){
     const booked=dcaBookedCount(p);
     const periods=dcaPeriods(p, new Date().getFullYear()+'-'+pad2(new Date().getMonth()+1)+'-'+pad2(new Date().getDate()));
-    const due=periods.filter(function(per){ return !dcaIsBooked(p, per.ym); }).length;
+    const due=periods.filter(function(per){ return !dcaIsBooked(p, per.periodKey); }).length;
+    const _per=p.period||'month';
+    const freq = _per==='month' ? ('每月 '+escHtml(String(p.day||1))+' 号')
+               : _per==='week' ? ('每周 '+wdName(p.weekday||1))
+               : _per==='biweek' ? ('每两周 '+wdName(p.weekday||1))
+               : '每个交易日';
     const status=p.paused?'<span class="tag tag-cur">已暂停</span>':(due?'<span class="tag tag-attr">待记账 '+due+' 期</span>':'<span class="tag">进行中</span>');
     return '<div class="dca-card'+(p.paused?' dca-paused':'')+'">'
       +'<div class="dca-card-top"><span class="dca-card-name">'+escHtml(p.name)+'</span>'+status
@@ -5189,7 +5216,7 @@ function dcaRenderList(){
       +'<button class="btn sm" onclick="dcaToggle(\''+escHtml(p.id)+'\')">'+(p.paused?'恢复':'暂停')+'</button>'
       +'<button class="btn sm danger-text" onclick="dcaDelete(\''+escHtml(p.id)+'\')">删除</button>'
       +'</div></div>'
-      +'<div class="dca-card-meta">账户：'+(p.account||effAccount('本人账户'))+' · 每月 '+escHtml(String(p.day||1))+' 号投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期。</div>'
+      +'<div class="dca-card-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期。</div>'
       +'</div>';
   }).join('');
 }
@@ -5198,8 +5225,11 @@ function dcaEdit(id){
   _dcaEditId=id;
   const t=document.getElementById('dcaSheetTitle'); if(t) t.textContent='编辑定投计划';
   const setV=function(i,v){ const el=document.getElementById(i); if(el) el.value=v; };
-  setV('dcaName',p.name); setV('dcaAmount',p.amount); setV('dcaDay',p.day); setV('dcaStart',p.start); setV('dcaEnd',p.end||'');
+  setV('dcaName',p.name); setV('dcaAmount',p.amount); setV('dcaStart',p.start); setV('dcaEnd',p.end||'');
   const acc=document.getElementById('dcaAcc'); if(acc){ let ok=false; Array.prototype.forEach.call(acc.options,function(o){ if(o.value===p.account){ o.selected=true; ok=true; } }); if(!ok && acc.options.length){ acc.selectedIndex=0; } }
+  const per=document.getElementById('dcaPeriod'); if(per){ per.value=p.period||'month'; dcaSetPeriod(per.value); }
+  if(p.period==='month'){ const d=document.getElementById('dcaDay'); if(d) d.value=p.day||1; }
+  else if(p.period==='week'||p.period==='biweek'){ const w=document.getElementById('dcaWeekday'); if(w){ const idx=(((p.weekday||1)-1)%7+7)%7; if(w.options[idx]) w.selectedIndex=idx; } }
 }
 function dcaToggle(id){
   const p=dcaPlans.find(x=>x.id===id); if(!p) return;
@@ -5214,20 +5244,26 @@ function dcaDelete(id){
 function dcaSave(){
   const name=(document.getElementById('dcaName')||{}).value||'';
   const amount=parseFloat((document.getElementById('dcaAmount')||{}).value||'0');
-  const dayRaw=parseInt((document.getElementById('dcaDay')||{}).value||'1',10);
   const start=(document.getElementById('dcaStart')||{}).value||'';
   const end=(document.getElementById('dcaEnd')||{}).value||'';
   const acc=(document.getElementById('dcaAcc')||{}).value||effAccount('本人账户');
+  const period=(document.getElementById('dcaPeriod')||{}).value||'month';
+  let day=1, weekday=1;
+  if(period==='month'){
+    day=parseInt((document.getElementById('dcaDay')||{}).value||'1',10);
+    if(!(day>=1 && day<=28)){ toast('每月几号请填 1~28'); return; }
+  } else if(period==='week'||period==='biweek'){
+    weekday=wdIndex((document.getElementById('dcaWeekday')||{}).value||'周一');
+  }
   if(!name.trim()){ toast('请填写基金名称'); return; }
-  if(!(amount>0)){ toast('请填写有效的每月金额'); return; }
-  if(!(dayRaw>=1 && dayRaw<=28)){ toast('每月几号请填 1~28'); return; }
+  if(!(amount>0)){ toast('请填写有效的单期金额'); return; }
   if(!start){ toast('请选择起始月份'); return; }
   if(end && end<start){ toast('结束月份不能早于起始月份'); return; }
   if(_dcaEditId){
     const p=dcaPlans.find(x=>x.id===_dcaEditId);
-    if(p){ p.name=name.trim(); p.account=acc; p.amount=amount; p.day=dayRaw; p.start=start; p.end=end||null; }
+    if(p){ p.name=name.trim(); p.account=acc; p.amount=amount; p.period=period; p.day=day; p.weekday=weekday; p.start=start; p.end=end||null; }
   }else{
-    dcaPlans.push({ id:genId('dca'), name:name.trim(), account:acc, amount:amount, day:dayRaw, start:start, end:end||null, paused:false, createdAt:new Date().toISOString() });
+    dcaPlans.push({ id:genId('dca'), name:name.trim(), account:acc, amount:amount, period:period, day:day, weekday:weekday, start:start, end:end||null, paused:false, createdAt:new Date().toISOString() });
   }
   silentSave(); dcaResetForm(); dcaRenderList();
   toast('已保存，将在下次刷新时自动记账');
@@ -6392,13 +6428,28 @@ function renderSyncCfg(){
       <div class="dca-section-header">扣款规则</div>
       <div class="dca-group">
         <div class="dca-row">
-          <span class="label">每月金额</span>
-          <div class="field"><input id="dcaAmount" type="number" min="0" step="0.01" placeholder="0.00" style="text-align:right"></div>
+          <span class="label">定投周期</span>
+          <div class="field has-chevron">
+            <select id="dcaPeriod" onchange="dcaSetPeriod(this.value)">
+              <option value="month">按月</option>
+              <option value="week">按周</option>
+              <option value="biweek">每两周</option>
+              <option value="day">按日</option>
+            </select>
+          </div>
         </div>
         <div class="dca-row">
-          <span class="label">扣款日期</span>
-          <div class="field"><input id="dcaDay" type="number" min="1" max="28" step="1" value="1" style="text-align:right"></div>
+          <span class="label">单期金额</span>
+          <div class="field"><input id="dcaAmount" type="number" min="0" step="0.01" placeholder="0.00" style="text-align:right"></div>
         </div>
+        <div class="dca-row" style="border-bottom:none">
+          <span class="label">扣款时间</span>
+          <div class="field has-chevron" id="dcaTimeField"></div>
+        </div>
+      </div>
+
+      <div class="dca-section-header">周期区间</div>
+      <div class="dca-group">
         <div class="dca-row">
           <span class="label">起始月份</span>
           <div class="field"><input id="dcaStart" type="month" value="" style="text-align:right"></div>
@@ -6412,8 +6463,8 @@ function renderSyncCfg(){
       <button class="dca-save-btn" onclick="dcaSave()">保存定投计划</button>
 
       <div class="dca-footer">
-        刷新净值时将用对应月份真实历史净值自动补记买入；<br>
-        拉不到当月净值的月份会顺延补记，手动删除的记录不会复活。
+        刷新净值时将用对应周期真实历史净值自动补记买入；<br>
+        拉不到净值的期次会顺延补记，手动删除的记录不会复活。
       </div>
     </div>
   </div>

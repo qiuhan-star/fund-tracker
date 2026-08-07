@@ -965,11 +965,22 @@ function addAccount(){
 }
 function removeAccount(name){
   if(accIsBuiltin(name)){ toast('内置账户不可删除（可在设置里重命名）'); return; }
-  if(!window.confirm('删除账户「'+name+'」？\n仅移除该账户标签，已存在的交易记录仍保留（显示为原账户名）。')) return;
+  const inCustom = CUSTOM_ACCOUNTS.indexOf(name)>=0;
+  const msg = inCustom
+    ? '删除账户「'+name+'」？\n仅移除该账户标签，已存在的交易记录仍保留（显示为原账户名）。'
+    : '删除账户「'+name+'」？\n将移除该账户下的示例数据（真实持仓不受影响）。';
+  if(!window.confirm(msg)) return;
   CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.filter(a=>a!==name);
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
+  // 不在自定义列表的纯数据账户（如「示例账户」）：移除其名下示例数据，账户才能真正消失
+  if(!inCustom){
+    snaps=(snaps||[]).filter(s=>!(s&&s.account===name));
+    trades=(trades||[]).filter(t=>!(t&&accOf(t)===name));
+    silentSave();
+  }
   loadCustomAccounts();
   if(scopeAcc===name) setScopeAcc(firstPersonalAccount()); else { renderScopeBar(); compute(); }
+  try{ refreshSampleBanner(); }catch(e){}
   toast('已删除账户「'+name+'」');
 }
 function renameAccount(oldName){

@@ -946,7 +946,7 @@ function renderScopeBar(){
   list.forEach(a=>{
     const bi=accIsBuiltin(a);
     html+='<button data-acc="'+escAttr(a)+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(this.dataset.acc)">'+escHtml(a)+cntSpan(cntOf(a));
-    if(!bi) html+='<span class="acc-x" onclick="event.stopPropagation();removeAccount(this.dataset.acc)" title="删除账户">×</span>';
+    if(!bi) html+='<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span>';
     html+='</button>';
   });
   html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(this.dataset.acc)">全量'+cntSpan(cntOf('all'))+'</button>';

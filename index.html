@@ -6455,13 +6455,15 @@ function calcWatchBuy(){
   const catSum={}; _allHoldings.forEach(function(f){ const c=f.cat||guessCat(f.name); catSum[c]=(catSum[c]||0)+(f.mv||0); });
   const bondSum={}; getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ const t=bondTypeOf(f); bondSum[t]=(bondSum[t]||0)+bondAmt(f); });
   const rows=[];
-  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const after=Math.round((catSum[c]+sug)/total*1000)/10; rows.push({name:x.name,type:'基金',cat:c,sug:sug,after:after}); });
-  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const after=Math.round((bondSum[t]+sug)/total*1000)/10; rows.push({name:f.name,type:f.mix?'混合':(f.type||'纯债'),cat:t,sug:sug,after:after}); });
+  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const after=((catSum[c]||0)+sug)/total; rows.push({name:x.name,type:'基金',cat:c,sug:sug,after:after}); });
+  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const after=((bondSum[t]||0)+sug)/total; rows.push({name:f.name,type:f.mix?'混合':(f.type||'纯债'),cat:t,sug:sug,after:after}); });
   if(!rows.length){ body.innerHTML='<tr><td colspan="5" class="sub2">暂无自选可测算</td></tr>'; return; }
   body.innerHTML=rows.map(function(r){
-    const flag=r.after>30?'<span class="tag warn" style="background:#fdeceb;color:#d8453a;border:1px solid #f6c9c4">该类占比过高</span>'
-      :(r.type==='纯债'||r.type==='混合'?'<span class="tag">防御仓·控比例</span>':'<span class="tag">ok</span>');
-    return '<tr><td>'+escHtml(r.name)+'</td><td>'+r.type+'</td><td><b>¥'+r.sug.toLocaleString()+'</b></td><td>'+r.after+'%</td><td>'+flag+'</td></tr>';
+    const pctStr=isFinite(r.after)?(r.after*100).toFixed(1)+'%':'—%';
+    const flag=!isFinite(r.after)?'<span class="tag">数据不足</span>'
+      :(r.after*100>30?'<span class="tag warn" style="background:#fdeceb;color:#d8453a;border:1px solid #f6c9c4">该类占比过高</span>'
+      :(r.type==='纯债'||r.type==='混合'?'<span class="tag">防御仓·控比例</span>':'<span class="tag">ok</span>'));
+    return '<tr><td>'+escHtml(r.name)+'</td><td>'+r.type+'</td><td><b>¥'+r.sug.toLocaleString()+'</b></td><td>'+pctStr+'</td><td>'+flag+'</td></tr>';
   }).join('');
 }
 

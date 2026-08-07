@@ -473,7 +473,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 @media (max-width: 768px) {
   /* 1. 容器与字号优化：提升基本可读性 */
   .wrap { 
-    padding: 12px 10px calc(100px + env(safe-area-inset-bottom)) !important; /* 底部留足空间给 FAB 按钮 + 安全区 */
+    padding: calc(12px + env(safe-area-inset-top)) 10px calc(100px + env(safe-area-inset-bottom)) !important; /* 顶部安全区 + 底部 FAB 按钮空间 */
   }
   
   body { 
@@ -658,6 +658,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .ov-hero-meta > div { display: flex; flex-direction: column; gap: 2px; }
   .ov-hero-meta .lab { font-size: 12px; color: var(--text-3); }
   .ov-hero-meta .val { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* 资产总览 4 张指标卡：在普通 Safari 网页模式（非 sm-mobile-home）也强制 2x2，防止右侧抛空 */
+  .ov-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
 
   /* 账户切换栏：空间不足时整行换行，不溢出；移动端隐藏「·N」计数（纯装饰，减负） */
   .scope-seg { max-width: 100%; }
@@ -2257,9 +2260,19 @@ function renderStatusLine(){
   const line=document.getElementById('statusLine'), dot=document.getElementById('statusDot'), text=document.getElementById('statusText');
   const df=localStorage.getItem('ft_lastSyncFail'), ds=localStorage.getItem('ft_lastSync');
   const fail=df && (!ds || (+df)>(+ds));
-  if(fail && fundsView && fundsView.length){
-    const diff=Math.floor((Date.now()-(+df))/1000);
-    const stale=diff<3600?Math.floor(diff/60)+' 分钟':Math.floor(diff/3600)+' 小时+';
+  const now=Date.now();
+  const dataFresh=ds && (now-(+ds)<5*60*1000);
+  if(fail && fundsView && fundsView.length && !dataFresh){
+    const diff=Math.floor((now-(+df))/1000);
+    // 失败 90 秒内视为瞬时抖动，不弹红色失败条；兜底显示普通“刚刚”
+    if(diff<90){
+      if(fb){ fb.style.display='inline-block'; fb.className='fresh-badge fr-warn'; fb.textContent='🟡 刚刚'; }
+      if(line){ line.className='status-line'; }
+      if(text){ text.textContent='数据刚刚更新'; }
+      if(dot){ dot.style.display='inline-block'; dot.className='dot closed'; }
+      return;
+    }
+    const stale=diff<60?'刚刚':diff<3600?Math.floor(diff/60)+' 分钟':Math.floor(diff/3600)+' 小时+';
     const msg='刷新失败（数据停留 '+stale+'）· 点击重试';
     if(u){ u.className='fr-fail-text'; u.textContent='刷新失败 · 数据停留 '+stale; }
     if(fb){ fb.style.display='inline-block'; fb.className='fresh-badge fr-fail'; fb.textContent='🔴 刷新失败'; }

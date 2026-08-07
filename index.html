@@ -1094,25 +1094,38 @@ function migrate(raw){
 const BK=['ft_backup_1','ft_backup_2','ft_backup_3']; // _1=最新；环形保留最近 3 份
 function _sig(arr,keys){ return (arr||[]).map(o=>keys.map(k=>o[k]).join(':')).sort().join('|'); }
 function isSampleData(obj){ try{ const a=_sig(SAMPLE_SNAP,['name','amount'])+'##'+_sig(SAMPLE_TRADE,['name','date','amount']); const b=_sig(obj.snaps,['name','amount'])+'##'+_sig(obj.trades,['name','date','amount']); return a===b; }catch(e){ return false; } }
+const SAMPLE_NAMES=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;})));
 function backupData(){
   try{
     const cur=localStorage.getItem('ft_data');
     if(!cur) return;
     let obj=null; try{ obj=JSON.parse(cur); }catch(e){}
-    if(obj && isSampleData(obj)) return; // 当前即示例数据，无需备份
+    if(!obj) return;
+    // 备份前剥离示例/演示数据：备份只保存真实账本，避免日后恢复把演示基金带回
+    if(Array.isArray(obj.snaps)) obj.snaps=obj.snaps.filter(function(s){return !SAMPLE_NAMES.has(s.name);});
+    if(Array.isArray(obj.trades)) obj.trades=obj.trades.filter(function(t){return !SAMPLE_NAMES.has(t.name);});
+    if((obj.snaps||[]).length===0 && (obj.trades||[]).length===0) return; // 纯示例或无数据，无需备份
     const b1=localStorage.getItem(BK[0]), b2=localStorage.getItem(BK[1]);
     if(b2) localStorage.setItem(BK[2], b2);
     if(b1) localStorage.setItem(BK[1], b1);
-    localStorage.setItem(BK[0], cur);
+    localStorage.setItem(BK[0], JSON.stringify(obj));
   }catch(e){ console.error('备份失败', e); }
 }
 function findValidBackup(){
+  let fallback=null;
   for(const k of BK){
     const raw=localStorage.getItem(k);
     if(!raw) continue;
-    try{ const d=JSON.parse(raw); if(d && (Array.isArray(d.snaps)||Array.isArray(d.trades))) return raw; }catch(e){}
+    try{
+      const d=JSON.parse(raw);
+      if(d && (Array.isArray(d.snaps)||Array.isArray(d.trades))){
+        const real=(d.snaps||[]).filter(function(s){return !SAMPLE_NAMES.has(s.name);}).length+(d.trades||[]).filter(function(t){return !SAMPLE_NAMES.has(t.name);}).length;
+        if(real>0) return raw;       // 优先返回含真实数据的备份
+        if(!fallback) fallback=raw;   // 纯示例的留作兜底
+      }
+    }catch(e){}
   }
-  return null;
+  return fallback;
 }
 function backupMeta(raw){
   try{ const d=JSON.parse(raw); return d.updatedAt?String(d.updatedAt).replace('T',' ').slice(0,16):'(未知时间)'; }catch(e){ return '(未知时间)'; }
@@ -1138,10 +1151,14 @@ function showRestoreModal(bk, done){
   if(ok) ok.onclick=function(){
     try{
       const migrated=migrate(JSON.parse(bk));
+      // 恢复时再剥离一层示例/演示，双保险：绝不让演示基金混回真实账本
+      if(Array.isArray(migrated.snaps)) migrated.snaps=migrated.snaps.filter(function(s){return !SAMPLE_NAMES.has(s.name);});
+      if(Array.isArray(migrated.trades)) migrated.trades=migrated.trades.filter(function(t){return !SAMPLE_NAMES.has(t.name);});
       snaps=migrated.snaps; trades=migrated.trades; navCache=migrated.navCache; dailySnapshots=normDailySnap(migrated.daily_snapshots); dcaPlans=migrated.dcaPlans||[];
       try{ localStorage.setItem('ft_data',JSON.stringify(migrated)); }catch(e){}
       loaded=true;
-      setTimeout(function(){ toast('已从历史备份恢复数据'); },400);
+      const n=(migrated.snaps||[]).length+(migrated.trades||[]).length;
+      setTimeout(function(){ toast(n>0?'已从历史备份恢复数据':'备份中无真实数据，已恢复为空白账本'); },400);
     }catch(e){}
     close(); done();
   };

@@ -6907,6 +6907,8 @@ function showOcrCandidates(codes){
   };
 }
 
+function markHint(html){ return html.replace('class="wrow"','class="wrow hint"'); }
+
 function renderWatchTab(){
   const bc=document.getElementById('tp3'); if(!bc) return;
   loadBond();
@@ -6918,10 +6920,10 @@ function renderWatchTab(){
   const items=[];
   fWatch.forEach(function(x){
     const held=_allHoldings.find(function(f){ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
-    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', typeLabel:'<span class="pool-f">基金</span>', quoteCode:x.code||'', y1:'—', status:(held?'<span class="tag">已持有</span>':'<span class="tag">未持仓</span>'), grp:x.grp||'', key:x.name});
+    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name});
   });
   bWatch.forEach(function(f){
-    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', typeLabel:(f.mix?'<span class="pool-m">混合</span>':'<span class="pool-b">纯债</span>'), quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), status:'<span class="tag">自选</span>', grp:f.grp||'', key:f.code});
+    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code});
   });
 
   // 是否买：债券部分复用 bondAnalysis；基金侧按分类查同类重复
@@ -6935,9 +6937,67 @@ function renderWatchTab(){
   // 买多少：默认总市值
   let total=0; _allHoldings.forEach(function(f){ total+=(f.mv||0); }); getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ total+=bondAmt(f); });
 
-  const STYLE='<style>.wt-tbl{width:100%;border-collapse:collapse;font-size: 14px}.wt-tbl th,.wt-tbl td{border-bottom:1px solid var(--border-2);padding:8px 7px;text-align:left;vertical-align:top}.wt-tbl th{color:var(--text-3);font-weight:600;white-space:nowrap;font-size: 12px}.wt-tbl td:nth-child(1){max-width:140px;min-width:0}.wt-tbl td:nth-child(1) b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size: 14px;line-height:1.3}.wt-tbl td:nth-child(1) .hint{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size: 12px}.wt-tbl td:nth-child(3){white-space:nowrap;font-size: 14px;width:40px}@media(max-width:560px){.wt-tbl{font-size: 14px}.wt-tbl th,.wt-tbl td{padding:6px 4px}.wt-tbl td:nth-child(1){max-width:90px}.wt-tbl td:nth-child(1) b{font-size: 12px}.wt-tbl th:nth-child(5),.wt-tbl td:nth-child(5),.wt-tbl th:nth-child(6),.wt-tbl td:nth-child(6),.wt-tbl th:nth-child(7),.wt-tbl td:nth-child(7){display:none}.wt-tbl td:nth-child(8){padding:4px 3px}.wt-tbl td:nth-child(8) .btn{padding:4px 7px;font-size: 12px;white-space:nowrap}.wt-grp{width:70px;padding:4px 5px;font-size: 12px}}</style>';
+  const STYLE='<style>'
+    +'.wt{max-width:600px;margin:0 auto;padding:0 0 90px}'
+    +'.wt-search{display:flex;align-items:center;gap:8px;padding:11px 18px;background:var(--surface-2);border-radius:12px;margin:6px 14px 0}'
+    +'.wt-search .lens{color:var(--text-3);font-size:14px;line-height:1;display:inline-flex;width:16px;flex:0 0 16px;align-items:center;justify-content:center}'
+    +'.wt-search input{flex:1;border:0;background:transparent;outline:0;font-size:15px;color:var(--text);min-width:0}'
+    +'.wt-search input::placeholder{color:var(--text-3)}'
+    +'.wt-search .cam{color:var(--accent);font-size:14px;font-weight:600;white-space:nowrap;margin-left:8px;padding-left:10px;border-left:1px solid var(--border-2)}'
+    +'.wt .sec-cap{display:flex;align-items:baseline;gap:8px;padding:18px 16px 8px;font-size:20px;font-weight:700;color:var(--text)}'
+    +'.wt .sec-cap .count{font-size:14px;font-weight:500;color:var(--text-3)}'
+    +'.wt .sec-cap .more{margin-left:auto;font-size:14px;font-weight:600;color:var(--accent)}'
+    +'.wt .sec-cap .tag-ok{font-size:11px;font-weight:600;color:#2f9e58;background:#eafaf0;border:1px solid #cdeeda;border-radius:99px;padding:2px 9px;margin-left:auto}'
+    +'.wt .sec-cap .info-trigger{margin-left:auto;flex:0 0 18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--text-3);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}'
+    +'.wt .card{background:var(--surface);border-radius:14px;overflow:hidden;margin:0 14px 14px;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}'
+    +'.wt .grp-head{font-size:13px;font-weight:600;color:var(--text-2);padding:14px 16px 6px}'
+    +'.wt-empty{padding:18px 16px;color:var(--text-3);font-size:14px}'
+    +'.wrow{position:relative;overflow:hidden;background:var(--surface)}'
+    +'.wrow:not(:first-child)::after{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--border-2)}'
+    +'.wrow .swipe-inner{position:relative;background:var(--surface);transition:transform .2s;will-change:transform}'
+    +'.wrow .r1{display:flex;align-items:center;gap:8px;padding:12px 16px 0}'
+    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}'
+    +'.wrow .name{font-size:15px;font-weight:600;color:var(--text)}'
+    +'.wrow .code{font-size:12px;color:var(--text-3);margin-left:3px;font-variant-numeric:tabular-nums}'
+    +'.wrow .nav{margin-left:auto;font-size:15px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right}'
+    +'.wrow .r2{display:flex;align-items:baseline;justify-content:space-between;padding:5px 16px 12px;font-size:12px;color:var(--text-3)}'
+    +'.wrow .r2 .acc-tag{color:var(--text-2)}'
+    +'.wrow .r2 .y1{font-variant-numeric:tabular-nums}'
+    +'.wrow .swipe-actions{position:absolute;top:0;right:0;height:100%;display:flex}'
+    +'.wrow .swipe-actions .sa{display:flex;align-items:center;justify-content:center;width:72px;color:#fff;font-size:13px;font-weight:600}'
+    +'.wrow .swipe-actions .sa.act{background:var(--accent)}'
+    +'.wrow .swipe-actions .sa.del{background:var(--up,#d93025)}'
+    +'@keyframes wtSwipeHint{0%,100%{transform:translateX(0)}22%{transform:translateX(-34px)}44%{transform:translateX(0)}}'
+    +'.wrow.hint .swipe-inner{animation:wtSwipeHint 1.7s ease .6s 2}'
+    +'.wt-calc-card{padding:14px 16px}'
+    +'.wt-calc-card .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}'
+    +'.wt-calc-card .calc-cell{background:var(--surface-2);border-radius:12px;padding:11px 13px}'
+    +'.wt-calc-card .calc-cell .lbl{font-size:12px;color:var(--text-3);margin-bottom:3px}'
+    +'.wt-calc-card .calc-cell .ipt{width:100%;border:0;background:transparent;outline:0;font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}'
+    +'.wt-calc-card .calc-sub{display:flex;align-items:baseline;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--text-3)}'
+    +'.wt-calc-card .calc-sub .val{font-size:16px;font-weight:700;color:var(--text-2);font-variant-numeric:tabular-nums}'
+    +'.wt-calc-card .calc-res{margin-top:8px;border-top:1px solid var(--border-2);padding-top:2px}'
+    +'.wt-calc-card .calc-res .line{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-2);font-size:14px}'
+    +'.wt-calc-card .calc-res .line:last-child{border-bottom:0}'
+    +'.wt-calc-card .calc-res .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:54%}'
+    +'.wt-calc-card .calc-res .res{white-space:nowrap;flex:0 0 auto;font-variant-numeric:tabular-nums}'
+    +'.wt-calc-card .calc-res .amt{font-weight:700}'
+    +'.wt-calc-card .calc-res .after{font-size:12px;color:var(--text-3);margin-left:10px}'
+    +'.wt-calc-card .wt-decide{margin-top:14px;border-top:1px solid var(--border-2);padding-top:12px}'
+    +'.wt-calc-card .wt-decide .alert{margin-bottom:8px}'
+    +'.wt .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:50}'
+    +'.wt .overlay.show{display:flex}'
+    +'.wt .sheet{background:var(--surface);border-radius:18px 18px 0 0;padding:18px 20px calc(28px + env(safe-area-inset-bottom));max-width:600px;width:100%;margin:0 auto}'
+    +'.wt .sheet h3{margin:0 0 10px;font-size:17px;font-weight:700}'
+    +'.wt .sheet p{margin:0 0 12px;font-size:13px;color:var(--text-2);line-height:1.6}'
+    +'.wt .sheet .close{margin-top:4px;width:100%;padding:12px;border:0;border-radius:12px;background:var(--surface-2);color:var(--text);font-size:15px;font-weight:600}'
+    +'.wt-menu-btn{display:block;width:100%;padding:15px;border:0;background:var(--surface);color:var(--text);font-size:16px;text-align:center;cursor:pointer;border-bottom:1px solid var(--border-2)}'
+    +'.wt-menu-btn.del{color:var(--up,#d93025)}'
+    +'.wt-menu-btn.cancel{color:var(--text-2);font-weight:600;margin-top:6px;border-bottom:0}'
+  +'</style>';
 
-  // 自选清单表体（平铺 / 按分组）
+  // 自选清单列表 HTML（平铺 / 按分组）
+  const showHint=!localStorage.getItem('ft_watch_swipe_hint');
   let listHtml='';
   if(uwGroupView){
     const groups={};
@@ -6945,38 +7005,83 @@ function renderWatchTab(){
     const names=Object.keys(groups);
     names.sort(function(a,b){ if(a==='未分组') return -1; if(b==='未分组') return 1; return a.localeCompare(b,'zh'); });
     names.forEach(function(g){
-      listHtml+='<tr class="grp-head"><td colspan="8">🗂 '+escHtml(g)+' <span class="hint">('+groups[g].length+')</span></td></tr>';
-      groups[g].forEach(function(it){ listHtml+=uwRow(it); });
+      listHtml+='<div class="grp-head">'+escHtml(g)+' <span class="hint">('+groups[g].length+')</span></div>';
+      listHtml+='<div class="card">'+groups[g].map(function(it,idx){ return (showHint&&idx===0?markHint(uwRow(it)):uwRow(it)); }).join('')+'</div>';
     });
   } else {
-    items.forEach(function(it){ listHtml+=uwRow(it); });
+    listHtml='<div class="card">'+items.map(function(it,idx){ return (showHint&&idx===0?markHint(uwRow(it)):uwRow(it)); }).join('')+'</div>';
   }
-  if(!listHtml) listHtml='<tr><td colspan="8" class="sub2" style="color:#9aa0aa">暂无自选，用上方输入框加，或在持仓页把基金标为自选。</td></tr>';
+  if(!items.length){ listHtml='<div class="card wt-empty">还没有自选。在上方输入代码 / 名称回车加入，或点 📷 截图识别。</div>'; }
 
   bc.innerHTML=STYLE
-    +'<div class="card"><h2>加自选 <span class="hint">（基金 + 债基通用）</span></h2>'
-    +'<div class="wt-addbar"><input id="uwInput" placeholder="输入 6 位代码或名称，如 003376"><button class="btn" onclick="addUnifiedWatch()">加自选</button><button class="btn" onclick="uwPickImage()">📷 截图识别</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"><span class="hint">输代码自动识别基金/债基并拉名称/类型/近1年；名称则加入基金自选</span></div>'
-    +'<p class="hint">说明：基金自选（首页底部区块）+ 债基自选（原资产页债基池）已合并到此；资产页的债基自选池已撤掉。点「📷 截图识别」可上传持仓截图，自动提取 6 位基金代码并加入自选（首次需联网下载识别模型）。</p></div>'
-    +'<div class="card"><div class="wt-addbar" style="justify-content:space-between;margin-bottom:8px"><span><b>自选清单</b> <span class="hint">（未持仓 · 基金 + 债基合并）</span></span><button class="btn sm" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'🗂 按分组')+'</button></div>'
-    +'<datalist id="uwGrps"><option value="想上车"></option><option value="等待中"></option><option value="观察"></option><option value="已定投"></option><option value="其他"></option></datalist>'
-    +'<div class="tbl-wrap"><table class="wt-tbl"><thead><tr><th>基金</th><th>类型</th><th>账户</th><th>最新净值/估算</th><th>近1年</th><th>状态</th><th>分组</th><th></th></tr></thead><tbody>'+listHtml+'</tbody></table></div></div>'
-    +'<div class="card"><h2>是否买 <span class="hint">（买入决策 · 防不知不觉买重）</span></h2>'
-    +'<h3 style="font-size: 14px;margin:10px 0 4px">同质化预警 <span class="hint">（债基持仓 + 债基自选）</span></h3>'+ban.warnHtml
-    +'<h3 style="font-size: 14px;margin:14px 0 4px">基金同类重复 <span class="hint">（基金自选 vs 现有持仓）</span></h3>'+fundWarn
-    +'<h3 style="font-size: 14px;margin:14px 0 4px">决策建议 <span class="hint">（债基持仓 + 债基自选）</span></h3>'+ban.sugHtml
+    +'<div class="wt">'
+    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key==='Enter')addUnifiedWatch()"><span class="cam" onclick="uwPickImage()">📷 截图</span><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
+    +'<div class="sec-cap"><span>自选清单</span><span class="count">('+items.length+')</span><span class="more" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'按分组 ▾')+'</span></div>'
+    + listHtml
+    +'<div class="sec-cap"><span>买入决策 &amp; 仓位测算</span><span class="tag-ok">已测算</span><span class="info-trigger" onclick="openWatchInfo()">ⓘ</span></div>'
+    +'<div class="card wt-calc-card">'
+      +'<div class="calc-grid"><div class="calc-cell"><div class="lbl">预备买入资金（¥）</div><input id="uwCap" class="ipt" type="number" value="5000"></div>'
+        +'<div class="calc-cell"><div class="lbl">单只上限（自动 %）</div><input id="uwPct" class="ipt" type="number" value="15"></div></div>'
+      +'<div class="calc-sub"><span class="lbl">组合当前总市值（¥）· 自动读取</span><span class="val">'+Math.round(total).toLocaleString()+'</span></div>'
+      +'<input id="uwTotal" type="hidden" value="'+Math.round(total)+'">'
+      +'<div class="calc-res" id="wtBuyRes"></div>'
+      +'<div class="wt-decide">'+ban.warnHtml+fundWarn+ban.sugHtml+'</div>'
     +'</div>'
-    +'<div class="card"><h2>买多少 <span class="hint">（仓位测算 · 按账户）</span></h2>'
-    +'<p class="hint">输入预备买入资金与单只上限，按「可用资金 × 上限%」给每只自选一个建议金额，并提示买入后该类占比是否过高。</p>'
-    +'<div class="wt-calc"><div class="wt-field"><label>预备买入资金（¥）</label><input id="uwCap" type="number" value="5000"></div>'
-    +'<div class="wt-field"><label>单只目标上限（%）</label><input id="uwPct" type="number" value="15"></div>'
-    +'<div class="wt-field"><label>组合当前总市值（¥）</label><input id="uwTotal" type="number" value="'+Math.round(total)+'"></div>'
-    +'<div class="wt-field" style="display:flex;align-items:flex-end"><button class="btn" onclick="calcWatchBuy()">测算</button></div></div>'
-    +'<div class="tbl-wrap"><table class="wt-tbl"><thead><tr><th>自选</th><th>类型</th><th>建议买入</th><th>买入后该类占比</th><th>提示</th></tr></thead><tbody id="buyBody"></tbody></table></div>'
-    +'<p class="hint" style="margin-top:8px">模型：债基（防御仓）单只上限建议 ≤10%，基金可到 15%；「买入后该类占比」&gt;30% 标红。实际买入仍由你在 App 记账决定，这里只给参考。</p></div>';
+    +'<div class="overlay" id="wtInfo" onclick="if(event.target===this)closeWatchInfo()"><div class="sheet"><h3>规则说明</h3><p><b>合并说明：</b>基金自选（首页底部区块）+ 债基自选（原资产页债基池）已合并到此；资产页的债基自选池已撤掉。</p><p><b>识别：</b>「📷 截图」可上传持仓截图，自动提取 6 位基金代码并加入自选（首次需联网下载识别模型）。</p><p><b>模型（买多少）：</b>债基（防御仓）单只上限建议 ≤10%，基金可到 15%；「买入后该类占比」&gt;30% 标红。实际买入仍由你在 App 记账决定。</p><button class="close" onclick="closeWatchInfo()">知道了</button></div></div>'
+    +'</div>';
 
   calcWatchBuy();
   fillWatchQuotes();
+  wtAttachSwipe();
 }
+
+function openWatchInfo(){ const o=document.getElementById('wtInfo'); if(o) o.classList.add('show'); }
+function closeWatchInfo(){ const o=document.getElementById('wtInfo'); if(o) o.classList.remove('show'); }
+function closeWtMenu(){ const m=document.getElementById('wtRowMenu'); if(m) m.remove(); }
+
+function wtRowMenu(row){
+  closeWtMenu();
+  const code=row.getAttribute('data-code'); const name=row.getAttribute('data-name'); const isBond=row.getAttribute('data-bond')==='1';
+  const mask=document.createElement('div'); mask.id='wtRowMenu';
+  mask.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;z-index:2000';
+  const sheet=document.createElement('div');
+  sheet.style.cssText='background:var(--surface);width:100%;max-width:600px;margin:0 auto;border-radius:16px 16px 0 0;overflow:hidden';
+  const nameRow='<div style="padding:16px;text-align:center;font-weight:600;border-bottom:1px solid var(--border-2)">'+escHtml(name||code)+'</div>';
+  const actBtns=isBond
+    ? '<button class="wt-menu-btn del" data-code="'+escAttr(code)+'" onclick="delByData(this)">🗑 删除</button>'
+    : '<button class="wt-menu-btn" data-name="'+escAttr(name)+'" onclick="openByData(this)">📝 记账</button><button class="wt-menu-btn del" data-code="'+escAttr(code)+'" data-name="'+escAttr(name)+'" onclick="rmByData(this)">🗑 删除</button>';
+  sheet.innerHTML=nameRow+actBtns+'<button class="wt-menu-btn cancel" onclick="closeWtMenu()">取消</button>';
+  mask.appendChild(sheet); mask.onclick=function(e){ if(e.target===mask) closeWtMenu(); };
+  document.body.appendChild(mask);
+}
+
+function wtAttachSwipe(){
+  const rows=document.querySelectorAll('#tp3 .wrow');
+  rows.forEach(function(row){
+    const inner=row.querySelector('.swipe-inner'); if(!inner) return;
+    let startX=null, cur=0, open=false;
+    row.addEventListener('touchstart',function(e){ startX=e.touches[0].clientX; },{passive:true});
+    row.addEventListener('touchmove',function(e){
+      if(startX==null) return;
+      const dx=e.touches[0].clientX-startX;
+      if(dx<0){ cur=Math.max(-144,dx); inner.style.transition='none'; inner.style.transform='translateX('+cur+'px)'; }
+    },{passive:true});
+    row.addEventListener('touchend',function(){
+      if(cur<-72){ open=true; inner.style.transition='transform .2s'; inner.style.transform='translateX(-144px)'; }
+      else { open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; }
+      startX=null; cur=0;
+    });
+    row.addEventListener('click',function(e){
+      if(e.target.closest('.swipe-actions')) return;
+      if(open){ open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; return; }
+      wtRowMenu(row);
+    });
+  });
+  if(!localStorage.getItem('ft_watch_swipe_hint')){
+    setTimeout(function(){ try{ localStorage.setItem('ft_watch_swipe_hint','1'); }catch(e){} }, 4200);
+  }
+}
+
 
 </script>
 </body>

@@ -649,6 +649,30 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 
 </div>
 
+  <style>
+  /* ===== 详情页底部固定操作栏 ===== */
+  .detail-bar{position:fixed;left:0;right:0;bottom:0;z-index:100;display:none;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -2px 12px rgba(0,0,0,.06);padding-bottom:env(safe-area-inset-bottom)}
+  .detail-bar.show{display:flex}
+  .detail-bar-inner{display:flex;align-items:stretch;height:56px;width:100%}
+  .detail-bar-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--text-2);font-family:inherit;font-size:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s}
+  .detail-bar-item:active{background:var(--surface-2)}
+  .detail-bar-item .ico{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+  .detail-bar-item .ico svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .detail-bar-item.primary{color:var(--accent);font-weight:600}
+  .detail-bar-item.danger{color:var(--up)}
+  #detailContent{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  </style>
+  <div class="detail-bar" id="detailBar">
+    <div class="detail-bar-inner">
+      <button class="detail-bar-item" onclick="detailGoBack()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span><span>返回</span></button>
+      <button class="detail-bar-item" onclick="detailEditHolding()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span><span>修改持仓</span></button>
+      <button class="detail-bar-item" onclick="detailScrollTrades()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span>交易记录</span></button>
+      <button class="detail-bar-item primary" onclick="detailAddWatch()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>添加自选</span></button>
+      <button class="detail-bar-item danger" onclick="detailDelHolding()"><span class="ico"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span><span>删除持有</span></button>
+      <button class="detail-bar-item" onclick="reviewNew()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></span><span>笔记</span></button>
+    </div>
+  </div>
+
   <!-- 交易选择器弹窗 -->
   <div id="tradePicker"></div>
   <div id="allTradesModal"></div>
@@ -3129,11 +3153,11 @@ function route(){
   const m=location.hash.match(/^#\/fund\/(.+)$/);
   if(m){ showDetail(decodeURIComponent(m[1])); } else { showHome(); }
 }
-function showHome(){ currentView='home'; detailName=null; document.getElementById('homeView').style.display='block'; document.getElementById('detailView').style.display='none'; render(); }
+function showHome(){ currentView='home'; detailName=null; document.getElementById('homeView').style.display='block'; document.getElementById('detailView').style.display='none'; var _b=document.getElementById('detailBar'); if(_b)_b.classList.remove('show'); render(); }
 function showDetail(name){
   currentView='detail'; detailName=name;
   detailAcc = pendingAcc || (_allHoldings.find(x=>x.name===name)?.account) || effAccount('本人账户'); pendingAcc=null;
-  document.getElementById('homeView').style.display='none'; document.getElementById('detailView').style.display='block';
+  document.getElementById('homeView').style.display='none'; document.getElementById('detailView').style.display='block'; var _b=document.getElementById('detailBar'); if(_b)_b.classList.add('show');
   const f=findFund(name,detailAcc), c=document.getElementById('detailContent');
   if(!f){ c.innerHTML=`<div class="card"><h2>未找到「${esc(name)}」</h2><p class="hint">可能已删除或数据未加载。点上方「← 返回首页」返回。</p></div>`; return; }
   enterDetail(f);
@@ -3291,6 +3315,38 @@ function renderDetailLive(arg){
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   try{ retroScenarioCards(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
 }
+// ---------- 详情页底部操作栏功能 ----------
+function detailGoBack(){ location.hash='#/'; }
+function detailDelHolding(){ if(detailName) delFundByIndex(encodeURIComponent(detailName)); }
+function detailScrollTrades(){
+  if(!detailName) return;
+  var f=findFund(detailName,detailAcc); if(!f) return;
+  var idx=fundsView.indexOf(f);
+  var tr=document.getElementById('tr-'+idx);
+  if(tr){
+    tr.classList.remove('collapsed');
+    var sec=tr.previousElementSibling; if(sec){ var ch=sec.querySelector('.chev'); if(ch) ch.textContent='▾'; }
+    tr.scrollIntoView({behavior:'smooth', block:'start'});
+  } else { toast('该基金暂无交易流水'); }
+}
+function detailEditHolding(){
+  if(!detailName) return;
+  var f=findFund(detailName,detailAcc); if(!f) return;
+  var card=document.getElementById('genericDetailCard');
+  if(card){ card.scrollIntoView({behavior:'smooth', block:'center'}); var inp=card.querySelector('input'); if(inp) inp.focus(); toast('可在此手动修改市值 / 净值 / 收益率'); return; }
+  var idx=fundsView.indexOf(f);
+  var tr=document.getElementById('tr-'+idx);
+  if(tr){ tr.classList.remove('collapsed'); tr.scrollIntoView({behavior:'smooth', block:'start'}); toast('持仓由交易流水自动计算，可在交易流水里新增 / 修改笔数'); }
+  else { toast('持仓由交易流水自动计算，先记录一笔交易即可修改'); }
+}
+function detailAddWatch(){
+  if(!detailName) return;
+  var a=getAnalysis(detailName); var code=a&&a.code?a.code:null;
+  if(!code){ toast('该基金未记录代码，无法加入自选（可在「＋ 加一只基金」补全代码）'); return; }
+  var w=loadWatch(); if(w.some(function(x){return x.code===code;})){ toast('已在自选中'); return; }
+  addWatch(code, detailName);
+}
+
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=getAnalysis(f.name);
   return `<div class="card detail-head">
@@ -3335,7 +3391,7 @@ function genericDetail(f){
   const mvIn = si>=0 ? `<input data-fld="s-mv-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].mv}" oninput="snaps[${si}].mv=+this.value;compute();silentSave()">` : M(f.mv);
   const retIn = si>=0 ? `<input data-fld="s-ret-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()">` : (f.ret>=0?'+':'')+f.ret.toFixed(2)+'%';
   const navIn = si>=0 ? `<input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()">` : (navVal?mask4(navVal):'自动/未填');
-  let h=`<div class="card"><h2>手动维护（快照）</h2><table class="am-t"><tbody>
+  let h=`<div class="card" id="genericDetailCard"><h2>手动维护（快照）</h2><table class="am-t"><tbody>
     <tr><th>类别</th><td>${f.cat}</td><th>当前市值</th><td>${mvIn}</td></tr>
     <tr><th>最新净值 ${navBadge(_nc)}</th><td>${navIn}</td><th>收益率</th><td>${retIn}</td></tr>
     ${estRow}

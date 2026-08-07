@@ -937,7 +937,6 @@ function renderScopeBar(){
   list.forEach(a=>{
     const bi=accIsBuiltin(a);
     html+='<button data-acc="'+escAttr(a)+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(this.dataset.acc)">'+escHtml(a)+cntSpan(cntOf(a));
-    html+='<span class="acc-ren" onclick="event.stopPropagation();renameAccount(this.dataset.acc)" title="重命名账户">✎</span>';
     if(!bi) html+='<span class="acc-x" onclick="event.stopPropagation();removeAccount(this.dataset.acc)" title="删除账户">×</span>';
     html+='</button>';
   });
@@ -949,7 +948,7 @@ function addAccount(){
   const name=(window.prompt('添加账户名称：')||'').trim();
   if(!name) return;
   if(name==='all'){ toast('「all」为保留字，不能用作账户名'); return; }
-  if(accIsBuiltin(name)){ toast('「'+name+'」是内置账户（点 ✎ 可重命名）'); return; }
+  if(accIsBuiltin(name)){ toast('「'+name+'」是内置账户（可在设置里重命名）'); return; }
   if(effBuiltins().concat(CUSTOM_ACCOUNTS).indexOf(name)>=0){ setScopeAcc(name); return; }
   CUSTOM_ACCOUNTS.push(name); ACCOUNT_META[effAccount(name)]={isPersonal:true, owner:'本人'};
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
@@ -957,7 +956,7 @@ function addAccount(){
   toast('已添加账户「'+name+'」');
 }
 function removeAccount(name){
-  if(accIsBuiltin(name)){ toast('内置账户不可删除，点 ✎ 可重命名'); return; }
+  if(accIsBuiltin(name)){ toast('内置账户不可删除（可在设置里重命名）'); return; }
   if(!window.confirm('删除账户「'+name+'」？\n仅移除该账户标签，已存在的交易记录仍保留（显示为原账户名）。')) return;
   CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.filter(a=>a!==name);
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
@@ -5867,6 +5866,11 @@ function renderSyncCfg(){
         <details><summary style="cursor:pointer;font-weight:600;margin:8px 0 6px">🔖 标签（首页筛选栏）</summary><div id="tagSortList" class="sort-list"></div></details>
       </div>
       <div class="sm-card">
+        <h3>🏦 账户名称</h3>
+        <p class="sm-note">在此统一管理账户名称：点击 ✎ 重命名，自定义账户可点 × 删除。账户栏只负责切换，不再显示编辑按钮。</p>
+        <div id="accNameList" class="sort-list"></div>
+      </div>
+      <div class="sm-card">
         <h3>💾 存储与缓存</h3>
         <div class="sm-row"><div class="sm-rt">本地缓存<div class="sm-rd">持仓、净值与备份占用</div></div>
           <div style="display:flex;align-items:center;gap:10px"><span class="sm-pill" id="smCacheSize">—</span><button class="sm-ghost danger-text" onclick="clearCache()">清除缓存</button></div></div>
@@ -5986,11 +5990,24 @@ function renderSyncCfg(){
     var ar=document.getElementById('smAutoRefresh'); if(ar){ try{ ar.checked = localStorage.getItem('ft_autorefresh')!=='0'; }catch(e){ ar.checked=true; } }
     var cs=document.getElementById('smCacheSize'); if(cs){ try{ var keys=['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh']; var bytes=0; keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) bytes+=v.length; }); cs.textContent='约 '+(bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB'); }catch(e){ cs.textContent='—'; } }
     var ver=document.getElementById('smVersion'); if(ver) ver.textContent='v'+SCHEMA_VERSION;
+    if(typeof renderAccountNames==='function') renderAccountNames();
     if(typeof renderAccSortList==='function') renderAccSortList();
     if(typeof renderTagSortList==='function') renderTagSortList();
     if(typeof renderCatSortList==='function') renderCatSortList();
     if(typeof renderSyncCfg==='function') renderSyncCfg();
   }catch(e){ console.error(e); } };
+  window.renderAccountNames=function(){
+    var box=document.getElementById('accNameList'); if(!box) return;
+    var list=accountListOrdered().slice();
+    try{ (_allRaw||[]).forEach(function(f){ var e=effAccount(f.account); if(e && list.indexOf(e)<0) list.push(e); }); }catch(e){}
+    if(!list.length){ box.innerHTML='<p class="sm-note">暂无账户。</p>'; return; }
+    box.innerHTML=list.map(function(a){
+      var bi=accIsBuiltin(a);
+      var btns='<button class="sort-up" data-acc="'+escAttr(a)+'" onclick="renameAccount(this.getAttribute(\'data-acc\'))" title="重命名" aria-label="重命名">✎</button>';
+      if(!bi) btns+='<button class="sort-down" data-acc="'+escAttr(a)+'" onclick="removeAccount(this.getAttribute(\'data-acc\'))" title="删除" aria-label="删除">×</button>';
+      return '<div class="sort-item" data-key="'+escAttr(a)+'"><span class="sort-label">'+escHtml(a)+'</span><span class="sort-ctrl">'+btns+'</span></div>';
+    }).join('');
+  };
   window.renderAccSortList=function(){
     var box=document.getElementById('accSortList'); if(!box) return;
     var list=accountListOrdered();

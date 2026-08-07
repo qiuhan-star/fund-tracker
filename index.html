@@ -3383,7 +3383,8 @@ function detailEditHolding(){
 }
 function detailAddWatch(){
   if(!detailName) return;
-  var a=getAnalysis(detailName); var code=a&&a.code?a.code:null;
+  var code=syncCode(detailName);
+  if(!code){ var a=getAnalysis(detailName); code=a&&a.code?a.code:null; }
   if(!code){ toast('该基金未记录代码，无法加入自选（可在「＋ 加一只基金」补全代码）'); return; }
   var w=loadWatch(); if(w.some(function(x){return x.code===code;})){ toast('已在自选中'); return; }
   addWatch(code, detailName);

@@ -3459,7 +3459,7 @@ function scenarioCls(v){ return v>=0?'pos':'neg'; }
 function renderScenarioCard(d){
   if(!d) return '';
   if(d.empty){
-    return '<div class="card scenario-card"><div class="sec-head"><h2>'+esc(d.title||'🪐 平行宇宙')+'</h2></div>'
+    return '<div class="card scenario-card"><div class="sec-head"><h2>'+esc(d.title||'平行宇宙')+'</h2></div>'
       +'<p class="hint" style="margin:8px 0">'+(d.emptyHint||'暂无足够数据推演。')+'</p></div>';
   }
   const cells=(d.cells||[]).map(function(c){
@@ -3478,13 +3478,13 @@ function puCtx(){ return { trades: trades, navCache: navCache, today: new Date()
 // A. 躺平不动 vs 实际操作（计算层：PU.computeLazyHold）
 function retroLazyHoldCard(f){
   const d=PU.computeLazyHold(f, puCtx());
-  if(d.empty) return renderScenarioCard({ title:'🪐 平行宇宙 · 如果当时买入后躺平不动', empty:true,
+  if(d.empty) return renderScenarioCard({ title:'平行宇宙 · 如果当时买入后躺平不动', empty:true,
     emptyHint:(d.reason==='noBuy'?'该基金暂无带净值的买入记录，无法推演。':'刷新净值后即可推演「躺平」到今天的结果。') });
   const sgn=function(v){return (v>=0?'+':'−')+M(Math.abs(v));};
   const note=d.better
     ? ('你中途的加仓 / 卖出相比「第一笔买入后躺平」，让你<b>多赚 '+sgn(d.diff)+'</b>（约 '+pp(d.pct)+' 相对首笔投入）。')
     : ('如果当时买了就不动，现在会<b>多赚 '+sgn(-d.diff)+'</b>——你的操作反而拖累了 '+sgn(-d.diff)+'（约 '+d.pct.toFixed(1)+'% 相对首笔投入）。');
-  return renderScenarioCard({ title:'🪐 平行宇宙 · 如果当时买入后躺平不动', hint:'对比首笔买入持有至今',
+  return renderScenarioCard({ title:'平行宇宙 · 如果当时买入后躺平不动', hint:'对比首笔买入持有至今',
     cells:[
       {lbl:'实际操作总收益', val:sgn(d.realProfit), cls:scenarioCls(d.realProfit), sub:'浮动 + 已实现'},
       {lbl:'躺平不动收益', val:sgn(d.lazyProfit), cls:scenarioCls(d.lazyProfit), sub:'首笔投入持有至今'},
@@ -3496,7 +3496,7 @@ function retroLazyHoldCard(f){
 function simulateDCA(f, hist){
   const d=PU.computeDCA(f, hist, puCtx());
   if(d.empty) return null;
-  return renderScenarioCard({ title:'🪐 平行宇宙 · 定投版（从首笔月起每月定投 ¥'+d.monthly+'）', hint:'对比你真实操作',
+  return renderScenarioCard({ title:'平行宇宙 · 定投版（从首笔月起每月定投 ¥'+d.monthly+'）', hint:'对比你真实操作',
     cells:[
       {lbl:'定投累计投入', val:M(d.totalInv), sub:d.months+' 个月 · 月投 ¥'+d.monthly},
       {lbl:'定投期末市值', val:M(d.endVal), sub:'份额 '+d.totalSh.toFixed(0)},
@@ -3508,7 +3508,7 @@ function simulateDCA(f, hist){
 function simulateBatchBuild(f){
   const d=PU.computeBatchBuild(f, puCtx());
   if(d.empty) return null;
-  return renderScenarioCard({ title:'🪐 平行宇宙 · 分批建仓 vs 一次性', hint:d.count+' 笔 · '+d.months+' 个月',
+  return renderScenarioCard({ title:'平行宇宙 · 分批建仓 vs 一次性', hint:d.count+' 笔 · '+d.months+' 个月',
     cells:[
       {lbl:'首笔净值（一次性基准）', val:d.firstNav.toFixed(4), sub:d.fbDate},
       {lbl:'实际加权建仓净值', val:d.wAvg.toFixed(4), sub:(d.diffPct<0?('较首笔日便宜 '+pp(-d.diffPct)):('较首笔日贵 '+pp(d.diffPct)))},
@@ -3524,7 +3524,7 @@ function simulateStopTarget(f, hist){
   const tpTxt = d.tp ? ('触发 '+dp(d.tp.date)+'，彼时卖收益 '+M(d.tp.gain)+'（vs 持有至今 '+M(d.hold)+'）') : ('未触发（区间最高仅 '+pp(d.spanHi)+'）');
   const slTxt = d.sl ? ('触发 '+dp(d.sl.date)+'，彼时割肉亏 '+M(d.sl.loss)+'（vs 扛到最低 '+M(d.minLoss)+'）') : ('未触发（区间最低 '+pp(d.spanLo)+'）');
   const extra = (d.tp&&d.hold>d.tp.gain)?('（注：你选择持有至今比那时止盈多赚 '+M(d.hold-d.tp.gain)+'）'):'';
-  return renderScenarioCard({ title:'🪐 平行宇宙 · 止盈 / 止损假设', hint:'成本线 ¥'+d.costPx.toFixed(4),
+  return renderScenarioCard({ title:'平行宇宙 · 止盈 / 止损假设', hint:'成本线 ¥'+d.costPx.toFixed(4),
     cells:[
       {lbl:'历史最高 vs 成本', val:pp(d.spanHi), cls:scenarioCls(d.spanHi), sub:dp(d.maxDate)},
       {lbl:'历史最低 vs 成本', val:pp(d.spanLo), cls:scenarioCls(d.spanLo), sub:dp(d.minDate)},
@@ -3536,7 +3536,7 @@ function simulateStopTarget(f, hist){
 function analyzeConvertSource(f){
   const d=PU.computeConvertSource(f, puCtx());
   if(d.empty) return null;
-  return renderScenarioCard({ title:'🪐 平行宇宙 · 转换优化', hint:'建仓资金来源',
+  return renderScenarioCard({ title:'平行宇宙 · 转换优化', hint:'建仓资金来源',
     cells:[
       {lbl:'转换转入', val:M(d.convAmt), sub:d.convCount+' 笔'},
       {lbl:'直接申购（新钱）', val:M(d.freshAmt), sub:d.freshCount+' 笔'},
@@ -3557,7 +3557,7 @@ async function retroScenarioCards(f){
       const a=simulateDCA(f,hist); if(a) html+=a;
       const c=simulateStopTarget(f,hist); if(c) html+=c;
     } else {
-      html+='<div class="card scenario-card"><div class="sec-head"><h2>🪐 平行宇宙 · 定投 / 止盈止损</h2></div><p class="hint" style="margin:8px 0">刷新历史净值（点 ↻ 刷新净值 或 查看「历史净值走势」）后可推演定投版与止盈止损场景。</p></div>';
+      html+='<div class="card scenario-card"><div class="sec-head"><h2>平行宇宙 · 定投 / 止盈止损</h2></div><p class="hint" style="margin:8px 0">刷新历史净值（点 ↻ 刷新净值 或 查看「历史净值走势」）后可推演定投版与止盈止损场景。</p></div>';
     }
     return html;
   }catch(e){ console.error('PU extras',e); return ''; }

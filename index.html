@@ -847,6 +847,9 @@ try{ CUSTOM_ACCOUNTS=JSON.parse(localStorage.getItem('ft_accounts')||'[]'); }cat
 CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNT_META[a]) ACCOUNT_META[a]={isPersonal:true, owner:'本人'}; });
 function loadCustomAccounts(){ ACCOUNTS=[...BUILTIN_ACCOUNTS]; CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNTS.includes(a)) ACCOUNTS.push(a); }); }
 loadCustomAccounts();
+// 账户显示顺序（用户可在设置里拖动/上下调整）；为空则按默认（内置+自定义+数据账户）
+function loadAccountOrder(){ try{ const a=JSON.parse(localStorage.getItem('ft_account_order')||'null'); return Array.isArray(a)?a:null; }catch(e){ return null; } }
+function saveAccountOrder(arr){ try{ localStorage.setItem('ft_account_order', JSON.stringify(arr)); }catch(e){} }
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -880,13 +883,27 @@ function setScopeAcc(acc){
   compute(); // 重建 _allHoldings(scope) + fundsView(curAccount)
 }
 function cntSpan(n){ return (n>0)? ' <span class="acc-cnt">'+n+'</span>' : ''; }
-function renderScopeBar(){
-  const seg=document.getElementById('scopeSeg'); if(!seg) return;
-  const cntOf=a=> (a==='all')? _allRaw.length : _allRaw.filter(f=>effAccount(f.account)===a).length;
-  // 账户集合：内置(改名后) + 自定义 + 数据中实际出现的账户(如示例账户)，去重保序
+// 账户显示顺序：默认（内置+自定义+数据账户）再按 ft_account_order 排序；排过序的在前，未排的（如新增账户）追加在后
+function accountListOrdered(){
   const seen=new Set(), list=[];
   effBuiltins().concat(CUSTOM_ACCOUNTS).forEach(a=>{ if(a&&!seen.has(a)){ seen.add(a); list.push(a); } });
   _allRaw.forEach(f=>{ const e=effAccount(f.account); if(e&&!seen.has(e)){ seen.add(e); list.push(e); } });
+  const order=loadAccountOrder();
+  if(order && order.length){
+    list.sort((a,b)=>{
+      const ia=order.indexOf(a), ib=order.indexOf(b);
+      if(ia<0 && ib<0) return 0;
+      if(ia<0) return 1;
+      if(ib<0) return -1;
+      return ia-ib;
+    });
+  }
+  return list;
+}
+function renderScopeBar(){
+  const seg=document.getElementById('scopeSeg'); if(!seg) return;
+  const cntOf=a=> (a==='all')? _allRaw.length : _allRaw.filter(f=>effAccount(f.account)===a).length;
+  const list=accountListOrdered();
   let html='';
   list.forEach(a=>{
     const bi=accIsBuiltin(a);
@@ -951,6 +968,9 @@ let holdSort=DEFAULT_SORT.key, holdSortDir=DEFAULT_SORT.dir, holdCatFilter='全�
 let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
 let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){ console.warn('分类覆盖数据损坏，已重置为默认', e); _cfgCorrupt=true; }
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){ console.warn('标签数据损坏，已重置为默认', e); _cfgCorrupt=true; }
+// 标签显示顺序（用户可在设置里拖动/上下调整）；为空则按出现顺序
+function loadTagOrder(){ try{ const a=JSON.parse(localStorage.getItem('ft_tag_order')||'null'); return Array.isArray(a)?a:null; }catch(e){ return null; } }
+function saveTagOrder(arr){ try{ localStorage.setItem('ft_tag_order', JSON.stringify(arr)); }catch(e){} }
 let homeView='dense';
 try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
 let currentView='home', detailName=null, detailAcc=effAccount('本人账户'), detailChartFund=null;
@@ -1501,14 +1521,88 @@ function effectiveTags(f){
   if((f.mv||0)<=GROUP_OBS_MV && t.indexOf('观察')<0) t.push('观察');
   return t;
 }
+// 标签显示顺序：默认按出现顺序，再按 ft_tag_order 排序；排过序的在前，未排的追加在后
+function tagListOrdered(){
+  const set=new Set();
+  (typeof fundsView!=='undefined'?fundsView:[]).forEach(f=> effectiveTags(f).forEach(t=>set.add(t)));
+  const tags=[...set];
+  const order=loadTagOrder();
+  if(order && order.length){
+    tags.sort((a,b)=>{
+      const ia=order.indexOf(a), ib=order.indexOf(b);
+      if(ia<0 && ib<0) return 0;
+      if(ia<0) return 1;
+      if(ib<0) return -1;
+      return ia-ib;
+    });
+  }
+  return tags;
+}
 function renderTagFilter(){
   const box=document.getElementById('tagFilter'); if(!box) return;
-  const set=new Set();
-  fundsView.forEach(f=> effectiveTags(f).forEach(t=>set.add(t)));
-  const tags=[...set].sort();
+  const tags=tagListOrdered();
   const all=tagFilter.size===0;
   box.innerHTML='<button class="cat-chip'+(all?' on':'')+'" onclick="toggleTag(null)">全部</button>'
     + tags.map(t=>`<button class="cat-chip${tagFilter.has(t)?' on':''}" onclick="toggleTag('${esc(t)}')">${t}</button>`).join('');
+}
+// 列表项上/下移动一格（移动端友好的备用方式，配合 makeSortable 拖拽）
+function moveSort(kind, dir, btn){
+  const item=btn.closest('.sort-item'); if(!item) return;
+  const list=item.parentNode; if(!list) return;
+  const arr=[].slice.call(list.querySelectorAll('.sort-item'));
+  const i=arr.indexOf(item), j=i+dir;
+  if(j<0||j>=arr.length) return;
+  list.insertBefore(arr[j], item); // 把邻居移到 item 前，即交换二者位置
+  const order=[].slice.call(list.querySelectorAll('.sort-item')).map(function(it){ return it.getAttribute('data-key'); });
+  if(kind==='acc'){ saveAccountOrder(order); renderScopeBar(); }
+  else { saveTagOrder(order); renderTagFilter(); }
+}
+// 指针拖拽排序（鼠标 + 触摸通用）：在 .drag-h 上按下拖动，松手即重排并回调 onChange(order)
+function makeSortable(listEl, onChange){
+  if(!listEl || listEl.dataset.sortable==='1') return;
+  listEl.dataset.sortable='1';
+  let dragEl=null, ghost=null, startY=0, startX=0, offY=0, offX=0, moved=false;
+  listEl.addEventListener('pointerdown', function(e){
+    const handle=e.target.closest('.drag-h'); if(!handle) return;
+    const item=handle.closest('.sort-item'); if(!item) return;
+    e.preventDefault();
+    dragEl=item; moved=false;
+    const r=item.getBoundingClientRect();
+    startY=e.clientY; startX=e.clientX; offY=e.clientY-r.top; offX=e.clientX-r.left;
+    ghost=item.cloneNode(true);
+    ghost.classList.add('sort-ghost');
+    ghost.style.width=r.width+'px'; ghost.style.height=r.height+'px';
+    ghost.style.left=r.left+'px'; ghost.style.top=r.top+'px';
+    ghost.style.position='fixed'; ghost.style.zIndex='9999'; ghost.style.pointerEvents='none'; ghost.style.margin='0';
+    document.body.appendChild(ghost);
+    item.classList.add('sort-dragging');
+    item.style.height=r.height+'px';
+    try{ listEl.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  listEl.addEventListener('pointermove', function(e){
+    if(!dragEl) return;
+    const dy=e.clientY-startY, dx=e.clientX-startX;
+    if(!moved && Math.abs(dy)+Math.abs(dx)<4) return;
+    moved=true;
+    if(ghost){ ghost.style.left=(e.clientX-offX)+'px'; ghost.style.top=(e.clientY-offY)+'px'; }
+    const items=[].slice.call(listEl.querySelectorAll('.sort-item:not(.sort-dragging)'));
+    let before=null;
+    for(const it of items){ const r=it.getBoundingClientRect(); if(e.clientY < r.top + r.height/2){ before=it; break; } }
+    if(before){ if(before!==dragEl.nextSibling) listEl.insertBefore(dragEl, before); }
+    else { if(listEl.lastChild!==dragEl) listEl.appendChild(dragEl); }
+  });
+  function endDrag(e){
+    if(!dragEl) return;
+    try{ listEl.releasePointerCapture(e.pointerId); }catch(_){}
+    if(ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    ghost=null;
+    dragEl.classList.remove('sort-dragging'); dragEl.style.height='';
+    const order=[].slice.call(listEl.querySelectorAll('.sort-item')).map(function(it){ return it.getAttribute('data-key'); });
+    dragEl=null;
+    if(onChange) onChange(order);
+  }
+  listEl.addEventListener('pointerup', endDrag);
+  listEl.addEventListener('pointercancel', endDrag);
 }
 function toggleTag(t){
   if(t===null){ tagFilter.clear(); }
@@ -5418,7 +5512,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_autorefresh'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_autorefresh'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }
@@ -5630,6 +5724,16 @@ function renderSyncCfg(){
         </div>
       </div>
       <div class="sm-card">
+        <h3>🏦 账户排序</h3>
+        <p class="sm-note">拖动 ☰ 或点 ↑↓，调整账户在顶部切换栏的显示顺序。</p>
+        <div id="accSortList" class="sort-list"></div>
+      </div>
+      <div class="sm-card">
+        <h3>🏷️ 标签排序</h3>
+        <p class="sm-note">拖动 ☰ 或点 ↑↓，调整首页标签筛选的显示顺序。</p>
+        <div id="tagSortList" class="sort-list"></div>
+      </div>
+      <div class="sm-card">
         <h3>💾 存储与缓存</h3>
         <div class="sm-row"><div class="sm-rt">本地缓存<div class="sm-rd">持仓、净值与备份占用</div></div>
           <div style="display:flex;align-items:center;gap:10px"><span class="sm-pill" id="smCacheSize">—</span><button class="sm-ghost danger-text" onclick="clearCache()">清除缓存</button></div></div>
@@ -5741,8 +5845,24 @@ function renderSyncCfg(){
     var ar=document.getElementById('smAutoRefresh'); if(ar){ try{ ar.checked = localStorage.getItem('ft_autorefresh')!=='0'; }catch(e){ ar.checked=true; } }
     var cs=document.getElementById('smCacheSize'); if(cs){ try{ var keys=['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh']; var bytes=0; keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) bytes+=v.length; }); cs.textContent='约 '+(bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB'); }catch(e){ cs.textContent='—'; } }
     var ver=document.getElementById('smVersion'); if(ver) ver.textContent='v'+SCHEMA_VERSION;
+    if(typeof renderAccSortList==='function') renderAccSortList();
+    if(typeof renderTagSortList==='function') renderTagSortList();
     if(typeof renderSyncCfg==='function') renderSyncCfg();
   }catch(e){ console.error(e); } };
+  window.renderAccSortList=function(){
+    var box=document.getElementById('accSortList'); if(!box) return;
+    var list=accountListOrdered();
+    if(!list.length){ box.innerHTML='<p class="sm-note">暂无账户。</p>'; return; }
+    box.innerHTML=list.map(function(a){ return '<div class="sort-item" data-key="'+escAttr(a)+'"><span class="drag-h" title="拖动排序">☰</span><span class="sort-label">'+escHtml(a)+'</span><span class="sort-ctrl"><button class="sort-up" onclick="moveSort(\'acc\',-1,this)" aria-label="上移">↑</button><button class="sort-down" onclick="moveSort(\'acc\',1,this)" aria-label="下移">↓</button></span></div>'; }).join('');
+    makeSortable(box, function(order){ saveAccountOrder(order); renderScopeBar(); });
+  };
+  window.renderTagSortList=function(){
+    var box=document.getElementById('tagSortList'); if(!box) return;
+    var list=tagListOrdered();
+    if(!list.length){ box.innerHTML='<p class="sm-note">暂无标签（给基金打标签后会出现）。</p>'; return; }
+    box.innerHTML=list.map(function(t){ return '<div class="sort-item" data-key="'+escAttr(t)+'"><span class="drag-h" title="拖动排序">☰</span><span class="sort-label">'+escHtml(t)+'</span><span class="sort-ctrl"><button class="sort-up" onclick="moveSort(\'tag\',-1,this)" aria-label="上移">↑</button><button class="sort-down" onclick="moveSort(\'tag\',1,this)" aria-label="下移">↓</button></span></div>'; }).join('');
+    makeSortable(box, function(order){ saveTagOrder(order); renderTagFilter(); });
+  };
   window.clearCache=function(){ if(!confirm('清除本地缓存（净值快照与备份）？\n持仓与交易台账保留，仅清掉可重新拉取的净值缓存以释放空间。')) return; try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
   window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ ['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} location.reload(); };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); } });
@@ -5785,6 +5905,17 @@ function renderSyncCfg(){
 .bd-sum{ cursor:pointer; padding:0; list-style:none; outline:none; }
 .bd-sum::-webkit-details-marker{ display:none; }
 @media (hover: hover){ .bond-tbl tbody tr[style*="cursor"]:hover{ background:var(--accent-soft); } }
+/* ===== 设置内 账户/标签 排序列表 ===== */
+.sort-list{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+.sort-item{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:8px; touch-action:none; }
+.sort-item.sort-dragging{ opacity:.4; }
+.sort-ghost{ background:var(--surface); border:1px solid var(--accent); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.18); opacity:.95; }
+.drag-h{ cursor:grab; color:var(--text-3); font-size:14px; line-height:1; padding:2px 4px; touch-action:none; user-select:none; -webkit-user-select:none; }
+.drag-h:active{ cursor:grabbing; }
+.sort-label{ flex:1; font-size:14px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sort-ctrl{ display:flex; gap:4px; }
+.sort-ctrl button{ width:30px; height:30px; border:1px solid var(--border-3); background:var(--surface); color:var(--text); border-radius:7px; cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; }
+.sort-ctrl button:active{ background:var(--accent-soft); }
 </style>
 
 

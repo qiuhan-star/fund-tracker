@@ -6845,7 +6845,46 @@ function renderSyncCfg(){
     if(typeof renderTagSortList==='function') renderTagSortList();
     if(typeof renderCatSortList==='function') renderCatSortList();
     if(typeof renderSyncCfg==='function') renderSyncCfg();
+    if(typeof renderMobileSettingsHome==='function') renderMobileSettingsHome();
   }catch(e){ console.error(e); } };
+  /* 移动端 iOS 分组列表首页：彩色圆角图标 + 分组卡片 */
+  var SM_MOBILE_CATS=[
+    {id:'shortcuts',color:'#ff9500',icon:'⚡️',title:'快捷功能'},
+    {id:'appearance',color:'#007aff',icon:'🎨',title:'外观与显示'},
+    {id:'data',color:'#34c759',icon:'🔒',title:'数据与安全'},
+    {id:'account',color:'#5856d6',icon:'👤',title:'账户'},
+    {id:'cloud',color:'#af52de',icon:'☁️',title:'账号云同步'},
+    {id:'about',color:'#8e8e93',icon:'__info__',title:'关于'}
+  ];
+  var SM_MOBILE_GROUPS=[['shortcuts','appearance'],['data','account','cloud'],['about']];
+  window.renderMobileSettingsHome=function(){
+    var host=document.getElementById('smMobileGroups'); if(!host) return;
+    var html='';
+    SM_MOBILE_GROUPS.forEach(function(g){
+      html+='<div class="sm-group"><div class="sm-icard">';
+      g.forEach(function(id){
+        var c=null; for(var i=0;i<SM_MOBILE_CATS.length;i++){ if(SM_MOBILE_CATS[i].id===id) c=SM_MOBILE_CATS[i]; }
+        if(!c) return;
+        var ico = c.icon==='__info__' ? '<span class="info-i">i</span>' : '<span class="e">'+c.icon+'</span>';
+        html+='<div class="sm-irow" onclick="openSettingsDetail(\''+c.id+'\')"><span class="sm-iicon" style="background:'+c.color+'">'+ico+'</span><div class="txt"><div class="t">'+c.title+'</div></div><span class="chev">›</span></div>';
+      });
+      html+='</div></div>';
+    });
+    host.innerHTML=html;
+  };
+  window.openSettingsDetail=function(id){
+    var panel=document.querySelector('.settings-panel'); if(!panel) return;
+    panel.classList.add('mobile-detail');
+    var t=document.getElementById('smMobileTitle'); if(t){ var c=null; for(var i=0;i<SM_MOBILE_CATS.length;i++){ if(SM_MOBILE_CATS[i].id===id) c=SM_MOBILE_CATS[i]; } t.textContent=c?c.title:'设置'; }
+    settingsTab(id);
+    panel.scrollTop=0;
+  };
+  window.closeSettingsDetail=function(){
+    var panel=document.querySelector('.settings-panel'); if(!panel) return;
+    panel.classList.remove('mobile-detail');
+    Array.prototype.forEach.call(panel.querySelectorAll('.panel-section'), function(s){ s.classList.remove('active'); });
+    panel.scrollTop=0;
+  };
   window.openSortSheet=function(){
     var s=document.getElementById('sortSheet'); if(!s) return;
     if(typeof renderAccSortList==='function') renderAccSortList();

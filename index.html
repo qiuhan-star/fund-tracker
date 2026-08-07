@@ -96,6 +96,10 @@ function ensureECharts(cb){
   .icon-btn { width:38px; height:38px; border-radius:10px; border:none; background:transparent; color:var(--text-2); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .12s, color .12s; padding:0; }
   .icon-btn:active { background:var(--surface-2); }
   .icon-btn svg { width:22px; height:22px; }
+  .theme-toggle { display:inline-flex; align-items:center; gap:2px; background:var(--surface-2); border-radius:11px; padding:2px; }
+  .theme-toggle .icon-btn { width:32px; height:32px; border-radius:9px; }
+  .theme-toggle .icon-btn.on { color:var(--accent); background:var(--surface); box-shadow:0 1px 3px rgba(0,0,0,.10); }
+  .theme-toggle .icon-btn svg { width:18px; height:18px; }
   .status-line { display:flex; align-items:center; gap:8px; font-size:13px; line-height:1.4; color:var(--text-3); margin-bottom:12px; padding:0 2px; }
   .status-line .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
   .status-line .dot.closed { background:#b6bcc4; }
@@ -112,7 +116,7 @@ function ensureECharts(cb){
   .acc-menu-item .acc-cnt { margin-left:5px; font-size:12px; opacity:.55; font-variant-numeric:tabular-nums; }
   .acc-menu-item .acc-x { margin-left:8px; opacity:.55; font-size:12px; cursor:pointer; }
   .acc-menu-item.acc-menu-add { color:var(--accent); font-weight:600; }
-  @media (max-width:600px){ .acc-title { font-size:20px; } .icon-btn { width:34px; height:34px; } .icon-btn svg { width:20px; height:20px; } }/* ===== 主 Tab 导航 ===== */
+  @media (max-width:600px){ .acc-title { font-size:20px; } .icon-btn { width:34px; height:34px; } .icon-btn svg { width:20px; height:20px; } .theme-toggle .icon-btn { width:30px; height:30px; } .theme-toggle .icon-btn svg { width:17px; height:17px; } }/* ===== 主 Tab 导航 ===== */
   .main-tabs { display: flex; gap: 0; background: var(--border-3); border-radius: 10px; padding: 3px; margin-bottom: 14px; }.main-tabs button { flex: 1; border: none; background: transparent; padding: 9px 0; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-2); cursor: pointer; font-family: inherit; transition: all .15s; }.main-tabs button.on { background:var(--surface); color: var(--accent-on); box-shadow: 0 1px 4px rgba(0,0,0,.06); }/* 资产口径切换器 */
   .scope-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border-strong); border-radius:10px; padding:8px 12px; margin-bottom:14px; }.scope-bar .scope-lab { font-size: 14px; color:var(--text-3); font-weight:600; }.scope-seg { display:inline-flex; flex-wrap:wrap; border:1px solid var(--border-strong); border-radius:8px; overflow:hidden; isolation:isolate; }.scope-seg button { border:none; background:var(--surface); padding:6px 14px; font-size: 14px; cursor:pointer; font-family:inherit; color:var(--text-2); transition:all .15s; }.scope-seg button + button { border-left:1px solid var(--border-strong); }.scope-seg button.on { background:var(--accent); color:#fff; font-weight:600; }.scope-hint { font-size: 12px; color:var(--text-3); }.scope-seg button.add { color:var(--accent); font-weight:700; padding:6px 10px; }.scope-seg button .acc-x { margin-left:5px; opacity:.55; font-size: 12px; cursor:pointer; }.scope-seg button .acc-ren { margin-left:4px; opacity:.5; font-size: 12px; cursor:pointer; }@media (hover: hover) { .scope-seg button .acc-x:hover {  opacity:1;  } .scope-seg button .acc-ren:hover {  opacity:1;  } }
 .scope-seg button .acc-cnt { margin-left:5px; font-size: 12px; opacity:.55; font-variant-numeric:tabular-nums; }.scope-seg button.on .acc-cnt { opacity:.9; }.scope-seg button .acc-cnt::before { content:"·"; margin-right:4px; opacity:.6; }.tag-owner { display:inline-block; background:#fff3e0; color:#c77700; border:1px solid #ffd9a0; padding:0 6px; border-radius:6px; font-size: 12px; margin-left:4px; }.tab-panel { display: none; }.tab-panel.active { display: block; }/* ===== 持仓列表 ===== */
@@ -135,7 +139,7 @@ function ensureECharts(cb){
   .dense-table th.col-drag { cursor: grab; }.dense-table th.col-drag:active { cursor: grabbing; }.dense-table th.col-dragging { opacity: .35; }.dense-table th.col-dragover { box-shadow: inset 3px 0 0 var(--accent); background: var(--surface-2); }.dense-table td { padding: 9px 8px; border-bottom: 1px solid var(--border-3); text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }.dense-table td:first-child { text-align: left; }.dense-table tbody tr { cursor: pointer; }@media (hover: hover) { .dense-table tbody tr:hover {  background: var(--surface-2);  } }
 .dt-name { font-weight: 600; font-size: 14px; line-height: 1.2; }.dt-sub { font-size: 14px; color: var(--text-3); margin-top: 4px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }.dt-big { font-weight: 700; font-size: 15px; }.dt-sub2 { font-size: 14px; color: var(--text-3); margin-top: 3px; }.upd-time { color:#9aa3b2; font-variant-numeric:tabular-nums; }/* 持仓手风琴展开 */
   .hl-body { display: none; padding: 4px 14px 16px; border-top: 1px dashed var(--border-3); }.hl.open .hl-body { display: block; }.hl.open .hl-arrow { transform: rotate(90deg); color: var(--accent-text); }.hl-summary { font-size: 14px; color: var(--text-2); line-height: 1.65; margin: 10px 0; padding: 10px 12px; background: var(--surface-3); border-radius: 10px; }.hl-rtitle { font-size: 14px; font-weight: 600; color: var(--text-3); margin: 8px 0 6px; }.hl-rtrade { display:flex; align-items:center; gap:8px; font-size: 14px; color:var(--text-2); padding:5px 0; border-bottom:1px dashed var(--border-3); font-variant-numeric: tabular-nums; }.hl-rtrade:last-child { border-bottom:none; }.hl-rtrade .num { margin-left:auto; font-weight:600; color:var(--text); }.hl-acts { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }/* 交易锁定行 */
-  tr.tr-locked td { color: var(--text-2); font-variant-numeric: tabular-nums; }.pending-nav { color: var(--warn); font-weight:600; }.lk { border:1px solid var(--border-strong); background:var(--surface-2); border-radius:8px; padding:3px 7px; cursor:pointer; font-size: 14px; }.lk.lock { color: var(--up); }/* 内联新增交易表单 */
+  tr.tr-locked td { color: var(--text-2); font-variant-numeric: tabular-nums; }.pending-nav { color: var(--warn); font-weight:600; }.lk { border:none; background:transparent; color:var(--text-3); padding:2px 5px; cursor:pointer; font-size:13px; font-family:inherit; }.lk:hover{color:var(--text-2)}/* 内联新增交易表单 */
   .tr-add { background: var(--surface-3); border:1px solid var(--border); border-radius:10px; padding:10px; margin-top:4px; }.tr-add-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; align-items:end; }.tr-add-grid input { padding:7px 8px; border:1px solid var(--border-strong); border-radius:8px; font-size: 16px; font-family:inherit; width:100%; box-sizing:border-box; }.tr-add-grid select { appearance:none; -webkit-appearance:none; -moz-appearance:none; width:100%; box-sizing:border-box; padding:7px 30px 7px 9px; border:1px solid var(--border-strong); border-radius:8px; font-size:14px; font-family:inherit; color:var(--text); background-color:var(--surface); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%238a8f99' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 9px center; background-size:12px 12px; cursor:pointer; }/* 交易流水编辑态：select 去原生外观，与无边框的 input 同款、仅加下拉箭头（iOS 统一） */
 #tradeTable td select, .am-t td select { appearance:none; -webkit-appearance:none; -moz-appearance:none; width:100%; box-sizing:border-box; border:none; background:transparent; font-size:16px; font-family:inherit; color:var(--text); padding:2px 18px 2px 0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%238a8f99' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 2px center; background-size:11px 11px; cursor:pointer; }/* 交易选择器弹窗 */
   #tradePicker { display:none; position: fixed; inset:0; z-index:1000; align-items:center; justify-content:center; }.tp-mask { position:absolute; inset:0; background:rgba(0,0,0,.35); }.tp-pop { position:relative; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); width:min(420px,92vw); max-height:80vh; overflow:auto; padding:16px; }.tp-title { font-size: 14px; font-weight:600; margin-bottom:10px; }.tp-search { width:100%; padding:8px 10px; border:1px solid var(--border-strong); border-radius:9px; font-size: 14px; margin-bottom:10px; box-sizing:border-box; font-family:inherit; }.tp-list { display:flex; flex-direction:column; gap:4px; }.tp-item { text-align:left; padding:9px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface-2); cursor:pointer; font-size: 14px; color:var(--text); }@media (hover: hover) { .tp-item:hover {  border-color:var(--accent-text); background:var(--accent-soft);  } }
@@ -204,7 +208,7 @@ function ensureECharts(cb){
 .draft-pill button { margin-left:auto; background:none; border:none; color:#b76e00; font-size: 14px; text-decoration:underline; cursor:pointer; }.cb-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }.cb-l { width: 58px; color: var(--text-3); flex: 0 0 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.cb-track { flex: 1 1 auto; height: 12px; background: var(--border-2); border-radius: 6px; overflow: hidden; }.cb-fill { height: 100%; background: var(--accent); border-radius: 6px; }.cb-fill.cur { background: var(--up); }.cb-v { width: 84px; text-align: right; flex: 0 0 auto; font-variant-numeric: tabular-nums; }.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }.table-scroll table { min-width: 640px; }@media (max-width: 680px) { .cards4 {grid-template-columns:repeat(2,1fr);}.grid2 {grid-template-columns:1fr;}  }
 @media (max-width: 768px) { .wrap { padding: calc(12px + env(safe-area-inset-top)) 10px calc(24px + env(safe-area-inset-bottom)); }h1 { font-size: 18px; }.topbar .sub { font-size: 12px; }.cards4 { grid-template-columns: repeat(2,1fr); gap: 8px; }.mcard { padding: 10px; }.mcard .val { font-size: 18px; }.grid2 { grid-template-columns: 1fr; gap: 12px; }.chart-box { height: 200px !important; }.card { padding: 12px 14px; margin-bottom: 12px; }input, select { font-size: 18px !important; }.main-tabs button { font-size: 14px; padding: 8px 0; }.hl-name { font-size: 14px; }.cat-chip { font-size: 12px; padding: 3px 10px; }
   /* iOS 自动放大修复：更高优先级 + !important 覆盖 .drawer-body .fld input(14px) / .bk-input input(14px) / td input(13px) 等更具体规则 */
-  td input, .drawer-body .fld input, .bk-input input, .nf-field input, .nf-field select, .dca-frow input, .dca-frow select, .tr-add-grid input, .tr-add-grid select, .hold-search input, .al-input, .tp-search, .at-search, .float-menu .fm-input, .sm-frow input, #impPasteArea { font-size: 18px !important; }
+  td input, .drawer-body .fld input, .bk-input input, .nf-field input, .nf-field select, .dca-row .field input, .dca-row .field select, .tr-add-grid input, .tr-add-grid select, .hold-search input, .al-input, .tp-search, .at-search, .float-menu .fm-input, .sm-frow input, #impPasteArea { font-size: 18px !important; }
   .cb-l { width: 46px; font-size: 12px; } .cb-v { width: 64px; font-size: 12px; } .cb-row { font-size: 12px; gap: 6px; margin: 4px 0; } .cb-track { height: 10px; } .bar-name { width: 80px; font-size: 12px; } .bar-ret { width: 42px; font-size: 12px; } .bar-row { gap: 6px; font-size: 12px; }
   /* 顶部右上 主题/设置 按钮：移动端只留 emoji，文字标签裁掉（防止「暗色」「设置」换行成两行） */
   #themeBtn, button[onclick="openSettings()"] { width: 38px; min-width: 38px; padding: 6px 0; font-size: 18px; line-height: 1; overflow: hidden; white-space: nowrap; text-overflow: clip; text-align: center; }
@@ -543,7 +547,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   }
   function _setTheme(c){ try{localStorage.setItem('ft_theme',c);}catch(e){} if(c==='system'){ var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m?'dark':'light'); } else document.documentElement.setAttribute('data-theme', c); _syncAppleChrome(); }
   function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');_setTheme(cur==='dark'?'light':'dark'); _syncThemeIcons();}
-  function _syncThemeIcons(){ var dark=document.documentElement.getAttribute('data-theme')==='dark'; var mi=document.getElementById('moonIcon'), si=document.getElementById('sunIcon'); if(mi) mi.style.display=dark?'none':'block'; if(si) si.style.display=dark?'block':'none'; }
+  function _syncThemeIcons(){ var dark=document.documentElement.getAttribute('data-theme')==='dark'; var lb=document.getElementById('lightBtn'), db=document.getElementById('darkBtn'); if(lb) lb.classList.toggle('on', !dark); if(db) db.classList.toggle('on', dark); }
   window.addEventListener('DOMContentLoaded',function(){ _syncThemeIcons(); _syncAppleChrome(); showBackupReminder();});
   if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){ try{ if((localStorage.getItem('ft_theme')||'system')==='system'){ document.documentElement.setAttribute('data-theme', e.matches?'dark':'light'); _syncAppleChrome(); } }catch(_){} }); }catch(_){} }
 </script>
@@ -609,10 +613,14 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
         </div>
       </div>
       <div class="header-icons">
-        <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="切换亮色 / 暗色" aria-label="切换主题">
-          <svg id="moonIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <svg id="sunIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        </button>
+        <div class="theme-toggle" role="group" aria-label="切换亮色 / 暗色">
+          <button class="icon-btn" id="lightBtn" onclick="_setTheme('light')" title="亮色" aria-label="亮色">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+          <button class="icon-btn" id="darkBtn" onclick="_setTheme('dark')" title="暗色" aria-label="暗色">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
         <button class="icon-btn" onclick="openSettings()" title="设置" aria-label="设置">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
@@ -3349,21 +3357,21 @@ function reviewInner(fund){
   const due=list.filter(n=>n.expect&&!n.outcome&&(n.expect.due||'')<=reviewToday());
   let h='';
   h+='<div class="rv-queue">';
-  if(due.length){ h+='<div class="rv-qh">⏰ 待回看（'+due.length+'）· 当时写的预期，到点了该回来验收了</div>';
+  if(due.length){ h+='<div class="rv-qh">待回看（'+due.length+'）· 当时写的预期，到点了该回来验收了</div>';
     due.forEach(n=>{ h+='<div class="rv-qitem"><div><b>'+rvEsc(n.date)+'</b> · 预期：'+rvEsc(n.expect.text)+'（'+n.expect.due+'）</div><button class="btn tiny" onclick="reviewFill('+n.id+')">填回看</button></div>'; });
   } else { h+='<div class="rv-qh rv-muted">✓ 没有到期的预期，暂无待回看</div>'; }
   h+='</div>';
   h+=`<div class="rv-bar"><button class="btn" onclick="reviewNew()">＋ 新建复盘笔记</button><button class="btn ghost" onclick="reviewExportMD()">⬇ MD</button><button class="btn ghost" onclick="reviewExportJSON()">⬇ JSON</button><button class="btn ghost" onclick="document.getElementById('rvImp').click()">⬆ 导入</button><input type="file" id="rvImp" accept="application/json,.json" style="display:none" onchange="reviewImport(this)"></div>`;
-  if(!list.length){ h+='<div class="rv-empty"><div class="ico">📝</div><p style="margin:10px 0 0;font-size: 16px">暂无复盘笔记，记录下这次买卖的逻辑吧</p></div>'; }
+  if(!list.length){ h+='<div class="rv-empty"><p style="margin:0;font-size:15px;color:var(--text-3)">暂无复盘笔记，记录下这次买卖的逻辑吧</p></div>'; }
   else {
     list.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(n=>{
       h+='<div class="rv-item">';
-      h+='<div class="rv-top"><span class="rv-date">⏱ '+rvEsc(n.date)+'</span>';
+      h+='<div class="rv-top"><span class="rv-date">'+rvEsc(n.date)+'</span>';
       if(n.expect&&!n.outcome) h+='<span class="rv-track">跟踪中 · '+rvEsc(n.expect.due)+'</span>';
       if(n.outcome) h+='<span class="rv-done '+(n.outcome.hit?'hit':'miss')+'">'+(n.outcome.hit?'✓ 已兑现':'✗ 未兑现')+'</span>';
       h+='<span class="rv-acts"><button class="btn tiny" onclick="reviewEdit('+n.id+')">编辑</button><button class="btn tiny danger" onclick="reviewDel('+n.id+')">删除</button></span></div>';
       if(n.snap&&(n.snap.nav!=null||n.snap.pnl!=null||n.snap.weight!=null)){
-        h+='<div class="rv-snap">📌 自动快照 · ';
+        h+='<div class="rv-snap">自动快照 · ';
         if(n.snap.nav!=null) h+='净值 '+n.snap.nav+' ';
         if(n.snap.pnl!=null) h+='· 持仓盈亏 '+(n.snap.pnl>0?'+':'')+n.snap.pnl.toFixed(2)+'% ';
         if(n.snap.weight!=null) h+='· 仓位 '+n.snap.weight.toFixed(1)+'%';
@@ -3371,7 +3379,7 @@ function reviewInner(fund){
       }
       if(n.tags&&n.tags.length) h+='<div class="rv-tags">'+n.tags.map(t=>'<span class="tag">#'+rvEsc(t)+'</span>').join('')+'</div>';
       h+='<div class="rv-body">'+rvEsc(n.body)+'</div>';
-      if(n.expect) h+='<div class="rv-exp">🎯 预期：'+rvEsc(n.expect.text)+(n.expect.due?('（'+rvEsc(n.expect.due)+'）'):'')+'</div>';
+      if(n.expect) h+='<div class="rv-exp">预期：'+rvEsc(n.expect.text)+(n.expect.due?('（'+rvEsc(n.expect.due)+'）'):'')+'</div>';
       if(n.outcome) h+='<div class="rv-out '+(n.outcome.hit?'hit':'miss')+'">'+(n.outcome.hit?'兑现':'未兑现')+'结论：'+rvEsc(n.outcome.note)+'</div>';
       h+='<div id="rvOf'+n.id+'"></div></div>';
     });
@@ -3842,12 +3850,11 @@ function liveSection(f){
           <input id="bkNav" type="number" step="any" inputmode="decimal" placeholder="${defaultNav.toFixed(4)}" oninput="simulateAddPosition('${encodeURIComponent(f.name)}')">
           <span class="unit">${basisShort}</span>
         </div>
-        <div class="bk-compare">
-          <div class="bk-col"><div class="bk-col-title">补仓前</div><div class="bk-line">成本<b>${curCost.toFixed(4)}</b></div><div class="bk-line">${need>=0?'已盈利':'需再涨'}<b class="${need>=0?'pos':'neg'}">${need>=0?'+':''}${Math.abs(need).toFixed(2)}%</b></div></div>
-          <div class="bk-arrow">→</div>
-          <div class="bk-col after"><div class="bk-col-title">补仓后</div><div class="bk-line">成本<b id="c1cost">—</b></div><div class="bk-line"><span id="c1needLbl">${need>=0?'已盈利':'需再涨'}</span><b id="c1need" class="${need>=0?'pos':'neg'}">—</b></div>
-            <div class="bk-extra" id="bkExtra"><div class="bk-sum bk-sum-empty"><span>输入补仓金额查看明细</span></div></div>
-          </div>
+        <div class="bk-result">
+          <div class="rh"><span>补仓后预计成本</span><span class="arr">↓</span></div>
+          <div class="big"><span class="before">${curCost.toFixed(4)}</span><span class="arr">→</span><span class="after"><b id="c1cost">—</b></span></div>
+          <div class="note"><span id="c1needLbl">${need>=0?'已盈利':'需再涨'}</span><b id="c1need" class="${need>=0?'pos':'neg'}">—</b></div>
+          <div class="bk-extra" id="bkExtra"><div class="bk-sum bk-sum-empty"><span>输入补仓金额查看明细</span></div></div>
         </div>
       </div>
     </div>`;
@@ -6790,20 +6797,22 @@ function rmByData(btn){
   renderWatchTab();
 }
 function uwRow(it){
-  var grp='<input class="wt-grp" list="uwGrps" value="'+escAttr(it.grp)+'" data-key="'+escAttr(it.key)+'" data-bond="'+(it.isBond?1:0)+'" onchange="grpChange(this)" placeholder="分组">';
-  var acts;
-  if(it.isBond){ acts='<button class="btn sm danger" data-code="'+escAttr(it.code)+'" onclick="delByData(this)">✕</button>'; }
-  else { acts='<button class="btn sm" data-name="'+escAttr(it.name)+'" onclick="openByData(this)">记账</button> <button class="btn sm danger" data-code="'+escAttr(it.code)+'" data-name="'+escAttr(it.name)+'" onclick="rmByData(this)">✕</button>'; }
-  return '<tr>'
-    +'<td><b>'+escHtml(it.name)+'</b><br><span class="hint">'+escHtml(it.code||'')+'</span></td>'
-    +'<td>'+it.typeLabel+'</td>'
-    +'<td>'+escHtml(it.acc)+'</td>'
-    +'<td><span class="watch-quote" data-code="'+escAttr(it.quoteCode||'')+'">…</span></td>'
-    +'<td>'+it.y1+'</td>'
-    +'<td>'+it.status+'</td>'
-    +'<td>'+grp+'</td>'
-    +'<td>'+acts+'</td>'
-  +'</tr>';
+  var ico=it.isBond?'📊':'📈';
+  var nav=it.isBond?'—':'<span class="watch-quote" data-code="'+escAttr(it.quoteCode||'')+'">…</span>';
+  var typeTxt=it.isBond?it.typeLabel.replace(/<[^>]+>/g,''):'基金';
+  var accTag=escHtml(it.acc)+' · '+typeTxt;
+  var codeHtml=it.code?'<span class="code">'+escAttr(it.code)+'</span>':'';
+  var bondAttr=it.isBond?' data-bond="1"':'';
+  var acts=it.isBond
+    ? '<span class="sa del" onclick="delByData(this)">删除</span>'
+    : '<span class="sa act" onclick="openByData(this)">记账</span><span class="sa del" onclick="rmByData(this)">删除</span>';
+  return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'">'
+    +'<div class="swipe-inner">'
+      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
+      +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="y1">近1年 '+it.y1+'</span></div>'
+    +'</div>'
+    +'<div class="swipe-actions">'+acts+'</div>'
+  +'</div>';
 }
 var _tessLoading=null;
 var _tessCDN=null;

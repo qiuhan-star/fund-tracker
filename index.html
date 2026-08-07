@@ -661,6 +661,11 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
     .af-tip{font-size:11px;color:#9aa0a6;margin-top:6px}
     [data-theme="dark"] .af-suggest{background:#1f2430;border-color:#333a47}
     [data-theme="dark"] .af-item:hover{background:#2a313f}
+    .liq-sg{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid transparent;margin-right:4px;vertical-align:middle}
+    .liq-sg.sg-open{color:#15803d;background:#dcfce7;border-color:#86efac}
+    .liq-sg.sg-pause{color:#b91c1c;background:#fee2e2;border-color:#fca5a5}
+    .liq-sg.sg-limit{color:#b45309;background:#fef3c7;border-color:#fcd34d}
+    .liq-sg.sg-other{color:#6b7280;background:#f3f4f6;border-color:#d1d5db}
   </style>
   <!-- 加一只基金弹窗 -->
   <div class="sm-mask" id="addFundMask" onclick="if(event.target===this)closeAddFund()">
@@ -1112,7 +1117,7 @@ function backupData(){
   }catch(e){ console.error('备份失败', e); }
 }
 function findValidBackup(){
-  let fallback=null;
+  // 只返回「剥离示例后仍有真实数据」的备份；纯示例/空备份一律视为无用，返回 null
   for(const k of BK){
     const raw=localStorage.getItem(k);
     if(!raw) continue;
@@ -1120,12 +1125,11 @@ function findValidBackup(){
       const d=JSON.parse(raw);
       if(d && (Array.isArray(d.snaps)||Array.isArray(d.trades))){
         const real=(d.snaps||[]).filter(function(s){return !SAMPLE_NAMES.has(s.name);}).length+(d.trades||[]).filter(function(t){return !SAMPLE_NAMES.has(t.name);}).length;
-        if(real>0) return raw;       // 优先返回含真实数据的备份
-        if(!fallback) fallback=raw;   // 纯示例的留作兜底
+        if(real>0) return raw;
       }
     }catch(e){}
   }
-  return fallback;
+  return null;
 }
 function backupMeta(raw){
   try{ const d=JSON.parse(raw); return d.updatedAt?String(d.updatedAt).replace('T',' ').slice(0,16):'(未知时间)'; }catch(e){ return '(未知时间)'; }
@@ -2759,6 +2763,7 @@ function renderLiquidated(){
       +'<div class="liq-metric liq-highlight"><span class="liq-lbl">收益率</span><span class="liq-val '+cls(f.retPct)+'">'+sign(f.retPct)+f.retPct.toFixed(2)+'%</span></div>'
       +'</div>'
       +'<div class="liq-foot">'
+      +'<span class="liq-sg" data-sg="1" data-nm="'+enc+'">申购状态…</span>'
       +'<span class="liq-meta">持有 '+f.days+'天</span>'
       +'<span class="liq-meta">'+(f.avgSellNav>0?'卖出价 '+navFmt(f.avgSellNav):'')+'</span>'
       +'<span class="liq-meta">'+(f.sellFee>0?'税费 '+M(f.sellFee):'')+'</span>'
@@ -5638,10 +5643,12 @@ function renderSyncCfg(){
     }catch(e){ /* 损坏，下面尝试从历史备份恢复 */ }
   }
   if(!loaded){
-    const bk=findValidBackup();
-    if(bk){ await new Promise(function(resolve){ showRestoreModal(bk, resolve); }); }
+    // ft_data 为空/损坏且无有效备份（含真实数据的备份）→ 静默走空白账本
+    // 用户如需恢复，可到「设置 → 从备份恢复」手动操作
+    snaps=[]; trades=[]; navCache={}; dailySnapshots=normDailySnap(null); dcaPlans=[];
+    loaded=true;
+    try{ localStorage.setItem('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots,dcaPlans})); }catch(e){}
   }
-  if(!loaded){ snaps=[]; trades=[]; navCache={}; }
   // 全新用户默认空白账本：不再自动塞入示例基金，避免与真实数据混淆。
   // 示例改为手动：首页「载入示例数据」按钮 / 设置；演示趋势也只在主动载入示例时生成（见 loadSample→seedDemoTrend）。
   try{ const a=localStorage.getItem('ft_alerts'); alerts=a?JSON.parse(a):{}; }catch(e){ alerts={}; }
@@ -5764,6 +5771,7 @@ function renderSyncCfg(){
         <h3>ℹ️ 关于</h3>
         <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
         <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
+        <button class="sm-ghost" id="btnRestoreBackup" onclick="manualRestoreBackup()">从备份恢复账本</button>
         <button class="sm-ghost" onclick="removeSampleData()">仅清除示例数据（保留本人账户真实数据）</button>
         <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
       </div>
@@ -5870,6 +5878,7 @@ function renderSyncCfg(){
     if(typeof renderAccSortList==='function') renderAccSortList();
     if(typeof renderTagSortList==='function') renderTagSortList();
     if(typeof renderSyncCfg==='function') renderSyncCfg();
+    if(typeof refreshRestoreBtn==='function') refreshRestoreBtn();
   }catch(e){ console.error(e); } };
   window.renderAccSortList=function(){
     var box=document.getElementById('accSortList'); if(!box) return;
@@ -5887,6 +5896,20 @@ function renderSyncCfg(){
   };
   window.clearCache=function(){ if(!confirm('清除本地缓存（净值快照与备份）？\n持仓与交易台账保留，仅清掉可重新拉取的净值缓存以释放空间。')) return; try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
   window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ ['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} location.reload(); };
+  window.manualRestoreBackup=function(){
+    const bk=findValidBackup();
+    if(!bk){ toast('没有找到含真实数据的备份'); return; }
+    showRestoreModal(bk, function(){ location.reload(); });
+  };
+  // 设置面板打开时更新「从备份恢复」按钮状态：有备份才可用
+  window.refreshRestoreBtn=function(){
+    var btn=document.getElementById('btnRestoreBackup');
+    if(!btn) return;
+    var has=!!findValidBackup();
+    btn.disabled=!has;
+    btn.style.opacity=has?'':'0.45';
+    btn.textContent=has?'从备份恢复账本（'+backupMeta(findValidBackup())+'）':'从备份恢复账本（无可用备份）';
+  };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); } });
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('change',function(e){ if(e.target && e.target.id==='smAutoRefresh'){ try{ localStorage.setItem('ft_autorefresh', e.target.checked?'1':'0'); }catch(_){} } });

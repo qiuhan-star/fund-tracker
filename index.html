@@ -849,6 +849,7 @@ function loadCustomAccounts(){ ACCOUNTS=[...BUILTIN_ACCOUNTS]; CUSTOM_ACCOUNTS.f
 loadCustomAccounts();
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function accIsPersonal(acc){ const m=ACCOUNT_META[effAccount(acc)]; return m? (m.isPersonal!==false) : true; }
 function accOwner(acc){ const m=ACCOUNT_META[effAccount(acc)]; return m? m.owner : '本人'; }
 // 账户（账户级）：本人账户 / 代管账户 / 投资账户 / 自定义 / all(全量)；兼容旧值 personal→本人账户、managed→代管账户
@@ -889,12 +890,12 @@ function renderScopeBar(){
   let html='';
   list.forEach(a=>{
     const bi=accIsBuiltin(a);
-    html+='<button data-acc="'+escJs(a)+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(\'+escJs(a)+'\')">'+escHtml(a)+cntSpan(cntOf(a));
-    html+='<span class="acc-ren" onclick="event.stopPropagation();renameAccount(\'+escJs(a)+'\')" title="重命名账户">✎</span>';
-    if(!bi) html+='<span class="acc-x" onclick="event.stopPropagation();removeAccount(\'+escJs(a)+'\')" title="删除账户">×</span>';
+    html+='<button data-acc="'+escAttr(a)+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(this.dataset.acc)">'+escHtml(a)+cntSpan(cntOf(a));
+    html+='<span class="acc-ren" onclick="event.stopPropagation();renameAccount(this.dataset.acc)" title="重命名账户">✎</span>';
+    if(!bi) html+='<span class="acc-x" onclick="event.stopPropagation();removeAccount(this.dataset.acc)" title="删除账户">×</span>';
     html+='</button>';
   });
-  html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(\'all\')">全量'+cntSpan(cntOf('all'))+'</button>';
+  html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(this.dataset.acc)">全量'+cntSpan(cntOf('all'))+'</button>';
   html+='<button class="add" onclick="addAccount()" title="添加账户">＋</button>';
   seg.innerHTML=html;
 }

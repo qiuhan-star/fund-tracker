@@ -984,6 +984,9 @@ function removeAccount(name){
   loadCustomAccounts();
   if(scopeAcc===name) setScopeAcc(firstPersonalAccount()); else { renderScopeBar(); compute(); }
   try{ refreshSampleBanner(); }catch(e){}
+  // 同步刷新「设置面板」里的账户列表/排序视图（topbar compute 不会触发到这里）
+  try{ if(typeof renderAccountNames==='function') renderAccountNames(); }catch(e){}
+  try{ if(typeof renderAccSortList==='function') renderAccSortList(); }catch(e){}
   toast('已删除账户「'+name+'」');
 }
 function renameAccount(oldName){

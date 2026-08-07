@@ -329,6 +329,45 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .danger-text { color:var(--danger); }.sm-danger { border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); border-radius:10px; padding:10px 14px; font-size: 14px; cursor:pointer; font-family:inherit; font-weight:600; width:100%; margin-top:6px; }@media (hover: hover) { .sm-danger:hover {  background:var(--danger); color:#fff;  } }
 .sm-frow { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }.sm-frow label { font-size: 14px; color:var(--text-2); white-space:nowrap; }@media (max-width:480px) { .sm-frow label { min-width:100%; display:block; margin-bottom:2px; }.sm-frow input { width:100%; }  }
 @media (max-width:480px) { .sm-grid { grid-template-columns:1fr; }  }
+/* 设置弹窗：桌面端双栏（sidebar + panel），窄屏回退为单栏长滚动 */
+.settings-modal { max-width:720px; }
+.settings-sidebar { display:none; }
+.settings-input { box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:8px; background:var(--surface); color:var(--text); font-size:14px; font-family:inherit; text-align:left; }
+.settings-input::placeholder { color:var(--text-3); }
+.panel-section { display:block; }
+.panel-title { font-size:17px; font-weight:700; margin:14px 0 10px; }
+.panel-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:11px 0; border-bottom:1px solid var(--border-2); }
+.panel-row:last-child { border-bottom:none; }
+.panel-row .left { min-width:0; }
+.panel-row .title { font-size:15px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.panel-row .desc { font-size:13px; color:var(--text-3); margin-top:2px; line-height:1.45; }
+.panel-row .right { flex-shrink:0; display:flex; align-items:center; gap:10px; }
+.panel-row .right .settings-input { width:200px; }
+.panel-row.stacked .right .settings-input { width:100%; }
+.panel-note { font-size:12px; color:var(--text-3); margin-top:14px; line-height:1.5; }
+.danger-zone { background:var(--danger-soft); border-radius:12px; padding:16px 18px; margin-top:18px; }
+.danger-zone .title { color:var(--danger); font-weight:600; font-size:15px; }
+.danger-zone .desc { color:var(--text-2); font-size:13px; margin:4px 0 12px; line-height:1.5; }
+.danger-zone .sm-danger { width:100%; margin-top:0; }
+@media (min-width:641px) {
+  #settingsMask { align-items:center; }
+  .sm-modal.settings-modal { width:720px; height:580px; max-height:580px; }
+  .sm-modal.settings-modal .sm-body.settings-body { display:flex; flex:1; min-height:0; padding:0; overflow:hidden; }
+  .settings-sidebar { display:flex; flex-direction:column; gap:4px; width:172px; flex-shrink:0; border-right:1px solid var(--border); padding:14px 12px; background:var(--surface-2); overflow-y:auto; }
+  .settings-sidebar .tab { border:none; background:transparent; color:var(--text-2); border-radius:8px; padding:10px 12px; font-size:14px; text-align:left; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .settings-sidebar .tab:hover { background:var(--surface-3); color:var(--text); }
+  .settings-sidebar .tab.active { background:var(--accent); color:#fff; font-weight:600; }
+  .settings-panel { flex:1; min-width:0; padding:20px 22px; overflow-y:auto; }
+  .panel-section { display:none; }
+  .panel-section.active { display:block; }
+  .panel-title { font-size:20px; font-weight:700; margin:0 0 16px; }
+  .panel-row { padding:12px 0; }
+  .panel-row.stacked { flex-direction:column; align-items:stretch; }
+  .panel-row.stacked .right { justify-content:flex-start; margin-top:10px; width:100%; }
+  .panel-row.stacked .sm-seg { width:100%; }
+  .panel-row.stacked .sm-seg button { flex:1; }
+}
+
 /* ==================== 手机端 (移动端) 阅读体验深度优化 ==================== */
 @media (max-width: 768px) {
   /* 1. 容器与字号优化：提升基本可读性 */
@@ -6269,158 +6308,171 @@ function renderSyncCfg(){
 
 <!-- ================= 设置弹窗 ================= -->
 <div class="sm-mask" id="settingsMask" onclick="if(event.target===this)closeSettings()">
-  <div class="sm-modal" role="dialog" aria-label="设置">
+  <div class="sm-modal settings-modal" role="dialog" aria-label="设置">
     <div class="sm-head"><h2>⚙️ 设置</h2><button class="sm-x" onclick="closeSettings()" aria-label="关闭">✕</button></div>
-    <div class="sm-body">
-      <div class="ios-section">
-        <div class="ios-section-header">快捷功能</div>
-        <div class="ios-card-group">
-          <div class="ios-row-item" onclick="openAllTrades();closeSettings()">
-            <span class="item-title">📒 全部交易记录</span>
-            <span class="item-arrow">›</span>
-          </div>
-          <div class="ios-row-item" onclick="openDcaModal();closeSettings()">
-            <span class="item-title">🗓️ 定投计划管理</span>
-            <span class="item-arrow">›</span>
-          </div>
-          <div class="ios-row-item" onclick="saveLocal();closeSettings()">
-            <span class="item-title">💾 保存下载</span>
-            <span class="item-arrow">›</span>
-          </div>
-          <div class="ios-row-item" onclick="window.print();closeSettings()">
-            <span class="item-title">🖨 导出 PDF</span>
-            <span class="item-arrow">›</span>
-          </div>
-        </div>
-      </div>
-      <div class="ios-section">
-        <div class="ios-section-header">外观与显示</div>
-        <div class="ios-card-group">
-          <div class="ios-row-item" style="cursor:default">
-            <div class="item-title">主题模式</div>
-            <div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div>
-          </div>
-          <div class="ios-row-item" style="cursor:default">
-            <div class="item-title">强调色 (Accent)</div>
-            <div class="sm-sw" id="smSwatches"></div>
-          </div>
-          <div class="ios-row-item" style="cursor:default;flex-wrap:wrap;row-gap:10px">
-            <div style="min-width:0">
-              <div class="item-title">默认资产口径</div>
-              <div class="item-subtitle" style="font-size:13px;color:var(--text-3);margin-top:2px">打开应用时的初始口径</div>
-            </div>
-            <div class="sm-seg" id="smScopeSeg"><button data-s="本人账户">本人账户</button><button data-s="代管账户">代管账户</button><button data-s="投资账户">投资账户</button><button data-s="all">全量</button></div>
-          </div>
-          <div class="ios-row-item" style="cursor:default">
-            <div class="item-title">自动刷新净值</div>
-            <label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label>
-          </div>
-          <div class="ios-row-item" onclick="openSortSheet()" style="cursor:pointer">
-            <span class="item-title">排序与显示顺序</span>
-            <span class="item-arrow">›</span>
-          </div>
-        </div>
-      </div>
-      <div class="sm-card">
-        <h3>🔐 数据与安全</h3>
+    <div class="sm-body settings-body">
+      <aside class="settings-sidebar">
+        <button class="tab active" data-tab="shortcuts" onclick="settingsTab('shortcuts')">快捷功能</button>
+        <button class="tab" data-tab="appearance" onclick="settingsTab('appearance')">外观与显示</button>
+        <button class="tab" data-tab="data" onclick="settingsTab('data')">数据与安全</button>
+        <button class="tab" data-tab="account" onclick="settingsTab('account')">账户</button>
+        <button class="tab" data-tab="cloud" onclick="settingsTab('cloud')">账号云同步</button>
+        <button class="tab" data-tab="about" onclick="settingsTab('about')">关于</button>
+      </aside>
+      <main class="settings-panel">
 
-        <div class="ios-section">
-          <div class="ios-section-header">备份与云端</div>
-          <div class="ios-card-group">
-            <div class="ios-row-item" onclick="syncOnline();closeSettings()">
-              <span class="item-title">从线上同步数据</span>
-              <span class="item-action primary">同步</span>
-            </div>
-            <div class="ios-row-item" onclick="exportJSON();closeSettings()">
-              <span class="item-title">导出备份 (JSON)</span>
-              <span class="item-action">导出</span>
-            </div>
-            <div class="ios-row-item" onclick="importJSON();closeSettings()">
-              <span class="item-title warning">导入备份 (JSON)</span>
-              <span class="item-action danger">覆盖导入</span>
-            </div>
+        <!-- 快捷功能 -->
+        <section class="panel-section active" id="panel-shortcuts">
+          <h4 class="panel-title">快捷功能</h4>
+          <div class="panel-row" style="cursor:pointer" onclick="openAllTrades();closeSettings()">
+            <div class="left"><div class="title">📒 全部交易记录</div><div class="desc">查看、筛选、编辑所有历史买入 / 卖出 / 转换</div></div>
+            <div class="right"><span class="item-arrow">›</span></div>
           </div>
-        </div>
-
-        <div class="ios-section">
-          <div class="ios-section-header">数据表格 (CSV)</div>
-          <div class="ios-card-group">
-            <div class="ios-row-item" onclick="openImportModal();closeSettings()">
-              <span class="item-title">导入交易记录</span>
-              <span class="item-arrow">›</span>
-            </div>
-            <div class="ios-row-item" onclick="downloadCSVTemplate();closeSettings()">
-              <span class="item-title sub">下载 CSV 导入模板</span>
-              <span class="item-action primary">下载</span>
-            </div>
-            <div class="ios-row-item" onclick="exportHoldingsCSV();closeSettings()">
-              <span class="item-title">导出持仓数据 (CSV)</span>
-              <span class="item-action primary">导出</span>
-            </div>
+          <div class="panel-row" style="cursor:pointer" onclick="openDcaModal();closeSettings()">
+            <div class="left"><div class="title">🗓️ 定投计划管理</div><div class="desc">按月 / 按周 / 双周 / 按日 自动补记买入</div></div>
+            <div class="right"><span class="item-arrow">›</span></div>
           </div>
-        </div>
-
-        <div class="ios-section">
-          <div class="ios-section-header">研究数据工具</div>
-          <div class="ios-card-group">
-            <div class="ios-row-item" onclick="importMyExtras();closeSettings()">
-              <span class="item-title">恢复真实债基与分析</span>
-              <span class="item-action danger">覆盖</span>
-            </div>
+          <div class="panel-row" style="cursor:pointer" onclick="saveLocal();closeSettings()">
+            <div class="left"><div class="title">💾 保存下载</div><div class="desc">把当前页面以 .html 形式保存到本地</div></div>
+            <div class="right"><span class="item-arrow">›</span></div>
           </div>
-          <div class="ios-section-footer">把示例债基/分析替换为你自己的本地研究数据。此操作会覆盖同名基金的演示分析。</div>
-        </div>
+          <div class="panel-row" style="cursor:pointer" onclick="window.print();closeSettings()">
+            <div class="left"><div class="title">🖨 导出 PDF</div><div class="desc">调用浏览器打印生成 PDF 报告</div></div>
+            <div class="right"><span class="item-arrow">›</span></div>
+          </div>
+        </section>
 
-        <p class="ios-section-footer" style="margin-top:12px;">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
-      </div>
-      <div class="sm-card" id="syncCard">
-        <h3>☁️ 账号云同步（GitHub 私有）</h3>
-        <div class="sm-row"><div class="sm-rt">开启云同步<div class="sm-rd">改动自动备份到你的 GitHub 私有仓库，打开网页自动拉取，多设备一致</div></div>
-          <label class="sm-switch"><input type="checkbox" id="smSyncOn" onchange="onSyncToggle()"><span class="sm-slider"></span></label></div>
-        <div id="syncCfg" style="display:none">
-  <div class="sync-group">
-    <div class="sync-row"><span class="sync-label">GitHub 令牌</span><div class="sync-val"><input id="smSyncPat" type="password" class="sync-input" placeholder="ghp_xxx…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="sync-eye" onclick="toggleSyncPat()">👁</button></div></div>
-    <div class="sync-row"><span class="sync-label">仓库路径</span><div class="sync-val"><input id="smSyncRepo" class="sync-input" placeholder="用户名/仓库名" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div></div>
-    <div class="sync-row"><span class="sync-label">分支</span><div class="sync-val"><input id="smSyncBranch" class="sync-input" value="main" autocapitalize="off"></div></div>
-    <div class="sync-row"><span class="sync-label">文件路径</span><div class="sync-val"><input id="smSyncPath" class="sync-input" value="fund-tracker-data.json" autocapitalize="off"></div></div>
-  </div>
-  <div class="sync-conflict"><span class="sync-conflict-label">冲突时</span><div class="sm-seg" id="smSyncConflict"><button data-c="local" class="on" onclick="setSyncConflict('local')">本机为准</button><button data-c="remote" onclick="setSyncConflict('remote')">云端为准</button></div></div>
-  <div class="sync-filewarn" id="syncFileWarn">你正以 <b>本地文件 (file://)</b> 打开，无法调用 GitHub API。请改用线上版，或用「导出备份 (JSON)」手动备份。</div>
-  <div class="sync-actions">
-    <button class="sync-btn primary" onclick="cloudPull(true)"><span>⬇️</span>立即下载</button>
-    <button class="sync-btn danger" onclick="cloudPush(true)"><svg class="sync-up-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M6 11l6-6 6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>立即上传</button>
-  </div>
-  <p class="sm-note" id="syncStatus" style="margin-top:10px">未同步</p>
-  <p class="sync-foot">数据会离开浏览器存到 GitHub（私有仓库也算出浏览器）。请用<strong>私有仓库</strong>且仅放账本。需 https 托管的线上版才能联网。</p>
-</div>
-      </div>
-      <!-- 显示顺序已收进二级页排序面板（外观与显示分组内的「排序与显示顺序」入口进入） -->
-      <div class="sm-card">
-        <h3>🏦 账户名称</h3>
-        <p class="sm-note">在此统一管理账户名称：点击 ✎ 重命名，自定义账户可点 × 删除。账户栏只负责切换，不再显示编辑按钮。</p>
-        <div id="accNameList" class="sort-list"></div>
-        <div class="sort-list" style="margin-top:8px"><div class="acc-add-row" onclick="addAccount()" role="button" tabindex="0"><span class="acc-add-ico">＋</span><span>添加账户</span></div></div>
-      </div>
-      <div class="sm-card">
-        <h3>💾 存储与缓存</h3>
-        <div class="sm-row"><div class="sm-rt">本地缓存<div class="sm-rd">持仓、净值与备份占用</div></div>
-          <div style="display:flex;align-items:center;gap:10px"><span class="sm-pill" id="smCacheSize">—</span><button class="sm-ghost danger-text" onclick="clearCache()">清除缓存</button></div></div>
-      </div>
-      <div class="sm-card">
-        <h3>🧹 数据操作</h3>
-        <div class="sm-row"><div class="sm-rt">清除示例数据<div class="sm-rd">保留真实持仓，移除示例账户、演示债基与分析。</div></div>
-          <button class="sm-ghost" onclick="removeSampleData()">清除</button></div>
-        <div style="margin-top:12px;border:1px solid var(--danger);border-radius:12px;padding:12px;background:rgba(217,48,38,.06)">
-          <div class="sm-rt" style="color:var(--danger);font-weight:600">重置应用</div>
-          <div class="sm-rd" style="margin:4px 0 10px">清空本浏览器全部本地数据（持仓/交易/设置），不可恢复。建议先「导出 JSON」备份。</div>
-          <button class="sm-danger" onclick="resetApp()" style="width:100%">重置应用</button>
-        </div>
-      </div>
-      <div class="sm-card">
-        <h3>ℹ️ 关于</h3>
-        <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
-        <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
-      </div>
+        <!-- 外观与显示 -->
+        <section class="panel-section" id="panel-appearance">
+          <h4 class="panel-title">外观与显示</h4>
+          <div class="panel-row stacked">
+            <div class="left"><div class="title">主题模式</div><div class="desc">跟随系统 / 浅色 / 深色</div></div>
+            <div class="right"><div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div></div>
+          </div>
+          <div class="panel-row">
+            <div class="left"><div class="title">强调色 (Accent)</div><div class="desc">主题高亮色</div></div>
+            <div class="right"><div class="sm-sw" id="smSwatches"></div></div>
+          </div>
+          <div class="panel-row stacked">
+            <div class="left"><div class="title">默认资产口径</div><div class="desc">打开应用时的初始口径</div></div>
+            <div class="right"><div class="sm-seg" id="smScopeSeg"><button data-s="本人账户">本人账户</button><button data-s="代管账户">代管账户</button><button data-s="投资账户">投资账户</button><button data-s="all">全量</button></div></div>
+          </div>
+          <div class="panel-row">
+            <div class="left"><div class="title">自动刷新净值</div><div class="desc">打开页面时自动拉取最新净值</div></div>
+            <div class="right"><label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="openSortSheet()">
+            <div class="left"><div class="title">排序与显示顺序</div><div class="desc">调整首页列表的排序规则和列顺序</div></div>
+            <div class="right"><span class="item-arrow">›</span></div>
+          </div>
+        </section>
+
+        <!-- 数据与安全 -->
+        <section class="panel-section" id="panel-data">
+          <h4 class="panel-title">数据与安全</h4>
+          <div class="panel-row">
+            <div class="left"><div class="title">本地缓存</div><div class="desc">持仓、净值与备份占用</div></div>
+            <div class="right"><span class="sm-pill" id="smCacheSize">—</span><button class="sm-ghost danger-text" onclick="clearCache()">清除缓存</button></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="syncOnline();closeSettings()">
+            <div class="left"><div class="title">从线上同步数据</div><div class="desc">从 GitHub 私有仓库拉取最新备份</div></div>
+            <div class="right"><span class="item-action primary">同步</span></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="exportJSON();closeSettings()">
+            <div class="left"><div class="title">导出备份 (JSON)</div><div class="desc">完整导出持仓、交易、设置、自选等</div></div>
+            <div class="right"><span class="item-action primary">导出</span></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="importJSON();closeSettings()">
+            <div class="left"><div class="title warning">导入备份 (JSON)</div><div class="desc">从本地 JSON 恢复全部数据（覆盖）</div></div>
+            <div class="right"><span class="item-action danger">覆盖导入</span></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="openImportModal();closeSettings()">
+            <div class="left"><div class="title">导入交易记录</div><div class="desc">按模板追加买入 / 卖出 / 转换记录</div></div>
+            <div class="right"><span class="item-arrow">›</span></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="downloadCSVTemplate();closeSettings()">
+            <div class="left"><div class="title sub">下载 CSV 导入模板</div><div class="desc">获取标准 CSV 表头格式</div></div>
+            <div class="right"><span class="item-action primary">下载</span></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="exportHoldingsCSV();closeSettings()">
+            <div class="left"><div class="title">导出持仓数据 (CSV)</div><div class="desc">导出当前持仓明细</div></div>
+            <div class="right"><span class="item-action primary">导出</span></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="importMyExtras();closeSettings()">
+            <div class="left"><div class="title">恢复真实债基与分析</div><div class="desc">把演示债基 / 分析替换为你自己的本地研究数据</div></div>
+            <div class="right"><span class="item-action danger">覆盖</span></div>
+          </div>
+          <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
+            <div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div>
+            <div class="right"><button class="sm-ghost">清除</button></div>
+          </div>
+          <div class="danger-zone">
+            <div class="title">重置应用</div>
+            <div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复。建议先「导出 JSON」备份。</div>
+            <button class="sm-danger" onclick="resetApp()">重置应用</button>
+          </div>
+          <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
+        </section>
+
+        <!-- 账户 -->
+        <section class="panel-section" id="panel-account">
+          <h4 class="panel-title">账户名称</h4>
+          <p class="sm-note">在此统一管理账户名称：点击 ✎ 重命名，自定义账户可点 × 删除。账户栏只负责切换，不再显示编辑按钮。</p>
+          <div id="accNameList" class="sort-list"></div>
+          <div class="sort-list" style="margin-top:8px"><div class="acc-add-row" onclick="addAccount()" role="button" tabindex="0"><span class="acc-add-ico">＋</span><span>添加账户</span></div></div>
+        </section>
+
+        <!-- 账号云同步 -->
+        <section class="panel-section" id="panel-cloud">
+          <h4 class="panel-title">账号云同步（GitHub 私有）</h4>
+          <div class="panel-row">
+            <div class="left"><div class="title">开启云同步</div><div class="desc">改动自动备份到你的 GitHub 私有仓库，打开网页自动拉取，多设备一致</div></div>
+            <div class="right"><label class="sm-switch"><input type="checkbox" id="smSyncOn" onchange="onSyncToggle()"><span class="sm-slider"></span></label></div>
+          </div>
+          <div id="syncCfg" style="display:none">
+            <div class="panel-row stacked">
+              <div class="left"><div class="title">GitHub 令牌</div><div class="desc">用于读写你的私有仓库，仅存于本地</div></div>
+              <div class="right" style="display:flex;align-items:center;gap:6px"><input id="smSyncPat" type="password" class="settings-input" style="flex:1;min-width:0" placeholder="ghp_xxx…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="sync-eye" onclick="toggleSyncPat()">👁</button></div>
+            </div>
+            <div class="panel-row stacked">
+              <div class="left"><div class="title">仓库路径</div><div class="desc">格式：用户名 / 仓库名</div></div>
+              <div class="right"><input id="smSyncRepo" class="settings-input" placeholder="用户名/仓库名" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+            </div>
+            <div class="panel-row">
+              <div class="left"><div class="title">分支</div><div class="desc">默认 main</div></div>
+              <div class="right"><input id="smSyncBranch" class="settings-input" value="main" autocapitalize="off" style="width:160px"></div>
+            </div>
+            <div class="panel-row">
+              <div class="left"><div class="title">文件路径</div><div class="desc">仓库内数据文件路径</div></div>
+              <div class="right"><input id="smSyncPath" class="settings-input" value="fund-tracker-data.json" autocapitalize="off" style="width:220px"></div>
+            </div>
+            <div class="panel-row">
+              <div class="left"><div class="title">冲突时</div><div class="desc">本地与云端数据不一致时的取舍</div></div>
+              <div class="right"><div class="sm-seg" id="smSyncConflict"><button data-c="local" class="on" onclick="setSyncConflict('local')">本机为准</button><button data-c="remote" onclick="setSyncConflict('remote')">云端为准</button></div></div>
+            </div>
+            <div class="sync-filewarn" id="syncFileWarn">你正以 <b>本地文件 (file://)</b> 打开，无法调用 GitHub API。请改用线上版，或用「导出备份 (JSON)」手动备份。</div>
+            <div class="sync-actions">
+              <button class="sync-btn primary" onclick="cloudPull(true)"><span>⬇️</span>立即下载</button>
+              <button class="sync-btn danger" onclick="cloudPush(true)"><svg class="sync-up-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M6 11l6-6 6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>立即上传</button>
+            </div>
+            <p class="sm-note" id="syncStatus" style="margin-top:10px">未同步</p>
+            <p class="sync-foot">数据会离开浏览器存到 GitHub（私有仓库也算出浏览器）。请用<strong>私有仓库</strong>且仅放账本。需 https 托管的线上版才能联网。</p>
+          </div>
+        </section>
+
+        <!-- 关于 -->
+        <section class="panel-section" id="panel-about">
+          <h4 class="panel-title">关于</h4>
+          <div class="panel-row">
+            <div class="left"><div class="title">版本</div></div>
+            <div class="right"><span class="sm-pill" id="smVersion">v2.2.0</span></div>
+          </div>
+          <div class="panel-row" style="align-items:flex-start">
+            <div class="left"><div class="title">免责声明</div><div class="desc" style="max-width:420px;margin-top:4px">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div>
+          </div>
+        </section>
+
+      </main>
     </div>
   </div>
 </div>
@@ -6603,6 +6655,11 @@ function renderSyncCfg(){
   ];
   window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); };
   window.closeSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.remove('show'); };
+  window.settingsTab=function(name){
+    var mask=document.getElementById('settingsMask'); if(!mask) return;
+    Array.prototype.forEach.call(mask.querySelectorAll('.settings-sidebar .tab'), function(t){ t.classList.toggle('active', t.getAttribute('data-tab')===name); });
+    Array.prototype.forEach.call(mask.querySelectorAll('.panel-section'), function(s){ s.classList.toggle('active', s.id==='panel-'+name); });
+  };
   window.renderSettings=function(){ try{
     var t=localStorage.getItem('ft_theme')||'system';
     var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-t')||'')===t); }); }

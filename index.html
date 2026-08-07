@@ -6108,7 +6108,7 @@ function renderMktLight(){
 // 净值性质标注：盘中=估值，收盘/官方=官方，手动填=手动
 function navKind(nc){ const mkt=isMarketOpen(new Date()); if(nc&&nc.date==='手动') return '手动'; if(nc&&nc.gsz!=null&&isTodayTs(nc.gszTs)) return '估值'; if(mkt&&nc&&nc.gsz!=null) return '估值'; return '官方'; }
 function navBadge(nc){ const k=navKind(nc); const cls=k==='估值'?'nk-est':k==='手动'?'nk-man':'nk-off'; return `<i class="nk ${cls}">${k}</i>`; }
-function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁'); render(); }
+function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁'); var pw=document.getElementById('privSw'); if(pw) pw.classList.toggle('on',hidden); var pd=document.getElementById('smPrivDsc'); if(pd) pd.textContent=hidden?'开启 · 金额已隐藏':'关闭 · 金额正常显示'; render(); }
 function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alerts));}catch(e){} }
 function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; const v=prompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur); if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ alert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }
 function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
@@ -6481,15 +6481,25 @@ function renderSyncCfg(){
         </div>
         <div class="sm-mobile-home" id="smMobileHome">
           <div class="sm-mobile-home-head"><h1>设置</h1><button class="sm-mobile-close" onclick="closeSettings()" aria-label="关闭">✕</button></div>
-          <div class="sm-ipcard" onclick="openSettingsDetail('account')">
-            <div class="avatar">Q</div>
-            <div class="pinfo"><div class="pn">QQa</div><div class="ps">个人资料与账号 · 云同步已开启</div></div>
+          <div class="sm-ipcard" onclick="openProfile()">
+            <div class="avatar" id="smAvatar">Q</div>
+            <div class="pinfo"><div class="pn"><span id="smNick">QQa</span><span class="edithint">编辑</span></div><div class="ps" id="smTag">个人资料与账号 · 云同步已开启</div></div>
             <span class="chev">›</span>
+          </div>
+          <div class="sm-statbar" id="smStatbar" onclick="cloudPush(true)">
+            <div class="sm-stat-ic">☁</div>
+            <div class="sm-stat-txt" id="smStatTxt">本地数据 · —</div>
+            <button type="button" class="sm-stat-btn" onclick="event.stopPropagation();cloudPush(true)">同步</button>
+          </div>
+          <div class="sm-privrow" onclick="toggleHidden()">
+            <div class="sm-priv-ic">🙈</div>
+            <div class="sm-priv-txt"><div class="t">资产隐蔽模式</div><div class="d" id="smPrivDsc">关闭 · 金额正常显示</div></div>
+            <span class="sm-priv-sw" id="privSw"><i></i></span>
           </div>
           <div id="smMobileGroups"></div>
           <div class="app-credit">
-            <div class="credit-line">Made with <span class="heart">♥</span> by QQa</div>
-            <div class="credit-sub">Copyright © 2026 QQa. All Rights Reserved.</div>
+            <div class="credit-line">Made with <span class="heart">♥</span> by FundTracker</div>
+            <div class="credit-sub">Copyright © 2026 FundTracker. All Rights Reserved.</div>
           </div>
         </div>
 
@@ -6667,8 +6677,8 @@ function renderSyncCfg(){
             <div class="left"><div class="title">免责声明</div><div class="desc" style="max-width:420px;margin-top:4px">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div>
           </div>
           <div class="app-credit">
-            <div class="credit-line">Made with <span class="heart">♥</span> by QQa</div>
-            <div class="credit-sub">Copyright © 2026 QQa. All Rights Reserved.</div>
+            <div class="credit-line">Made with <span class="heart">♥</span> by FundTracker</div>
+            <div class="credit-sub">Copyright © 2026 FundTracker. All Rights Reserved.</div>
           </div>
         </section>
 
@@ -6676,6 +6686,101 @@ function renderSyncCfg(){
     </div>
   </div>
 </div>
+
+<style id="profStyle">
+.prof-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;justify-content:center;z-index:1200;}
+.prof-mask.show{display:flex;}
+.prof-sheet{width:100%;max-width:412px;background:var(--bg);border-radius:18px 18px 0 0;padding:8px 8px 24px;animation:profUp .25s ease;max-height:90%;overflow:auto;}
+@keyframes profUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.prof-h{text-align:center;font-size:14px;font-weight:600;color:var(--text-3);padding:12px;}
+.prof-fld{background:var(--surface);border-radius:14px;margin:6px 4px;padding:14px;}
+.prof-fld label{font-size:13px;color:var(--text-3);display:block;margin-bottom:4px;}
+.prof-fld input{width:100%;border:none;border-bottom:1px solid var(--border);font-size:16px;padding:6px 0;font-family:inherit;color:var(--text);outline:none;background:transparent;}
+.prof-av{display:flex;gap:12px;align-items:center;margin-bottom:14px;}
+.prof-av .a{width:50px;height:50px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid var(--accent);overflow:hidden;flex:0 0 auto;}
+.prof-av .a img{width:100%;height:100%;object-fit:cover;}
+.prof-av button{border:1px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;}
+.prof-sheet-opt{background:var(--surface);border-radius:14px;padding:15px;text-align:center;font-size:16px;margin:6px 4px;cursor:pointer;}
+.prof-cancel{background:var(--surface);border-radius:14px;padding:15px;text-align:center;font-size:16px;font-weight:600;margin:10px 4px 0;cursor:pointer;}
+.prof-emoji{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:8px;background:var(--surface);border-radius:14px;margin:6px 4px;}
+.prof-emoji span{font-size:26px;text-align:center;padding:6px 0;border-radius:10px;cursor:pointer;}
+.prof-emoji span:hover{background:var(--border);}
+.sm-ipcard .pn{display:flex;align-items:center;gap:4px;}
+.sm-ipcard .avatar{overflow:hidden;}
+.sm-ipcard .avatar img{width:100%;height:100%;object-fit:cover;}
+.edithint{font-size:12px;color:var(--accent);font-weight:500;margin-left:2px;}
+.sm-statbar{margin:0 12px 10px;background:var(--surface);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;}
+.sm-stat-ic{width:32px;height:32px;border-radius:10px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;color:var(--accent);}
+.sm-stat-txt{flex:1;font-size:12.5px;color:var(--text-2);line-height:1.5;min-width:0;}
+.sm-stat-txt b{color:var(--text);font-weight:600;}
+.sm-stat-btn{border:1px solid var(--accent);color:var(--accent);background:var(--surface);border-radius:8px;padding:5px 12px;font-size:13px;font-weight:600;flex:0 0 auto;cursor:pointer;}
+.sm-privrow{margin:0 12px 12px;background:var(--surface);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;}
+.sm-priv-ic{width:30px;height:30px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;}
+.sm-priv-txt{flex:1;min-width:0;}
+.sm-priv-txt .t{font-size:15px;font-weight:500;}
+.sm-priv-txt .d{font-size:12px;color:var(--text-3);margin-top:2px;}
+.sm-priv-sw{width:48px;height:28px;border-radius:14px;background:#e2e4e9;position:relative;transition:background .2s;flex:0 0 auto;}
+.sm-priv-sw.on{background:#34c759;}
+.sm-priv-sw i{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s;}
+.sm-priv-sw.on i{left:22px;}
+</style>
+
+<div class="prof-mask" id="profMask">
+  <div class="prof-sheet" onclick="event.stopPropagation()">
+    <div class="prof-h">个人资料</div>
+    <div class="prof-fld">
+      <div class="prof-av">
+        <div class="a" id="profAv">Q</div>
+        <button type="button" onclick="openAvSheet()">选择头像</button>
+      </div>
+      <label>昵称</label>
+      <input id="profNick" maxlength="12" placeholder="昵称（最多 12 字）">
+      <label style="margin-top:12px">身份标签</label>
+      <input id="profTag" maxlength="8" placeholder="如：资产管家">
+    </div>
+    <div class="prof-cancel" onclick="saveProfile()">完成</div>
+  </div>
+</div>
+<div class="prof-mask" id="avMask">
+  <div class="prof-sheet" onclick="event.stopPropagation()">
+    <div class="prof-h">选择头像</div>
+    <div class="prof-emoji" id="profEmoji"></div>
+    <div class="prof-sheet-opt" onclick="uploadImg()">📷 上传图片</div>
+    <div class="prof-cancel" onclick="closeAvSheet()">取消</div>
+  </div>
+</div>
+<input type="file" id="profImgUp" accept="image/*" style="display:none" onchange="onImg(event)">
+<script>
+(function(){
+  var PROF_EMOJIS=['🦊','🐱','🐶','🐼','🦁','🐯','🐸','🐵','🦉','🐧','🌟','🔥','💎','🌈','🍀','⚡️','🚀','🐢','🦄','🐝','🍎','🌻','🏆','🎯'];
+  function getUser(){ try{ return JSON.parse(localStorage.getItem('ft_user')||'null')||{}; }catch(e){ return {}; } }
+  function setUser(u){ try{ localStorage.setItem('ft_user', JSON.stringify(u)); }catch(e){} }
+  function avatarHTML(u){ if(u.img){ return '<img src="'+u.img+'" alt="">'; } if(u.avatar){ return u.avatar; } return (u.nick&&u.nick.trim())?u.nick.trim().charAt(0):'Q'; }
+  window.renderProfileCard=function(){
+    var u=getUser();
+    var av=document.getElementById('smAvatar'); if(av) av.innerHTML=avatarHTML(u);
+    var nk=document.getElementById('smNick'); if(nk) nk.textContent=u.nick||'QQa';
+    var tg=document.getElementById('smTag'); if(tg) tg.textContent=(u.tag&&u.tag.trim())?u.tag:(syncEnabled()?'个人资料与账号 · 云同步已开启':'个人资料与账号');
+    var sw=document.getElementById('privSw'); if(sw) sw.classList.toggle('on',!!hidden);
+    var d=document.getElementById('smPrivDsc'); if(d) d.textContent=hidden?'开启 · 金额已隐藏':'关闭 · 金额正常显示';
+    var st=document.getElementById('smStatTxt');
+    if(st){ var bytes=0; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('ft_')===0){ var v=localStorage.getItem(k); if(v) bytes+=v.length; } }
+      var kb=bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB';
+      var lp=localStorage.getItem('ft_sync_lastpush'); var ls=localStorage.getItem('ft_lastSync');
+      var t=lp||ls; var ts=t?('上次同步 '+new Date(+t).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})):'尚未同步';
+      st.innerHTML='本地数据 · <b>约 '+kb+'</b> · '+ts;
+    }
+  };
+  window.openProfile=function(){ var u=getUser(); var n=document.getElementById('profNick'); if(n) n.value=u.nick||''; var t=document.getElementById('profTag'); if(t) t.value=u.tag||''; var a=document.getElementById('profAv'); if(a) a.innerHTML=avatarHTML(u); var m=document.getElementById('profMask'); if(m) m.classList.add('show'); };
+  window.closeProfile=function(){ var m=document.getElementById('profMask'); if(m) m.classList.remove('show'); };
+  window.saveProfile=function(){ var u=getUser(); var n=document.getElementById('profNick'); if(n) u.nick=(n.value||'').trim()||'QQa'; var t=document.getElementById('profTag'); if(t) u.tag=(t.value||'').trim(); setUser(u); renderProfileCard(); closeProfile(); };
+  window.openAvSheet=function(){ var g=document.getElementById('profEmoji'); if(g&&!g.dataset.built){ PROF_EMOJIS.forEach(function(e){ var s=document.createElement('span'); s.textContent=e; s.onclick=function(){ var u=getUser(); u.avatar=e; u.img=null; setUser(u); var a=document.getElementById('profAv'); if(a) a.innerHTML=e; closeAvSheet(); }; g.appendChild(s); }); g.dataset.built='1'; } var m=document.getElementById('avMask'); if(m) m.classList.add('show'); };
+  window.closeAvSheet=function(){ var m=document.getElementById('avMask'); if(m) m.classList.remove('show'); };
+  window.uploadImg=function(){ var f=document.getElementById('profImgUp'); if(f) f.click(); };
+  window.onImg=function(ev){ var file=ev.target.files&&ev.target.files[0]; if(!file) return; var r=new FileReader(); r.onload=function(){ var u=getUser(); u.img=r.result; u.avatar=null; setUser(u); var a=document.getElementById('profAv'); if(a) a.innerHTML='<img src="'+r.result+'" alt="">'; }; r.readAsDataURL(file); var m=document.getElementById('avMask'); if(m) m.classList.remove('show'); ev.target.value=''; };
+  ['profMask','avMask'].forEach(function(id){ var m=document.getElementById(id); if(m) m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('show'); }); });
+})();
+</script>
 
 <!-- 定投计划管理弹窗（iOS 底部抽屉） -->
 <div class="dca-mask" id="dcaMask" onclick="if(event.target===this)closeDcaModal()">
@@ -6895,6 +7000,7 @@ function renderSyncCfg(){
     if(typeof renderCatSortList==='function') renderCatSortList();
     if(typeof renderSyncCfg==='function') renderSyncCfg();
     if(typeof renderMobileSettingsHome==='function') renderMobileSettingsHome();
+    if(typeof renderProfileCard==='function') renderProfileCard();
   }catch(e){ console.error(e); } };
   /* 移动端 iOS 分组列表首页：彩色圆角图标 + 分组卡片 */
   var SM_MOBILE_CATS=[

@@ -283,6 +283,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .dca-row .field.has-chevron::after { content:"A"; position:absolute; right:0; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:16px; line-height:1; pointer-events:none; }
 .dca-row .field input.ph { color:var(--text-2); }
 .dca-row .field input.ph::placeholder { color:var(--text-3); }
+.dca-row .field .static-time { color:var(--text-3); font-size:16px; }
 .dca-save-btn { display:block; width:100%; border:none; background:var(--accent); color:#fff; border-radius:12px; padding:15px; font-size:17px; font-weight:600; font-family:inherit; margin-top:18px; }
 .dca-footer { font-size:11px; color:var(--text-3); line-height:1.45; text-align:center; padding:14px 10px 6px; }
 .sm-act span { font-size: 18px; }.sm-note { font-size: 14px; color:var(--text-3); margin:12px 0 0; line-height:1.5; }
@@ -1392,7 +1393,7 @@ function migrate(raw){
   (data.trades||[]).forEach(t=>{ t.account=_accNorm(t.account); });
   (data.snaps||[]).forEach(s=>{ if(s.account) s.account=_accNorm(s.account); });
   (data.daily_snapshots||[]).forEach(d=>{ if(d.account) d.account=_accNorm(d.account); });
-  (data.dcaPlans||[]).forEach(p=>{ if(p&&p.account) p.account=_accNorm(p.account); });
+  (data.dcaPlans||[]).forEach(p=>{ if(p&&p.account) p.account=_accNorm(p.account); if(p&&!p.period) p.period='month'; });
   return data;
 }
 
@@ -5048,20 +5049,60 @@ async function refresh(){
 // 自动生成的买入交易标记：{ dcaId, dcaPeriod:'YYYY-MM' }，便于幂等去重与计划管理展示。
 function genId(p){ return p+(Date.now().toString(36))+Math.random().toString(36).slice(2,6); }
 function pad2(n){ return ('0'+n).slice(-2); }
-// 计算某计划应记账的月份列表（已在 start~end 区间、且 <= 今天）；返回 [{ym,date}]
+function parseYMD(s){ const a=String(s).split('-').map(Number); return new Date(a[0], (a[1]||1)-1, a[2]||1); }
+const _WD=['周一','周二','周三','周四','周五','周六','周日'];
+function wdName(n){ return _WD[(((n||1)-1)%7+7)%7]; }
+function wdIndex(s){ const i=_WD.indexOf(String(s)); return i<0?1:(i+1); }
+// 计算某计划应记账的期次列表（已在 start~end 区间、且 <= 今天）；返回 [{periodKey,date}]
+// periodKey 用于幂等去重（dcaId+dcaPeriod）；date 为真实记账日 YYYY-MM-DD
 function dcaPeriods(plan, today){
   const out=[]; if(!plan||!plan.start) return out;
+  const period=plan.period||'month';
+  const todayD=parseYMD(today);
   const [sy,sm]=plan.start.split('-').map(Number);
-  let ey=9999, em=12;
-  if(plan.end){ const e=plan.end.split('-').map(Number); ey=e[0]; em=e[1]; }
-  let y=sy, m=sm;
-  while(y<ey || (y===ey && m<=em)){
-    const dim=new Date(y,m,0).getDate();
-    const day=Math.min(plan.day||1, dim);
-    const ym=y+'-'+pad2(m);
-    const date=ym+'-'+pad2(day);
-    if(date <= today) out.push({ym,date});
-    m++; if(m>12){ m=1; y++; }
+  const startD=new Date(sy, sm-1, 1);
+  let endD=null;
+  if(plan.end){
+    const e=plan.end.split('-').map(Number);
+    if(e.length===2) endD=new Date(e[0], e[1], 0); // 月末（含整月）
+    else endD=new Date(e[0], e[1]-1, e[2]);
+  }
+  if(period==='month'){
+    const day=Math.min(plan.day||1, 28);
+    let y=sy, m=sm, ey=9999, em=12;
+    if(endD){ ey=endD.getFullYear(); em=endD.getMonth()+1; }
+    while(y<ey || (y===ey && m<=em)){
+      const dim=new Date(y,m,0).getDate();
+      const dd=Math.min(day, dim);
+      const ym=y+'-'+pad2(m);
+      const date=ym+'-'+pad2(dd);
+      if(date <= today) out.push({periodKey:ym, date:date});
+      m++; if(m>12){ m=1; y++; }
+    }
+  } else if(period==='week' || period==='biweek'){
+    const step = period==='biweek' ? 14 : 7;
+    const targetGD = ((plan.weekday||1)-1+7)%7; // 0=周一
+    const gd = (targetGD+1)%7; // Date.getDay(): 0=周日,1=周一...
+    let d=new Date(startD);
+    while(d.getDay()!==gd){ d.setDate(d.getDate()+1); }
+    let guard=0;
+    while(guard++<20000){
+      if(d>todayD) break;
+      if(endD && d>endD) break;
+      out.push({periodKey:d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()), date:d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())});
+      d.setDate(d.getDate()+step);
+    }
+  } else { // day：每个工作日（周一~周五）
+    let d=new Date(startD);
+    let guard=0;
+    while(guard++<20000){
+      if(d>todayD) break;
+      if(endD && d>endD) break;
+      if(d.getDay()>=1 && d.getDay()<=5){
+        out.push({periodKey:d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()), date:d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())});
+      }
+      d.setDate(d.getDate()+1);
+    }
   }
   return out;
 }
@@ -5088,15 +5129,17 @@ async function runDcaPlans(){
     for(const plan of active){
       const periods=dcaPeriods(plan, todayStr);
       if(!periods.length) continue;
+      const booked=new Set(trades.filter(t=>t.dcaId===plan.id).map(t=>t.dcaPeriod));
       const code=await resolveCode(plan.name);
       const hist=code? await fetchNavHistory(code) : null;
       for(const per of periods){
-        if(dcaIsBooked(plan, per.ym)) continue;
+        if(booked.has(per.periodKey)) continue;
         const nav=hist? navOnOrBefore(hist, per.date) : null;
         if(nav==null) continue; // 拉不到该日净值：跳过，下次刷新自动补（不伪造）
         const amt=+(plan.amount||0); if(amt<=0) continue;
         const sh=amt/nav;
-        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:'15:00', type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.ym});
+        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:'15:00', type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey});
+        booked.add(per.periodKey);
         added++;
       }
     }

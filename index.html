@@ -594,6 +594,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
     font-size: 14px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));align-items:center;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.15)}
   .pwa-hint .x{margin-left:auto;cursor:pointer;font-weight:700;padding:0 6px}
   @media (max-width:600px){ .pwa-hint{display:flex} }
+  .bk-input .unit{white-space:nowrap;flex-shrink:0}
 </style>
 
 </head>
@@ -877,6 +878,12 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   .sheet-row:last-child{ border-bottom:none; }
   .sheet-row.danger{ color:var(--danger); font-weight:600; }
   .sheet-cancel{ background:var(--surface); border-radius:14px; padding:16px; text-align:center; font-size:17px; font-weight:600; color:var(--accent); border:none; width:100%; font-family:inherit; }
+  /* 复盘编辑：复用底部 sheet 弹层（去内联展开，避免遮挡列表） */
+  .rv-sheet-card{ margin-bottom:8px; max-height:82vh; overflow:auto; -webkit-overflow-scrolling:touch; }
+  .rv-sheet-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
+  .rv-sheet-head .t{ font-size:16px; font-weight:700; }
+  .rv-sheet-x{ border:none; background:transparent; font-size:22px; line-height:1; color:var(--text-3); cursor:pointer; padding:0 4px; font-family:inherit; }
+  .rv-sheet-card .rv-ed{ border:none; border-radius:0; margin-bottom:0; }
   </style>
   <div class="detail-bar" id="detailBar">
     <div class="detail-bar-inner">
@@ -894,6 +901,13 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
       <button class="sheet-row danger" onclick="closeDetailMore();detailDelHolding()">删除持有</button>
     </div>
     <button class="sheet-cancel" onclick="closeDetailMore()">取消</button>
+  </div>
+  <div class="sheet-mask" id="rvMask" onclick="reviewSheetClose()"></div>
+  <div class="sheet" id="rvSheet">
+    <div class="sheet-card rv-sheet-card">
+      <div class="rv-sheet-head"><span class="t" id="rvSheetTitle">复盘笔记</span><button class="rv-sheet-x" onclick="reviewSheetClose()" aria-label="关闭">×</button></div>
+      <div id="rvSheetBody"></div>
+    </div>
   </div>
 
   <!-- 交易选择器弹窗 -->
@@ -3349,7 +3363,7 @@ function reviewSnap(fundName){
 }
 function rvEsc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 function reviewCardHtml(fund){
-  return '<div class="card" id="reviewCard"><div class="sec-head"><h2 style="margin:0;font-size: 14px">📓 个人复盘 &amp; 调仓笔记 <span class="tag">本地保存</span></h2></div><div id="reviewBody">'+reviewInner(fund)+'</div></div>';
+  return '<div class="card" id="reviewCard"><div class="sec-head"><h2 style="margin:0;font-size: 14px">个人复盘 &amp; 调仓笔记 <span class="tag">本地保存</span></h2></div><div id="reviewBody">'+reviewInner(fund)+'</div></div>';
 }
 function reviewInner(fund){
   reviewCurFund=fund||'';
@@ -3361,7 +3375,7 @@ function reviewInner(fund){
     due.forEach(n=>{ h+='<div class="rv-qitem"><div><b>'+rvEsc(n.date)+'</b> · 预期：'+rvEsc(n.expect.text)+'（'+n.expect.due+'）</div><button class="btn tiny" onclick="reviewFill('+n.id+')">填回看</button></div>'; });
   } else { h+='<div class="rv-qh rv-muted">✓ 没有到期的预期，暂无待回看</div>'; }
   h+='</div>';
-  h+=`<div class="rv-bar"><button class="btn" onclick="reviewNew()">＋ 新建复盘笔记</button><button class="btn ghost" onclick="reviewExportMD()">⬇ MD</button><button class="btn ghost" onclick="reviewExportJSON()">⬇ JSON</button><button class="btn ghost" onclick="document.getElementById('rvImp').click()">⬆ 导入</button><input type="file" id="rvImp" accept="application/json,.json" style="display:none" onchange="reviewImport(this)"></div>`;
+  h+=`<div class="rv-bar"><button class="btn" onclick="reviewNew()">新建复盘笔记</button><button class="btn ghost" onclick="reviewExportMD()">导出 MD</button><button class="btn ghost" onclick="reviewExportJSON()">导出 JSON</button><button class="btn ghost" onclick="document.getElementById('rvImp').click()">导入</button><input type="file" id="rvImp" accept="application/json,.json" style="display:none" onchange="reviewImport(this)"></div>`;
   if(!list.length){ h+='<div class="rv-empty"><p style="margin:0;font-size:15px;color:var(--text-3)">暂无复盘笔记，记录下这次买卖的逻辑吧</p></div>'; }
   else {
     list.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(n=>{
@@ -3391,10 +3405,14 @@ function reviewRender(fund){ const b=document.getElementById('reviewBody'); if(b
 function reviewNew(){ reviewEditing=null; reviewDraft={date:reviewToday(),fund:reviewCurFund,tags:'',body:'',expect:'',due:''}; reviewEditorRender(); }
 function reviewEdit(id){ const n=reviewNotes.find(x=>x.id===id); if(!n) return; reviewEditing=id; reviewDraft={date:n.date,fund:n.fund||'',tags:(n.tags||[]).join(' '),body:n.body,expect:n.expect?n.expect.text:'',due:n.expect?n.expect.due:''}; reviewEditorRender(); }
 function reviewEditorRender(){
-  const e=document.getElementById('rvEditor'); if(!e) return;
+  const e=document.getElementById('rvSheetBody'); if(!e) return;
+  reviewSheetOpen();
+  var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent=reviewEditing?'编辑复盘笔记':'新建复盘笔记';
   e.innerHTML='<div class="rv-ed"><div class="rv-row"><div class="rv-f"><label>日期</label><input type="date" id="rvDate" value="'+reviewDraft.date+'"></div><div class="rv-f"><label>关联标的（留空=全局笔记）</label><input type="text" id="rvFund" value="'+rvEsc(reviewDraft.fund)+'" placeholder="如 示例全球配置(QDII)C"></div></div><div class="rv-f" style="margin:8px 0"><label>标签（空格分隔，自动加 #）</label><input type="text" id="rvTags" value="'+rvEsc(reviewDraft.tags)+'" placeholder="止盈 抄底 追高警告"></div><label>复盘笔记</label><textarea id="rvBody" placeholder="记录这次买卖的逻辑、当时的判断、后续计划…">'+rvEsc(reviewDraft.body)+'</textarea><div class="rv-f" style="margin:8px 0"><label>预期（可选）</label><input type="text" id="rvExpect" value="'+rvEsc(reviewDraft.expect)+'" placeholder="我预期__会发生"></div><div class="rv-f" style="margin-bottom:8px"><label>回看日期（可选）</label><input type="date" id="rvDue" value="'+reviewDraft.due+'"></div><div class="rv-acts"><button class="btn" onclick="reviewCommit()">'+(reviewEditing?'保存修改':'添加笔记')+'</button><button class="btn ghost" onclick="reviewCancel()">取消</button></div></div>';
   const ta=document.getElementById('rvBody'); if(ta) ta.focus();
 }
+function reviewSheetOpen(){ var m=document.getElementById('rvMask'), s=document.getElementById('rvSheet'); if(m)m.classList.add('show'); if(s)s.classList.add('show'); }
+function reviewSheetClose(){ var m=document.getElementById('rvMask'), s=document.getElementById('rvSheet'); if(m)m.classList.remove('show'); if(s)s.classList.remove('show'); var b=document.getElementById('rvSheetBody'); if(b)b.innerHTML=''; }
 function reviewCommit(){
   const tags=document.getElementById('rvTags').value.split(/\s+/).map(s=>s.replace(/^#/,'').trim()).filter(Boolean);
   const expectText=document.getElementById('rvExpect').value.trim();
@@ -3408,9 +3426,9 @@ function reviewCommit(){
   if(reviewEditing){ const n=reviewNotes.find(x=>x.id===reviewEditing); n.date=date; n.fund=fund; n.tags=tags; n.body=body; n.expect=expect; n.snap=snap; }
   else { reviewNotes.unshift({id:Date.now(),date,fund,tags,body,expect,snap,outcome:null}); }
   reviewEditing=null; reviewDraft=null;
-  reviewSave(); reviewRender(reviewCurFund);
+  reviewSave(); reviewRender(reviewCurFund); reviewSheetClose();
 }
-function reviewCancel(){ reviewEditing=null; reviewDraft=null; const e=document.getElementById('rvEditor'); if(e) e.innerHTML=''; }
+function reviewCancel(){ reviewEditing=null; reviewDraft=null; reviewSheetClose(); }
 function reviewDel(id){ if(!confirm('确定删除这条复盘笔记？')) return; reviewNotes=reviewNotes.filter(x=>x.id!==id); reviewSave(); reviewRender(reviewCurFund); }
 function reviewFill(id){ const e=document.getElementById('rvOf'+id); if(!e) return; e.innerHTML='<div class="rv-of"><label><input type="radio" name="rvh'+id+'" value="1"> 兑现了</label><label><input type="radio" name="rvh'+id+'" value="0"> 没兑现</label><textarea id="rvOn'+id+'" placeholder="复盘结论：当时判断对在哪/错在哪，下次怎么改"></textarea><button class="btn tiny" onclick="reviewSaveOutcome('+id+')">保存回看</button></div>'; }
 function reviewSaveOutcome(id){ const n=reviewNotes.find(x=>x.id===id); if(!n) return; const hit=document.querySelector('input[name="rvh'+id+'"]:checked'); const note=(document.getElementById('rvOn'+id).value||'').trim(); n.outcome={hit:!!(hit&&hit.value==='1'),note}; reviewSave(); reviewRender(reviewCurFund); }
@@ -3512,7 +3530,7 @@ function renderScenarioCard(d){
   return '<div class="card scenario-card"><div class="sec-head"><h2>'+esc(d.title)+'</h2>'
     +(d.hint?'<span class="hint">'+esc(d.hint)+'</span>':'')+'</div>'
     +'<div class="scenario-grid">'+cells+'</div>'
-    +(d.note?'<p class="scenario-note">📌 '+d.note+'</p>':'')+'</div>';
+    +(d.note?'<p class="scenario-note">'+d.note+'</p>':'')+'</div>';
 }
 // 上下文打包：把全局 trades / navCache / 今天 交给纯计算层（PU）
 function puCtx(){ return { trades: trades, navCache: navCache, today: new Date() }; }
@@ -7015,7 +7033,7 @@ function renderWatchTab(){
 
   bc.innerHTML=STYLE
     +'<div class="wt">'
-    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key==='Enter')addUnifiedWatch()"><span class="cam" onclick="uwPickImage()">📷 截图</span><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
+    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><span class="cam" onclick="uwPickImage()">📷 截图</span><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
     +'<div class="sec-cap"><span>自选清单</span><span class="count">('+items.length+')</span><span class="more" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'按分组 ▾')+'</span></div>'
     + listHtml
     +'<div class="sec-cap"><span>买入决策 &amp; 仓位测算</span><span class="tag-ok">已测算</span><span class="info-trigger" onclick="openWatchInfo()">ⓘ</span></div>'

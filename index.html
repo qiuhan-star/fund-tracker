@@ -699,6 +699,41 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sync-up-arrow{ width:15px; height:15px; }
   .sync-foot{ margin:10px 0 0; font-size:12px; color:var(--text-3); line-height:1.5; }
 
+/* XIRR/定投模拟 现代化卡片风格（替代旧 .calc-row/.co-row/.xr-row 老人机外观） */
+.xirr-card .sec-title { font-size:15px; font-weight:700; margin:18px 0 12px; display:flex; align-items:center; gap:6px; }
+.xirr-card .sec-title::before { content:''; width:4px; height:16px; background:var(--accent); border-radius:2px; }
+.xirr-card .dca-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px; }
+.xirr-card .fc { background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:14px; transition:border-color .15s,box-shadow .15s; cursor:text; }
+.xirr-card .fc:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.xirr-card .fc-label { font-size:12px; color:var(--text-3); margin-bottom:6px; }
+.xirr-card .fc-input { display:flex; align-items:baseline; gap:4px; }
+.xirr-card .fc-input input { width:100%; border:none; background:transparent; font-size:24px; font-weight:700; color:var(--text); font-family:inherit; outline:none; font-variant-numeric:tabular-nums; padding:0; }
+.xirr-card .fc-input .u { font-size:14px; color:var(--text-3); font-weight:500; flex:0 0 auto; }
+.xirr-card .dca-banner { background:linear-gradient(135deg,var(--accent) 0%, #4f85ff 100%); border-radius:12px; padding:18px; color:#fff; margin-bottom:14px; }
+.xirr-card .dca-banner .bl { font-size:13px; opacity:.92; margin-bottom:4px; }
+.xirr-card .dca-banner .bv { font-size:30px; font-weight:800; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; }
+.xirr-card .dca-banner .bs { font-size:13px; opacity:.92; margin-top:8px; }
+.xirr-card .dca-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.xirr-card .dca-kpi { background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:12px; text-align:center; }
+.xirr-card .dca-kpi .kl { font-size:12px; color:var(--text-3); margin-bottom:4px; }
+.xirr-card .dca-kpi .kv { font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; }
+.xirr-card .xr-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.xirr-card .xr-item { display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:10px 12px; }
+.xirr-card .xr-date { flex:0 0 104px; font-size:14px; color:var(--text-2); font-variant-numeric:tabular-nums; border:none; background:transparent; font-family:inherit; outline:none; padding:0; }
+.xirr-card .xr-amt { flex:1; min-width:0; font-size:18px; font-weight:700; text-align:right; border:none; background:transparent; font-family:inherit; outline:none; font-variant-numeric:tabular-nums; padding:0; color:var(--text); }
+.xirr-card .xr-pill { border:none; border-radius:99px; padding:5px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; flex:0 0 auto; }
+.xirr-card .xr-pill.out { background:var(--accent-soft); color:var(--accent); }
+.xirr-card .xr-pill.in { background:var(--down-bg); color:var(--down); }
+.xirr-card .xr-del { width:32px; height:32px; border:none; background:transparent; color:var(--text-3); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:50%; flex:0 0 auto; }
+.xirr-card .xr-del:active { background:var(--surface-3); }
+.xirr-card .xr-add { width:100%; border:1.5px dashed var(--border-2); background:transparent; border-radius:12px; padding:13px; font-size:14px; color:var(--accent); font-weight:600; cursor:pointer; font-family:inherit; margin-bottom:16px; }
+.xirr-card .xr-add:active { background:var(--surface-2); }
+.xirr-card .xr-result { background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:16px; text-align:center; }
+.xirr-card .xr-result .rl { font-size:13px; color:var(--text-3); margin-bottom:6px; }
+.xirr-card .xr-result .rv { font-size:34px; font-weight:800; color:var(--down); letter-spacing:-0.5px; font-variant-numeric:tabular-nums; }
+.xirr-card .xr-result .rv.neg { color:var(--up); }
+.xirr-card .xr-result .rn { font-size:12px; color:var(--text-3); margin-top:8px; line-height:1.5; }
+
 /* XIRR/定投模拟卡片字号层级瘦身 */
 .xirr-card h2 { font-size: 18px; margin-bottom: 8px; }
 .xirr-card > h2 .tag { font-size: 12px; vertical-align: middle; margin-left: 6px; }
@@ -6498,8 +6533,8 @@ function renderSyncCfg(){
           </div>
           <div id="smMobileGroups"></div>
           <div class="app-credit">
-            <div class="credit-line">Made with <span class="heart">♥</span> by FundTracker</div>
-            <div class="credit-sub">Copyright © 2026 FundTracker. All Rights Reserved.</div>
+            <div class="credit-line">Made with <span class="heart">♥</span> by QQa</div>
+            <div class="credit-sub">Copyright © 2026 QQa. All Rights Reserved.</div>
           </div>
         </div>
 
@@ -6677,8 +6712,8 @@ function renderSyncCfg(){
             <div class="left"><div class="title">免责声明</div><div class="desc" style="max-width:420px;margin-top:4px">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div>
           </div>
           <div class="app-credit">
-            <div class="credit-line">Made with <span class="heart">♥</span> by FundTracker</div>
-            <div class="credit-sub">Copyright © 2026 FundTracker. All Rights Reserved.</div>
+            <div class="credit-line">Made with <span class="heart">♥</span> by QQa</div>
+            <div class="credit-sub">Copyright © 2026 QQa. All Rights Reserved.</div>
           </div>
         </section>
 

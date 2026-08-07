@@ -653,16 +653,27 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   <div id="tradePicker"></div>
   <div id="allTradesModal"></div>
 
+  <style>
+    .af-suggest{position:absolute;left:0;right:0;top:100%;z-index:30;max-height:240px;overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-top:4px}
+    .af-item{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px}
+    .af-item:hover{background:#f3f4f6}
+    .af-code{color:#9aa0a6;font-size:12px;font-variant-numeric:tabular-nums}
+    .af-tip{font-size:11px;color:#9aa0a6;margin-top:6px}
+    [data-theme="dark"] .af-suggest{background:#1f2430;border-color:#333a47}
+    [data-theme="dark"] .af-item:hover{background:#2a313f}
+  </style>
   <!-- 加一只基金弹窗 -->
   <div class="sm-mask" id="addFundMask" onclick="if(event.target===this)closeAddFund()">
     <div class="sm-modal">
       <div class="sm-head"><h2>＋ 加一只基金</h2><button class="sm-x" onclick="closeAddFund()">✕</button></div>
       <div class="sm-body">
         <p class="hint" style="margin:0 0 14px">填基金名称或 6 位代码（代码会自动识别名称），加好后可点开补录交易 / 市值。</p>
-        <div class="nf-field">
+        <div class="nf-field" style="position:relative">
           <label>基金名称 / 代码</label>
-          <input id="af-input" list="af-name" placeholder="如：演示稳健债券A 或 017847" />
+          <input id="af-input" list="af-name" autocomplete="off" placeholder="输入即搜全网，如：华夏成长 或 017847" oninput="afInput()" />
           <datalist id="af-name"></datalist>
+          <div id="af-suggest" class="af-suggest" style="display:none" onclick="afSuggestClick(event)"></div>
+          <div class="af-tip">输入即实时搜索天天基金；点下方结果可直接带正确名称加入</div>
         </div>
         <div class="nf-field">
           <label>账户</label>
@@ -3270,6 +3281,7 @@ function liveSection(f){
 // ---------- 新增 / 删除 ----------
 function addSnapRow(){ openAddFund(); }
 function openAddFund(){
+  afSelected=null; afHideSuggest();
   const accSel=document.getElementById('af-acc');
   if(accSel){
     const cur=accSel.value||'本人账户';
@@ -3279,20 +3291,23 @@ function openAddFund(){
   }
   const m=document.getElementById('addFundMask'); if(m){ m.classList.add('show'); const el=document.getElementById('af-input'); if(el) setTimeout(()=>el.focus(),60); }
 }
-function closeAddFund(){ const m=document.getElementById('addFundMask'); if(m) m.classList.remove('show'); const i=document.getElementById('af-input'); if(i) i.value=''; const v=document.getElementById('af-mv'); if(v) v.value=''; }
+function closeAddFund(){ const m=document.getElementById('addFundMask'); if(m) m.classList.remove('show'); const i=document.getElementById('af-input'); if(i) i.value=''; const v=document.getElementById('af-mv'); if(v) v.value=''; afSelected=null; afHideSuggest(); }
 function addFundSave(){
   const g=id=>document.getElementById(id);
   const raw=(g('af-input').value||'').trim();
   if(!raw){ toast('请填写基金名称或 6 位代码'); g('af-input').focus(); return; }
   const acc=g('af-acc').value||'本人账户';
   const mvRaw=g('af-mv').value, mv=(mvRaw===''||mvRaw==null)?null:+mvRaw;
-  let name=raw;
-  // 若输入像 6 位代码，尝试解析成基金名（失败则直接用原值）
-  if(/^\d{6}$/.test(raw)){ const nm=syncNameByCode(raw); if(nm) name=nm; }
+  let name=raw, code='';
+  // 优先用实时搜索选中的结果（带正确名称+代码）
+  if(afSelected && (afSelected.name===raw || afSelected.code===raw)){ name=afSelected.name; code=afSelected.code; }
+  else if(/^\d{6}$/.test(raw)){ const nm=syncNameByCode(raw); if(nm) name=nm; code=raw; }
   if(snaps.some(s=>s.name===name && accOf(s)===acc)){ toast('该基金在当前账户已存在'); return; }
   const snap={name,cat:'',mv:(mv!=null && !isNaN(mv))?mv:0,ret:0,account:acc};
   if(acc!=='本人账户') snap.account=acc;
+  if(code) snap.code=code;
   snaps.push(snap);
+  if(code) codeCache[name]=code;
   silentSave(); compute();
   closeAddFund();
   toast('已添加「'+name+'」，可点开补录交易或市值');
@@ -3521,7 +3536,50 @@ function searchCode(name){
     document.body.appendChild(s);
   });
 }
-// ---------- 批量净值（东方财富 FundMNFInfo，天天基金 App 同款移动后端） ----------
+// 实时搜索基金（带下拉结果，供「加一只基金」弹窗使用）
+let _afTimer=null, afSelected=null;
+function searchFunds(keyword){
+  return new Promise(resolve=>{
+    keyword=(keyword||'').trim();
+    if(!keyword){ resolve([]); return; }
+    const timer=setTimeout(()=>resolve([]),4000);
+    const s=document.createElement('script'), cb='sf_'+Math.random().toString(36).slice(2);
+    window[cb]=d=>{
+      clearTimeout(timer);
+      try{
+        const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]);
+        const list=arr.slice(0,12).map(x=>({code:x.CODE,name:x.NAME})).filter(x=>x.code&&x.name);
+        resolve(list);
+      }catch(e){ resolve([]); }
+      window[cb]=null; s.remove();
+    };
+    s.onerror=()=>{ clearTimeout(timer); resolve([]); window[cb]=null; };
+    s.src=`https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key=${encodeURIComponent(keyword)}&callback=${cb}`;
+    document.body.appendChild(s);
+  });
+}
+function afInput(){
+  const el=document.getElementById('af-input'); const box=document.getElementById('af-suggest');
+  const v=(el?el.value:'').trim();
+  if(!v){ if(box) box.style.display='none'; afSelected=null; return; }
+  if(_afTimer) clearTimeout(_afTimer);
+  _afTimer=setTimeout(()=>{
+    searchFunds(v).then(list=>{
+      const b=document.getElementById('af-suggest'); if(!b) return;
+      if(!list.length){ b.style.display='none'; return; }
+      b.innerHTML=list.map(x=>`<div class="af-item" data-code="${esc(x.code)}" data-name="${esc(x.name)}"><span>${esc(x.name)}</span><span class="af-code">${esc(x.code)}</span></div>`).join('');
+      b.style.display='block';
+    });
+  },300);
+}
+function afSuggestClick(e){
+  const item=e.target.closest&&e.target.closest('.af-item'); if(!item) return;
+  const code=item.getAttribute('data-code'), name=item.getAttribute('data-name');
+  const el=document.getElementById('af-input'); if(el) el.value=name;
+  afSelected={code,name};
+  const box=document.getElementById('af-suggest'); if(box) box.style.display='none';
+}
+function afHideSuggest(){ const b=document.getElementById('af-suggest'); if(b) b.style.display='none'; }
 const codeCache={}; // name -> code（解析一次后缓存）
 function resolveCode(name){
   if(codeCache[name]) return Promise.resolve(codeCache[name]);

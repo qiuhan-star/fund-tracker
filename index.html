@@ -590,6 +590,28 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sync-btn.danger:active{ background:rgba(255,59,48,.18); }
   .sync-up-arrow{ width:15px; height:15px; }
   .sync-foot{ margin:10px 0 0; font-size:12px; color:var(--text-3); line-height:1.5; }
+
+/* XIRR/定投模拟卡片字号层级瘦身 */
+.xirr-card h2 { font-size: 18px; margin-bottom: 8px; }
+.xirr-card > h2 .tag { font-size: 12px; vertical-align: middle; margin-left: 6px; }
+.xirr-card > p.hint { font-size: 12px; line-height: 1.5; margin-bottom: 14px; }
+.xirr-card .am-h { font-size: 15px; margin: 14px 0 6px; }
+.xirr-card .calc-row { font-size: 13px; }
+.xirr-card .calc-row label { flex: 0 0 64px; font-size: 13px; color: var(--text-3); }
+.xirr-card .calc-row input.num { width: 88px; height: 32px; padding: 0 8px; font-size: 13px; font-weight: normal; line-height: 1; box-sizing: border-box; }
+.xirr-card .calc-row .hint { font-size: 13px; padding: 0; color: var(--text-3); }
+.xirr-card .co-row { font-size: 13px; padding: 3px 0; }
+.xirr-card .co-row span { font-size: 13px; color: var(--text-3); }
+.xirr-card .co-row b { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.xirr-card .xr-row { margin: 4px 0; gap: 5px; }
+.xirr-card .xr-date,
+.xirr-card .xr-amt,
+.xirr-card .xr-dir { height: 32px; padding: 0 6px; font-size: 13px; font-weight: normal; border-radius: 6px; box-sizing: border-box; }
+.xirr-card .xr-date { flex: 0 0 112px; }
+.xirr-card .xr-amt { flex: 1 1 70px; min-width: 0; text-align: right; }
+.xirr-card .xr-dir { flex: 0 0 72px; }
+.xirr-card .xr-row .del { padding: 0 8px; height: 32px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+.xirr-card .btn.sm { font-size: 13px; padding: 3px 10px; margin-top: 4px; }
 </style>
 <script>
   try{
@@ -773,7 +795,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <h2>优化建议 + 止盈止损信号 <span class="tag">自动生成</span></h2>
         <div id="advice"></div>
       </div>
-      <div class="card">
+      <div class="card xirr-card">
         <h2>定投模拟 / 年化收益（XIRR）<span class="tag">测算工具</span></h2>
         <p class="hint">左侧假设年化收益，算定投未来值；右侧填入真实现金流（日期 + 金额 + 方向），算你的真实年化（XIRR）。</p>
         <div class="grid2">

@@ -339,6 +339,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .settings-input { box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:8px; background:var(--surface); color:var(--text); font-size:14px; font-family:inherit; text-align:left; }
 .settings-input::placeholder { color:var(--text-3); }
 .panel-section { display:block; }
+.sm-mobile-home { display:none; }   /* 仅移动端（≤640px）显示 iOS 分组列表首页 */
+.sm-mobile-bar { display:none; }
 .panel-title { font-size:17px; font-weight:700; margin:14px 0 10px; }
 .panel-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:11px 0; border-bottom:1px solid var(--border-2); }
 .panel-row:last-child { border-bottom:none; }
@@ -353,6 +355,31 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .danger-zone .title { color:var(--danger); font-weight:600; font-size:15px; }
 .danger-zone .desc { color:var(--text-2); font-size:13px; margin:4px 0 12px; line-height:1.5; }
 .danger-zone .sm-danger { width:100%; margin-top:0; }
+/* 设置二级页面：灰底 + 白色圆角分组卡片（iOS Inset Group） */
+.settings-panel{background:var(--bg);scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.18) transparent}
+.settings-panel::-webkit-scrollbar{width:6px}
+.settings-panel::-webkit-scrollbar-track{background:transparent}
+.settings-panel::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:3px}
+.nset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:0 0 14px;overflow:hidden}
+.nset-card .panel-row{padding-left:14px;padding-right:14px}
+.nset-label{font-size:12.5px;font-weight:600;color:var(--text-3);margin:18px 4px 7px}
+.panel-row .title.is-danger{color:var(--danger)}
+.add-acc-card{cursor:pointer}
+.add-acc-card .panel-row{border:none;justify-content:center;color:var(--accent);font-weight:600}
+/* 设置侧栏：语义色图标 tab（固定 iOS 系统色，不随主题强调色变化） */
+.settings-sidebar .tab{display:flex;align-items:center;gap:10px}
+.settings-sidebar .tab .ico{width:26px;height:26px;border-radius:7px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center}
+.settings-sidebar .tab .ico svg{width:15px;height:15px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.settings-sidebar .tab .lbl{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-sidebar .tab.active{background:var(--surface-3);color:var(--text)}
+.ico.c-orange{background:#FF9500}.ico.c-blue{background:#007AFF}.ico.c-green{background:#34C759}.ico.c-indigo{background:#5856D6}.ico.c-cyan{background:#30B0C7}.ico.c-gray{background:#8E8E93}
+.settings-sidebar .tab.active.t-orange .lbl{color:#d97700}
+.settings-sidebar .tab.active.t-blue .lbl{color:#007AFF}
+.settings-sidebar .tab.active.t-green .lbl{color:#1f9e43}
+.settings-sidebar .tab.active.t-indigo .lbl{color:#5856D6}
+.settings-sidebar .tab.active.t-cyan .lbl{color:#1f93a8}
+.settings-sidebar .tab.active.t-gray .lbl{color:#6b6b70}
+
 @media (min-width:641px) {
   #settingsMask { align-items:center; }
   .sm-modal.settings-modal { width:720px; height:580px; max-height:580px; }
@@ -370,6 +397,60 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .panel-row.stacked .right { justify-content:flex-start; margin-top:10px; width:100%; }
   .panel-row.stacked .sm-seg { width:100%; }
   .panel-row.stacked .sm-seg button { flex:1; }
+}
+
+/* 设置弹窗：移动端（≤640px）iOS 分组列表 + 推入二级页（桌面双栏原样不动） */
+@media (max-width:640px) {
+  /* 弹窗近似全屏 sheet */
+  .sm-mask { padding:0; align-items:stretch; }
+  .sm-modal.settings-modal, .sm-modal { width:100%; max-width:100%; height:100%; max-height:100%; border-radius:0; border:none; margin:0; }
+  .sm-head { display:none; }
+  .sm-body.settings-body { padding:0; overflow:hidden; flex:1; min-height:0; display:flex; }
+  .settings-panel { padding:0; overflow:hidden; position:relative; display:block; width:100%; background:var(--surface-2); }
+
+  /* 移动首页（iOS 分组列表） */
+  .sm-mobile-home { display:block; height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:calc(10px + env(safe-area-inset-top)) 14px calc(20px + env(safe-area-inset-bottom)); }
+  .sm-mobile-home-head { display:flex; align-items:center; justify-content:space-between; padding:12px 4px 8px; }
+  .sm-mobile-home-head h1 { font-size:30px; font-weight:700; margin:0; color:var(--text); }
+  .sm-mobile-close { border:none; background:transparent; color:var(--text-2); font-size:20px; width:34px; height:34px; border-radius:50%; cursor:pointer; font-family:inherit; line-height:1; }
+  .sm-mobile-close:active { background:var(--surface-3); }
+
+  /* 个人卡片（头像主色蓝） */
+  .sm-ipcard { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin:6px 0 22px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .sm-ipcard:active { background:var(--surface-2); }
+  .sm-ipcard .avatar { width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,#3a7afe,#007aff); color:#fff; font-size:22px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sm-ipcard .pinfo { flex:1; min-width:0; }
+  .sm-ipcard .pn { font-size:19px; font-weight:600; color:var(--text); }
+  .sm-ipcard .ps { font-size:13px; color:var(--text-3); margin-top:2px; }
+  .sm-ipcard .chev { color:var(--text-3); font-size:20px; flex-shrink:0; }
+
+  /* 分组卡片 */
+  .sm-group { margin:0 0 22px; }
+  .sm-icard { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .sm-irow { display:flex; align-items:center; gap:13px; padding:12px 14px; cursor:pointer; position:relative; }
+  .sm-irow:active { background:var(--surface-2); }
+  .sm-irow+.sm-irow::before { content:""; position:absolute; top:0; left:57px; right:0; height:1px; background:var(--border-2); }
+  .sm-iicon { width:30px; height:30px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; font-size:17px; }
+  .sm-iicon .e { filter:brightness(0) invert(1); font-size:16px; line-height:1; }
+  .sm-iicon .info-i { color:#fff; font-style:italic; font-weight:700; font-family:Georgia,"Times New Roman",serif; font-size:18px; }
+  .sm-irow .txt { flex:1; min-width:0; }
+  .sm-irow .txt .t { font-size:17px; color:var(--text); }
+  .sm-irow .chev { color:var(--text-3); font-size:20px; flex-shrink:0; }
+
+  /* 返回栏（二级页顶部） */
+  .sm-mobile-bar { display:none; align-items:center; height:52px; padding:0 6px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:3; }
+  .sm-mobile-bar .back { color:var(--accent); font-size:17px; display:flex; align-items:center; gap:1px; cursor:pointer; padding:6px 8px; background:none; border:none; font-family:inherit; }
+  .sm-mobile-bar .back .arr { font-size:24px; line-height:1; margin-top:-2px; }
+  .sm-mobile-bar .bt { position:absolute; left:0; right:0; text-align:center; font-size:17px; font-weight:600; color:var(--text); pointer-events:none; }
+
+  /* 详情态：隐藏首页、显示返回栏、仅显示对应 section */
+  .settings-panel.mobile-detail .sm-mobile-home { display:none; }
+  .settings-panel.mobile-detail .sm-mobile-bar { display:flex; }
+  .settings-panel.mobile-detail { overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--surface-2); padding:0 14px calc(20px + env(safe-area-inset-bottom)); }
+  .settings-panel .panel-section { display:none; }
+  .settings-panel .panel-section.active { display:block; }
+  .settings-panel.mobile-detail .panel-section { padding-top:14px; }
+  .settings-panel .app-credit { margin-top:18px; }
 }
 
 /* 总资产大卡片：桌面端元数据三列横向，移动端（见下方媒体查询）改为占满 */
@@ -6359,14 +6440,33 @@ function renderSyncCfg(){
     <div class="sm-head"><h2>⚙️ 设置</h2><button class="sm-x" onclick="closeSettings()" aria-label="关闭">✕</button></div>
     <div class="sm-body settings-body">
       <aside class="settings-sidebar">
-        <button class="tab active" data-tab="shortcuts" onclick="settingsTab('shortcuts')">快捷功能</button>
-        <button class="tab" data-tab="appearance" onclick="settingsTab('appearance')">外观与显示</button>
-        <button class="tab" data-tab="data" onclick="settingsTab('data')">数据与安全</button>
-        <button class="tab" data-tab="account" onclick="settingsTab('account')">账户</button>
-        <button class="tab" data-tab="cloud" onclick="settingsTab('cloud')">账号云同步</button>
-        <button class="tab" data-tab="about" onclick="settingsTab('about')">关于</button>
+        <button class="tab active t-orange" data-tab="shortcuts" onclick="settingsTab('shortcuts')"><span class="ico c-orange"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></span><span class="lbl">快捷功能</span></button>
+        <button class="tab t-blue" data-tab="appearance" onclick="settingsTab('appearance')"><span class="ico c-blue"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1 0 1.5-.8 1.5-1.6 0-.4-.2-.8-.4-1.1-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a5 5 0 0 0 5-5c0-3.9-4-7.2-9-7.2zM6.5 12a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></span><span class="lbl">外观与显示</span></button>
+        <button class="tab t-green" data-tab="data" onclick="settingsTab('data')"><span class="ico c-green"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="lbl">数据与安全</span></button>
+        <button class="tab t-indigo" data-tab="account" onclick="settingsTab('account')"><span class="ico c-indigo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg></span><span class="lbl">账户</span></button>
+        <button class="tab t-cyan" data-tab="cloud" onclick="settingsTab('cloud')"><span class="ico c-cyan"><svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 18z"/></svg></span><span class="lbl">账号云同步</span></button>
+        <button class="tab t-gray" data-tab="about" onclick="settingsTab('about')"><span class="ico c-gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.6" r=".8" style="fill:#fff;stroke:none"/></svg></span><span class="lbl">关于</span></button>
       </aside>
       <main class="settings-panel">
+
+        <!-- 移动端 iOS 分组列表首页（≤640px 显示；桌面隐藏） -->
+        <div class="sm-mobile-bar" id="smMobileBar">
+          <button class="back" onclick="closeSettingsDetail()"><span class="arr">‹</span> 设置</button>
+          <span class="bt" id="smMobileTitle">设置</span>
+        </div>
+        <div class="sm-mobile-home" id="smMobileHome">
+          <div class="sm-mobile-home-head"><h1>设置</h1><button class="sm-mobile-close" onclick="closeSettings()" aria-label="关闭">✕</button></div>
+          <div class="sm-ipcard" onclick="openSettingsDetail('account')">
+            <div class="avatar">Q</div>
+            <div class="pinfo"><div class="pn">QQa</div><div class="ps">资产管家 · 已同步</div></div>
+            <span class="chev">›</span>
+          </div>
+          <div id="smMobileGroups"></div>
+          <div class="app-credit">
+            <div class="credit-line">Made with <span class="heart">♥</span> by QQa</div>
+            <div class="credit-sub">Copyright © 2026 QQa. All Rights Reserved.</div>
+          </div>
+        </div>
 
         <!-- 快捷功能 -->
         <section class="panel-section active" id="panel-shortcuts">
@@ -6414,62 +6514,78 @@ function renderSyncCfg(){
           </div>
         </section>
 
-        <!-- 数据与安全 -->
+                <!-- 数据与安全 -->
         <section class="panel-section" id="panel-data">
           <h4 class="panel-title">数据与安全</h4>
-          <div class="panel-row">
-            <div class="left"><div class="title">本地缓存</div><div class="desc">持仓、净值与备份占用</div></div>
-            <div class="right"><span class="sm-pill" id="smCacheSize">—</span><button class="sm-ghost danger-text" onclick="clearCache()">清除缓存</button></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="syncOnline();closeSettings()">
-            <div class="left"><div class="title">从线上同步数据</div><div class="desc">从 GitHub 私有仓库拉取最新备份</div></div>
-            <div class="right"><span class="item-action primary">同步</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="exportJSON();closeSettings()">
-            <div class="left"><div class="title">导出备份 (JSON)</div><div class="desc">完整导出持仓、交易、设置、自选等</div></div>
-            <div class="right"><span class="item-action primary">导出</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="importJSON();closeSettings()">
-            <div class="left"><div class="title warning">导入备份 (JSON)</div><div class="desc">从本地 JSON 恢复全部数据（覆盖）</div></div>
-            <div class="right"><span class="item-action danger">覆盖导入</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="openImportModal();closeSettings()">
-            <div class="left"><div class="title">导入交易记录</div><div class="desc">按模板追加买入 / 卖出 / 转换记录</div></div>
-            <div class="right"><span class="item-arrow">›</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="downloadCSVTemplate();closeSettings()">
-            <div class="left"><div class="title sub">下载 CSV 导入模板</div><div class="desc">获取标准 CSV 表头格式</div></div>
-            <div class="right"><span class="item-action primary">下载</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="exportHoldingsCSV();closeSettings()">
-            <div class="left"><div class="title">导出持仓数据 (CSV)</div><div class="desc">导出当前持仓明细</div></div>
-            <div class="right"><span class="item-action primary">导出</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="importMyExtras();closeSettings()">
-            <div class="left"><div class="title">恢复真实债基与分析</div><div class="desc">把演示债基 / 分析替换为你自己的本地研究数据</div></div>
-            <div class="right"><span class="item-action danger">覆盖</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
-            <div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div>
-            <div class="right"><button class="sm-ghost">清除</button></div>
-          </div>
-          <div class="danger-zone">
-            <div class="title">重置应用</div>
-            <div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复。建议先「导出 JSON」备份。</div>
-            <button class="sm-danger" onclick="resetApp()">重置应用</button>
-          </div>
-          <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
-        </section>
 
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:pointer" onclick="clearCache()">
+              <div class="left"><div class="title">本地缓存</div><div class="desc">净值快照与备份占用，点击清除</div></div>
+              <div class="right"><span class="sm-pill" id="smCacheSize">—</span></div>
+            </div>
+          </div>
+
+          <div class="nset-label">云端与备份</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:pointer" onclick="syncOnline();closeSettings()">
+              <div class="left"><div class="title">从线上同步数据</div><div class="desc">从 GitHub 私有仓库拉取最新备份</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="exportJSON();closeSettings()">
+              <div class="left"><div class="title">导出全量备份 (JSON)</div><div class="desc">完整导出持仓、交易、设置、自选等</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="importJSON();closeSettings()">
+              <div class="left"><div class="title">导入全量备份 (JSON)</div><div class="desc">从本地 JSON 恢复全部数据（覆盖）</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+          </div>
+
+          <div class="nset-label">导入与明细</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:pointer" onclick="openImportModal();closeSettings()">
+              <div class="left"><div class="title">导入交易记录</div><div class="desc">按模板追加买入 / 卖出 / 转换记录</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="importMyExtras();closeSettings()">
+              <div class="left"><div class="title">恢复真实债基与分析</div><div class="desc">把演示债基 / 分析替换为你自己的本地研究数据</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="downloadCSVTemplate();closeSettings()">
+              <div class="left"><div class="title">下载 CSV 导入模板</div><div class="desc">获取标准 CSV 表头格式</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="exportHoldingsCSV();closeSettings()">
+              <div class="left"><div class="title">导出持仓数据 (CSV)</div><div class="desc">导出当前持仓明细</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+          </div>
+
+          <div class="nset-label">危险区域</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
+              <div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="resetApp()">
+              <div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+          </div>
+
+          <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出全量备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
+        </section>
         <!-- 账户 -->
         <section class="panel-section" id="panel-account">
-          <h4 class="panel-title">账户名称</h4>
+          <h4 class="panel-title">账户</h4>
           <p class="sm-note">在此统一管理账户名称：点击 ✎ 重命名，自定义账户可点 × 删除。账户栏只负责切换，不再显示编辑按钮。</p>
-          <div id="accNameList" class="sort-list"></div>
-          <div class="sort-list" style="margin-top:8px"><div class="acc-add-row" onclick="addAccount()" role="button" tabindex="0"><span class="acc-add-ico">＋</span><span>添加账户</span></div></div>
+          <div class="nset-label">账户名称</div>
+          <div class="nset-card"><div id="accNameList" class="sort-list"></div></div>
+          <div class="nset-card add-acc-card" onclick="addAccount()" role="button" tabindex="0">
+            <div class="panel-row">＋ 添加账户</div>
+          </div>
         </section>
-
-        <!-- 账号云同步 -->
+<!-- 账号云同步 -->
         <section class="panel-section" id="panel-cloud">
           <h4 class="panel-title">账号云同步（GitHub 私有）</h4>
           <div class="panel-row">
@@ -6704,7 +6820,7 @@ function renderSyncCfg(){
     {name:'玫红',a:'#e24b6b',s:'#cf3a5a',o:'#f25c7c',t:'#cf3a5a',soft:'#fdeaef'},
     {name:'青',a:'#0aa2b8',s:'#088a9e',o:'#16b8cf',t:'#088a9e',soft:'#e2f6f9'}
   ];
-  window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); };
+  window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){ var p=document.querySelector('.settings-panel'); if(p){ p.classList.remove('mobile-detail'); Array.prototype.forEach.call(p.querySelectorAll('.panel-section'), function(s){ s.classList.remove('active'); }); } } };
   window.closeSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.remove('show'); };
   window.settingsTab=function(name){
     var mask=document.getElementById('settingsMask'); if(!mask) return;

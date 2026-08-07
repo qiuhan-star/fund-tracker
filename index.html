@@ -360,7 +360,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .settings-panel::-webkit-scrollbar{width:6px}
 .settings-panel::-webkit-scrollbar-track{background:transparent}
 .settings-panel::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:3px}
-.nset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:0 0 14px;overflow:hidden}
+.nset-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:0 0 14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .nset-card .panel-row{padding-left:14px;padding-right:14px}
 .nset-label{font-size:12.5px;font-weight:600;color:var(--text-3);margin:18px 4px 7px}
 .panel-row .title.is-danger{color:var(--danger)}
@@ -450,7 +450,12 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .settings-panel .panel-section { display:none; }
   .settings-panel .panel-section.active { display:block; }
   .settings-panel.mobile-detail .panel-section { padding-top:14px; }
+  .settings-panel.mobile-detail .panel-title { display:none; }
+  .settings-panel.mobile-detail .sm-note { display:none; }
   .settings-panel .app-credit { margin-top:18px; }
+  /* iOS 风格：滚动条极薄、仅在滑动时出现（消除 Web 默认粗灰条） */
+  .sm-mobile-home, .settings-panel.mobile-detail { scrollbar-width:none; -ms-overflow-style:none; }
+  .sm-mobile-home::-webkit-scrollbar, .settings-panel.mobile-detail::-webkit-scrollbar { width:0; height:0; }
 }
 
 /* 总资产大卡片：桌面端元数据三列横向，移动端（见下方媒体查询）改为占满 */

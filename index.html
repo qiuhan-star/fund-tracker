@@ -5892,6 +5892,7 @@ function renderSyncCfg(){
         <h3>🏦 账户名称</h3>
         <p class="sm-note">在此统一管理账户名称：点击 ✎ 重命名，自定义账户可点 × 删除。账户栏只负责切换，不再显示编辑按钮。</p>
         <div id="accNameList" class="sort-list"></div>
+        <div class="sort-list" style="margin-top:8px"><div class="acc-add-row" onclick="addAccount()" role="button" tabindex="0"><span class="acc-add-ico">＋</span><span>添加账户</span></div></div>
       </div>
       <div class="sm-card">
         <h3>💾 存储与缓存</h3>
@@ -6106,8 +6107,12 @@ function renderSyncCfg(){
 .sort-ctrl{ display:flex; gap:4px; }
 .sort-ctrl button{ width:30px; height:30px; border:1px solid var(--border-3); background:var(--surface); color:var(--text); border-radius:7px; cursor:pointer; font-size: 14px; line-height:1; display:flex; align-items:center; justify-content:center; }
 .sort-ctrl button:active{ background:var(--accent-soft); }
-.sort-ctrl .sort-del{ color:var(--danger,#d93025); border-color:var(--danger,#d93025); }
+.sort-ctrl .sort-del{ color:var(--danger,#d93025); border-color:var(--danger,#d93025); background:transparent; }
 .sort-ctrl .sort-del:active{ background:rgba(217,48,38,.12); }
+/* 账户名称面板底部"添加账户"行（iOS 标准：列表末尾蓝色高亮行） */
+.sort-list .acc-add-row{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface-2); border:1px dashed var(--border-strong); border-radius:8px; color:var(--accent); font-size: 14px; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.sort-list .acc-add-row .acc-add-ico{ display:inline-flex; width:24px; height:24px; align-items:center; justify-content:center; border-radius:50%; background:var(--accent); color:#fff; font-size: 16px; line-height:1; }
+@media (hover: hover) { .sort-list .acc-add-row:hover {  background:var(--accent-soft);  } }
 </style>
 
 

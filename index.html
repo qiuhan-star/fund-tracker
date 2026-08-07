@@ -559,7 +559,18 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
   /* 资产总览卡片：防止数值被截断（图一） */
   .ov-card { min-width: 0; overflow: visible; }
-  .ov-val { white-space: nowrap; font-size: 16px !important; }
+  .ov-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 16px !important; }
+  /* 移动端：总资产大卡片通铺 + 元数据三列占满，消除右侧留白（图一） */
+  .ov-hero { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+  .ov-hero-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .ov-hero-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; width: 100%; }
+  .ov-hero-meta > div { display: flex; flex-direction: column; gap: 2px; }
+  .ov-hero-meta .lab { font-size: 12px; color: var(--text-3); }
+  .ov-hero-meta .val { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /* 收益率排行：移动端垂直堆叠，进度条全宽、收益率不被截断 */
+  .bar-row { flex-direction: column !important; align-items: stretch !important; gap: 5px !important; }
+  .bar-name { flex: 0 0 auto !important; width: auto !important; font-size: 14px !important; }
+  .bar-ret { text-align: right !important; align-self: flex-end; min-width: 0 !important; font-size: 13px !important; }
 
   /* 账户切换栏：空间不足时整行换行，不溢出；移动端隐藏「·N」计数（纯装饰，减负） */
   .scope-seg { max-width: 100%; }
@@ -2485,14 +2496,15 @@ function renderOverview(){
   document.getElementById('overview').innerHTML=`
     <div class="ov-wrap">
       <section class="ov-hero">
-        <div class="ov-hero-left">
+        <div class="ov-hero-main">
           <span class="ov-hero-label">总资产市值 · 账户 ${scopeLabel} <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></span>
           <span class="ov-hero-value">${mask(M(total))}</span>
           <span class="ov-hero-sub">累计投入本金 ${mask(M(principal))}</span>
         </div>
-        <div class="ov-hero-right">
-          <div>今日预估 <b class="${tgcls}">${mask(tg)}</b> <span class="${estCls}">${estLine}</span></div>
-          <div class="ov-hero-sub">更新 ${updLine}</div>
+        <div class="ov-hero-meta">
+          <div><span class="lab">今日预估</span><b class="val ${tgcls}">${mask(tg)}</b></div>
+          <div><span class="lab">估值涨跌</span><b class="val ${estCls}">${estLine}</b></div>
+          <div><span class="lab">更新</span><span class="val ov-zero">${updLine}</span></div>
         </div>
       </section>
       <section class="ov-grid">
@@ -2753,12 +2765,11 @@ function renderAdvice(){
       const c=+uCur[i], s=+uSug[i], d=+(s-c).toFixed(1);
       const cls=d>0?'pos':d<0?'neg':'zero';
       return `<div class="cmp-bar-row">
-        <div class="cbr-name" title="${esc(l)}">${esc(l)}</div>
+        <div class="cmp-top"><span class="cmp-name" title="${esc(l)}">${esc(l)}</span><span class="cbr-diff ${cls}">${d>0?'+':''}${d}%</span></div>
         <div class="cbr-bars">
           <div class="cbr-line"><span class="cbr-lab">当前</span><div class="cbr-track"><i class="cbr-fill cur" style="width:${Math.max(0,c/maxV*100).toFixed(1)}%"></i></div><b>${c.toFixed(1)}%</b></div>
           <div class="cbr-line"><span class="cbr-lab">建议</span><div class="cbr-track"><i class="cbr-fill sug" style="width:${Math.max(0,s/maxV*100).toFixed(1)}%"></i></div><b>${s.toFixed(1)}%</b></div>
         </div>
-        <div class="cbr-diff ${cls}">${d>0?'+':''}${d}%</div>
       </div>`;
     }).join('');
     wrap.innerHTML=`<div class="cmp-leg2"><span><i class="sw cur"></i>当前配置</span><span><i class="sw sug"></i>建议配置</span><span class="cbr-diff-note">右列=变动</span></div>${rows}`;

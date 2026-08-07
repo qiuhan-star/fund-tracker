@@ -982,6 +982,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     .af-item:hover{background:#f3f4f6}
     .af-code{color:#9aa0a6;font-size: 14px;font-variant-numeric:tabular-nums}
     .af-tip{font-size: 12px;color:#9aa0a6;margin-top:6px}
+    .sm-modal input.num{text-align:left}
     [data-theme="dark"] .af-suggest{background:#1f2430;border-color:#333a47}
     [data-theme="dark"] .af-item:hover{background:#2a313f}
     .liq-sg{display:inline-block;padding:2px 8px;border-radius:10px;font-size: 12px;font-weight:600;border:1px solid transparent;margin-right:4px;vertical-align:middle}
@@ -995,25 +996,23 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     <div class="sm-modal">
       <div class="sm-head"><h2>＋ 加一只基金</h2><button class="sm-x" onclick="closeAddFund()">✕</button></div>
       <div class="sm-body">
-        <p class="hint" style="margin:0 0 14px">填基金名称或 6 位代码（代码会自动识别名称），加好后可点开补录交易 / 市值。</p>
         <div class="nf-field" style="position:relative">
           <label>基金名称 / 代码</label>
-          <input id="af-input" list="af-name" autocomplete="off" placeholder="输入即搜全网，如：华夏成长 或 017847" oninput="afInput()" />
+          <input id="af-input" list="af-name" autocomplete="off" placeholder="代码或名称（支持天天基金检索）" oninput="afInput()" />
           <datalist id="af-name"></datalist>
           <div id="af-suggest" class="af-suggest" style="display:none" onclick="afSuggestClick(event)"></div>
-          <div class="af-tip">输入即实时搜索天天基金；点下方结果可直接带正确名称加入</div>
         </div>
         <div class="nf-field">
           <label>账户</label>
           <select id="af-acc"></select>
         </div>
         <div class="nf-field">
-          <label>当前市值（元，可留空）</label>
-          <input id="af-mv" class="num" type="number" step="any" inputmode="decimal" placeholder="留空则记 0，之后补" />
+          <label>当前市值（元）</label>
+          <input id="af-mv" class="num" type="number" step="any" inputmode="decimal" placeholder="可留空，记为 0" />
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
           <button class="btn" onclick="closeAddFund()">取消</button>
-          <button class="btn primary" onclick="addFundSave()">添加并打开</button>
+          <button class="btn primary" onclick="addFundSave()">添加</button>
         </div>
       </div>
     </div>

@@ -77,7 +77,7 @@ function ensureECharts(cb){
   .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 12px; }.cmp .cc { background: var(--surface-3); border: 1px solid var(--border-3); border-radius: 10px; padding: 10px; }.cmp h3 { font-size: 14px; margin: 0 0 6px; color: var(--text-2); font-weight: 600; text-align: center; }.cmp .chart-box { height: 180px; }.cmp .legend { justify-content: center; margin-top: 6px; }.cmp-diff { margin: 12px 0 4px; }.cmp-diff table { width:100%; border-collapse:collapse; font-size: 14px; }.cmp-diff th, .cmp-diff td { padding:6px 8px; text-align:right; border-bottom:1px solid var(--border); }.cmp-diff th.dl, .cmp-diff td.dl { text-align:left; }.cmp-diff thead th { color:var(--text-2); font-weight:600; }.cmp-diff .sw { width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:middle; }.cmp-diff .cmp-up { color:var(--up); font-weight:600; }.cmp-diff .cmp-down { color:var(--down); font-weight:600; }.cmp-diff .cmp-flat { color:var(--text-3); }.cmp-diff-note { font-size: 12px; color:var(--text-3); margin-top:6px; }.risk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin: 2px 0 14px; justify-content: center; }.risk-legend span { display: flex; align-items: center; gap: 5px; }.risk-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }/* 优先级建议卡 */
   .adk { display: flex; gap: 10px; border: 1px solid var(--border-3); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background:var(--surface); }.adk-badge { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; height: fit-content; white-space: nowrap; }.adk.high { border-left: 3px solid var(--danger); }.adk.high .adk-badge { background: var(--up-bg); color: #d23b3b; }.adk.medium { border-left: 3px solid var(--warn); }.adk.medium .adk-badge { background: var(--warn-bg); color: #b9791a; }.adk.low { border-left: 3px solid var(--accent); }.adk.low .adk-badge { background: var(--accent-soft); color: var(--accent); }.adk-title { font-size: 14px; font-weight: 600; margin: 0 0 4px; }.adk-body { font-size: 14px; color: var(--text-2); line-height: 1.65; margin: 0 0 8px; }.adk ul { margin: 0 0 6px; padding-left: 18px; font-size: 14px; color: var(--text-2); line-height: 1.7; }.adk-alt { font-size: 14px; color: var(--text-2); background: var(--surface-2); border-radius: 8px; padding: 7px 10px; line-height: 1.6; }.adk-alt b { color: var(--text-2); }/* 分阶段计划 */
   .plan { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; margin-top: 6px; }.plan h3 { font-size: 14px; margin: 0 0 10px; font-weight: 600; }.pl { display: flex; gap: 10px; margin-bottom: 10px; }.pl:last-child { margin-bottom: 0; }.pl-m { flex: 0 0 auto; width: 64px; font-size: 14px; font-weight: 600; color: var(--accent); padding-top: 1px; }.pl-c { font-size: 14px; color: var(--text-2); line-height: 1.65; }.hint { font-size: 14px; color: var(--text-3); line-height: 1.7; }.privacy { color: var(--text-2); font-size: 14px; margin: 8px 0 0; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; line-height: 1.6; }.legend { display: flex; flex-wrap: wrap; gap: 9px; font-size: 14px; margin-top: 8px; }.legend span { display: flex; align-items: center; gap: 5px; }.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }/* 饼图可点击图例（下钻筛选） */
-  .pie-leg { cursor: pointer; padding:7px 10px; min-height:36px; display:inline-flex; align-items:center; border-radius: 6px; transition: background .15s, color .15s; user-select: none; }@media (hover: hover) { .pie-leg:hover {  background: var(--surface-3);  } }
+  .pie-leg { cursor: pointer; padding:7px 10px; min-height:36px; display:inline-flex; align-items:center; border-radius: 6px; transition: background .15s, color .15s; user-select: none; max-width:100%; min-width:0; overflow-wrap:anywhere; }@media (hover: hover) { .pie-leg:hover {  background: var(--surface-3);  } }
 .pie-leg.on { background: var(--accent); color: #fff; }.pie-leg.on i { box-shadow: 0 0 0 1px rgba(255,255,255,.6); }/* ===== 快捷记账抽屉 ===== */
   .fab { position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 80; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 28px; line-height: 1; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.22); transition: transform .15s, box-shadow .15s; }@media (hover: hover) { .fab:hover {  transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,.28);  } }@media (max-width: 768px) { .fab { display: none; } }
 .fab:active { transform: translateY(0); }.drawer-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 90; }.drawer { position: fixed; top: 0; right: 0; height: 100%; width: 340px; max-width: 88vw; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 28px rgba(0,0,0,.14); z-index: 95; transform: translateX(100%); transition: transform .22s ease; display: flex; flex-direction: column; }.drawer.open { transform: translateX(0); }.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-2); }.drawer-head h3 { margin: 0; font-size: 15px; }.drawer-x { border: none; background: none; font-size: 18px; cursor: pointer; color: var(--text-2); padding: 4px 8px; border-radius: 6px; }@media (hover: hover) { .drawer-x:hover {  background: var(--bg);  } }
@@ -109,13 +109,30 @@ function ensureECharts(cb){
   .status-line.fail .retry { display:inline-flex; align-items:center; gap:4px; font-weight:600; }
   .acc-menu { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.12); overflow:hidden; margin-bottom:12px; }
   .acc-menu.show { display:block; }
-  .acc-menu-item { display:flex; align-items:center; justify-content:space-between; padding:11px 14px; font-size:15px; cursor:pointer; border-bottom:1px solid var(--border-2); }
+  .acc-menu-head { display:flex; align-items:center; padding:10px 14px; font-size:13px; color:var(--text-3); border-bottom:1px solid var(--border-2); }
+  .acc-menu-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px; font-size:15px; cursor:pointer; border-bottom:1px solid var(--border-2); }
   .acc-menu-item:last-child { border-bottom:none; }
-  .acc-menu-item:active { background:var(--surface-2); }
-  .acc-menu-item.on { color:var(--accent); font-weight:600; }
-  .acc-menu-item .acc-cnt { margin-left:5px; font-size:12px; opacity:.55; font-variant-numeric:tabular-nums; }
-  .acc-menu-item .acc-x { margin-left:8px; opacity:.55; font-size:12px; cursor:pointer; }
-  .acc-menu-item.acc-menu-add { color:var(--accent); font-weight:600; }
+  .acc-menu-item:hover { background:var(--surface-2); }
+  .acc-menu-item.on { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .acc-menu-item .acc-left { display:flex; align-items:center; gap:8px; min-width:0; }
+  .acc-menu-item .acc-check { visibility:hidden; color:var(--accent); font-size:14px; width:16px; text-align:center; flex-shrink:0; }
+  .acc-menu-item.on .acc-check { visibility:visible; }
+  .acc-menu-item .acc-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .acc-menu-item .acc-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .acc-menu-item .acc-cnt { font-size:12px; color:var(--text-3); background:var(--surface-2); padding:2px 7px; border-radius:10px; font-variant-numeric:tabular-nums; }
+  .acc-menu-item .acc-x { display:none; color:var(--danger); font-size:15px; cursor:pointer; width:18px; text-align:center; line-height:1; }
+  .acc-menu-item:hover .acc-x { display:block; }
+  .acc-menu-item.acc-menu-add { border-top:2px solid var(--border-2); color:var(--accent); font-weight:600; background:var(--surface); }
+  .acc-menu-item.acc-menu-add:hover { background:var(--surface-2); }
+  @media (max-width:600px){
+    .acc-menu { position:static; width:auto; max-width:none; margin-top:8px; }
+    .acc-menu-item .acc-x { display:block; opacity:.55; }
+  }
+  @media (min-width:601px){
+    .topbar .header-left { position:relative; }
+    .acc-menu { position:absolute; top:calc(100% + 8px); left:0; width:240px; max-width:240px; margin:0; z-index:10; }
+    .acc-menu-head { display:none; }
+  }
   @media (max-width:600px){ .acc-title { font-size:20px; } .icon-btn { width:34px; height:34px; } .icon-btn svg { width:20px; height:20px; } .theme-toggle .icon-btn { width:30px; height:30px; } .theme-toggle .icon-btn svg { width:17px; height:17px; } }/* ===== 主 Tab 导航 ===== */
   .main-tabs { display: flex; gap: 0; background: var(--border-3); border-radius: 10px; padding: 3px; margin-bottom: 14px; }.main-tabs button { flex: 1; border: none; background: transparent; padding: 9px 0; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-2); cursor: pointer; font-family: inherit; transition: all .15s; }.main-tabs button.on { background:var(--surface); color: var(--accent-on); box-shadow: 0 1px 4px rgba(0,0,0,.06); }/* 资产口径切换器 */
   .scope-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border-strong); border-radius:10px; padding:8px 12px; margin-bottom:14px; }.scope-bar .scope-lab { font-size: 14px; color:var(--text-3); font-weight:600; }.scope-seg { display:inline-flex; flex-wrap:wrap; border:1px solid var(--border-strong); border-radius:8px; overflow:hidden; isolation:isolate; }.scope-seg button { border:none; background:var(--surface); padding:6px 14px; font-size: 14px; cursor:pointer; font-family:inherit; color:var(--text-2); transition:all .15s; }.scope-seg button + button { border-left:1px solid var(--border-strong); }.scope-seg button.on { background:var(--accent); color:#fff; font-weight:600; }.scope-hint { font-size: 12px; color:var(--text-3); }.scope-seg button.add { color:var(--accent); font-weight:700; padding:6px 10px; }.scope-seg button .acc-x { margin-left:5px; opacity:.55; font-size: 12px; cursor:pointer; }.scope-seg button .acc-ren { margin-left:4px; opacity:.5; font-size: 12px; cursor:pointer; }@media (hover: hover) { .scope-seg button .acc-x:hover {  opacity:1;  } .scope-seg button .acc-ren:hover {  opacity:1;  } }
@@ -170,7 +187,7 @@ function ensureECharts(cb){
 .idx-modal-body { padding: 16px 18px 20px; }.idx-modal-chart { border: 1px solid var(--border-2); border-radius: 10px; background: var(--surface-3); padding: 8px; }/* 主题 / 板块热力（统一规格网格，不表示面积） */
   .theme-heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }.th-cell { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--surface-3); }.th-cell.pos { background: rgba(192,57,43,.06); border-color: rgba(192,57,43,.28); }.th-cell.neg { background: rgba(39,174,96,.06); border-color: rgba(39,174,96,.28); }.th-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 4px; }.th-cat { font-size: 14px; font-weight: 600; color: var(--text); }.th-n { font-size: 12px; color: var(--text-3); flex: 0 0 auto; }.th-pct { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }.th-ret { font-size: 14px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }.th-ret.pos { color: var(--up); }.th-ret.neg { color: var(--down); }.th-ret.zero { color: var(--text-3); }/* 板块卡：折叠开关 + 合计行 */
   .sec-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }.mini-toggle { font-size: 14px; color: var(--text-2); display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }.mini-toggle input { width: auto; margin: 0; }/* 板块配置：占比条用中性品牌色，盈亏仅通过 cb-ret 文字色表达 */
-  .cb-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }.bar-list { display:flex; flex-direction:column; gap:6px; }.bar-row { display:flex; align-items:center; gap:8px; font-size: 14px; }.bar-name { width:140px; flex:0 0 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }.bar-track { flex:1 1 auto; height:10px; background:var(--border-2); border-radius:5px; overflow:hidden; }.bar-fill { height:100%; border-radius:5px; transition:width .3s ease; }.bar-fill.pos { background:var(--up); }.bar-fill.neg { background:var(--down); }.bar-fill.zero { background:var(--text-3); }.bar-ret { width:54px; flex:0 0 auto; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }@media(max-width:680px) { .bar-name { width:96px; }.bar-ret { width:48px; font-size: 12px; }  }
+  .cb-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }.bar-list { display:flex; flex-direction:column; gap:6px; }.bar-row { display:flex; align-items:center; gap:8px; font-size: 14px; min-width:0; }.bar-name { flex:0 0 140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }.bar-track { flex:1 1 auto; min-width:40px; height:10px; background:var(--border-2); border-radius:5px; overflow:hidden; }.bar-fill { height:100%; border-radius:5px; transition:width .3s ease; }.bar-fill.pos { background:var(--up); }.bar-fill.neg { background:var(--down); }.bar-fill.zero { background:var(--text-3); }.bar-ret { flex:0 0 auto; min-width:54px; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }@media(max-width:680px) { .bar-name { flex:0 0 96px; }.bar-ret { min-width:48px; font-size: 12px; }  }
 .cb-ret { font-size: 12px; margin-left: 6px; font-weight: 600; font-variant-numeric: tabular-nums; }.cb-ret.pos { color: var(--up); }.cb-ret.neg { color: var(--down); }.cb-ret.zero { color: var(--text-3); }/* 空状态引导 */
   .empty-state { text-align: center; padding: 40px 16px; }.empty-state .es-emoji { font-size: 42px; }.empty-state .es-title { font-size: 18px; font-weight: 600; margin: 10px 0 6px; }.empty-state .es-desc { font-size: 14px; color: var(--text-3); margin: 0 auto 16px; max-width: 320px; line-height: 1.6; }.empty-state .es-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }.cat-chip { border: 1px solid var(--border-strong); background:var(--surface); border-radius: 16px; padding: 6px 14px; min-height:36px; font-size: 14px; cursor: pointer; font-family: inherit; color: var(--text-2); transition: all .15s; }@media (hover: hover) { .cat-chip:hover {  border-color: var(--text-3);  } }
 .cat-chip.on { background: var(--accent-on); color: #fff; border-color: var(--accent-on); }.sec-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }.sec-head.collapsible { cursor: pointer; user-select: none; }@media (hover: hover) { .sec-head.collapsible:hover h2 {  color: var(--accent);  } }
@@ -209,7 +226,7 @@ function ensureECharts(cb){
 @media (max-width: 768px) { .wrap { padding: calc(12px + env(safe-area-inset-top)) 10px calc(24px + env(safe-area-inset-bottom)); }h1 { font-size: 18px; }.topbar .sub { font-size: 12px; }.cards4 { grid-template-columns: repeat(2,1fr); gap: 8px; }.mcard { padding: 10px; }.mcard .val { font-size: 18px; }.grid2 { grid-template-columns: 1fr; gap: 12px; }.chart-box { height: 200px !important; }.card { padding: 12px 14px; margin-bottom: 12px; }input, select { font-size: 18px !important; }.main-tabs button { font-size: 14px; padding: 8px 0; }.hl-name { font-size: 14px; }.cat-chip { font-size: 12px; padding: 3px 10px; }
   /* iOS 自动放大修复：更高优先级 + !important 覆盖 .drawer-body .fld input(14px) / .bk-input input(14px) / td input(13px) 等更具体规则 */
   td input, .drawer-body .fld input, .bk-input input, .nf-field input, .nf-field select, .dca-row .field input, .dca-row .field select, .tr-add-grid input, .tr-add-grid select, .hold-search input, .al-input, .tp-search, .at-search, .float-menu .fm-input, .sm-frow input, #impPasteArea { font-size: 18px !important; }
-  .cb-l { width: 46px; font-size: 12px; } .cb-v { width: 64px; font-size: 12px; } .cb-row { font-size: 12px; gap: 6px; margin: 4px 0; } .cb-track { height: 10px; } .bar-name { width: 80px; font-size: 12px; } .bar-ret { width: 42px; font-size: 12px; } .bar-row { gap: 6px; font-size: 12px; }
+  .cb-l { width: 46px; font-size: 12px; } .cb-v { width: 64px; font-size: 12px; } .cb-row { font-size: 12px; gap: 6px; margin: 4px 0; } .cb-track { height: 10px; } .bar-name { flex:0 0 80px; font-size: 12px; } .bar-ret { min-width:42px; font-size: 12px; } .bar-row { gap: 6px; font-size: 12px; }
   /* 顶部右上 主题/设置 按钮：移动端只留 emoji，文字标签裁掉（防止「暗色」「设置」换行成两行） */
   #themeBtn, button[onclick="openSettings()"] { width: 38px; min-width: 38px; padding: 6px 0; font-size: 18px; line-height: 1; overflow: hidden; white-space: nowrap; text-overflow: clip; text-align: center; }
   .scope-bar { flex-wrap: wrap; gap: 6px; } .scope-bar button { font-size: 14px; padding: 5px 9px; }
@@ -1173,15 +1190,20 @@ function renderScopeBar(){
   const menu=document.getElementById('accMenu'); if(!menu) return;
   const cntOf=a=> (a==='all')? _allRaw.length : _allRaw.filter(f=>effAccount(f.account)===a).length;
   const list=accountListOrdered();
-  let html='';
+  let html='<div class="acc-menu-head"><span>账户选择</span></div>';
   list.forEach(a=>{
     const bi=accIsBuiltin(a);
-    html+='<div class="acc-menu-item'+(a===scopeAcc?' on':'')+'" data-acc="'+escAttr(a)+'" onclick="pickAcc(this.dataset.acc)">'+escHtml(a)+cntSpan(cntOf(a));
+    const isOn=(a===scopeAcc);
+    html+='<div class="acc-menu-item'+(isOn?' on':'')+'" data-acc="'+escAttr(a)+'" onclick="pickAcc(this.dataset.acc)">';
+    html+='<span class="acc-left"><span class="acc-check">'+(isOn?'✓':'')+'</span><span class="acc-name">'+escHtml(a)+'</span></span>';
+    html+='<span class="acc-right"><span class="acc-cnt">'+cntOf(a)+'只</span>';
     if(!bi) html+='<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span>';
-    html+='</div>';
+    html+='</span></div>';
   });
-  html+='<div class="acc-menu-item'+(scopeAcc==='all'?' on':'')+'" data-acc="all" onclick="pickAcc(this.dataset.acc)">全量<span class="acc-cnt">'+cntOf('all')+'</span></div>';
-  html+='<div class="acc-menu-item acc-menu-add" onclick="addAccount()">＋ 新增账户</div>';
+  html+='<div class="acc-menu-item'+(scopeAcc==='all'?' on':'')+'" data-acc="all" onclick="pickAcc(this.dataset.acc)">';
+  html+='<span class="acc-left"><span class="acc-check">'+(scopeAcc==='all'?'✓':'')+'</span><span class="acc-name">全量</span></span>';
+  html+='<span class="acc-right"><span class="acc-cnt">'+cntOf('all')+'只</span></span></div>';
+  html+='<div class="acc-menu-item acc-menu-add" onclick="addAccount()"><span class="acc-left"><span class="acc-name">＋ 新增账户</span></span></div>';
   menu.innerHTML=html;
   // 同步 Header 账户名（改名/切换后保持显示当前 scope）
   const nm=document.getElementById('accName'); if(nm) nm.textContent = scopeAcc;
@@ -7050,7 +7072,7 @@ function renderWatchTab(){
   let total=0; _allHoldings.forEach(function(f){ total+=(f.mv||0); }); getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ total+=bondAmt(f); });
 
   const STYLE='<style>'
-    +'.wt{max-width:600px;margin:0 auto;padding:0 0 90px}'
+    +'.wt{max-width:600px;margin:0 auto;padding:0 0 90px}'    +'.wt-split{display:block}'    +'.wt-col{display:flex;flex-direction:column}'    +'.wt .sec-cap .tag-idle{font-size:11px;font-weight:600;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border-2);border-radius:99px;padding:2px 9px}'    +'@media (min-width:900px){'    +'.wt{max-width:1180px;padding:0 24px 90px}'    +'.wt-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}'    +'.wt-search{margin:6px 0 0}'    +'.wt .card{margin:0 0 14px}'    +'.wt .sec-cap{padding-left:0;padding-right:0}'    +'.wt .card.wt-calc-card{margin:0}'    +'}'
     +'.wt-search{display:flex;align-items:center;gap:8px;padding:11px 18px;background:var(--surface-2);border-radius:12px;margin:6px 14px 0}'
     +'.wt-search .lens{color:var(--text-3);font-size:14px;line-height:1;display:inline-flex;width:16px;flex:0 0 16px;align-items:center;justify-content:center}'
     +'.wt-search input{flex:1;border:0;background:transparent;outline:0;font-size:15px;color:var(--text);min-width:0}'
@@ -7059,7 +7081,7 @@ function renderWatchTab(){
     +'.wt .sec-cap{display:flex;align-items:baseline;gap:8px;padding:18px 16px 8px;font-size:20px;font-weight:700;color:var(--text)}'
     +'.wt .sec-cap .count{font-size:14px;font-weight:500;color:var(--text-3)}'
     +'.wt .sec-cap .more{margin-left:auto;font-size:14px;font-weight:600;color:var(--accent)}'
-    +'.wt .sec-cap .tag-ok{font-size:11px;font-weight:600;color:#2f9e58;background:#eafaf0;border:1px solid #cdeeda;border-radius:99px;padding:2px 9px;margin-left:auto}'
+    +'.wt .sec-cap .tag-ok{font-size:11px;font-weight:600;color:#2f9e58;background:#eafaf0;border:1px solid #cdeeda;border-radius:99px;padding:2px 9px}'
     +'.wt .sec-cap .info-trigger{margin-left:auto;flex:0 0 18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--text-3);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}'
     +'.wt .card{background:var(--surface);border-radius:14px;overflow:hidden;margin:0 14px 14px;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}'
     +'.wt .grp-head{font-size:13px;font-weight:600;color:var(--text-2);padding:14px 16px 6px}'
@@ -7125,19 +7147,28 @@ function renderWatchTab(){
   }
   if(!items.length){ listHtml='<div class="card wt-empty">还没有自选。在上方输入代码 / 名称回车加入，或点 📷 截图识别。</div>'; }
 
+  const isEmptyWatch = (!items.length && !bWatch.length);
   bc.innerHTML=STYLE
     +'<div class="wt">'
-    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><span class="cam" onclick="uwPickImage()">📷 截图</span><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
-    +'<div class="sec-cap"><span>自选清单</span><span class="count">('+items.length+')</span><span class="more" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'按分组 ▾')+'</span></div>'
-    + listHtml
-    +'<div class="sec-cap"><span>买入决策 &amp; 仓位测算</span><span class="tag-ok">已测算</span><span class="info-trigger" onclick="openWatchInfo()">ⓘ</span></div>'
-    +'<div class="card wt-calc-card">'
-      +'<div class="calc-grid"><div class="calc-cell"><div class="lbl">预备买入资金（¥）</div><input id="uwCap" class="ipt" type="number" value="5000"></div>'
-        +'<div class="calc-cell"><div class="lbl">单只上限（自动 %）</div><input id="uwPct" class="ipt" type="number" value="15"></div></div>'
-      +'<div class="calc-sub"><span class="lbl">组合当前总市值（¥）· 自动读取</span><span class="val">'+Math.round(total).toLocaleString()+'</span></div>'
-      +'<input id="uwTotal" type="hidden" value="'+Math.round(total)+'">'
-      +'<div class="calc-res" id="wtBuyRes"></div>'
-      +'<div class="wt-decide">'+ban.warnHtml+fundWarn+ban.sugHtml+'</div>'
+    +'<div class="wt-split">'
+      +'<div class="wt-col">'
+        +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><span class="cam" onclick="uwPickImage()">📷 截图</span><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
+        +'<div class="sec-cap"><span>自选清单</span><span class="count">('+items.length+')</span><span class="more" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'按分组 ▾')+'</span></div>'
+        + listHtml
+      +'</div>'
+      + (isEmptyWatch ? '' :
+        '<div class="wt-col">'
+          +'<div class="sec-cap"><span>买入决策 &amp; 仓位测算</span>'+(items.length?'<span class="tag-ok">已测算</span>':'<span class="tag-idle">待测算</span>')+'<span class="info-trigger" onclick="openWatchInfo()">ⓘ</span></div>'
+          +'<div class="card wt-calc-card">'
+            +'<div class="calc-grid"><div class="calc-cell"><div class="lbl">预备买入资金（¥）</div><input id="uwCap" class="ipt" type="number" value="5000"></div>'
+              +'<div class="calc-cell"><div class="lbl">单只上限（自动 %）</div><input id="uwPct" class="ipt" type="number" value="15"></div></div>'
+            +'<div class="calc-sub"><span class="lbl">组合当前总市值（¥）· 自动读取</span><span class="val">'+Math.round(total).toLocaleString()+'</span></div>'
+            +'<input id="uwTotal" type="hidden" value="'+Math.round(total)+'">'
+            +'<div class="calc-res" id="wtBuyRes"></div>'
+            +'<div class="wt-decide">'+ban.warnHtml+fundWarn+ban.sugHtml+'</div>'
+          +'</div>'
+        +'</div>'
+      )
     +'</div>'
     +'<div class="overlay" id="wtInfo" onclick="if(event.target===this)closeWatchInfo()"><div class="sheet"><h3>规则说明</h3><p><b>合并说明：</b>基金自选（首页底部区块）+ 债基自选（原资产页债基池）已合并到此；资产页的债基自选池已撤掉。</p><p><b>识别：</b>「📷 截图」可上传持仓截图，自动提取 6 位基金代码并加入自选（首次需联网下载识别模型）。</p><p><b>模型（买多少）：</b>债基（防御仓）单只上限建议 ≤10%，基金可到 15%；「买入后该类占比」&gt;30% 标红。实际买入仍由你在 App 记账决定。</p><button class="close" onclick="closeWatchInfo()">知道了</button></div></div>'
     +'</div>';

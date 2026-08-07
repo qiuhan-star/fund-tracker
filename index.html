@@ -1039,37 +1039,37 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
         </div>
         <div class="nf-row2">
           <div class="nf-field">
-            <label>日期</label>
-            <input id="tq-date" type="date" />
-          </div>
-          <div class="nf-field">
-            <label>时间</label>
-            <input id="tq-time" type="time" value="15:00" />
-          </div>
-        </div>
-        <div class="nf-row2">
-          <div class="nf-field">
             <label>金额（元）</label>
             <input id="tq-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="如 1000" />
           </div>
           <div class="nf-field">
-            <label>净值（留空=T+1）</label>
-            <input id="tq-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="可留空" />
+            <label>日期时间</label>
+            <div class="dt-wrap">
+              <input id="tq-datetime" type="datetime-local" />
+              <span class="cal">📅</span>
+            </div>
           </div>
         </div>
-        <div class="nf-row2">
-          <div class="nf-field">
-            <label>费用（元）</label>
-            <input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0" />
+        <button class="more-toggle" id="tqMoreToggle" type="button" onclick="tqToggleMore()"><span class="arrow">▸</span><span>更多选项</span><span class="tag-opt">净值、费用、确认份额</span></button>
+        <div class="more-fields" id="tqMoreFields">
+          <div class="nf-row2">
+            <div class="nf-field">
+              <label>净值（留空=T+1）</label>
+              <input id="tq-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" />
+            </div>
+            <div class="nf-field">
+              <label>费用（元）</label>
+              <input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0" />
+            </div>
           </div>
           <div class="nf-field">
             <label>确认份额（可选）</label>
-            <input id="tq-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="可选" />
+            <input id="tq-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="不填则按金额/净值估算" />
           </div>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
           <button class="btn" onclick="closeTradePicker()">取消</button>
-          <button class="btn primary" onclick="tradeQuickSave()">保存并记账</button>
+          <button class="btn primary" onclick="tradeQuickSave()">保存</button>
         </div>
       </div>
     </div>

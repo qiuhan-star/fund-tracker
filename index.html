@@ -413,6 +413,27 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   filter: brightness(.94);
 }
 
+
+  /* ===== 云同步 iOS grouped 表单（2026-08-07 重设计） ===== */
+  .sync-group{ background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-top:10px; }
+  .sync-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 14px; border-top:1px solid var(--border-2); }
+  .sync-row:first-child{ border-top:none; }
+  .sync-label{ width:92px; flex-shrink:0; font-size:15px; color:var(--text); }
+  .sync-val{ flex:1; min-width:0; display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+  .sync-input{ flex:1; min-width:0; border:none; background:transparent; font:15px ui-monospace,monospace; color:var(--text-2); text-align:right; outline:none; padding:2px 0; }
+  .sync-input::placeholder{ color:var(--text-3); }
+  .sync-eye{ border:none; background:transparent; color:var(--text-3); font-size:15px; padding:2px 4px; cursor:pointer; flex-shrink:0; }
+  .sync-conflict{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
+  .sync-conflict-label{ font-size:14px; color:var(--text-2); flex-shrink:0; }
+  .sync-filewarn{ display:none; margin-top:12px; padding:10px 13px; border-radius:10px; background:var(--danger-bg); color:var(--danger); font-size:13px; line-height:1.45; }
+  .sync-filewarn.show{ display:block; }
+  .sync-actions{ display:flex; gap:10px; margin-top:6px; }
+  .sync-btn{ flex:1; border:none; border-radius:10px; padding:11px 12px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .sync-btn.primary{ background:var(--accent); color:#fff; }
+  .sync-btn.danger{ background:var(--danger-bg); color:var(--danger); }
+  .sync-btn.danger:active{ background:rgba(255,59,48,.18); }
+  .sync-up-arrow{ width:15px; height:15px; }
+  .sync-foot{ margin:10px 0 0; font-size:12px; color:var(--text-3); line-height:1.5; }
 </style>
 <script>
   try{
@@ -5762,6 +5783,7 @@ function renderSyncCfg(){
   var cf=localStorage.getItem('ft_sync_conflict')||'local';
   var seg=document.getElementById('smSyncConflict'); if(seg) Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on',(b.getAttribute('data-c')||'')===cf); });
   ['smSyncPat','smSyncRepo','smSyncBranch','smSyncPath'].forEach(function(id){ var e=document.getElementById(id); if(e) e.onchange=function(){ var cc=syncCfg(); if(id==='smSyncPat') cc.pat=e.value.trim(); else if(id==='smSyncRepo') cc.repo=e.value.trim(); else if(id==='smSyncBranch') cc.branch=e.value.trim(); else if(id==='smSyncPath') cc.path=e.value.trim(); setSyncCfg(cc); setSyncStatus('配置已保存'); }; });
+  var fwEl=document.getElementById('syncFileWarn'); if(fwEl) fwEl.classList.toggle('show', location.protocol==='file:');
   var lp=localStorage.getItem('ft_sync_lastpush'); if(lp) setSyncStatus('已上传 · 云端为最新 · '+new Date(lp).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
 }
 // ===== 以下进入应用初始化 =====
@@ -5848,25 +5870,50 @@ function renderSyncCfg(){
   <div class="sm-modal" role="dialog" aria-label="设置">
     <div class="sm-head"><h2>⚙️ 设置</h2><button class="sm-x" onclick="closeSettings()" aria-label="关闭">✕</button></div>
     <div class="sm-body">
-      <div class="sm-card">
-        <h3>🚀 常用操作</h3>
-        <div class="sm-grid">
-          <button class="sm-act" onclick="openAllTrades();closeSettings()"><span>📒</span>全部交易</button>
-          <button class="sm-act" onclick="openDcaModal();closeSettings()"><span>🗓️</span>定投计划</button>
-          <button class="sm-act" onclick="saveLocal();closeSettings()"><span>💾</span>保存下载</button>
-          <button class="sm-act" onclick="window.print();closeSettings()"><span>🖨</span>导出 PDF</button>
+      <div class="ios-section">
+        <div class="ios-section-header">快捷功能</div>
+        <div class="ios-card-group">
+          <div class="ios-row-item" onclick="openAllTrades();closeSettings()">
+            <span class="item-title">📒 全部交易记录</span>
+            <span class="item-arrow">›</span>
+          </div>
+          <div class="ios-row-item" onclick="openDcaModal();closeSettings()">
+            <span class="item-title">🗓️ 定投计划管理</span>
+            <span class="item-arrow">›</span>
+          </div>
+          <div class="ios-row-item" onclick="saveLocal();closeSettings()">
+            <span class="item-title">💾 保存下载</span>
+            <span class="item-arrow">›</span>
+          </div>
+          <div class="ios-row-item" onclick="window.print();closeSettings()">
+            <span class="item-title">🖨 导出 PDF</span>
+            <span class="item-arrow">›</span>
+          </div>
         </div>
       </div>
-      <div class="sm-card">
-        <h3>🎨 外观与显示</h3>
-        <div class="sm-row"><div class="sm-rt">主题模式<div class="sm-rd">浅色 / 深色，或跟随系统</div></div>
-          <div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div></div>
-        <div class="sm-row"><div class="sm-rt">强调色 (Accent)<div class="sm-rd">用于按钮、开关与高亮</div></div>
-          <div class="sm-sw" id="smSwatches"></div></div>
-        <div class="sm-row"><div class="sm-rt">默认资产口径<div class="sm-rd">打开应用时的初始口径</div></div>
-          <div class="sm-seg" id="smScopeSeg"><button data-s="本人账户">本人账户</button><button data-s="代管账户">代管账户</button><button data-s="投资账户">投资账户</button><button data-s="all">全量</button></div></div>
-        <div class="sm-row"><div class="sm-rt">自动刷新净值<div class="sm-rd">每 3 分钟后台刷新一次行情</div></div>
-          <label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div>
+      <div class="ios-section">
+        <div class="ios-section-header">外观与显示</div>
+        <div class="ios-card-group">
+          <div class="ios-row-item" style="cursor:default">
+            <div class="item-title">主题模式</div>
+            <div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div>
+          </div>
+          <div class="ios-row-item" style="cursor:default">
+            <div class="item-title">强调色 (Accent)</div>
+            <div class="sm-sw" id="smSwatches"></div>
+          </div>
+          <div class="ios-row-item" style="cursor:default;flex-wrap:wrap;row-gap:10px">
+            <div style="min-width:0">
+              <div class="item-title">默认资产口径</div>
+              <div class="item-subtitle" style="font-size:13px;color:var(--text-3);margin-top:2px">打开应用时的初始口径</div>
+            </div>
+            <div class="sm-seg" id="smScopeSeg"><button data-s="本人账户">本人账户</button><button data-s="代管账户">代管账户</button><button data-s="投资账户">投资账户</button><button data-s="all">全量</button></div>
+          </div>
+          <div class="ios-row-item" style="cursor:default">
+            <div class="item-title">自动刷新净值</div>
+            <label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label>
+          </div>
+        </div>
       </div>
       <div class="sm-card">
         <h3>🔐 数据与安全</h3>
@@ -5925,19 +5972,21 @@ function renderSyncCfg(){
         <div class="sm-row"><div class="sm-rt">开启云同步<div class="sm-rd">改动自动备份到你的 GitHub 私有仓库，打开网页自动拉取，多设备一致</div></div>
           <label class="sm-switch"><input type="checkbox" id="smSyncOn" onchange="onSyncToggle()"><span class="sm-slider"></span></label></div>
         <div id="syncCfg" style="display:none">
-          <div class="sm-frow"><label>GitHub 令牌 (PAT)</label><div style="position:relative;flex:1;min-width:0"><input id="smSyncPat" type="password" placeholder="ghp_xxx…" style="width:100%;box-sizing:border-box;padding:8px 34px 8px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--text);font:13.5px ui-monospace,monospace"><button type="button" onclick="toggleSyncPat()" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size: 15px">👁</button></div></div>
-          <div class="sm-frow"><label>仓库路径</label><input id="smSyncRepo" placeholder="用户名/仓库名" style="flex:1;min-width:0;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--text);font:13.5px inherit"></div>
-          <div class="sm-frow"><label>分支</label><input id="smSyncBranch" value="main" style="flex:1;min-width:0;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--text);font:13.5px inherit"></div>
-          <div class="sm-frow"><label>文件路径</label><input id="smSyncPath" value="fund-tracker-data.json" style="flex:1;min-width:0;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--text);font:13.5px inherit"></div>
-          <div class="sm-row" style="margin-top:4px"><div class="sm-rt">冲突时<div class="sm-rd">本机有未上传改动时保留本机</div></div>
-            <div class="sm-seg" id="smSyncConflict"><button data-c="local" class="on" onclick="setSyncConflict('local')">本机为准</button><button data-c="remote" onclick="setSyncConflict('remote')">云端为准</button></div></div>
-          <div style="display:flex;gap:10px;margin-top:10px">
-            <button class="sm-act" style="flex:1;justify-content:center" onclick="cloudPush(true)"><span>⬆️</span>立即上传</button>
-            <button class="sm-act" style="flex:1;justify-content:center" onclick="cloudPull(true)"><span>⬇️</span>立即下载</button>
-          </div>
-          <p class="sm-note" id="syncStatus" style="margin-top:10px">未同步</p>
-          <p class="sm-note">数据会离开浏览器存到 GitHub（私有仓库也算出浏览器）。请用<strong>私有仓库</strong>且仅放账本。需 https 托管的线上版才能联网（本地双击打开的 file:// 无法调用 GitHub API）。</p>
-        </div>
+  <div class="sync-group">
+    <div class="sync-row"><span class="sync-label">GitHub 令牌</span><div class="sync-val"><input id="smSyncPat" type="password" class="sync-input" placeholder="ghp_xxx…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="sync-eye" onclick="toggleSyncPat()">👁</button></div></div>
+    <div class="sync-row"><span class="sync-label">仓库路径</span><div class="sync-val"><input id="smSyncRepo" class="sync-input" placeholder="用户名/仓库名" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div></div>
+    <div class="sync-row"><span class="sync-label">分支</span><div class="sync-val"><input id="smSyncBranch" class="sync-input" value="main" autocapitalize="off"></div></div>
+    <div class="sync-row"><span class="sync-label">文件路径</span><div class="sync-val"><input id="smSyncPath" class="sync-input" value="fund-tracker-data.json" autocapitalize="off"></div></div>
+  </div>
+  <div class="sync-conflict"><span class="sync-conflict-label">冲突时</span><div class="sm-seg" id="smSyncConflict"><button data-c="local" class="on" onclick="setSyncConflict('local')">本机为准</button><button data-c="remote" onclick="setSyncConflict('remote')">云端为准</button></div></div>
+  <div class="sync-filewarn" id="syncFileWarn">你正以 <b>本地文件 (file://)</b> 打开，无法调用 GitHub API。请改用线上版，或用「导出备份 (JSON)」手动备份。</div>
+  <div class="sync-actions">
+    <button class="sync-btn primary" onclick="cloudPull(true)"><span>⬇️</span>立即下载</button>
+    <button class="sync-btn danger" onclick="cloudPush(true)"><svg class="sync-up-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M6 11l6-6 6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>立即上传</button>
+  </div>
+  <p class="sm-note" id="syncStatus" style="margin-top:10px">未同步</p>
+  <p class="sync-foot">数据会离开浏览器存到 GitHub（私有仓库也算出浏览器）。请用<strong>私有仓库</strong>且仅放账本。需 https 托管的线上版才能联网。</p>
+</div>
       </div>
       <div class="sm-card">
         <h3>📐 显示顺序</h3>

@@ -1172,7 +1172,7 @@ let CUSTOM_ACCOUNTS=[];
 let _cfgCorrupt=false;
 try{ CUSTOM_ACCOUNTS=JSON.parse(localStorage.getItem('ft_accounts')||'[]'); }catch(e){ console.warn('账户配置数据损坏，已重置为默认', e); _cfgCorrupt=true; }
 CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNT_META[a]) ACCOUNT_META[a]={isPersonal:true, owner:'本人'}; });
-function loadCustomAccounts(){ ACCOUNTS=[...BUILTIN_ACCOUNTS]; CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNTS.includes(a)) ACCOUNTS.push(a); }); }
+function loadCustomAccounts(){ ACCOUNTS=[...effBuiltins()]; CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNTS.includes(a)) ACCOUNTS.push(a); }); }
 loadCustomAccounts();
 // 账户显示顺序（用户可在设置里拖动/上下调整）；为空则按默认（内置+自定义+数据账户）
 function loadAccountOrder(){ try{ const a=JSON.parse(localStorage.getItem('ft_account_order')||'null'); return Array.isArray(a)?a:null; }catch(e){ return null; } }
@@ -5633,7 +5633,7 @@ function openImportModal(){ const m=document.getElementById('importMask'); if(m)
 function closeImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.remove('show'); const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML=''; const qc=document.getElementById('impQuickCode'); if(qc) qc.value=''; const qa=document.getElementById('impQuickAmount'); if(qa) qa.value=''; const qi=document.getElementById('impQuickInfo'); if(qi) qi.innerHTML=''; const qp=document.getElementById('impQuickPreview'); if(qp) qp.innerHTML=''; quickFund=null; }
 function switchImpTab(t){ const map={file:'impFileTab', paste:'impPasteTab', quick:'impQuickTab'}; for(const k in map){ const el=document.getElementById(map[k]); if(el) el.style.display=(k===t)?'':'none'; } const bs=document.querySelectorAll('#impTabSeg button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.t===t); } }
 let quickFund=null;
-function fillQuickAccount(){ const sel=document.getElementById('impQuickAccount'); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); const cur=(typeof currentScope!=='undefined' && currentScope && ACCOUNTS.indexOf(currentScope)>=0)?currentScope:'本人账户'; sel.value=cur; } const dt=document.getElementById('impQuickDate'); if(dt && !dt.value) dt.value=fmtDate(new Date()); }
+function fillQuickAccount(){ const sel=document.getElementById('impQuickAccount'); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); const cur=(typeof currentScope!=='undefined' && currentScope && ACCOUNTS.indexOf(currentScope)>=0)?currentScope:effAccount('本人账户'); sel.value=cur; } const dt=document.getElementById('impQuickDate'); if(dt && !dt.value) dt.value=fmtDate(new Date()); }
 function quickResolve(){
   const code=(document.getElementById('impQuickCode').value||'').trim();
   const box=document.getElementById('impQuickInfo');

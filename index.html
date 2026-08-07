@@ -85,7 +85,34 @@ function ensureECharts(cb){
 .btn.ghost { background: var(--surface-2); color: var(--text-2); border-color: var(--border-strong); }.tl { width: 100%; }/* ===== 债券板块 ===== */
   .sub2 { font-size: 12px; color: var(--text-3); margin: 3px 0 0; }.thermo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }.yield-box { background: var(--surface-3); border: 1px solid var(--border-3); border-radius: 10px; padding: 12px; }.yield-box .lbl { font-size: 12px; color: var(--text-3); }.yield-input { display: flex; align-items: baseline; gap: 4px; margin: 6px 0; }.yield-input input { width: 92px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 8px; font-size: 24px; font-weight: 600; font-family: inherit; color: var(--text); }.yield-input .pct { font-size: 18px; color: var(--text-2); }.thermo-status { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 14px; font-weight: 600; }.ts-low { background: var(--up-bg); color: #d23b3b; }.ts-mid { background: var(--accent-soft); color: var(--accent); }.ts-high { background: var(--warn-bg); color: #b9791a; }.cmp-bar { height: 26px; border-radius: 8px; background: var(--border-3); position: relative; overflow: hidden; margin: 8px 0 4px; }.cmp-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; }.cmp-bar .target { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--accent); }.cmp-legend { display: flex; gap: 16px; font-size: 14px; color: var(--text-2); margin-top: 4px; }.cmp-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: 0; }.roadmap { opacity: .72; }.roadmap .rh { display: flex; align-items: center; gap: 8px; }.pill { font-size: 12px; padding: 1px 8px; border-radius: 4px; background: var(--border-3); color: var(--text-3); white-space:nowrap; }.adv-toggle { cursor: pointer; color: var(--accent); font-size: 14px; font-weight: 600; margin-top: 14px; user-select: none; }@media (hover: hover) { .adv-toggle:hover {  text-decoration: underline;  } }
 .loading { font-size: 14px; color: var(--text-3); }.chart-box { position: relative; height: 230px; }.tree-fallback { display: flex; flex-direction: column; gap: 6px; padding: 4px 2px; }.tf-row { position: relative; display: flex; align-items: center; min-height: 22px; }.tf-bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; max-width: 100%; }.tf-cap { position: relative; z-index: 1; font-size: 12px; padding-left: 6px; line-height: 1.3; }.tf-cap b { font-weight: 600; }/* ===== 顶部栏 ===== */
-  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }.topbar .sub { margin-top: 3px; }/* ===== 主 Tab 导航 ===== */
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }.topbar .sub { margin-top: 3px; }
+  /* ===== 新 Header（账户名 + 无边框图标 + 单条状态） ===== */
+  .topbar .header-left { min-width: 0; }
+  .acc-title { display:inline-flex; align-items:center; gap:4px; font-size:22px; font-weight:700; line-height:1.2; cursor:pointer; -webkit-user-select:none; user-select:none; max-width:100%; }
+  .acc-title #accName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .acc-title .chev { font-size:12px; color:var(--text-3); transition:transform .15s; flex-shrink:0; }
+  .acc-title.open .chev { transform:rotate(180deg); }
+  .header-icons { display:flex; align-items:center; gap:2px; flex-shrink:0; }
+  .icon-btn { width:38px; height:38px; border-radius:10px; border:none; background:transparent; color:var(--text-2); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .12s, color .12s; padding:0; }
+  .icon-btn:active { background:var(--surface-2); }
+  .icon-btn svg { width:22px; height:22px; }
+  .status-line { display:flex; align-items:center; gap:8px; font-size:13px; line-height:1.4; color:var(--text-3); margin-bottom:12px; padding:0 2px; }
+  .status-line .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .status-line .dot.closed { background:#b6bcc4; }
+  .status-line .dot.open { background:#1f9d4d; }
+  .status-line .dot.lunch { background:#c6840a; }
+  .status-line.fail { color:var(--danger); cursor:pointer; }
+  .status-line.fail .retry { display:inline-flex; align-items:center; gap:4px; font-weight:600; }
+  .acc-menu { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.12); overflow:hidden; margin-bottom:12px; }
+  .acc-menu.show { display:block; }
+  .acc-menu-item { display:flex; align-items:center; justify-content:space-between; padding:11px 14px; font-size:15px; cursor:pointer; border-bottom:1px solid var(--border-2); }
+  .acc-menu-item:last-child { border-bottom:none; }
+  .acc-menu-item:active { background:var(--surface-2); }
+  .acc-menu-item.on { color:var(--accent); font-weight:600; }
+  .acc-menu-item .acc-cnt { margin-left:5px; font-size:12px; opacity:.55; font-variant-numeric:tabular-nums; }
+  .acc-menu-item .acc-x { margin-left:8px; opacity:.55; font-size:12px; cursor:pointer; }
+  .acc-menu-item.acc-menu-add { color:var(--accent); font-weight:600; }
+  @media (max-width:600px){ .acc-title { font-size:20px; } .icon-btn { width:34px; height:34px; } .icon-btn svg { width:20px; height:20px; } }/* ===== 主 Tab 导航 ===== */
   .main-tabs { display: flex; gap: 0; background: var(--border-3); border-radius: 10px; padding: 3px; margin-bottom: 14px; }.main-tabs button { flex: 1; border: none; background: transparent; padding: 9px 0; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-2); cursor: pointer; font-family: inherit; transition: all .15s; }.main-tabs button.on { background:var(--surface); color: var(--accent-on); box-shadow: 0 1px 4px rgba(0,0,0,.06); }/* 资产口径切换器 */
   .scope-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border-strong); border-radius:10px; padding:8px 12px; margin-bottom:14px; }.scope-bar .scope-lab { font-size: 14px; color:var(--text-3); font-weight:600; }.scope-seg { display:inline-flex; flex-wrap:wrap; border:1px solid var(--border-strong); border-radius:8px; overflow:hidden; isolation:isolate; }.scope-seg button { border:none; background:var(--surface); padding:6px 14px; font-size: 14px; cursor:pointer; font-family:inherit; color:var(--text-2); transition:all .15s; }.scope-seg button + button { border-left:1px solid var(--border-strong); }.scope-seg button.on { background:var(--accent); color:#fff; font-weight:600; }.scope-hint { font-size: 12px; color:var(--text-3); }.scope-seg button.add { color:var(--accent); font-weight:700; padding:6px 10px; }.scope-seg button .acc-x { margin-left:5px; opacity:.55; font-size: 12px; cursor:pointer; }.scope-seg button .acc-ren { margin-left:4px; opacity:.5; font-size: 12px; cursor:pointer; }@media (hover: hover) { .scope-seg button .acc-x:hover {  opacity:1;  } .scope-seg button .acc-ren:hover {  opacity:1;  } }
 .scope-seg button .acc-cnt { margin-left:5px; font-size: 12px; opacity:.55; font-variant-numeric:tabular-nums; }.scope-seg button.on .acc-cnt { opacity:.9; }.scope-seg button .acc-cnt::before { content:"·"; margin-right:4px; opacity:.6; }.tag-owner { display:inline-block; background:#fff3e0; color:#c77700; border:1px solid #ffd9a0; padding:0 6px; border-radius:6px; font-size: 12px; margin-left:4px; }.tab-panel { display: none; }.tab-panel.active { display: block; }/* ===== 持仓列表 ===== */
@@ -481,8 +508,9 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
     }catch(e){}
   }
   function _setTheme(c){ try{localStorage.setItem('ft_theme',c);}catch(e){} if(c==='system'){ var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m?'dark':'light'); } else document.documentElement.setAttribute('data-theme', c); _syncAppleChrome(); }
-  function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');_setTheme(cur==='dark'?'light':'dark');}
-  window.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️ 亮色':'🌙 暗色'; _syncAppleChrome(); showBackupReminder();});
+  function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');_setTheme(cur==='dark'?'light':'dark'); _syncThemeIcons();}
+  function _syncThemeIcons(){ var dark=document.documentElement.getAttribute('data-theme')==='dark'; var mi=document.getElementById('moonIcon'), si=document.getElementById('sunIcon'); if(mi) mi.style.display=dark?'none':'block'; if(si) si.style.display=dark?'block':'none'; }
+  window.addEventListener('DOMContentLoaded',function(){ _syncThemeIcons(); _syncAppleChrome(); showBackupReminder();});
   if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){ try{ if((localStorage.getItem('ft_theme')||'system')==='system'){ document.documentElement.setAttribute('data-theme', e.matches?'dark':'light'); _syncAppleChrome(); } }catch(_){} }); }catch(_){} }
 </script>
 <style>
@@ -540,22 +568,30 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   <div id="homeView">
     <div id="backupReminder" class="bk-reminder" style="display:none"></div>
     <div class="topbar">
-      <div>
-        <h1>本人账户基金追踪器</h1>
-        <p class="sub"><span id="mktLight" class="mkt-light" title="A股(沪深)交易时段状态"></span><span id="updated" class="loading">数据未刷新</span><span id="freshBadge" class="fresh-badge" style="display:none"></span></p>
+      <div class="header-left">
+        <div class="acc-title" id="accTitle" onclick="toggleAccMenu()">
+          <span id="accName">本人账户</span>
+          <span class="chev">▾</span>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:flex-start">
-        <button class="btn sm" id="themeBtn" onclick="toggleTheme()" title="切换亮色 / 暗色">🌓 主题</button>
-        <button class="btn sm" onclick="openSettings()" title="设置">⚙️ 设置</button>
+      <div class="header-icons">
+        <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="切换亮色 / 暗色" aria-label="切换主题">
+          <svg id="moonIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="sunIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <button class="icon-btn" onclick="openSettings()" title="设置" aria-label="设置">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
       </div>
     </div>
 
-    <!-- 大盘实时（腾讯财经，独立备用源） -->
-    <!-- 账户切换（本人账户 / 代管账户 / 投资账户 / 自定义 / 全量）· 置于最顶，作为整页数据归属上下文 -->
-    <div class="scope-bar" id="scopeBar">
-      <span class="scope-lab">账户</span>
-      <div class="scope-seg" id="scopeSeg"></div>
+    <div class="status-line" id="statusLine" onclick="if(isFailState()) retryRefresh()">
+      <span class="dot closed" id="statusDot"></span>
+      <span id="statusText">数据未刷新</span>
     </div>
+
+    <!-- 账户下拉菜单（由 Header 账户名触发；整合原 scope-bar 账户切换 + 全量 + 新增） -->
+    <div class="acc-menu" id="accMenu"></div>
 
     <!-- 市场风向 Tab 专用：数据源 / 刷新状态栏（公共市场数据，与"谁的账户"无关） -->
     <div class="scope-bar" id="marketStatus" style="display:none">
@@ -737,15 +773,85 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   }
   .hdr-extra{display:none}
   </style>
+  <style>
+  /* ===== 移动端交易录入（iOS 连体分组 + 卡片化历史） ===== */
+  .tr-ios .section-label{ padding:18px 16px 8px; font-size:13px; font-weight:600; color:var(--text-3); }
+  .tr-ios .ios-group{ margin:0 16px; }
+  .tr-ios .ios-card{ background:var(--surface); border-radius:14px; box-shadow:0 1px 2px rgba(0,0,0,.05),0 1px 1px rgba(0,0,0,.04); overflow:hidden; }
+  .tr-ios .ios-row{ display:flex; align-items:center; min-height:48px; padding:10px 15px; border-bottom:1px solid var(--border); }
+  .tr-ios .ios-row:last-child{ border-bottom:none; }
+  .tr-ios .ios-row .label{ min-width:64px; color:var(--text-2); font-size:16px; flex-shrink:0; }
+  .tr-ios .ios-row .value{ flex:1; text-align:right; color:var(--text); font-size:16px; }
+  .tr-ios .ios-row select, .tr-ios .ios-row input{ flex:1; border:none; background:transparent; color:var(--text); font-size:16px; text-align:right; outline:none; margin:0; padding:0; min-height:28px; font-family:inherit; }
+  .tr-ios .ios-row input::placeholder{ color:var(--text-3); }
+  .tr-ios .segmented{ display:flex; flex:1; justify-content:flex-end; gap:0; background:var(--surface-2); border-radius:9px; padding:2px; max-width:170px; }
+  .tr-ios .segmented button{ flex:1; border:none; background:transparent; color:var(--text-2); padding:6px 0; border-radius:7px; font-size:14px; font-weight:500; font-family:inherit; }
+  .tr-ios .segmented button.active{ background:var(--surface); color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,.12); font-weight:600; }
+  .tr-ios .seg-more{ margin-left:8px; border:none; background:transparent; color:var(--text-3); font-size:18px; padding:4px 2px; }
+  .tr-ios .collapsible-head{ cursor:pointer; }
+  .tr-ios .collapsible-head .chev{ color:var(--text-3); font-size:13px; margin-left:6px; display:inline-block; transition:transform .2s; }
+  .tr-ios .collapsible-head.open .chev{ transform:rotate(180deg); }
+  .tr-ios .collapsible-body{ display:none; }
+  .tr-ios .collapsible-body.open{ display:block; }
+  .tr-ios .fee-hint-row{ padding:2px 15px 10px; }
+  .tr-ios .fee-hint{ font-size:12px; color:var(--text-3); }
+  .tr-ios .hint-row{ padding:8px 20px 0; font-size:12px; color:var(--text-3); line-height:1.5; display:flex; gap:5px; align-items:flex-start; }
+  .tr-ios .hint-row .i{ font-size:12px; color:var(--text-3); flex-shrink:0; }
+  .tr-ios .ios-btn{ display:block; width:calc(100% - 32px); margin:16px 16px 8px; padding:14px; background:linear-gradient(180deg,var(--accent),var(--accent-strong)); color:#fff; border:none; border-radius:13px; font-size:17px; font-weight:600; text-align:center; box-shadow:0 2px 8px rgba(10,120,255,.25); font-family:inherit; }
+  .tr-ios .ios-btn:active{ opacity:.9; }
+  .tr-ios .tx-list{ margin:0 16px; }
+  .tr-ios .tx-card{ background:var(--surface); border-radius:14px; box-shadow:0 1px 2px rgba(0,0,0,.05),0 1px 1px rgba(0,0,0,.04); padding:13px 15px; margin-bottom:10px; }
+  .tr-ios .tx-line1{ display:flex; justify-content:space-between; align-items:center; margin-bottom:9px; }
+  .tr-ios .tx-id{ display:flex; align-items:center; gap:7px; font-size:14px; font-weight:600; }
+  .tr-ios .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .tr-ios .dot.buy{ background:var(--up); }
+  .tr-ios .dot.sell{ background:var(--down); }
+  .tr-ios .tx-id.buy{ color:var(--up); }
+  .tr-ios .tx-id.sell{ color:var(--down); }
+  .tr-ios .tx-date{ font-size:13px; color:var(--text-3); }
+  .tr-ios .tx-line2{ display:flex; justify-content:space-between; align-items:flex-end; }
+  .tr-ios .tx-amount{ font-size:21px; font-weight:700; letter-spacing:-.01em; }
+  .tr-ios .tx-sub{ font-size:13px; color:var(--text-3); margin-top:1px; }
+  .tr-ios .tx-right{ display:flex; align-items:center; gap:10px; }
+  .tr-ios .tx-status{ display:inline-flex; align-items:center; font-size:12px; color:var(--text-3); background:var(--surface-2); padding:4px 9px; border-radius:999px; }
+  .tr-ios .tx-ops{ display:flex; gap:14px; }
+  .tr-ios .tx-ops button{ border:none; background:transparent; color:var(--accent); font-size:13px; padding:2px; font-family:inherit; }
+  .tr-ios .tx-ops .del{ color:var(--danger); }
+  .tr-ios .tx-edit{ margin-top:4px; padding-top:4px; }
+  .tr-ios .tx-edit .ios-row{ padding:8px 0; min-height:44px; border-bottom:1px solid var(--border); }
+  .tr-ios .tx-edit .ios-row:last-child{ border-bottom:none; }
+  .tr-ios .tx-edit .label{ font-size:14px; min-width:56px; color:var(--text-2); }
+  .tr-ios .tx-edit input, .tr-ios .tx-edit select{ font-size:16px; text-align:right; }
+
+  /* ===== 详情页底部「更多」Action Sheet ===== */
+  .detail-bar-item .ico svg.filled{ fill:currentColor; stroke:none; }
+  .detail-bar-item.more{ color:var(--text-3); }
+  .sheet-mask{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:30; opacity:0; pointer-events:none; transition:opacity .2s; }
+  .sheet-mask.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:fixed; left:12px; right:12px; bottom:12px; z-index:31; transform:translateY(110%); transition:transform .25s cubic-bezier(.2,.8,.2,1); padding-bottom:env(safe-area-inset-bottom); }
+  .sheet.show{ transform:translateY(0); }
+  .sheet-card{ background:var(--surface); border-radius:14px; overflow:hidden; margin-bottom:8px; }
+  .sheet-row{ display:block; width:100%; border:none; background:transparent; padding:16px; font-size:17px; text-align:center; color:var(--text); border-bottom:1px solid var(--border); font-family:inherit; }
+  .sheet-row:last-child{ border-bottom:none; }
+  .sheet-row.danger{ color:var(--danger); font-weight:600; }
+  .sheet-cancel{ background:var(--surface); border-radius:14px; padding:16px; text-align:center; font-size:17px; font-weight:600; color:var(--accent); border:none; width:100%; font-family:inherit; }
+  </style>
   <div class="detail-bar" id="detailBar">
     <div class="detail-bar-inner">
       <button class="detail-bar-item" onclick="detailGoBack()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span><span>返回</span></button>
       <button class="detail-bar-item" onclick="detailEditHolding()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span><span>修改持仓</span></button>
-      <button class="detail-bar-item" onclick="detailScrollTrades()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span>交易记录</span></button>
-      <button class="detail-bar-item primary" onclick="detailAddWatch()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span><span>添加自选</span></button>
-      <button class="detail-bar-item danger" onclick="detailDelHolding()"><span class="ico"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span><span>删除持有</span></button>
       <button class="detail-bar-item" onclick="reviewNew()"><span class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></span><span>笔记</span></button>
+      <button class="detail-bar-item more" onclick="openDetailMore()"><span class="ico"><svg class="filled" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span><span>更多</span></button>
     </div>
+  </div>
+  <div class="sheet-mask" id="detailMoreMask" onclick="closeDetailMore()"></div>
+  <div class="sheet" id="detailMoreSheet">
+    <div class="sheet-card">
+      <button class="sheet-row" onclick="closeDetailMore();detailScrollTrades()">交易记录</button>
+      <button class="sheet-row" onclick="closeDetailMore();detailAddWatch()">添加自选</button>
+      <button class="sheet-row danger" onclick="closeDetailMore();detailDelHolding()">删除持有</button>
+    </div>
+    <button class="sheet-cancel" onclick="closeDetailMore()">取消</button>
   </div>
 
   <!-- 交易选择器弹窗 -->
@@ -985,6 +1091,7 @@ function setScopeAcc(acc){
   try{ localStorage.setItem('ft_scope', scopeAcc==='all'?'all':scopeAcc); }catch(e){}
   updateScopeUI();
   compute(); // 重建 _allHoldings(scope) + fundsView(curAccount)
+  closeAccMenu();
 }
 function cntSpan(n){ return (n>0)? ' <span class="acc-cnt">'+n+'</span>' : ''; }
 // 账户显示顺序：默认（内置+自定义+数据账户）再按 ft_account_order 排序；排过序的在前，未排的（如新增账户）追加在后
@@ -1004,20 +1111,42 @@ function accountListOrdered(){
   }
   return list;
 }
+// Header 账户下拉（取代原顶部 scope-bar）：整合账户切换 + 全量 + 新增/重命名/删除
 function renderScopeBar(){
-  const seg=document.getElementById('scopeSeg'); if(!seg) return;
+  const menu=document.getElementById('accMenu'); if(!menu) return;
   const cntOf=a=> (a==='all')? _allRaw.length : _allRaw.filter(f=>effAccount(f.account)===a).length;
   const list=accountListOrdered();
   let html='';
   list.forEach(a=>{
     const bi=accIsBuiltin(a);
-    html+='<button data-acc="'+escAttr(a)+'"'+(a===scopeAcc?' class="on"':'')+' onclick="setScopeAcc(this.dataset.acc)">'+escHtml(a)+cntSpan(cntOf(a));
+    html+='<div class="acc-menu-item'+(a===scopeAcc?' on':'')+'" data-acc="'+escAttr(a)+'" onclick="pickAcc(this.dataset.acc)">'+escHtml(a)+cntSpan(cntOf(a));
     if(!bi) html+='<span class="acc-x" onclick="event.stopPropagation();removeAccount(\''+escJs(a)+'\')" title="删除账户">×</span>';
-    html+='</button>';
+    html+='</div>';
   });
-  html+='<button data-acc="all"'+(scopeAcc==='all'?' class="on"':'')+' onclick="setScopeAcc(this.dataset.acc)">全量'+cntSpan(cntOf('all'))+'</button>';
-  html+='<button class="add" onclick="addAccount()" title="添加账户">＋</button>';
-  seg.innerHTML=html;
+  html+='<div class="acc-menu-item'+(scopeAcc==='all'?' on':'')+'" data-acc="all" onclick="pickAcc(this.dataset.acc)">全量<span class="acc-cnt">'+cntOf('all')+'</span></div>';
+  html+='<div class="acc-menu-item acc-menu-add" onclick="addAccount()">＋ 新增账户</div>';
+  menu.innerHTML=html;
+  // 同步 Header 账户名（改名/切换后保持显示当前 scope）
+  const nm=document.getElementById('accName'); if(nm) nm.textContent = scopeAcc;
+}
+function toggleAccMenu(){
+  const m=document.getElementById('accMenu'), t=document.getElementById('accTitle');
+  if(!m) return;
+  const show=m.classList.toggle('show'); if(t) t.classList.toggle('open', show);
+  if(show) renderScopeBar();
+}
+function pickAcc(name){
+  setScopeAcc(name);
+  toggleAccMenu();
+}
+function isFailState(){
+  const df=localStorage.getItem('ft_lastSyncFail'), ds=localStorage.getItem('ft_lastSync');
+  return !!(df && (!ds || (+df)>(+ds)));
+}
+function retryRefresh(){ closeAccMenu(); refresh().catch(function(e){ console.error('manual retry failed', e); }); }
+function closeAccMenu(){
+  const m=document.getElementById('accMenu'), t=document.getElementById('accTitle');
+  if(m) m.classList.remove('show'); if(t) t.classList.remove('open');
 }
 function addAccount(){
   const name=(window.prompt('添加账户名称：')||'').trim();
@@ -1338,9 +1467,8 @@ function calcXIRR(){ const box=document.getElementById('xirrOut'); if(!box) retu
 function switchTab(i){
   activeTab=i;
   [0,1,2,3,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
-  // 资产口径栏仅对账户相关数据生效；市场风向为公共市场数据，切换为"数据源/刷新状态"栏
-  const sb=document.getElementById('scopeBar'), ms=document.getElementById('marketStatus');
-  if(sb) sb.style.display = (i===5)?'none':'flex';
+  // 市场风向为公共市场数据，切换为"数据源/刷新状态"栏
+  const ms=document.getElementById('marketStatus');
   if(ms) ms.style.display = (i===5)?'flex':'none';
   if(i===0){ renderHomeList(); renderBond(); }
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); }
@@ -1871,29 +1999,46 @@ function updStr(f){ const _n=navCache[f.name]||{}; const _open=isMarketOpen(new 
 function freshAgeShort(){ const d=localStorage.getItem('ft_lastSync'); if(!d) return ''; const diff=Math.floor((Date.now()-(+d))/1000); if(diff<60) return '刚刚'; if(diff<3600) return '停留'+Math.floor(diff/60)+'分'; return '停留'+Math.floor(diff/3600)+'时'; }
 // 顶部状态条：市场时段 + 上次成功刷新时间 + 新鲜度/失败徽标
 function renderStatusLine(){
-  const u=document.getElementById('updated'); if(!u) return;
+  const u=document.getElementById('updated');
   const ml=document.getElementById('mktLight');
   const sess=marketSession(new Date());
   if(ml){ ml.className='mkt-light ms-'+sess.state; ml.textContent=sess.emoji+' '+sess.label; }
   const fb=document.getElementById('freshBadge');
+  const line=document.getElementById('statusLine'), dot=document.getElementById('statusDot'), text=document.getElementById('statusText');
   const df=localStorage.getItem('ft_lastSyncFail'), ds=localStorage.getItem('ft_lastSync');
-  if(df && (!ds || (+df)>(+ds))){
+  const fail=df && (!ds || (+df)>(+ds));
+  if(fail){
     const diff=Math.floor((Date.now()-(+df))/1000);
     const stale=diff<3600?Math.floor(diff/60)+' 分钟':Math.floor(diff/3600)+' 小时+';
-    u.className='fr-fail-text'; u.textContent='刷新失败 · 数据停留 '+stale;
+    const msg='刷新失败（数据停留 '+stale+'）· 点击重试';
+    if(u){ u.className='fr-fail-text'; u.textContent='刷新失败 · 数据停留 '+stale; }
     if(fb){ fb.style.display='inline-block'; fb.className='fresh-badge fr-fail'; fb.textContent='🔴 刷新失败'; }
+    if(line){ line.className='status-line fail'; line.setAttribute('role','button'); }
+    if(dot) dot.style.display='none';
+    if(text) text.innerHTML='<span class="retry">↻ '+msg+'</span>';
     return;
   }
-  if(!ds){ u.className='loading'; u.textContent='数据未刷新'; if(fb) fb.style.display='none'; return; }
+  if(!ds){
+    if(u){ u.className='loading'; u.textContent='数据未刷新'; }
+    if(fb) fb.style.display='none';
+    if(line){ line.className='status-line'; }
+    if(dot){ dot.style.display='inline-block'; dot.className='dot closed'; }
+    if(text) text.textContent='数据未刷新';
+    return;
+  }
   const diff=Math.floor((Date.now()-(+ds))/1000), t=new Date(+ds);
   const hh=t.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  u.className=sess.state==='open'?'live':'closed'; u.textContent='上次成功刷新 '+hh;
+  const label=(sess.state==='open'?'交易中':sess.state==='lunch'?'午间休市':'已收盘')+' · '+hh;
+  if(u){ u.className=sess.state==='open'?'live':'closed'; u.textContent='上次成功刷新 '+hh; }
   if(fb){
     fb.style.display='inline-block';
     if(diff<60){ fb.className='fresh-badge fr-now'; fb.textContent='🟢 刚刚'; }
     else if(diff<3600){ fb.className='fresh-badge fr-warn'; fb.textContent='🟡 停留'+Math.floor(diff/60)+'分钟'; }
     else { fb.className='fresh-badge fr-old'; fb.textContent='🟠 停留'+Math.floor(diff/3600)+'小时+'; }
   }
+  if(line){ line.className='status-line'; }
+  if(dot){ dot.style.display='inline-block'; dot.className='dot '+(sess.state==='open'?'open':sess.state==='lunch'?'lunch':'closed'); }
+  if(text) text.textContent=label+(diff<60?'':'');
 }
 // 持仓估值格：盘中显示实时估值(带新鲜度)，休市/收盘回退到已确认「收」涨跌幅并标注该收盘日期(非"预估")
 function estCellHtml(f){
@@ -3761,6 +3906,7 @@ function addTradeForForm(enc){
   silentSave(); compute();
   toast('已保存并锁定 · '+typeLabel(type)+' '+M(amount));
   g('nf-amount').value=''; g('nf-nav').value=''; g('nf-fee').value=''; g('nf-shares').value='';
+  if(isMobile() && typeof renderDetailLive==='function') renderDetailLive(encodeURIComponent(name));
 }
 function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); } }
 function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); } }
@@ -4782,8 +4928,12 @@ async function renderFundHoldings(f){
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size: 14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size: 12px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 async function refresh(){
-  const u=document.getElementById('updated'); u.textContent='⏳ 正在刷新…'; u.className='loading';
+  const u=document.getElementById('updated'); if(u){ u.textContent='⏳ 正在刷新…'; u.className='loading'; }
   const _fb0=document.getElementById('freshBadge'); if(_fb0){ _fb0.style.display='inline-block'; _fb0.className='fresh-badge fr-warn'; _fb0.textContent='⏳ 刷新中'; }
+  const _line=document.getElementById('statusLine'), _dot=document.getElementById('statusDot'), _txt=document.getElementById('statusText');
+  if(_line){ _line.className='status-line'; }
+  if(_dot){ _dot.style.display='inline-block'; _dot.className='dot closed'; }
+  if(_txt){ _txt.innerHTML='<span class="retry" style="color:var(--text-3);font-weight:400">↻ 正在刷新…</span>'; }
   Object.keys(intradayCache).forEach(k=>delete intradayCache[k]);
   const prev={}; Object.keys(navCache).forEach(k=>prev[k]=navCache[k].nav);
   const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);
@@ -4819,7 +4969,7 @@ async function refresh(){
   if(got===0){
     // 刷新失败：仅记录失败时间，不覆盖 ft_lastSync（保留上一成功时间以计算数据停留时长）
     try{ localStorage.setItem('ft_lastSyncFail', now.getTime()); }catch(e){}
-    u.className='fr-fail-text'; u.textContent='⚠ 刷新失败 · 已用缓存 / 手动净值';
+    if(u){ u.className='fr-fail-text'; u.textContent='⚠ 刷新失败 · 已用缓存 / 手动净值'; }
   } else {
     try{ localStorage.removeItem('ft_lastSyncFail'); }catch(e){}
     try{ localStorage.setItem('ft_lastSync', now.getTime()); }catch(e){}
@@ -6388,6 +6538,7 @@ function renderSyncCfg(){
   window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ ['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} location.reload(); };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); } });
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
+  document.addEventListener('click',function(e){ if(e.target.closest && (e.target.closest('#accTitle')||e.target.closest('#accMenu'))) return; closeAccMenu(); });
   document.addEventListener('change',function(e){ if(e.target && e.target.id==='smAutoRefresh'){ try{ localStorage.setItem('ft_autorefresh', e.target.checked?'1':'0'); }catch(_){} } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var s=document.getElementById('sortSheet'); if(s&&s.classList.contains('show')){ closeSortSheet(); return; } var m=document.getElementById('settingsMask'); if(m&&m.classList.contains('show')) closeSettings(); } });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var bd=document.getElementById('bondDrawer'); if(bd&&bd.classList.contains('open')) closeBondDrawer(); } });

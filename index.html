@@ -975,8 +975,10 @@ function removeAccount(name){
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
   // 不在自定义列表的纯数据账户（如「示例账户」）：移除其名下示例数据，账户才能真正消失
   if(!inCustom){
-    snaps=(snaps||[]).filter(s=>!(s&&s.account===name));
-    trades=(trades||[]).filter(t=>!(t&&accOf(t)===name));
+    // 账户可能已改名：用显示名(name)与原始名双向匹配，否则改名后底层数据删不掉、账户又会冒出来
+    const accMatch=a=>(a===name||effAccount(a)===name);
+    snaps=(snaps||[]).filter(s=>!(s&&accMatch(s.account)));
+    trades=(trades||[]).filter(t=>!(t&&accMatch(accOf(t))));
     silentSave();
   }
   loadCustomAccounts();
@@ -6032,7 +6034,7 @@ function renderSyncCfg(){
     var box=document.getElementById('accSortList'); if(!box) return;
     var list=accountListOrdered();
     if(!list.length){ box.innerHTML='<p class="sm-note">暂无账户。</p>'; return; }
-    box.innerHTML=list.map(function(a){ return '<div class="sort-item" data-key="'+escAttr(a)+'"><span class="drag-h" title="拖动排序">☰</span><span class="sort-label">'+escHtml(a)+'</span><span class="sort-ctrl"><button class="sort-up" onclick="moveSort(\'acc\',-1,this)" aria-label="上移">↑</button><button class="sort-down" onclick="moveSort(\'acc\',1,this)" aria-label="下移">↓</button></span></div>'; }).join('');
+    box.innerHTML=list.map(function(a){ var bi=accIsBuiltin(a); var del= bi? '' : '<button class="sort-del" data-acc="'+escAttr(a)+'" onclick="removeAccount(this.getAttribute(\'data-acc\'))" title="删除账户" aria-label="删除">×</button>'; return '<div class="sort-item" data-key="'+escAttr(a)+'"><span class="drag-h" title="拖动排序">☰</span><span class="sort-label">'+escHtml(a)+'</span><span class="sort-ctrl"><button class="sort-up" onclick="moveSort(\'acc\',-1,this)" aria-label="上移">↑</button><button class="sort-down" onclick="moveSort(\'acc\',1,this)" aria-label="下移">↓</button>'+del+'</span></div>'; }).join('');
     makeSortable(box, function(order){ saveAccountOrder(order); renderScopeBar(); });
   };
   window.renderTagSortList=function(){
@@ -6103,6 +6105,8 @@ function renderSyncCfg(){
 .sort-ctrl{ display:flex; gap:4px; }
 .sort-ctrl button{ width:30px; height:30px; border:1px solid var(--border-3); background:var(--surface); color:var(--text); border-radius:7px; cursor:pointer; font-size: 14px; line-height:1; display:flex; align-items:center; justify-content:center; }
 .sort-ctrl button:active{ background:var(--accent-soft); }
+.sort-ctrl .sort-del{ color:var(--danger,#d93025); border-color:var(--danger,#d93025); }
+.sort-ctrl .sort-del:active{ background:rgba(217,48,38,.12); }
 </style>
 
 

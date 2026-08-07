@@ -944,16 +944,18 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <p class="hint">左侧假设年化收益，算定投未来值；右侧填入真实现金流（日期 + 金额 + 方向），算你的真实年化（XIRR）。</p>
         <div class="grid2">
           <div>
-            <h4 class="am-h"><span class="n">📈</span>定投模拟</h4>
-            <div class="calc-row"><label for="dcaMon">每月定投</label><input id="dcaMon" class="num" type="number" value="1000" oninput="calcDCA()"> <span class="hint">元</span></div>
-            <div class="calc-row"><label for="dcaYrs">定投年数</label><input id="dcaYrs" class="num" type="number" value="5" oninput="calcDCA()"> <span class="hint">年</span></div>
-            <div class="calc-row"><label for="dcaRate">预期年化</label><input id="dcaRate" class="num" type="number" value="10" oninput="calcDCA()"> <span class="hint">%</span></div>
+            <div class="sec-title">定投模拟</div>
+            <div class="dca-grid">
+              <div class="fc" onclick="document.getElementById('dcaMon').focus()"><div class="fc-label">每月定投（元）</div><div class="fc-input"><input id="dcaMon" type="number" value="1000" oninput="calcDCA()"><span class="u">元</span></div></div>
+              <div class="fc" onclick="document.getElementById('dcaRate').focus()"><div class="fc-label">预期年化</div><div class="fc-input"><input id="dcaRate" type="number" value="10" oninput="calcDCA()"><span class="u">%</span></div></div>
+              <div class="fc" style="grid-column:span 2" onclick="document.getElementById('dcaYrs').focus()"><div class="fc-label">定投年数</div><div class="fc-input"><input id="dcaYrs" type="number" value="5" oninput="calcDCA()"><span class="u">年</span></div></div>
+            </div>
             <div id="dcaOut" class="calc-out"></div>
           </div>
           <div>
-            <h4 class="am-h"><span class="n">🔁</span>真实年化（XIRR）</h4>
+            <div class="sec-title">真实年化（XIRR）</div>
             <div id="xirrRows"></div>
-            <button class="btn sm" onclick="xirrAddRow()">＋ 添加一笔现金流</button>
+            <button class="xr-add" onclick="xirrAddRow()">＋ 添加一笔现金流</button>
             <div id="xirrOut" class="calc-out"></div>
           </div>
         </div>
@@ -1730,8 +1732,11 @@ function calcDCA(){
   const out=document.getElementById('dcaOut'); if(!out) return;
   if(mon<=0||n<=0){ out.innerHTML='<span class="hint">填入每月定投金额与年数</span>'; return; }
   const fv = rate===0 ? mon*n : mon*((Math.pow(1+rate/12,n)-1)/(rate/12));
-  const invested=mon*n, profit=fv-invested;
-  out.innerHTML='<div class="co-row"><span>总投入</span><b>'+M(invested)+'</b></div><div class="co-row"><span>预期期末资产</span><b class="pos">'+M(fv)+'</b></div><div class="co-row"><span>预期收益</span><b class="'+(profit>=0?'pos':'neg')+'">'+(profit>=0?'+':'')+M(profit)+'</b></div><div class="co-row"><span>本金倍数</span><b>'+(fv/invested).toFixed(2)+'×</b></div>';
+  const invested=mon*n, profit=fv-invested, roi=invested>0?profit/invested*100:0;
+  out.innerHTML='<div class="dca-banner"><div class="bl">预期期末资产</div><div class="bv">'+M(fv)+'</div><div class="bs">预期收益 '+(profit>=0?'+':'')+M(profit)+' · 收益率 '+(roi>=0?'+':'')+roi.toFixed(2)+'%</div></div>'
+    +'<div class="dca-kpis"><div class="dca-kpi"><div class="kl">总投入</div><div class="kv">'+M(invested)+'</div></div>'
+    +'<div class="dca-kpi"><div class="kl">预期收益</div><div class="kv" style="color:var(--'+(profit>=0?'up':'down')+')">'+(profit>=0?'+':'')+M(profit)+'</div></div>'
+    +'<div class="dca-kpi"><div class="kl">本金倍数</div><div class="kv">'+(invested>0?(fv/invested).toFixed(2):'0')+'×</div></div></div>';
 }
 function xirr(flows){
   const fs=flows.map(f=>({t:new Date(f.date), amt:(f.dir==='in'?1:-1)*Math.abs(parseFloat(f.amt)||0)}))
@@ -1743,13 +1748,13 @@ function xirr(flows){
   return (lo+hi)/2;
 }
 function renderXirr(){ const box=document.getElementById('xirrRows'); if(!box) return;
-  box.innerHTML=xirrFlows.map((f,i)=>'<div class="xr-row"><input class="xr-date" type="date" value="'+f.date+'" onchange="xirrFlows['+i+'].date=this.value;calcXIRR()"><input class="num xr-amt" type="number" value="'+f.amt+'" oninput="xirrFlows['+i+'].amt=+this.value;calcXIRR()"><select class="xr-dir" onchange="xirrFlows['+i+'].dir=this.value;calcXIRR()"><option value="out" '+(f.dir==='out'?'selected':'')+'>投入</option><option value="in" '+(f.dir==='in'?'selected':'')+'>赎回</option></select><button class="del" onclick="xirrDelRow('+i+')">✕</button></div>').join('');
+  box.innerHTML='<div class="xr-list">'+xirrFlows.map((f,i)=>'<div class="xr-item"><input class="xr-date" type="date" value="'+f.date+'" onchange="xirrFlows['+i+'].date=this.value;calcXIRR()"><input class="xr-amt" type="number" value="'+f.amt+'" oninput="xirrFlows['+i+'].amt=+this.value;calcXIRR()"><button class="xr-pill '+(f.dir==='out'?'out':'in')+'" onclick="xirrFlows['+i+'].dir=(xirrFlows['+i+'].dir===\'out\'?\'in\':\'out\');renderXirr();calcXIRR()">'+(f.dir==='out'?'投入':'赎回')+'</button><button class="xr-del" onclick="xirrDelRow('+i+')">✕</button></div>').join('')+'</div>';
 }
 function xirrAddRow(){ const last=xirrFlows[xirrFlows.length-1]; const d=(last&&last.date)?last.date:new Date().toISOString().slice(0,10); xirrFlows.push({date:d,amt:1000,dir:'out'}); renderXirr(); calcXIRR(); }
 function xirrDelRow(i){ if(xirrFlows.length<=2){ toast('至少保留两笔现金流'); return; } xirrFlows.splice(i,1); renderXirr(); calcXIRR(); }
 function calcXIRR(){ const box=document.getElementById('xirrOut'); if(!box) return; const r=xirr(xirrFlows);
   if(r===null){ box.innerHTML='<span class="hint">需至少两笔、且「投入/赎回」方向不同的现金流</span>'; return; }
-  const pct=r*100; box.innerHTML='<div class="co-row"><span>真实年化（XIRR）</span><b class="'+(r>=0?'pos':'neg')+'">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</b></div>';
+  const pct=r*100; box.innerHTML='<div class="xr-result"><div class="rl">年化内部收益率（XIRR）</div><div class="rv '+(r>=0?'':'neg')+'">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</div><div class="rn">根据你输入的 '+xirrFlows.length+' 笔现金流时间与金额计算</div></div>';
 }
 
 function switchTab(i){

@@ -2225,7 +2225,7 @@ function renderBar(){
 // ---------- 个性化配置建议（当前/建议对比 + 优先级 + 分阶段计划）----------
 let userProfile={risk:'稳健',horizon:'中期(1-3年)',liquidity:'中'};
 let _profileLoaded=false;
-function loadProfile(){ try{const s=localStorage.getItem('ft_profile'); if(s){const p=JSON.parse(s); if(p&&typeof p==='object') userProfile={...userProfile,...p};}}catch(e){} _profileLoaded=true; }
+function loadUserProfile(){ try{const s=localStorage.getItem('ft_profile'); if(s){const p=JSON.parse(s); if(p&&typeof p==='object') userProfile={...userProfile,...p};}}catch(e){} _profileLoaded=true; }
 function saveProfile(){ try{localStorage.setItem('ft_profile',JSON.stringify(userProfile));}catch(e){} }
 function setProfile(k,v){ userProfile[k]=v; saveProfile(); render(); }
 const RISK_CATS=['芯片','周期资源','海外','科技','制造','医药'];
@@ -2255,7 +2255,7 @@ function suggestedAlloc(p){
 let cmpBarChart=null;
 function renderAdvice(){
   const box=document.getElementById('advice'); if(!box) return;
-  if(!_profileLoaded) loadProfile();
+  if(!_profileLoaded) loadUserProfile();
   const catPct=getCatAllocation(), total=fundsView.reduce((a,f)=>a+f.mv,0);
   const cats={}; catPct.forEach(([k,v])=>cats[k]=v);
   const M2=profileModel(userProfile), sug=suggestedAlloc(userProfile);

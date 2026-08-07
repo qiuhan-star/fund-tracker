@@ -2359,6 +2359,7 @@ function loadBond(){ try{const s=localStorage.getItem('ft_bond'); if(s){const b=
 function saveBond(){ try{localStorage.setItem('ft_bond',JSON.stringify(bondState));}catch(e){} }
 
 // 演示债券清单（公开模板默认值）；你的真实债基请通过「恢复债基+分析」导入到浏览器本地 ft_bond_list
+let demoOff = localStorage.getItem('ft_demo_off')==='1';
 const BOND_FUNDS=[
   {code:'900002',name:'演示稳健债券A',company:'演示',acc:'本人账户',amt:10000,y1:2.15,since:5.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-30'},
   {code:'900011',name:'演示稳健债券B',company:'演示',acc:'代管账户',amt:50000,y1:2.40,since:8.00,risk:'中低',dur:'中长债',credit:'高等级',lock:0,mix:false,date:'2026-07-10'},
@@ -2367,7 +2368,7 @@ const BOND_FUNDS=[
 const BOND_DEF_DATES={'900002':'2026-07-30','900011':'2026-07-10','900013':'2026-08-01'};
 // 债券清单读取：优先用浏览器本地 ft_bond_list（用户真实债基），否则用上方演示数据
 let _bondListCache=null;
-function getBondFunds(){ if(_bondListCache) return _bondListCache; let arr=null; try{ const s=localStorage.getItem('ft_bond_list'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)&&a.length) arr=a; } }catch(e){} if(!arr) arr=BOND_FUNDS; (arr||[]).forEach(b=>{ if(b&&b.acc) b.acc=effAccount(b.acc); }); _bondListCache=arr; return arr; }
+function getBondFunds(){ if(_bondListCache) return _bondListCache; let arr=null; try{ const s=localStorage.getItem('ft_bond_list'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)&&a.length) arr=a; } }catch(e){} if(!arr && !demoOff) arr=BOND_FUNDS; (arr||[]).forEach(b=>{ if(b&&b.acc) b.acc=effAccount(b.acc); }); _bondListCache=arr; return arr; }
 function pad2(n){return n<10?'0'+n:''+n;}
 function fmtDate(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
 function addDays(d,n){const x=new Date(d); x.setDate(x.getDate()+n); return x;}
@@ -4929,6 +4930,7 @@ function importMyExtras(){
       const d=JSON.parse(r.result); let n=0;
       if(Array.isArray(d.bonds)){ localStorage.setItem('ft_bond_list', JSON.stringify(d.bonds)); n++; }
       if(d.analysis && typeof d.analysis==='object'){ localStorage.setItem('ft_analysis', JSON.stringify(d.analysis)); n++; }
+      setDemoOff(); removeSampleData(true);
       toast('已恢复 '+n+' 项（债基清单 / 深度分析），即将刷新');
       setTimeout(()=>{ location.reload(); }, 800);
     }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
@@ -5190,7 +5192,8 @@ function loadSample(){
   navCache={}; seedDemoTrend(); silentSave(); try{ setScopeAcc('all'); }catch(e){} renderTrade(); compute(); switchTab(0); toast('已追加示例数据（你的真实持仓已保留；示例归入独立「示例账户」，不污染真实账本）'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); });
 }
 function seedDemoTrend(){ try{ const now=new Date(), base=90000, arr=[]; for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d); const k=(59-i)/59; const total=Math.round(base*(1+0.22*k)); const principal=Math.round(base*(1+0.20*k)); arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); } dailySnapshots={personal:arr, managed:[], all:arr}; }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; } }
-function removeSampleData(silent){ const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !names.has(s.name);}); trades=trades.filter(function(t){return !names.has(t.name);}); const removed=(bS-snaps.length)+(bT-trades.length); if(removed===0){ if(!silent) toast('未检测到示例数据，无需清理'); return removed; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); if(!silent) toast('已移除 '+removed+' 条示例数据（真实数据已保留）'); return removed; }
+function setDemoOff(){ demoOff=true; try{ localStorage.setItem('ft_demo_off','1'); }catch(e){} _bondListCache=null; }
+function removeSampleData(silent){ setDemoOff(); const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !names.has(s.name);}); trades=trades.filter(function(t){return !names.has(t.name);}); const removed=(bS-snaps.length)+(bT-trades.length); if(removed===0){ if(!silent) toast('未检测到示例数据，无需清理'); return removed; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); if(!silent) toast('已移除 '+removed+' 条示例数据（真实数据已保留）'); return removed; }
 window.removeSampleData=removeSampleData;
 
 
@@ -5217,10 +5220,12 @@ function analysisCharts022(){
 }
 function getAnalysis(name){
   try{ const s=localStorage.getItem('ft_analysis'); if(s){ const o=JSON.parse(s); if(o && o[name]){ const e=o[name]; if(!e.charts) e.charts=analysisCharts022; return e; } } }catch(e){}
+  if(demoOff) return null;
   const d=ANALYSIS[name]; if(d && !d.charts) d.charts=analysisCharts022; return d;
 }
 function analysisNameByCode(code){
   try{ const s=localStorage.getItem('ft_analysis'); if(s){ const o=JSON.parse(s); for(const k in o){ if(o[k]&&o[k].code===code) return k; } } }catch(e){}
+  if(demoOff) return null;
   for(const k in ANALYSIS){ if(ANALYSIS[k]&&ANALYSIS[k].code===code) return k; }
   return null;
 }
@@ -5854,7 +5859,7 @@ function renderSyncCfg(){
         <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
         <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
         <button class="sm-ghost" id="btnRestoreBackup" onclick="manualRestoreBackup()">从备份恢复账本</button>
-        <button class="sm-ghost" onclick="removeSampleData()">仅清除示例数据（保留本人账户真实数据）</button>
+        <button class="sm-ghost" onclick="removeSampleData()">清除示例与演示数据（保留真实数据）</button>
         <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
       </div>
     </div>

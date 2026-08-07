@@ -6196,7 +6196,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_autorefresh'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_catoverride','ft_cols','ft_colorder'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }

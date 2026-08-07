@@ -1000,6 +1000,8 @@ let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}')
 // 标签显示顺序（用户可在设置里拖动/上下调整）；为空则按出现顺序
 function loadTagOrder(){ try{ const a=JSON.parse(localStorage.getItem('ft_tag_order')||'null'); return Array.isArray(a)?a:null; }catch(e){ return null; } }
 function saveTagOrder(arr){ try{ localStorage.setItem('ft_tag_order', JSON.stringify(arr)); }catch(e){} }
+function loadCatOrder(){ try{ const a=JSON.parse(localStorage.getItem('ft_cat_order')||'null'); return Array.isArray(a)?a:null; }catch(e){ return null; } }
+function saveCatOrder(arr){ try{ localStorage.setItem('ft_cat_order', JSON.stringify(arr)); }catch(e){} }
 let homeView='dense';
 try{ const _hv=localStorage.getItem('ft_homeview'); if(_hv==='card'||_hv==='dense') homeView=_hv; }catch(e){}
 let currentView='home', detailName=null, detailAcc=effAccount('本人账户'), detailChartFund=null;
@@ -1583,6 +1585,23 @@ function tagListOrdered(){
   }
   return tags;
 }
+// 分类标签显示顺序：全部始终在前，其余按 ft_cat_order 排序
+function catListOrdered(){
+  const cats=['全部', ...new Set((typeof fundsView!=='undefined'?fundsView:[]).map(f=>f.cat))];
+  const order=loadCatOrder();
+  if(order && order.length){
+    // 全部固定首位，只排其余
+    const rest=cats.slice(1);
+    rest.sort((a,b)=>{
+      const ia=order.indexOf(a), ib=order.indexOf(b);
+      if(ia<0 && ib<0) return 0;
+      if(ia<0) return 1; if(ib<0) return -1;
+      return ia-ib;
+    });
+    return ['全部', ...rest];
+  }
+  return cats;
+}
 function renderTagFilter(){
   const box=document.getElementById('tagFilter'); if(!box) return;
   const tags=tagListOrdered();
@@ -1600,7 +1619,8 @@ function moveSort(kind, dir, btn){
   list.insertBefore(arr[j], item); // 把邻居移到 item 前，即交换二者位置
   const order=[].slice.call(list.querySelectorAll('.sort-item')).map(function(it){ return it.getAttribute('data-key'); });
   if(kind==='acc'){ saveAccountOrder(order); renderScopeBar(); }
-  else { saveTagOrder(order); renderTagFilter(); }
+  else if(kind==='tag'){ saveTagOrder(order); renderTagFilter(); }
+  else if(kind==='cat'){ saveCatOrder(order); renderCatFilter(); }
 }
 // 指针拖拽排序（鼠标 + 触摸通用）：在 .drag-h 上按下拖动，松手即重排并回调 onChange(order)
 function makeSortable(listEl, onChange){
@@ -1658,7 +1678,7 @@ function toggleTag(t){
 }
 // ---------- 分类筛选（系统按名称自动判定，可手动覆盖）----------
 function renderCatFilter(){
-  const cats=['全部', ...new Set(fundsView.map(f=>f.cat))];
+  const cats=catListOrdered();
   const box=document.getElementById('catFilter');
   box.innerHTML=cats.map(c=>`<button class="cat-chip${c===holdCatFilter?' on':''}" onclick="filterCat('${esc(c)}')">${c}</button>`).join('');
 }
@@ -5818,7 +5838,7 @@ function renderSyncCfg(){
           <button class="sm-act" onclick="downloadCSVTemplate();closeSettings()"><span>📄</span>CSV 模板</button>
           <button class="sm-act" onclick="importMyExtras();closeSettings()"><span>📦</span>恢复债基+分析</button>
         </div>
-        <p class="sm-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。删除 / 导入前已自动环形备份最近 3 份，可从备份恢复。</p>
+        <p class="sm-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出 JSON」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
       </div>
       <div class="sm-card" id="syncCard">
         <h3>☁️ 账号云同步（GitHub 私有）</h3>
@@ -5840,14 +5860,11 @@ function renderSyncCfg(){
         </div>
       </div>
       <div class="sm-card">
-        <h3>🏦 账户排序</h3>
-        <p class="sm-note">拖动 ☰ 或点 ↑↓，调整账户在顶部切换栏的显示顺序。</p>
-        <div id="accSortList" class="sort-list"></div>
-      </div>
-      <div class="sm-card">
-        <h3>🏷️ 标签排序</h3>
-        <p class="sm-note">拖动 ☰ 或点 ↑↓，调整首页标签筛选的显示顺序。</p>
-        <div id="tagSortList" class="sort-list"></div>
+        <h3>📐 显示顺序</h3>
+        <p class="sm-note">拖动 ☰ 或点 ↑↓ 调整各区域的显示顺序。</p>
+        <details open><summary style="cursor:pointer;font-weight:600;margin-bottom:6px">🏷️ 分类标签（首页筛选栏）</summary><div id="catSortList" class="sort-list"></div></details>
+        <details><summary style="cursor:pointer;font-weight:600;margin:8px 0 6px">🏦 账户（顶部切换栏）</summary><div id="accSortList" class="sort-list"></div></details>
+        <details><summary style="cursor:pointer;font-weight:600;margin:8px 0 6px">🔖 标签（首页筛选栏）</summary><div id="tagSortList" class="sort-list"></div></details>
       </div>
       <div class="sm-card">
         <h3>💾 存储与缓存</h3>
@@ -5855,12 +5872,19 @@ function renderSyncCfg(){
           <div style="display:flex;align-items:center;gap:10px"><span class="sm-pill" id="smCacheSize">—</span><button class="sm-ghost danger-text" onclick="clearCache()">清除缓存</button></div></div>
       </div>
       <div class="sm-card">
+        <h3>🧹 数据操作</h3>
+        <div class="sm-row"><div class="sm-rt">清除示例数据<div class="sm-rd">保留真实持仓，移除示例账户、演示债基与分析。</div></div>
+          <button class="sm-ghost" onclick="removeSampleData()">清除</button></div>
+        <div style="margin-top:12px;border:1px solid var(--danger);border-radius:12px;padding:12px;background:rgba(217,48,38,.06)">
+          <div class="sm-rt" style="color:var(--danger);font-weight:600">重置应用</div>
+          <div class="sm-rd" style="margin:4px 0 10px">清空本浏览器全部本地数据（持仓/交易/设置），不可恢复。建议先「导出 JSON」备份。</div>
+          <button class="sm-danger" onclick="resetApp()" style="width:100%">重置应用</button>
+        </div>
+      </div>
+      <div class="sm-card">
         <h3>ℹ️ 关于</h3>
         <div class="sm-row"><div class="sm-rt">版本</div><span class="sm-pill" id="smVersion">v2.2.0</span></div>
         <div class="sm-row"><div class="sm-rt">免责声明<div class="sm-rd">数据基于公开来源与量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。</div></div></div>
-        <button class="sm-ghost" id="btnRestoreBackup" onclick="manualRestoreBackup()">从备份恢复账本</button>
-        <button class="sm-ghost" onclick="removeSampleData()">清除示例与演示数据（保留真实数据）</button>
-        <button class="sm-danger" onclick="resetApp()">重置应用（清空全部本地数据）</button>
       </div>
     </div>
   </div>
@@ -5964,8 +5988,8 @@ function renderSyncCfg(){
     var ver=document.getElementById('smVersion'); if(ver) ver.textContent='v'+SCHEMA_VERSION;
     if(typeof renderAccSortList==='function') renderAccSortList();
     if(typeof renderTagSortList==='function') renderTagSortList();
+    if(typeof renderCatSortList==='function') renderCatSortList();
     if(typeof renderSyncCfg==='function') renderSyncCfg();
-    if(typeof refreshRestoreBtn==='function') refreshRestoreBtn();
   }catch(e){ console.error(e); } };
   window.renderAccSortList=function(){
     var box=document.getElementById('accSortList'); if(!box) return;
@@ -5981,22 +6005,16 @@ function renderSyncCfg(){
     box.innerHTML=list.map(function(t){ return '<div class="sort-item" data-key="'+escAttr(t)+'"><span class="drag-h" title="拖动排序">☰</span><span class="sort-label">'+escHtml(t)+'</span><span class="sort-ctrl"><button class="sort-up" onclick="moveSort(\'tag\',-1,this)" aria-label="上移">↑</button><button class="sort-down" onclick="moveSort(\'tag\',1,this)" aria-label="下移">↓</button></span></div>'; }).join('');
     makeSortable(box, function(order){ saveTagOrder(order); renderTagFilter(); });
   };
+  window.renderCatSortList=function(){
+    var box=document.getElementById('catSortList'); if(!box) return;
+    var list=catListOrdered();
+    var movable=list.filter(function(c){ return c!=='全部'; });
+    if(!movable.length){ box.innerHTML='<p class="sm-note">暂无分类（导入持仓后出现）。</p>'; return; }
+    box.innerHTML=movable.map(function(c){ return '<div class="sort-item" data-key="'+escAttr(c)+'"><span class="drag-h" title="拖动排序">☰</span><span class="sort-label">'+escHtml(c)+'</span><span class="sort-ctrl"><button class="sort-up" onclick="moveSort(\'cat\',-1,this)" aria-label="上移">↑</button><button class="sort-down" onclick="moveSort(\'cat\',1,this)" aria-label="下移">↓</button></span></div>'; }).join('');
+    makeSortable(box, function(order){ saveCatOrder(order); renderCatFilter(); });
+  };
   window.clearCache=function(){ if(!confirm('清除本地缓存（净值快照与备份）？\n持仓与交易台账保留，仅清掉可重新拉取的净值缓存以释放空间。')) return; try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
   window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ ['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} location.reload(); };
-  window.manualRestoreBackup=function(){
-    const bk=findValidBackup();
-    if(!bk){ toast('没有找到含真实数据的备份'); return; }
-    showRestoreModal(bk, function(){ location.reload(); });
-  };
-  // 设置面板打开时更新「从备份恢复」按钮状态：有备份才可用
-  window.refreshRestoreBtn=function(){
-    var btn=document.getElementById('btnRestoreBackup');
-    if(!btn) return;
-    var has=!!findValidBackup();
-    btn.disabled=!has;
-    btn.style.opacity=has?'':'0.45';
-    btn.textContent=has?'从备份恢复账本（'+backupMeta(findValidBackup())+'）':'从备份恢复账本（无可用备份）';
-  };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); } });
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('change',function(e){ if(e.target && e.target.id==='smAutoRefresh'){ try{ localStorage.setItem('ft_autorefresh', e.target.checked?'1':'0'); }catch(_){} } });

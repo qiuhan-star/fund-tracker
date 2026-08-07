@@ -2779,9 +2779,35 @@ function renderLiquidated(){
     return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(c)+'</span><span class="liq-imp-bar"><i style="width:'+pct.toFixed(1)+'%"></i></span><span class="liq-imp-val">'+M(v)+' · '+pct.toFixed(0)+'%</span></div>';
   }).join('')+'</div>':'';
   box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+impact+'</div>';
+  fillLiqStatus();
 }
 
 
+
+function fillLiqStatus(){
+  const nodes=document.querySelectorAll('#tp2 [data-sg]');
+  nodes.forEach(async function(node){
+    const name=decodeURIComponent(node.getAttribute('data-nm')||'');
+    if(!name){ return; }
+    const code=await resolveCode(name);
+    if(!code){ node.textContent='申购状态：未知'; node.className='liq-sg sg-other'; return; }
+    const h=await loadProfile(code);
+    const d=h&&h.data;
+    if(!d){ node.textContent='申购状态：暂未获取'; node.className='liq-sg sg-other'; return; }
+    node.outerHTML=sgBadge(d.SGZT, d.MINSG, d.SHZT);
+  });
+}
+function sgBadge(sgzt, minsg, shzt){
+  const s=(sgzt||'').trim();
+  let cls='sg-other', txt=s||'—', icon='ℹ️';
+  if(s.indexOf('限大额')>=0){ cls='sg-limit'; icon='⚠️'; }
+  else if(s.indexOf('暂停')>=0){ cls='sg-pause'; icon='⛔'; }
+  else if(s.indexOf('开放')>=0){ cls='sg-open'; txt='开放申购'; icon='✅'; }
+  let html='<span class="liq-sg '+cls+'">'+icon+' '+esc(txt)+'</span>';
+  if(minsg!=null && +minsg>0) html+='<span class="liq-meta">最低¥'+minsg+'</span>';
+  if(shzt && shzt.indexOf('暂停')>=0) html+='<span class="liq-sg sg-pause">⛔ '+esc(shzt)+'</span>';
+  return html;
+}
 
 function buildFundsView(){
   // 交易默认锁定（旧数据未标记的补 locked=true）

@@ -6747,24 +6747,22 @@ function fetchFundInfoUnified(code){
   document.body.appendChild(s);
 }
 
-// 买多少：仓位测算
+// 买多少：仓位测算（输出到 #wtBuyRes 卡片行；占比不可算时不显示，绝不暴露 NaN）
 function calcWatchBuy(){
   const cap=+(document.getElementById('uwCap').value)||0;
   const pct=+(document.getElementById('uwPct').value)||0;
   const total=+(document.getElementById('uwTotal').value)||1;
-  const body=document.getElementById('buyBody'); if(!body) return;
+  const box=document.getElementById('wtBuyRes'); if(!box) return;
   const catSum={}; _allHoldings.forEach(function(f){ const c=f.cat||guessCat(f.name); catSum[c]=(catSum[c]||0)+(f.mv||0); });
   const bondSum={}; getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ const t=bondTypeOf(f); bondSum[t]=(bondSum[t]||0)+bondAmt(f); });
   const rows=[];
-  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const after=((catSum[c]||0)+sug)/total; rows.push({name:x.name,type:'基金',cat:c,sug:sug,after:after}); });
-  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const after=((bondSum[t]||0)+sug)/total; rows.push({name:f.name,type:f.mix?'混合':(f.type||'纯债'),cat:t,sug:sug,after:after}); });
-  if(!rows.length){ body.innerHTML='<tr><td colspan="5" class="sub2">暂无自选可测算</td></tr>'; return; }
-  body.innerHTML=rows.map(function(r){
-    const pctStr=isFinite(r.after)?(r.after*100).toFixed(1)+'%':'—%';
-    const flag=!isFinite(r.after)?'<span class="tag">数据不足</span>'
-      :(r.after*100>30?'<span class="tag warn" style="background:#fdeceb;color:#d8453a;border:1px solid #f6c9c4">该类占比过高</span>'
-      :(r.type==='纯债'||r.type==='混合'?'<span class="tag">防御仓·控比例</span>':'<span class="tag">ok</span>'));
-    return '<tr><td>'+escHtml(r.name)+'</td><td>'+r.type+'</td><td><b>¥'+r.sug.toLocaleString()+'</b></td><td>'+pctStr+'</td><td>'+flag+'</td></tr>';
+  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const v=((catSum[c]||0)+sug)/total; rows.push({name:x.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
+  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const v=((bondSum[t]||0)+sug)/total; rows.push({name:f.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
+  if(!rows.length){ box.innerHTML='<div class="line"><span class="nm" style="color:var(--text-3)">暂无自选可测算</span></div>'; return; }
+  box.innerHTML=rows.map(function(r){
+    const afterHtml=r.after!=null?'（占比 '+(r.after*100).toFixed(1)+'%）':'';
+    const flag=r.after!=null&&r.after>0.3?' <span class="tag warn" style="background:#fdeceb;color:#d8453a;border:1px solid #f6c9c4;font-size:11px;padding:1px 6px;border-radius:99px;margin-left:6px">占比过高</span>':'';
+    return '<div class="line"><span class="nm">'+escHtml(r.name)+'</span><span class="res">建议买入 <b class="amt">¥'+r.sug.toLocaleString()+'</b><span class="after">'+afterHtml+'</span>'+flag+'</span></div>';
   }).join('');
 }
 

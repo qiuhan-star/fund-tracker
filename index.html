@@ -246,7 +246,41 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .sm-sw-dot.on { outline-color:var(--text); }.sm-switch { position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0; }.sm-switch input { opacity:0; width:0; height:0; }.sm-slider { position:absolute; inset:0; background:#c4c9d2; border-radius:999px; transition:.2s; cursor:pointer; }.sm-slider:before { content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }.sm-switch input:checked + .sm-slider { background:var(--accent); }.sm-switch input:checked + .sm-slider:before { transform:translateX(19px); }.sm-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.nf-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }.nf-field > label { font-size: 14px; color:var(--text-2); font-weight:500; }.nf-field input, .nf-field select { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface); color:var(--text); font-size: 16px; font-family:inherit; }.nf-field input:focus, .nf-field select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }.nf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }.sm-act { display:flex; align-items:center; gap:9px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:10px; padding:11px 13px; font-size: 14px; cursor:pointer; text-align:left; font-family:inherit; }@media (hover: hover) { .sm-act:hover {  border-color:var(--accent); color:var(--accent);  } }
 /* 详情页定投快捷卡 */
 .dca-quick { padding:10px 14px; margin:0 0 12px; }.dca-quick-row { display:flex; align-items:center; gap:10px; }.dca-quick-t { font-weight:600; font-size: 14px; }.dca-quick .btn { margin-left:auto; }/* 定投计划管理弹窗 */
-.dca-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1200; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }.dca-mask.show { display:flex; }.dca-modal { background:var(--surface); color:var(--text); width:100%; max-width:600px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.dca-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.dca-head h2 { margin:0; font-size: 18px; font-weight:600; }.dca-body { padding:14px 18px 22px; overflow:auto; }.dca-card { border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:12px; }.dca-card-top { display:flex; align-items:center; gap:10px; }.dca-card-name { font-weight:600; font-size: 15px; }.dca-card-meta { font-size: 14px; color:var(--text-3); margin-top:5px; line-height:1.5; }.dca-card-actions { margin-left:auto; display:flex; gap:6px; flex-shrink:0; }.dca-paused { opacity:.6; }.dca-empty { text-align:center; color:var(--text-3); font-size: 14px; padding:18px 0; }.dca-form { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }.dca-form h3 { margin:0 0 12px; font-size: 14px; font-weight:600; }.dca-frow { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }.dca-frow label { font-size: 14px; color:var(--text-2); min-width:74px; }.dca-frow input, .dca-frow select { flex:1; min-width:120px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:8px; padding:8px 10px; font-size: 16px; font-family:inherit; box-sizing:border-box; }.dca-frow input[type=number] { flex:0 0 120px; min-width:0; }.dca-hint { font-size: 14px; color:var(--text-3); margin:4px 0 0; line-height:1.5; }@media (max-width:560px) { .dca-frow label { min-width:100%; }.dca-frow input, .dca-frow select { min-width:0; width:100%; }  }
+.dca-mask { position:fixed; inset:0; background:rgba(0,0,0,.38); display:none; z-index:1200; }
+.dca-mask.show { display:block; }
+.dca-sheet { position:absolute; left:0; right:0; bottom:0; background:var(--bg); border-radius:20px 20px 0 0; max-height:90%; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 -4px 30px rgba(0,0,0,.18); animation:dcaSheetUp .26s cubic-bezier(.32,.72,0,1); }
+@keyframes dcaSheetUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+.dca-sheet-handle { height:22px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.dca-sheet-handle::after { content:""; width:36px; height:5px; border-radius:3px; background:rgba(120,120,130,.35); }
+.dca-sheet-head { display:flex; align-items:center; justify-content:space-between; padding:4px 18px 12px; }
+.dca-sheet-head .dca-cancel { border:none; background:none; color:var(--text-3); font-size:17px; font-family:inherit; padding:4px 0; }
+.dca-sheet-head .dca-head-spacer { min-width:34px; }
+.dca-sheet-title { margin:0; font-size:18px; font-weight:700; color:var(--text); }
+.dca-sheet-body { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 16px calc(22px + env(safe-area-inset-bottom)); }
+.dca-list { margin:4px 0 8px; }
+.dca-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+.dca-paused { opacity:.6; }
+.dca-card-top { display:flex; align-items:center; gap:10px; }
+.dca-card-name { font-weight:600; font-size:15px; color:var(--text); }
+.dca-card-top .tag { margin-left:6px; }
+.dca-card-actions { margin-left:auto; display:flex; gap:8px; flex-shrink:0; }
+.dca-card-actions .btn { margin:0; padding:6px 10px; font-size:13px; }
+.dca-card-actions .btn.danger-text { color:var(--danger); border-color:var(--danger); }
+.dca-card-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }
+.dca-section-header { font-size:13px; font-weight:600; color:var(--text-3); margin:18px 0 8px 2px; }
+.dca-group { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.dca-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 14px; min-height:48px; border-bottom:1px solid var(--border-2); }
+.dca-row:last-child { border-bottom:none; }
+.dca-row .label { font-size:16px; color:var(--text); flex-shrink:0; }
+.dca-row .field { flex:1; min-width:0; display:flex; align-items:center; justify-content:flex-end; text-align:right; }
+.dca-row .field input, .dca-row .field select { width:100%; border:none; background:transparent; color:var(--text); font-size:16px; font-family:inherit; text-align:right; outline:none; padding:0; }
+.dca-row .field select { -webkit-appearance:none; appearance:none; color:var(--text-2); }
+.dca-row .field.has-chevron { position:relative; padding-right:16px; }
+.dca-row .field.has-chevron::after { content:"A"; position:absolute; right:0; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:16px; line-height:1; pointer-events:none; }
+.dca-row .field input.ph { color:var(--text-2); }
+.dca-row .field input.ph::placeholder { color:var(--text-3); }
+.dca-save-btn { display:block; width:100%; border:none; background:var(--accent); color:#fff; border-radius:12px; padding:15px; font-size:17px; font-weight:600; font-family:inherit; margin-top:18px; }
+.dca-footer { font-size:11px; color:var(--text-3); line-height:1.45; text-align:center; padding:14px 10px 6px; }
 .sm-act span { font-size: 18px; }.sm-note { font-size: 14px; color:var(--text-3); margin:12px 0 0; line-height:1.5; }
 /* 数据与安全：iOS 分组列表（替代原 sm-grid 按钮矩阵） */
 .ios-section { margin-bottom:18px; }
@@ -5067,15 +5101,14 @@ function openDcaModal(name){
 function closeDcaModal(){ const m=document.getElementById('dcaMask'); if(m) m.classList.remove('show'); }
 function dcaResetForm(){
   _dcaEditId=null;
-  const t=document.getElementById('dcaFormTitle'); if(t) t.textContent='➕ 新增定投计划';
-  const cb=document.getElementById('dcaCancelBtn'); if(cb) cb.style.display='none';
+  const t=document.getElementById('dcaSheetTitle'); if(t) t.textContent='新增定投计划';
   ['dcaName','dcaAmount','dcaDay','dcaStart','dcaEnd'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
   const day=document.getElementById('dcaDay'); if(day) day.value='1';
   const acc=document.getElementById('dcaAcc'); if(acc && acc.options.length) acc.selectedIndex=0;
 }
 function dcaRenderList(){
   const box=document.getElementById('dcaList'); if(!box) return;
-  if(!dcaPlans.length){ box.innerHTML='<div class="dca-empty">还没有定投计划。在下方填好基金、金额与起始月份即可开启自动记账。</div>'; return; }
+  if(!dcaPlans.length){ box.innerHTML=''; return; }
   box.innerHTML=dcaPlans.map(function(p){
     const booked=dcaBookedCount(p);
     const periods=dcaPeriods(p, new Date().getFullYear()+'-'+pad2(new Date().getMonth()+1)+'-'+pad2(new Date().getDate()));
@@ -5095,8 +5128,7 @@ function dcaRenderList(){
 function dcaEdit(id){
   const p=dcaPlans.find(x=>x.id===id); if(!p) return;
   _dcaEditId=id;
-  const t=document.getElementById('dcaFormTitle'); if(t) t.textContent='✏️ 编辑定投计划';
-  const cb=document.getElementById('dcaCancelBtn'); if(cb) cb.style.display='';
+  const t=document.getElementById('dcaSheetTitle'); if(t) t.textContent='编辑定投计划';
   const setV=function(i,v){ const el=document.getElementById(i); if(el) el.value=v; };
   setV('dcaName',p.name); setV('dcaAmount',p.amount); setV('dcaDay',p.day); setV('dcaStart',p.start); setV('dcaEnd',p.end||'');
   const acc=document.getElementById('dcaAcc'); if(acc){ let ok=false; Array.prototype.forEach.call(acc.options,function(o){ if(o.value===p.account){ o.selected=true; ok=true; } }); if(!ok && acc.options.length){ acc.selectedIndex=0; } }
@@ -6265,25 +6297,55 @@ function renderSyncCfg(){
   </div>
 </div>
 
-<!-- 定投计划管理弹窗 -->
+<!-- 定投计划管理弹窗（iOS 底部抽屉） -->
 <div class="dca-mask" id="dcaMask" onclick="if(event.target===this)closeDcaModal()">
-  <div class="dca-modal" role="dialog" aria-label="定投计划">
-    <div class="dca-head"><h2>🗓️ 定投计划</h2><button class="sm-x" onclick="closeDcaModal()" aria-label="关闭">✕</button></div>
-    <div class="dca-body">
-      <div id="dcaList"></div>
-      <div class="dca-form">
-        <h3 id="dcaFormTitle">➕ 新增定投计划</h3>
-        <div class="dca-frow"><label>基金名称</label><input id="dcaName" list="dcaNameList" placeholder="如：易方达蓝筹精选混合"><datalist id="dcaNameList"></datalist></div>
-        <div class="dca-frow"><label>账户</label><select id="dcaAcc"></select></div>
-        <div class="dca-frow"><label>每月金额</label><input id="dcaAmount" type="number" min="0" step="0.01" placeholder="5000"></div>
-        <div class="dca-frow"><label>每月几号</label><input id="dcaDay" type="number" min="1" max="28" step="1" value="1"></div>
-        <div class="dca-frow"><label>起始月份</label><input id="dcaStart" type="month" placeholder="2026-01"></div>
-        <div class="dca-frow"><label>结束月份</label><input id="dcaEnd" type="month" placeholder="留空=无限期"></div>
-        <p class="dca-hint">定投会在每次刷新净值时，用对应月份的<b>真实历史净值</b>自动补记买入；拉不到当月净值的月份会顺延到下个刷新周期自动补（不会虚构数据）。手动删除的定投记录不会复活。</p>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="sm-act" style="flex:1;background:var(--accent);color:#fff;border:none" onclick="dcaSave()"><span>💾</span>保存计划</button>
-          <button class="sm-ghost" id="dcaCancelBtn" onclick="dcaResetForm()">取消编辑</button>
+  <div class="dca-sheet" role="dialog" aria-label="定投计划">
+    <div class="dca-sheet-handle"></div>
+    <div class="dca-sheet-head">
+      <button class="dca-cancel" onclick="closeDcaModal()">取消</button>
+      <h3 class="dca-sheet-title" id="dcaSheetTitle">新增定投计划</h3>
+      <span class="dca-head-spacer"></span>
+    </div>
+    <div class="dca-sheet-body">
+      <div id="dcaList" class="dca-list"></div>
+
+      <div class="dca-section-header">计划基金</div>
+      <div class="dca-group">
+        <div class="dca-row">
+          <span class="label">基金名称</span>
+          <div class="field"><input id="dcaName" list="dcaNameList" placeholder="如：易方达蓝筹精选" style="text-align:right"><datalist id="dcaNameList"></datalist></div>
         </div>
+        <div class="dca-row" style="border-bottom:none">
+          <span class="label">账户</span>
+          <div class="field has-chevron"><select id="dcaAcc"></select></div>
+        </div>
+      </div>
+
+      <div class="dca-section-header">扣款规则</div>
+      <div class="dca-group">
+        <div class="dca-row">
+          <span class="label">每月金额</span>
+          <div class="field"><input id="dcaAmount" type="number" min="0" step="0.01" placeholder="0.00" style="text-align:right"></div>
+        </div>
+        <div class="dca-row">
+          <span class="label">扣款日期</span>
+          <div class="field"><input id="dcaDay" type="number" min="1" max="28" step="1" value="1" style="text-align:right"></div>
+        </div>
+        <div class="dca-row">
+          <span class="label">起始月份</span>
+          <div class="field"><input id="dcaStart" type="month" value="" style="text-align:right"></div>
+        </div>
+        <div class="dca-row" style="border-bottom:none">
+          <span class="label">结束月份</span>
+          <div class="field"><input id="dcaEnd" type="text" class="ph" placeholder="可选（默认长期）" style="text-align:right"></div>
+        </div>
+      </div>
+
+      <button class="dca-save-btn" onclick="dcaSave()">保存定投计划</button>
+
+      <div class="dca-footer">
+        刷新净值时将用对应月份真实历史净值自动补记买入；<br>
+        拉不到当月净值的月份会顺延补记，手动删除的记录不会复活。
       </div>
     </div>
   </div>

@@ -405,6 +405,31 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   /* 15. 基金榜单表：横向滚动 */
   .market-table { min-width: 560px !important; }
   .market-table th, .market-table td { white-space: nowrap !important; }
+
+  /* 16. 移动端横向溢出总兜底 + 双列布局塌成单列 */
+  html, body { overflow-x: hidden; }
+  .wrap { max-width: 100%; }
+
+  /* 资产配置+盈亏分布 / 定投+XIRR：双列→单列，杜绝图二/图五溢出 */
+  .grid2 { grid-template-columns: 1fr !important; }
+
+  /* 优化建议 当前配置/建议配置：双列→单列（图三） */
+  .cmp { grid-template-columns: 1fr !important; }
+
+  /* XIRR 现金流行：日期+金额+方向+✕ 不再挤一行，自动换行（图五） */
+  .xr-row { flex-wrap: wrap; gap: 6px; }
+  .xr-date { flex: 1 1 130px; }
+  .xr-amt { flex: 1 1 80px; }
+  .xr-dir { flex: 1 1 70px; }
+  .xr-row .del { flex: 0 0 auto; padding: 4px 10px; }
+
+  /* 资产总览卡片：防止数值被截断（图一） */
+  .ov-card { min-width: 0; overflow: visible; }
+  .ov-val { white-space: nowrap; font-size: 16px !important; }
+
+  /* 账户切换栏：空间不足时整行换行，不溢出；移动端隐藏「·N」计数（纯装饰，减负） */
+  .scope-seg { max-width: 100%; }
+  .scope-seg button .acc-cnt { display: none !important; }
 }/* ===== 手机端底部导航（App 式）：图标在上、文字在下 ===== */
 .main-tabs button .ti, .main-tabs button .tl { font-style: normal; display: inline; }.main-tabs button .ti { margin-right: 4px; }.main-tabs button .tl { font-weight: 600; }
 
@@ -3521,55 +3546,96 @@ function liveSection(f){
   const defCol = tr.length>12;
   const _tc={buy:0,sell:0,conv:0,oth:0};
   tr.forEach(function(t){ const k=t.type; if(k==='buy')_tc.buy++; else if(k==='sell')_tc.sell++; else if(k==='convert'||k==='convert_out')_tc.conv++; else _tc.oth++; });
-  h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>本只基金 · 交易流水（${tr.length} 笔 · 买入${_tc.buy} 卖出${_tc.sell}${_tc.conv?(' 转换'+_tc.conv):''}${_tc.oth?(' 其他'+_tc.oth):''}）</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
-  h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
-  h+=`<p class="hint" style="margin:0 0 8px">每笔「保存并锁定」后自动 🔒 防误改；点 🔓 可临时解锁编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
-  h+=`<div class="tr-add"><div class="tr-add-grid">
-    <select id="nf-acc" onchange="autoFee('nf')">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(f)===a?'selected':''}>${a}</option>`).join('')}</select>
-    <input id="nf-date" type="date" value="${tdtoday}" onchange="autoFee('nf')">
-    <input id="nf-time" type="time" value="15:00">
-    <select id="nf-type" onchange="autoFee('nf')">${TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>
-    <input id="nf-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="金额(元)" oninput="autoFee('nf')" onchange="autoFee('nf')">
-    <input id="nf-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="净值(留空=T+1)">
-    <input id="nf-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="费用(元)">
-    <span class="fee-hint" id="nf-fee-hint"></span>
-    <input id="nf-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="确认份额(可选)">
-    <button class="btn sm primary" onclick="addTradeForForm('${encodeURIComponent(f.name)}')">💾 保存并锁定</button>
-  </div></div>`;
-  if(tr.length){
-    h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
-    tr.forEach(t=>{
-      const i=trades.indexOf(t);
-      if(t.locked!==false){
-        h+=`<tr class="tr-locked">
-          <td>${esc(accOf(t))}</td>
-          <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
-          <td>${typeLabel(t.type)}</td>
-          <td class="num">${M(t.amount)}</td>
-          <td class="num">${t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class="pending-nav">待填</span>'}</td>
-          <td class="num">${t.fee?M(t.fee):'—'}</td>
-          <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'—'}</td>
-          <td><button class="lk" title="解锁编辑" onclick="unlockTrade(${i})">🔓</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
-        </tr>`;
-      } else {
-        h+=`<tr>
-          <td><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
-          <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
-          <td><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></td>
-          <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${TRADE_TYPES.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
-          <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
-          <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
-          <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
-          <td class="num"><input data-fld="t-shares-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.shares||''}" placeholder="份额" oninput="trades[${i}].shares=+this.value;compute();silentSave()"></td>
-          <td><button class="lk lock" title="锁定" onclick="lockTrade(${i})">🔒</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
-        </tr>`;
-      }
-    });
-    h+=`</tbody></table></div><div style="margin-top:12px"><div style="font-size: 14px;font-weight:600;margin:0 0 6px">买卖点</div>${miniTimeline(f)}</div>`;
+  const tradeHead = `本只基金 · 交易流水（${tr.length} 笔 · 买入${_tc.buy} 卖出${_tc.sell}${_tc.conv?(' 转换'+_tc.conv):''}${_tc.oth?(' 其他'+_tc.oth):''}）`;
+  if(isMobile()){
+    // ===== 移动端：iOS 连体分组表单 + 卡片化历史流水 =====
+    h+=`<div class="tr-ios">`;
+    h+=`<div class="section-label">${tradeHead}</div>`;
+    h+=`<div class="ios-group"><div class="ios-card">
+      <div class="ios-row"><span class="label">账户</span><select id="nf-acc" onchange="autoFee('nf')">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(f)===a?'selected':''}>${a}</option>`).join('')}</select></div>
+      <div class="ios-row"><span class="label">时间</span><input id="nf-date" type="date" value="${tdtoday}" onchange="autoFee('nf')" style="flex:1.5"><input id="nf-time" type="time" value="15:00" style="flex:1;margin-left:10px"></div>
+      <div class="ios-row"><span class="label">类型</span><div class="segmented" id="nf-seg"><button type="button" class="active" onclick="nfSeg(this,'buy')">买入</button><button type="button" onclick="nfSeg(this,'sell')">卖出</button></div><button type="button" class="seg-more" onclick="nfMore()">⋯</button><select id="nf-type" style="display:none" onchange="autoFee('nf')">${TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div>
+      <div class="ios-row"><span class="label">金额</span><input id="nf-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="autoFee('nf')" onchange="autoFee('nf')"></div>
+      <div class="ios-row"><span class="label">净值</span><input id="nf-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1 待确认"></div>
+      <div class="ios-row collapsible-head" onclick="nfToggleExtra(this)"><span class="label">费用 / 份额</span><span class="value" style="color:var(--text-3)">可选 <span class="chev">▾</span></span></div>
+      <div class="collapsible-body" id="nf-extra-body"><div class="ios-row"><span class="label">费用</span><input id="nf-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="autoFee('nf')" onchange="autoFee('nf')"></div><div class="ios-row"><span class="label">份额</span><input id="nf-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="可选"></div><div class="fee-hint-row"><span class="fee-hint" id="nf-fee-hint"></span></div></div>
+    </div>
+    <div class="hint-row"><span class="i">ⓘ</span> 保存后自动锁定，点「解锁」可临时编辑。净值留空会在结算日后首次刷新时自动填入。</div></div>`;
+    h+=`<button class="ios-btn" onclick="addTradeForForm('${encodeURIComponent(f.name)}')">保存并锁定</button>`;
+    // 历史流水卡片
+    h+=`<div class="section-label">历史流水（${tr.length} 笔）</div>`;
+    if(tr.length){
+      h+=`<div class="tx-list">`;
+      tr.forEach(t=>{
+        const i=trades.indexOf(t);
+        const dc=(t.type==='buy')?'buy':'sell';
+        const idTxt=typeLabel(t.type)+' · '+accOf(t);
+        const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
+        const navTxt=(t.nav!=null&&t.nav!=='')?('净值 '+navFmt(t.nav)):'净值 待确认';
+        const shareTxt=(t.shares!=null&&t.shares!=='')?(' · 份额 '+fmt(t.shares)):'';
+        if(t.locked!==false){
+          h+=`<div class="tx-card"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt}</div></div><div class="tx-right"><span class="tx-status">已锁定</span><div class="tx-ops"><button type="button" onclick="unlockTrade(${i})">解锁</button><button type="button" class="del" onclick="delTrade(${i})">删除</button></div></div></div></div>`;
+        } else {
+          h+=`<div class="tx-card"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-edit"><div class="ios-row"><span class="label">账户</span><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></div><div class="ios-row"><span class="label">日期</span><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">时间</span><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></div><div class="ios-row"><span class="label">类型</span><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${TRADE_TYPES.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="ios-row"><span class="label">金额</span><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">净值</span><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">费用</span><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">份额</span><input data-fld="t-shares-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.shares||''}" placeholder="份额" oninput="trades[${i}].shares=+this.value;compute();silentSave()"></div></div><div class="tx-line2" style="margin-top:10px"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt}</div></div><div class="tx-right"><div class="tx-ops"><button type="button" onclick="lockTrade(${i})">锁定</button><button type="button" class="del" onclick="delTrade(${i})">删除</button></div></div></div></div>`;
+        }
+      });
+      h+=`</div>`;
+    } else {
+      h+=`<p class="hint" style="margin:0 16px 8px">还没有交易流水。在上方填写后点「保存并锁定」即可记录第一笔。</p>`;
+    }
+    h+=`</div>`;
   } else {
-    h+=`<p class="hint" style="margin-top:8px">还没有交易流水。在上方填写后点「💾 保存并锁定」即可记录第一笔。</p>`;
+    // ===== 桌面端：保持原 Table 渲染 =====
+    h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>${tradeHead}</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
+    h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
+    h+=`<p class="hint" style="margin:0 0 8px">每笔「保存并锁定」后自动 🔒 防误改；点 🔓 可临时解锁编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
+    h+=`<div class="tr-add"><div class="tr-add-grid">
+      <select id="nf-acc" onchange="autoFee('nf')">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(f)===a?'selected':''}>${a}</option>`).join('')}</select>
+      <input id="nf-date" type="date" value="${tdtoday}" onchange="autoFee('nf')">
+      <input id="nf-time" type="time" value="15:00">
+      <select id="nf-type" onchange="autoFee('nf')">${TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>
+      <input id="nf-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="金额(元)" oninput="autoFee('nf')" onchange="autoFee('nf')">
+      <input id="nf-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="净值(留空=T+1)">
+      <input id="nf-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="费用(元)">
+      <span class="fee-hint" id="nf-fee-hint"></span>
+      <input id="nf-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="确认份额(可选)">
+      <button class="btn sm primary" onclick="addTradeForForm('${encodeURIComponent(f.name)}')">💾 保存并锁定</button>
+    </div></div>`;
+    if(tr.length){
+      h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
+      tr.forEach(t=>{
+        const i=trades.indexOf(t);
+        if(t.locked!==false){
+          h+=`<tr class="tr-locked">
+            <td>${esc(accOf(t))}</td>
+            <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
+            <td>${typeLabel(t.type)}</td>
+            <td class="num">${M(t.amount)}</td>
+            <td class="num">${t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class="pending-nav">待填</span>'}</td>
+            <td class="num">${t.fee?M(t.fee):'—'}</td>
+            <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'—'}</td>
+            <td><button class="lk" title="解锁编辑" onclick="unlockTrade(${i})">🔓</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
+          </tr>`;
+        } else {
+          h+=`<tr>
+            <td><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
+            <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
+            <td><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></td>
+            <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${TRADE_TYPES.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
+            <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
+            <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
+            <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
+            <td class="num"><input data-fld="t-shares-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.shares||''}" placeholder="份额" oninput="trades[${i}].shares=+this.value;compute();silentSave()"></td>
+            <td><button class="lk lock" title="锁定" onclick="lockTrade(${i})">🔒</button> <button class="lk" title="删除" onclick="delTrade(${i})">🗑</button></td>
+          </tr>`;
+        }
+      });
+      h+=`</tbody></table></div><div style="margin-top:12px"><div style="font-size: 14px;font-weight:600;margin:0 0 6px">买卖点</div>${miniTimeline(f)}</div>`;
+    } else {
+      h+=`<p class="hint" style="margin-top:8px">还没有交易流水。在上方填写后点「💾 保存并锁定」即可记录第一笔。</p>`;
+    }
+    h+=`</div></div>`;
   }
-  h+=`</div>`;
 
   const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
   const _ncBk=navCache[f.name]||{};
@@ -3732,6 +3798,28 @@ function tradeQuickSave(){
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
   toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
 }
+
+// 移动端交易录入辅助
+function isMobile(){ return !!(window.matchMedia && window.matchMedia('(max-width:600px)').matches); }
+window.nfSeg=function(btn,val){
+  var seg=document.getElementById('nf-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  var sel=document.getElementById('nf-type'); if(sel){ sel.value=val; sel.style.display='none'; }
+  if(typeof autoFee==='function') autoFee('nf');
+};
+window.nfMore=function(){
+  var seg=document.getElementById('nf-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+  var sel=document.getElementById('nf-type'); if(sel) sel.style.display='';
+  if(typeof autoFee==='function') autoFee('nf');
+};
+window.nfToggleExtra=function(head){
+  var body=document.getElementById('nf-extra-body'); if(!body) return;
+  var open=body.classList.toggle('open');
+  if(head) head.classList.toggle('open', open);
+  var chev=head?head.querySelector('.chev'):null; if(chev) chev.style.transform=open?'rotate(180deg)':'';
+};
+window.openDetailMore=function(){ var m=document.getElementById('detailMoreMask'), s=document.getElementById('detailMoreSheet'); if(m)m.classList.add('show'); if(s)s.classList.add('show'); };
+window.closeDetailMore=function(){ var m=document.getElementById('detailMoreMask'), s=document.getElementById('detailMoreSheet'); if(m)m.classList.remove('show'); if(s)s.classList.remove('show'); };
 
 // ---------- 快捷记账抽屉 ----------
 function openDrawer(){

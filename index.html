@@ -210,16 +210,17 @@ function ensureECharts(cb){
 .cmp-leg2 .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle; }
 .cmp-leg2 .sw.cur { background:#5b6fd6; } .cmp-leg2 .sw.sug { background:#27ae60; }
 .cmp-leg2 .cbr-diff-note { margin-left:auto; color:var(--text-3); font-size: 12px; }
-.cmp-bar-row { display:grid; grid-template-columns: 84px 1fr 56px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed var(--border-2); }
-.cmp-bar-row .cbr-name { font-size: 14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cmp-bar-row { display:flex; flex-direction:column; gap:6px; padding:8px 0; border-bottom:1px dashed var(--border-2); }
+.cmp-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.cmp-name { font-size: 14px; color:var(--text); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 .cmp-bar-row .cbr-bars { display:flex; flex-direction:column; gap:3px; }
 .cmp-bar-row .cbr-line { display:flex; align-items:center; gap:6px; font-size: 12px; color:var(--text-3); }
 .cmp-bar-row .cbr-lab { flex:0 0 28px; }
-.cmp-bar-row .cbr-track { flex:1; height:9px; background:var(--border-3); border-radius:6px; overflow:hidden; }
+.cmp-bar-row .cbr-track { flex:1; min-width:0; height:9px; background:var(--border-3); border-radius:6px; overflow:hidden; }
 .cmp-bar-row .cbr-fill { display:block; height:100%; border-radius:6px; min-width:2px; }
 .cmp-bar-row .cbr-fill.cur { background:#5b6fd6; } .cmp-bar-row .cbr-fill.sug { background:#27ae60; }
 .cmp-bar-row .cbr-line b { font-variant-numeric:tabular-nums; font-size: 12px; flex:0 0 42px; text-align:right; }
-.cmp-bar-row .cbr-diff { text-align:right; font-weight:600; font-size: 14px; font-variant-numeric:tabular-nums; }
+.cmp-bar-row .cbr-diff { font-weight:600; font-size: 14px; font-variant-numeric:tabular-nums; }
 .cmp-bar-row .cbr-diff.pos { color:var(--up); } .cmp-bar-row .cbr-diff.neg { color:var(--down); } .cmp-bar-row .cbr-diff.zero { color:var(--text-3); }
 /* 草稿自动保存提示 */
 .draft-pill { display:none; align-items:center; gap:8px; background:#fff7e6; color:#b76e00; font-size: 14px; border-radius:9px; padding:8px 11px; margin:0 0 10px; }
@@ -371,6 +372,12 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .panel-row.stacked .sm-seg button { flex:1; }
 }
 
+/* 总资产大卡片：桌面端元数据三列横向，移动端（见下方媒体查询）改为占满 */
+.ov-hero-main { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.ov-hero-meta { display:grid; grid-template-columns:repeat(3,auto); gap:8px 18px; align-items:end; }
+.ov-hero-meta > div { display:flex; flex-direction:column; gap:2px; }
+.ov-hero-meta .lab { font-size:12px; color:var(--text-3); }
+.ov-hero-meta .val { font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; }
 /* ==================== 手机端 (移动端) 阅读体验深度优化 ==================== */
 @media (max-width: 768px) {
   /* 1. 容器与字号优化：提升基本可读性 */

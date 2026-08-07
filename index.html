@@ -4836,12 +4836,17 @@ function parseCSV(text){
     added.push({name,date,type,amount,nav,fee,account,shares:sh});
   }
   if(!added.length) return {count:0, dup:0, rows:[]};
-  // 去重：同名+同日+同金额+同净值+同账户 已存在则跳过，支持安全重导（不必先删）
+  // 增量更新（upsert）：同名+同日+同金额+同账户 视为同一笔。已存在且净值相同→跳过；已存在但缺净值/净值不同→用新行补全或覆盖（支持补净值或修正后重导，不生成重复交易）
   const normNum=v=>(v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):'';
-  const keyOf=t=>(t.name||'')+'|'+(t.date||'')+'|'+normNum(t.amount)+'|'+normNum(t.nav)+'|'+((t.account)||'');
-  const seen=new Set(trades.map(keyOf));
+  const matchKey=t=>(t.name||'')+'|'+(t.date||'')+'|'+normNum(t.amount)+'|'+((t.account)||'');
+  const byMatch={}; trades.forEach(t=>{ const k=matchKey(t); (byMatch[k]=byMatch[k]||[]).push(t); });
   let dup=0; const fresh=[];
-  for(const t of added){ const k=keyOf(t); if(seen.has(k)){ dup++; } else { seen.add(k); fresh.push(t); } }
+  for(const t of added){
+    const k=matchKey(t); const grp=byMatch[k]||[];
+    let hit=grp.find(e=> normNum(e.nav)===normNum(t.nav));
+    if(!hit){ hit=grp.find(e=> !e.nav || normNum(e.nav)!==normNum(t.nav)); if(hit){ if(t.nav) hit.nav=t.nav; if(t.shares) hit.shares=t.shares; if(t.fee) hit.fee=t.fee; } }
+    if(hit) dup++; else fresh.push(t);
+  }
   trades=trades.concat(fresh);
   return {count:fresh.length, dup, rows:fresh};
 }

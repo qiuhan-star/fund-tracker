@@ -220,7 +220,23 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 /* 详情页定投快捷卡 */
 .dca-quick { padding:10px 14px; margin:0 0 12px; }.dca-quick-row { display:flex; align-items:center; gap:10px; }.dca-quick-t { font-weight:600; font-size: 14px; }.dca-quick .btn { margin-left:auto; }/* 定投计划管理弹窗 */
 .dca-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1200; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }.dca-mask.show { display:flex; }.dca-modal { background:var(--surface); color:var(--text); width:100%; max-width:600px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.dca-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.dca-head h2 { margin:0; font-size: 18px; font-weight:600; }.dca-body { padding:14px 18px 22px; overflow:auto; }.dca-card { border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:12px; }.dca-card-top { display:flex; align-items:center; gap:10px; }.dca-card-name { font-weight:600; font-size: 15px; }.dca-card-meta { font-size: 14px; color:var(--text-3); margin-top:5px; line-height:1.5; }.dca-card-actions { margin-left:auto; display:flex; gap:6px; flex-shrink:0; }.dca-paused { opacity:.6; }.dca-empty { text-align:center; color:var(--text-3); font-size: 14px; padding:18px 0; }.dca-form { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }.dca-form h3 { margin:0 0 12px; font-size: 14px; font-weight:600; }.dca-frow { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }.dca-frow label { font-size: 14px; color:var(--text-2); min-width:74px; }.dca-frow input, .dca-frow select { flex:1; min-width:120px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:8px; padding:8px 10px; font-size: 16px; font-family:inherit; box-sizing:border-box; }.dca-frow input[type=number] { flex:0 0 120px; min-width:0; }.dca-hint { font-size: 14px; color:var(--text-3); margin:4px 0 0; line-height:1.5; }@media (max-width:560px) { .dca-frow label { min-width:100%; }.dca-frow input, .dca-frow select { min-width:0; width:100%; }  }
-.sm-act span { font-size: 18px; }.sm-note { font-size: 14px; color:var(--text-3); margin:12px 0 0; line-height:1.5; }.sm-pill { font-size: 14px; color:var(--text-2); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }.sm-ghost { border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:9px; padding:7px 12px; font-size: 14px; cursor:pointer; font-family:inherit; }@media (hover: hover) { .sm-ghost:hover {  border-color:var(--accent); color:var(--accent);  } }
+.sm-act span { font-size: 18px; }.sm-note { font-size: 14px; color:var(--text-3); margin:12px 0 0; line-height:1.5; }
+/* 数据与安全：iOS 分组列表（替代原 sm-grid 按钮矩阵） */
+.ios-section { margin-bottom:18px; }
+.ios-section:last-of-type { margin-bottom:0; }
+.ios-section-header { font-size:13px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.02em; margin:0 0 7px 12px; }
+.ios-card-group { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.ios-row-item { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 14px; min-height:48px; border-bottom:1px solid var(--border-2); cursor:pointer; -webkit-user-select:none; user-select:none; transition:background .12s; }
+.ios-row-item:last-child { border-bottom:none; }
+.ios-row-item:active { background:var(--surface-2); }
+.item-title { font-size:16px; color:var(--text); }
+.item-title.sub { font-size:14px; color:var(--text-2); }
+.item-title.warning { color:var(--warn); }
+.item-action { font-size:14px; color:var(--text-3); font-weight:400; line-height:1; }
+.item-action.primary { color:var(--accent); font-weight:600; }
+.item-action.danger { color:var(--danger); font-weight:600; }
+.item-arrow { font-size:20px; color:var(--text-3); line-height:1; }
+.ios-section-footer { font-size:12px; color:var(--text-3); line-height:1.5; margin:8px 12px 0; padding:6px 0; }.sm-pill { font-size: 14px; color:var(--text-2); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }.sm-ghost { border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:9px; padding:7px 12px; font-size: 14px; cursor:pointer; font-family:inherit; }@media (hover: hover) { .sm-ghost:hover {  border-color:var(--accent); color:var(--accent);  } }
 .danger-text { color:var(--danger); }.sm-danger { border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); border-radius:10px; padding:10px 14px; font-size: 14px; cursor:pointer; font-family:inherit; font-weight:600; width:100%; margin-top:6px; }@media (hover: hover) { .sm-danger:hover {  background:var(--danger); color:#fff;  } }
 .sm-frow { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }.sm-frow label { font-size: 14px; color:var(--text-2); white-space:nowrap; }@media (max-width:480px) { .sm-frow label { min-width:100%; display:block; margin-bottom:2px; }.sm-frow input { width:100%; }  }
 @media (max-width:480px) { .sm-grid { grid-template-columns:1fr; }  }
@@ -5854,16 +5870,55 @@ function renderSyncCfg(){
       </div>
       <div class="sm-card">
         <h3>🔐 数据与安全</h3>
-        <div class="sm-grid">
-          <button class="sm-act" onclick="syncOnline();closeSettings()"><span>🔄</span>从线上同步</button>
-          <button class="sm-act" onclick="importJSON();closeSettings()"><span>📥</span>导入 JSON</button>
-          <button class="sm-act" onclick="openImportModal();closeSettings()"><span>📥</span>导入交易</button>
-          <button class="sm-act" onclick="exportJSON();closeSettings()"><span>📤</span>导出 JSON</button>
-          <button class="sm-act" onclick="exportHoldingsCSV();closeSettings()"><span>📊</span>导出持仓CSV</button>
-          <button class="sm-act" onclick="downloadCSVTemplate();closeSettings()"><span>📄</span>CSV 模板</button>
-          <button class="sm-act" onclick="importMyExtras();closeSettings()"><span>📦</span>恢复债基+分析</button>
+
+        <div class="ios-section">
+          <div class="ios-section-header">备份与云端</div>
+          <div class="ios-card-group">
+            <div class="ios-row-item" onclick="syncOnline();closeSettings()">
+              <span class="item-title">从线上同步数据</span>
+              <span class="item-action primary">同步</span>
+            </div>
+            <div class="ios-row-item" onclick="exportJSON();closeSettings()">
+              <span class="item-title">导出备份 (JSON)</span>
+              <span class="item-action">导出</span>
+            </div>
+            <div class="ios-row-item" onclick="importJSON();closeSettings()">
+              <span class="item-title warning">导入备份 (JSON)</span>
+              <span class="item-action danger">覆盖导入</span>
+            </div>
+          </div>
         </div>
-        <p class="sm-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出 JSON」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
+
+        <div class="ios-section">
+          <div class="ios-section-header">数据表格 (CSV)</div>
+          <div class="ios-card-group">
+            <div class="ios-row-item" onclick="openImportModal();closeSettings()">
+              <span class="item-title">导入交易记录</span>
+              <span class="item-arrow">›</span>
+            </div>
+            <div class="ios-row-item" onclick="downloadCSVTemplate();closeSettings()">
+              <span class="item-title sub">下载 CSV 导入模板</span>
+              <span class="item-action primary">下载</span>
+            </div>
+            <div class="ios-row-item" onclick="exportHoldingsCSV();closeSettings()">
+              <span class="item-title">导出持仓数据 (CSV)</span>
+              <span class="item-action primary">导出</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ios-section">
+          <div class="ios-section-header">研究数据工具</div>
+          <div class="ios-card-group">
+            <div class="ios-row-item" onclick="importMyExtras();closeSettings()">
+              <span class="item-title">恢复真实债基与分析</span>
+              <span class="item-action danger">覆盖</span>
+            </div>
+          </div>
+          <div class="ios-section-footer">把示例债基/分析替换为你自己的本地研究数据。此操作会覆盖同名基金的演示分析。</div>
+        </div>
+
+        <p class="ios-section-footer" style="margin-top:12px;">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
       </div>
       <div class="sm-card" id="syncCard">
         <h3>☁️ 账号云同步（GitHub 私有）</h3>

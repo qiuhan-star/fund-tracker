@@ -618,14 +618,17 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     height: 180px !important;
   }
 
-  /* 9. 市场风向：指数卡片固定双列、增大点击区 */
-  .idx-list { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  .idx-chip { padding: 10px 12px !important; min-height: 78px !important; }
-  .idx-name { font-size: 14px !important; }
+  /* 9. 市场风向：指数卡片改为横向滚动（修复 3 卡右侧留白 + 信息密度低） */
+  .idx-list { display: flex !important; flex-direction: row; align-items: flex-start; gap: 8px !important; overflow-x: auto !important; padding: 4px 4px 8px !important; margin: 0 -4px !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .idx-list::-webkit-scrollbar { display: none; }
+  .idx-chip { flex: 0 0 148px !important; padding: 9px 11px !important; min-height: 0 !important; box-sizing: border-box; }
+  .idx-name { font-size: 13px !important; }
   .idx-val { font-size: 15px !important; }
-  .idx-pct { font-size: 14px !important; }
-  .idx-mktstatus { font-size: 12px !important; }
-  .idx-grp-h { font-size: 14px !important; margin-bottom: 8px !important; }
+  .idx-pct { font-size: 12px !important; }
+  .idx-mktstatus { font-size: 11px !important; }
+  .idx-spark { margin-top: 4px !important; }
+  .idx-nospark { margin-top: 4px !important; font-size: 11px !important; }
+  .idx-grp-h { font-size: 13px !important; margin-bottom: 6px !important; }
   .idx-head-right { flex-wrap: wrap !important; gap: 6px !important; justify-content: flex-end !important; }
   .idx-toggle { padding: 5px 10px !important; font-size: 14px !important; }
 

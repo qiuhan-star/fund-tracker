@@ -719,21 +719,21 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .home-ctable{ border-collapse:collapse; font-size:12px; min-width:100%; }
   .home-ctable th{ padding:9px 10px 7px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; white-space:nowrap; cursor:pointer; user-select:none; }
-  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); min-width:92px; max-width:42vw; }
-  .home-ctable thead th.th-col{ cursor:default; }
+  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); min-width:92px; max-width:56vw; width:100%; }
+  .home-ctable thead th.th-col{ cursor:default; width:1%; }
   .home-ctable th .sub{ font-weight:400; display:block; font-size:10px; margin-top:1px; }
   .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }
   .home-ctable th.sort-on{ color:var(--accent); font-weight:700; }
   .home-ctable th.sort-on .arrow{ color:var(--accent); }
   .home-ctable td{ padding:9px 10px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; white-space:nowrap; }
-  .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); }
+  .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); max-width:56vw; }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
-  .home-ctable .cname{ font-size:11px; font-weight:600; color:var(--text); line-height:1.25; white-space:nowrap; }
+  .home-ctable .cname{ font-size:11px; font-weight:600; color:var(--text); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%; }
   .home-ctable .csub{ font-size:10.5px; color:var(--text-3); margin-top:4px; display:flex; gap:4px; align-items:center; flex-wrap:wrap; line-height:1.2; }
   .home-ctable .csub span{ white-space:nowrap; }
   .home-ctable .tag-code{ color:var(--text-3); }
-  .home-ctable .cnum{ font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.2; white-space:nowrap; }
+  .home-ctable .cnum{ font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.2; white-space:nowrap; width:1%; }
   .home-ctable .cnum.zero{ color:var(--text-3); font-weight:500; }
   .home-ctable .pos{ color:var(--up); } .home-ctable .neg{ color:var(--down); }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */

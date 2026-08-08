@@ -7591,18 +7591,20 @@ function renderSyncCfg(){
     function group(t,rows){ return '<div class="sm-group"><div class="sm-gtitle">'+t+'</div><div class="smg-card">'+rows.join('')+'</div></div>'; }
     function row(icon,c,t,d,trail,onclick,danger){ return '<div class="smg-row'+(danger?' danger':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span class="smg-ic" style="background:'+B[c]+';color:'+F[c]+'">'+SMG_ICONS[icon]+'</span><div class="smg-txt"><div class="smg-t">'+t+'</div>'+(d?'<div class="smg-d">'+d+'</div>':'')+'</div><div class="smg-trail">'+trail+'</div></div>'; }
     var html='';
-    html+=group('数据与云端',[
+    html+=group('同步与隐私',[
       row('cloud','blue','本地云同步','<span id="smStatTxt">本地数据 · —</span>','<button type="button" class="smg-btn" onclick="event.stopPropagation();cloudPush(true)">同步</button>','cloudPush(true)'),
       row('eyeoff','purple','资产隐蔽模式','<span id="smPrivDsc">关闭 · 金额正常显示</span>','<span class="sm-priv-sw" id="privSw"><i></i></span>','toggleHidden()')
     ]);
     html+=group('偏好设置',[
-      row('palette','orange','外观与显示','','<span class="smg-chev">›</span>','openSettingsDetail(\'appearance\')'),
+      row('palette','orange','外观与偏好','','<span class="smg-chev">›</span>','openSettingsDetail(\'appearance\')'),
       row('cycle','orange','周期与定投计划','','<span class="smg-chev">›</span>','openDcaModal();closeSettings()')
     ]);
-    html+=group('数据与安全',[
-      row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')'),
-      row('download','blue','导入与恢复','','<span class="smg-chev">›</span>','openImportModal();closeSettings()'),
-      row('cycle','purple','导入全量备份 (JSON)','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
+    html+=group('安全与隐私',[
+      row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')')
+    ]);
+    html+=group('数据管理',[
+      row('download','blue','导入交易 (CSV)','','<span class="smg-chev">›</span>','openImportModal();closeSettings()'),
+      row('cycle','purple','恢复全量备份 (JSON)','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
       row('upload','green','导出备份','','<span class="smg-chev">›</span>','exportJSON();closeSettings()'),
       row('trash','red','清除与重置','','<span class="smg-chev">›</span>','openSettingsDetail(\'data\')',true)
     ]);

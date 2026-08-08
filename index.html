@@ -4136,8 +4136,14 @@ function setSectorView(i){
   if(bars) bars.style.display=isBars?'block':'none';
   if(tree) tree.style.display=isBars?'none':'block';
   if(warn) warn.style.display=isBars?'block':'none';
+  if(isBars){
+    // 切回「占比排位」时销毁盈亏瓦片(treemap)的 ECharts 实例并清空容器，
+    // 避免残留 canvas / tooltip 层在手机端遮挡点击或导致切换后视图残留
+    try{ if(typeof echarts!=='undefined'){ const c=echarts.getInstanceByDom(tree); if(c) c.dispose(); } }catch(e){}
+    try{ if(tree) tree.innerHTML=''; }catch(e){}
+  }
   ['sv0','sv1'].forEach((id,k)=>{ const b=document.getElementById(id); if(b) b.classList.toggle('on',k===i); });
-  if(isBars) renderSector(); else renderSectorTree();
+  try{ if(isBars) renderSector(); else renderSectorTree(); }catch(e){ console.error('setSectorView render failed', e); }
 }
 function renderSectorTotal(){
   const te=document.getElementById('sectorTotal'); if(!te) return;

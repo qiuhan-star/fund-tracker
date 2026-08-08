@@ -6287,7 +6287,7 @@ function importJSON(){
       setTimeout(()=>{ location.reload(); }, 800);
     }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
     r.readAsText(f); };
-  inp.style.cssText='position:fixed;left:-9999px;top:0';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
   document.body.appendChild(inp); inp.click();
 }
 
@@ -6303,7 +6303,7 @@ function importMyExtras(){
       setTimeout(()=>{ location.reload(); }, 800);
     }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
     r.readAsText(f); };
-  inp.style.cssText='position:fixed;left:-9999px;top:0';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
   document.body.appendChild(inp); inp.click();
 }
 
@@ -6355,7 +6355,7 @@ function importCSV(){
         showImpPreview(res.rows, 'csv', res.dup); }
       catch(e){ alert('CSV 解析失败：'+e.message); } };
     r.readAsText(f,'utf-8'); };
-  inp.style.cssText='position:fixed;left:-9999px;top:0';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
   document.body.appendChild(inp); inp.click();
 }
 function parseCSV(text, defaultAcc, forceAcc){
@@ -6568,6 +6568,7 @@ function commitImpPreview(){
   trades=trades.concat(impPreviewRows);
   removeSampleData(true);
   compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('import preview commit failed', e); });
+  if(impPreviewRows.some(function(t){ return !accIsPersonal(t.account); })){ setScopeAcc('all'); }
   toast('已导入 '+added+' 笔交易· 正在拉取净值…');
   closeImpPreview(); closeImportModal();
 }

@@ -7811,5 +7811,35 @@ function wtAttachSwipe(){
 
 
 </script>
+<script>
+/* 溢出自诊断工具：仅当 URL 含 ?debug=overflow 时启用，不影响正常模式 */
+(function(){
+  try{
+    if(location.search.indexOf('debug=overflow')<0) return;
+    var box=document.createElement('div');
+    box.id='_ovDiag';
+    box.style.cssText='position:fixed;left:0;right:0;bottom:0;max-height:42%;overflow:auto;background:rgba(0,0,0,.86);color:#39ff14;font:11px/1.4 monospace;z-index:999999;padding:8px 10px;white-space:pre-wrap;box-sizing:border-box';
+    document.body.appendChild(box);
+    function run(){
+      var vw=document.documentElement.clientWidth||window.innerWidth;
+      var bad=[];
+      var all=document.querySelectorAll('body *');
+      for(var i=0;i<all.length;i++){
+        var el=all[i];
+        var r=el.getBoundingClientRect();
+        if(r.width>0 && (r.right>vw+1 || r.left<-1)){
+          bad.push({t:el.tagName, c:(el.className&&el.className.toString()||'').slice(0,50), right:Math.round(r.right), w:Math.round(r.width)});
+          try{ el.style.outline='2px solid #ff2d55'; }catch(e){}
+        }
+      }
+      box.textContent='视口宽 '+vw+'px · 超出元素 '+bad.length+' 个：\n'+
+        bad.slice(0,40).map(function(b){return '▶ '+b.t+' .'+b.c+'  right='+b.right+' w='+b.w;}).join('\n');
+    }
+    run();
+    setInterval(run,700);
+    window.addEventListener('resize',function(){setTimeout(run,200);});
+  }catch(e){}
+})();
+</script>
 </body>
 </html>

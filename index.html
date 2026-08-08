@@ -2752,8 +2752,8 @@ function renderHomeMobileTable(list){
   const head='<tr>'
     + '<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>'
     + hd('day','涨跌幅')
-    + hd('ret','当日收益','08-08')
-    + hd('hold','持有收益','08-08')
+    + hd('ret','当日收益')
+    + hd('hold','持有收益')
     + '</tr>';
   const rows=list.map(f=>{
     const nc=navCache[f.name]||{};
@@ -3662,13 +3662,15 @@ function buildFundsView(){
     const cat=snap?snap.cat:(tr[0]?guessCat(tr[0].name):guessCat(name));
     let f;
     if(tr.length){
-      let shares=0,cost=0,firstDate=null,realized=0,lots=[];  // lots：严格 FIFO 批次 {sh,cp}
+      let shares=0,cost=0,firstDate=null,realized=0,lots=[],lastNav=0;  // lots：严格 FIFO 批次 {sh,cp}；lastNav：缺净值成交的近似净值
       const sortedTr=[...tr].sort((a,b)=>a.date.localeCompare(b.date));
       sortedTr.forEach(t=>{
         const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
-        const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
-        if(ty==='buy'||ty==='convert'){ if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } /* 手动份额优先，否则金额÷净值（T+1 待确认） */ }
-        else if(ty==='sell'||ty==='convert_out'){ if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }
+        // 份额：手动份额优先 → 否则金额÷净值 → 净值缺失且金额>0 时，用「该日期之前最近一次买入净值」近似（转换常不带净值）
+        let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
+        if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
+        if(ty==='buy'||ty==='convert'){ if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; /* 手动份额优先，否则金额÷净值（T+1 待确认） */ }
+        else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); const sellPx=nav>0?nav:lastNav; realized+=(sellPx-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }
         else if(ty==='dividend'){ if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
         else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
         else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }             // 份额拆分：份额×比例、成本不变
@@ -3678,6 +3680,13 @@ function buildFundsView(){
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
       // 例外：若已有卖出且净份额=0（已清仓），不再回退快照，让它进「清仓」Tab
       const hasSell = tr.some(function(t){ return t.type==='sell' || t.type==='convert_out'; });
+      // 清仓修正（修复浮点残留）：按金额记录时净值波动会让净份额残留极小非零值（如买1000元/卖1000.79元→剩0.04份≈0.04元）。
+      // 这类基金实际已清仓，但 shares>0 会被误判为持有。有卖出/转换转出记录的基金，若「残留市值 < 1 元」或「净值缺失且残留不足 1 份」则强制归零 → 正确进「清仓」Tab。
+      if(hasSell && shares>0){
+        const _nav = navCache[name] ? navCache[name].nav : (snap&&snap.mv&&snap.shares? snap.mv/snap.shares : 0);
+        const _rmv = _nav>0 ? shares*_nav : 0;
+        if(_rmv < 1 || (shares < 1 && _rmv <= 0)) shares=0;
+      }
       if(shares===0 && snap && !hasSell){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
         f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(nav?c0/nav:null)),trades:tr,realized:0};

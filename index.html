@@ -3017,7 +3017,7 @@ function renderHomeMobileTable(list){
     const code=syncCode(f.name);
     const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
     // 持仓行副信息：分类 + 自定义标签 + 代码/持仓额 + 净值；不再显示账户类标签（代管账户/小号/本人等）
-    const subParts=[ (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, (code?(f.mv!=null?('<span class="tag-code">#'+code+' · 持仓 ¥'+M(f.mv)+'</span>'):('<span class="tag-code">#'+code+'</span>')):(f.mv!=null?'<span class="tag-code">持仓 ¥'+M(f.mv)+'</span>':'')), (nc.nav!=null?'<span class="tag-code">净值 '+navFmt(nc.nav)+'</span>':'') ].filter(Boolean).join('');
+    const subParts=[ (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, (code?'<span class="tag-code">#'+code+'</span>':'') ].filter(Boolean).join('');
     let tds='<td><div class="cname">'+esc(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
     cols.slice(1).forEach(c=>{ tds+=cellOf(f,c.key); });
     return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
@@ -3937,7 +3937,7 @@ function buildFundsView(){
       }
       if(shares===0 && snap && !hasSell){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(nav?c0/nav:null)),trades:tr,realized:0};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(navCache[name]?navCache[name].nav:null)),trades:tr,realized:0};
       } else {
         const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:0);
         const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;

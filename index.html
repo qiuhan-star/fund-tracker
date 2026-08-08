@@ -1484,6 +1484,8 @@ let ACC_RENAME_MAP={};
 try{ ACC_RENAME_MAP=JSON.parse(localStorage.getItem('ft_acc_rename')||'{}'); }catch(e){ ACC_RENAME_MAP={}; }
 function effAccount(n){ return n==null? n : (ACC_RENAME_MAP[n]||n); }
 function effBuiltins(){ return BUILTIN_ACCOUNTS.map(effAccount); }
+// 账户名归一化（与 migrate 内 _accNorm 一致）：先套旧名映射 ACCOUNT_RENAME（小号→代管账户、微信债券→投资账户…），再套用户改名映射 effAccount；空值回退本人账户。导入统一走这里，避免 CSV/粘贴里写「小号/微信债券/代管账户」被误归到本人账户。
+function normalizeAccount(a){ if(!a) return effAccount('本人账户'); a=String(a).trim(); return effAccount(ACCOUNT_RENAME[a]||a); }
 function accIsBuiltin(n){ const m=ACCOUNT_META[effAccount(n)]; return !!(m&&m.builtin); }
 function renameOrigin(n){ for(const k in ACC_RENAME_MAP){ if(ACC_RENAME_MAP[k]===n) return k; } return n; }
 function firstPersonalAccount(){ const list=effBuiltins().concat(CUSTOM_ACCOUNTS); for(const a of list){ if(accIsPersonal(a)) return a; } return list[0]||'本人账户'; }
@@ -1776,7 +1778,7 @@ function migrate(raw){
   data.daily_snapshots = normDailySnap(data.daily_snapshots);
   if(!Array.isArray(data.dcaPlans)) data.dcaPlans = [];
   // 账户名归一化（统一模板话术：旧名 → 当前账户名；幂等，仅作用于内存，落盘在下一次保存）
-  const _accNorm=a=>{ if(!a) return effAccount('本人账户'); a=String(a).trim(); return effAccount(ACCOUNT_RENAME[a]||a); };
+  const _accNorm=a=> normalizeAccount(a);
   (data.trades||[]).forEach(t=>{ t.account=_accNorm(t.account); });
   (data.snaps||[]).forEach(s=>{ if(s.account) s.account=_accNorm(s.account); });
   (data.daily_snapshots||[]).forEach(d=>{ if(d.account) d.account=_accNorm(d.account); });
@@ -5916,8 +5918,7 @@ function parseCSV(text){
     const nav=col.nav>=0?parseFloat(String(c[col.nav]).replace(/[^\d.\-]/g,''))||0:0;
     const fee=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
     const sh=col.shares>=0?parseFloat(String(c[col.shares]).replace(/[^\d.\-]/g,''))||0:0;
-    let accRaw=col.account>=0?c[col.account]:''; if(accRaw==='本人账户') accRaw='本人账户'; else if(accRaw==='投资账户') accRaw='投资账户';
-    const account=accRaw?(ACCOUNTS.concat(effBuiltins()).includes(accRaw)?accRaw:effAccount('本人账户')):effAccount('本人账户');
+    const account=normalizeAccount(col.account>=0?c[col.account]:'');
     if(!(amount||nav)) continue;
     added.push({name,date,type,amount,nav,fee,account,shares:sh});
   }
@@ -5972,8 +5973,7 @@ function parsePaste(text){
     const tType=type?guessType(type):'buy';
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
     const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;
-    let accRaw=account?String(account).trim():''; if(accRaw==='本人账户') accRaw='本人账户'; else if(accRaw==='投资账户') accRaw='投资账户';
-    const account2=accRaw?(ACCOUNTS.concat(effBuiltins()).includes(accRaw)?accRaw:effAccount('本人账户')):effAccount('本人账户');
+    const account2=normalizeAccount(account);
     if(!(amt||nv)) continue;
     added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:0,account:account2,shares:0});
   }

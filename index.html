@@ -285,14 +285,14 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .dash-pill{ display:inline-flex; align-items:center; gap:5px; background:var(--surface-2); border:1px solid var(--border, rgba(0,0,0,.06)); border-radius:999px; padding:5px 10px; font-size:12px; color:var(--text-2); font-variant-numeric:tabular-nums; }
 .dash-pill b{ color:var(--text); }
 .dash-pill .dash-dot{ width:6px; height:6px; border-radius:50%; background:var(--text-3); display:inline-block; }
-.dash-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:14px; padding:12px 10px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:108px; box-sizing:border-box; }
+.dash-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; }
+.dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:14px; padding:12px 10px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:108px; height:100%; box-sizing:border-box; }
 .dash-head{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-2); }
 .dash-head svg{ width:14px; height:14px; }
 .dash-val{ font-size:clamp(15px,4.4vw,20px); font-weight:700; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
 .dash-val.pos{ color:var(--up); }
 .dash-val.neg{ color:var(--down); }
-.dash-desc{ font-size:11px; color:var(--text-3); line-height:1.45; }
+.dash-desc{ font-size:11px; color:var(--text-3); line-height:1.45; min-height:16px; }
 .dash-desc.muted{ color:var(--text-3); }
 .dash-desc.warn{ color:var(--warn); }
 .dash-bar{ height:5px; border-radius:999px; background:var(--surface-2); overflow:hidden; margin:8px 0 4px; border:1px solid var(--border, rgba(0,0,0,.06)); display:flex; }
@@ -947,6 +947,26 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .ov-grid { grid-template-columns: 1fr; }
   .mkt-metrics { grid-template-columns: repeat(3, minmax(0,1fr)); gap:2px; }
 }
+/* 按账户汇总：横向滑动卡片 */
+.acc-scroll-tip{font-size:11px;color:var(--text-3);margin:0 0 10px;display:flex;align-items:center;gap:4px;}
+.acc-hscroll{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding:2px 2px 8px;margin:0 -2px;max-width:100%;}
+.acc-hscroll::-webkit-scrollbar{display:none;}
+.acc-card{flex:0 0 158px;scroll-snap-align:start;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.acc-card.total{background:var(--surface-2);border-style:dashed;}
+.acc-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px;}
+.acc-name{font-size:14px;font-weight:600;color:var(--text);}
+.acc-owner{font-size:10px;padding:2px 6px;border-radius:6px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);white-space:nowrap;}
+.acc-total-flag{font-size:10px;color:var(--accent);font-weight:600;}
+.acc-lbl{font-size:11px;color:var(--text-3);margin:0 0 1px;}
+.acc-mv{font-size:19px;font-weight:700;margin:0 0 9px;color:var(--text);font-variant-numeric:tabular-nums;}
+.acc-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-top:5px;}
+.acc-k{color:var(--text-3);}
+.acc-v{font-variant-numeric:tabular-nums;font-weight:600;}
+.acc-v.pos{color:var(--up);}.acc-v.neg{color:var(--down);}.acc-v.zero{color:var(--text-3);}
+.acc-pct-wrap{margin-top:11px;}
+.acc-pct-bar{height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border);}
+.acc-pct-fill{height:100%;background:var(--accent);border-radius:3px;}
+.acc-pct-txt{font-size:11px;color:var(--text-2);margin-top:4px;font-variant-numeric:tabular-nums;}
 </style>
 <script>
   try{
@@ -2513,10 +2533,10 @@ function toggleSortHeader(key){
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
 let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true,holdpct:true};
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; } }catch(e){}
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['est','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
 const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率'};
 const COL_KEYS=['nav','est','day','mv','ret','hold','holdpct'];
-const DEFAULT_COL_ORDER=['est','day','ret','hold','holdpct','nav','mv'];
+const DEFAULT_COL_ORDER=['est','ret','hold','mv','day','holdpct','nav'];
 const COL_ORDER_VER='2';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
@@ -2768,10 +2788,22 @@ function renderAccountSummary(){
   }).sort((a,b)=>b.mv-a.mv);
   const tMv=rows.reduce((a,r)=>a+r.mv,0), tFl=rows.reduce((a,r)=>a+r.fl,0), tRl=rows.reduce((a,r)=>a+r.rl,0);
   const cls=v=>v>=0?'pos':'neg', sign=v=>v>=0?'+':'';
-  box.innerHTML=`<table class="hk-table" style="margin-top:0"><thead><tr><th>账户</th><th>归属</th><th>市值</th><th>浮动收益</th><th>已实现</th><th>合计收益</th><th>占比</th></tr></thead><tbody>`
-    + rows.map(r=>`<tr><td class="hk-name">${effAccount(r.acc)}</td><td><span class="tag-owner">${accOwner(r.acc)}</span></td><td>${M(r.mv)}</td><td class="${cls(r.fl)}">${sign(r.fl)}${M(r.fl)}</td><td class="${cls(r.rl)}">${sign(r.rl)}${M(r.rl)}</td><td class="${cls(r.fl+r.rl)}">${sign(r.fl+r.rl)}${M(r.fl+r.rl)}</td><td>${r.pct.toFixed(1)}%</td></tr>`).join('')
-    + `<tr style="font-weight:700"><td class="hk-name">合计</td><td></td><td>${M(tMv)}</td><td class="${cls(tFl)}">${sign(tFl)}${M(tFl)}</td><td class="${cls(tRl)}">${sign(tRl)}${M(tRl)}</td><td class="${cls(tFl+tRl)}">${sign(tFl+tRl)}${M(tFl+tRl)}</td><td>100%</td></tr>`
-    + `</tbody></table>`;
+  const accCard = (r, isTotal) => {
+    const flc = cls(r.fl), rlc = cls(r.rl), ttc = cls(r.fl + r.rl);
+    const pct = isTotal ? 100 : (r.pct || 0);
+    return `<div class="acc-card${isTotal ? ' total' : ''}">
+      <div class="acc-top"><span class="acc-name">${isTotal ? '合计' : effAccount(r.acc)}</span>${isTotal ? '<span class="acc-total-flag">全部账户</span>' : '<span class="acc-owner">' + accOwner(r.acc) + '</span>'}</div>
+      <p class="acc-lbl">${isTotal ? '总市值' : '市值'}</p><p class="acc-mv">${M(r.mv)}</p>
+      <div class="acc-row"><span class="acc-k">浮动收益</span><span class="acc-v ${flc}">${sign(r.fl)}${M(r.fl)}</span></div>
+      <div class="acc-row"><span class="acc-k">已实现</span><span class="acc-v ${rlc}">${sign(r.rl)}${M(r.rl)}</span></div>
+      <div class="acc-row"><span class="acc-k">合计</span><span class="acc-v ${ttc}">${sign(r.fl + r.rl)}${M(r.fl + r.rl)}</span></div>
+      <div class="acc-pct-wrap"><div class="acc-pct-bar"><div class="acc-pct-fill" style="width:${pct.toFixed(1)}%"></div></div><div class="acc-pct-txt">占比 ${pct.toFixed(1)}%</div></div>
+    </div>`;
+  };
+  box.innerHTML = `<div class="acc-scroll-tip">← 左右滑动查看各账户 →</div><div class="acc-hscroll">`
+    + rows.map(r => accCard(r, false)).join('')
+    + accCard({ acc: '合计', mv: tMv, fl: tFl, rl: tRl }, true)
+    + `</div>`;
 }
 
 // ---------- 持仓列表 ----------

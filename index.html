@@ -637,21 +637,19 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     border-radius: 12px !important;
   }
 
-  /* 移动端持仓紧凑表格：4 列同屏（名称/涨跌幅/当日收益/持有收益），不横滑 */
+  /* 移动端持仓表格：列可配置（跟随「≡ 列」开关）+ 列多时横向滚动；基金名列固定左侧 */
   .home-ctable-wrap{ background:var(--surface); border-radius:12px; overflow:hidden; margin:0; }
-  .home-ctable{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
-  .home-ctable th{ padding:9px 4px 7px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; white-space:nowrap; cursor:pointer; user-select:none; }
-  .home-ctable th:first-child{ text-align:left; padding-left:12px; width:44%; }
-  .home-ctable th:nth-child(2){ width:16%; }
-  .home-ctable th:nth-child(3){ width:20%; }
-  .home-ctable th:nth-child(4){ width:20%; padding-right:12px; }
+  .home-ctable-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .home-ctable{ border-collapse:collapse; font-size:12px; min-width:100%; }
+  .home-ctable th{ padding:9px 10px 7px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; white-space:nowrap; cursor:pointer; user-select:none; }
+  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); min-width:92px; max-width:42vw; }
+  .home-ctable thead th.th-col{ cursor:default; }
   .home-ctable th .sub{ font-weight:400; display:block; font-size:10px; margin-top:1px; }
   .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }
   .home-ctable th.sort-on{ color:var(--accent); font-weight:700; }
   .home-ctable th.sort-on .arrow{ color:var(--accent); }
-  .home-ctable td{ padding:9px 4px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; }
-  .home-ctable td:first-child{ text-align:left; padding-left:12px; }
-  .home-ctable td:last-child{ padding-right:12px; }
+  .home-ctable td{ padding:9px 10px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; white-space:nowrap; }
+  .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
   .home-ctable .cname{ font-size:11px; font-weight:600; color:var(--text); line-height:1.25; white-space:nowrap; }
@@ -2217,6 +2215,7 @@ function setSort(s){
   if(s==='est'&&!colVis.est){ colVis.est=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='nav'&&!colVis.nav){ colVis.nav=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   if(s==='ret'&&!colVis.ret){ colVis.ret=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
+  if(s==='holdpct'&&!colVis.holdpct){ colVis.holdpct=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} syncColSetChecks(); }
   const sel=document.getElementById('sortSelect'); if(sel) sel.value=holdSort;
   try{ localStorage.setItem('ft_sort',JSON.stringify({key:holdSort,dir:holdSortDir})); localStorage.setItem('ft_sort_ver',SORT_VER); }catch(e){}
   if(currentView==='home'&&activeTab===0) renderHomeList();
@@ -2231,11 +2230,11 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true};
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false}; } }catch(e){}
-const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益'};
-const COL_KEYS=['nav','est','day','mv','ret','hold'];
-const DEFAULT_COL_ORDER=['est','day','ret','hold','nav','mv'];
+let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true,holdpct:true};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; } }catch(e){}
+const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率'};
+const COL_KEYS=['nav','est','day','mv','ret','hold','holdpct'];
+const DEFAULT_COL_ORDER=['est','day','ret','hold','holdpct','nav','mv'];
 const COL_ORDER_VER='2';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
@@ -2596,6 +2595,7 @@ function sortKeyVal(f,k){
   if(k==='nav') return nc.nav!=null?nc.nav:0;
   if(k==='ret'){ const c=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); return (c!=null&&f.mv!=null)?(f.mv-f.mv/(1+c/100)):0; }
   if(k==='hold') return f.profit||0;
+  if(k==='holdpct') return f.ret||0;
   return 0;
 }
 
@@ -2607,6 +2607,7 @@ function sortKeyVal(f,k){
   if(k==='nav') return nc.nav!=null?nc.nav:0;
   if(k==='ret'){ const c=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); return (c!=null&&f.mv!=null)?(f.mv-f.mv/(1+c/100)):0; }
   if(k==='hold') return f.profit||0;
+  if(k==='holdpct') return f.ret||0;
   return 0;
 }
 
@@ -2633,6 +2634,7 @@ function renderHomeList(){
     let av,bv,cmp;
     if(holdSort==='ret'){ av=sortKeyVal(a,'ret'); bv=sortKeyVal(b,'ret'); }
     else if(holdSort==='hold'){ av=a.profit||0; bv=b.profit||0; }
+    else if(holdSort==='holdpct'){ av=a.ret||0; bv=b.ret||0; }
     else if(holdSort==='day'){ av=(navCache[a.name]&&navCache[a.name].navChg)||0; bv=(navCache[b.name]&&navCache[b.name].navChg)||0; }
     else if(holdSort==='name'){ cmp=a.name.localeCompare(b.name,'zh-CN'); }
     else if(holdSort==='nav'){ av=(navCache[a.name]&&navCache[a.name].nav)||0; bv=(navCache[b.name]&&navCache[b.name].nav)||0; }
@@ -2690,7 +2692,6 @@ function renderHomeDense(list, showHead){
     const nc=navCache[f.name]||{};
     // 估算涨跌：盘中估值为实时预估(带新鲜度徽标)，休市/收盘回退到已确认「收」涨跌幅并标注该收盘日期(非"预估")
     const estCell=estCellHtml(f);
-    const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
     const code=syncCode(f.name);
@@ -2698,7 +2699,6 @@ function renderHomeDense(list, showHead){
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}</div><div class="dt-sub">
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
-        ${f.account&&effAccount(f.account)!==effAccount('本人账户')?`<span class="tag">${effAccount(f.account)}</span>`:''}${ownerTag}
         ${code?`<span>#${code}</span>`:''}
         ${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
       </div></td>`;
@@ -2717,6 +2717,7 @@ function renderHomeDense(list, showHead){
         }
       }
       else if(c.key==='hold') tds+=`<td class="${f.profit>=0?'pos':'neg'}"><div class="dt-big">${f.profit>=0?'+':''}${M(f.profit)}</div><div class="dt-sub2">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
+      else if(c.key==='holdpct') tds+=`<td class="${f.ret>=0?'pos':'neg'}"><div class="dt-big">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
       else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：优先用盘中估算涨跌(gszzl)，无估算(QDII等)退回官方当日涨跌(navChg)
@@ -2751,33 +2752,36 @@ function renderHomeDense(list, showHead){
 function dayGainOf(f){ const nc=navCache[f.name]||{}; const chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); if(chg==null||f.mv==null) return null; return f.mv - f.mv/(1+chg/100); }
 
 function renderHomeMobileTable(list){
+  // 列跟随「≡ 列」开关（colVis）+ 顺序（colOrder）；不再写死 4 列，多列时外层横滑
+  const cols=[{key:'name',label:'基金名称'}];
+  colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   const arrow=k=> holdSort===k ? (holdSortDir==='asc'?'▲':'▼') : '';
-  const hd=(k,label,sub)=>'<th class="'+(holdSort===k?'sort-on':'')+'" onclick="setSort(\''+k+'\')">'+label+(sub?'<span class="sub">'+sub+'</span>':'')+'<span class="arrow">'+arrow(k)+'</span></th>';
-  const head='<tr>'
-    + '<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>'
-    + hd('day','涨跌幅')
-    + hd('ret','当日收益')
-    + hd('hold','持有收益')
-    + '</tr>';
+  const nameTh='<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>';
+  const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
+  const head='<tr>'+nameTh+cols.slice(1).map(c=>numTh(c.key,c.label)).join('')+'<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>'+'</tr>';
+  const navDate=fd=>{ const nc=navCache[fd.name]||{}; return (nc.date!=null)?String(nc.date).slice(5):''; };
+  const cellOf=(fd,key)=>{
+    const nc=navCache[fd.name]||{};
+    if(key==='day'){ const d=(nc.navChg!=null)?nc.navChg:null; return d!=null?'<td class="cnum '+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+(fd.ret>=0?'+':'')+fd.ret.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='nav'){ return nc.nav!=null?'<td class="cnum">'+navFmt(nc.nav)+'<div class="csub" style="margin-top:2px">'+navDate(fd)+'</div></td>':'<td class="cnum zero">—</td>'; }
+    if(key==='est'){ const g=(nc.gszzl!=null)?nc.gszzl:null; return g!=null?'<td class="cnum '+(g>=0?'pos':'neg')+'">'+(g>=0?'+':'')+g.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='mv'){ return fd.mv!=null?'<td class="cnum">'+M(fd.mv)+'</td>':'<td class="cnum zero">—</td>'; }
+    return '<td></td>';
+  };
   const rows=list.map(f=>{
     const nc=navCache[f.name]||{};
     const code=syncCode(f.name);
-    const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?'<span class="tag tag-owner">'+accOwner(f.account)+'</span>':'';
     const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
-    const _day=(nc.navChg!=null)?nc.navChg:null;
-    let dayHtml = (_day!=null) ? '<div class="cnum '+(_day>=0?'pos':'neg')+'">'+( _day>=0?'+':'')+_day.toFixed(2)+'%</div>' : '<div class="cnum zero">—</div>';
-    const _amt=dayGainOf(f);
-    let retHtml = (_amt!=null) ? '<div class="cnum '+(_amt>=0?'pos':'neg')+'">'+( _amt>=0?'+':'')+M(_amt)+'</div>' : '<div class="cnum zero">—</div>';
-    let holdHtml = (f.profit!=null) ? '<div class="cnum '+(f.profit>=0?'pos':'neg')+'">'+(f.profit>=0?'+':'')+M(f.profit)+'</div>' : '<div class="cnum zero">—</div>';
-    const subParts=[ (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, (code?(f.mv!=null?('<span class="tag-code">#'+code+' · 持仓 ¥'+M(f.mv)+'</span>'):('<span class="tag-code">#'+code+'</span>')):(f.mv!=null?'<span class="tag-code">持仓 ¥'+M(f.mv)+'</span>':'')), (nc.nav!=null?'<span class="tag-code">净值 '+navFmt(nc.nav)+'</span>':''), ((f.account&&effAccount(f.account)!==effAccount('本人账户'))?'<span class="tag">'+effAccount(f.account)+'</span>':''), ownerTag ].filter(Boolean).join('');
-    return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'
-      + '<td><div class="cname">'+esc(f.name)+'</div><div class="csub">'+subParts+'</div></td>'
-      + '<td>'+dayHtml+'</td>'
-      + '<td>'+retHtml+'</td>'
-      + '<td>'+holdHtml+'</td>'
-      + '</tr>';
+    // 持仓行副信息：分类 + 自定义标签 + 代码/持仓额 + 净值；不再显示账户类标签（代管账户/小号/本人等）
+    const subParts=[ (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, (code?(f.mv!=null?('<span class="tag-code">#'+code+' · 持仓 ¥'+M(f.mv)+'</span>'):('<span class="tag-code">#'+code+'</span>')):(f.mv!=null?'<span class="tag-code">持仓 ¥'+M(f.mv)+'</span>':'')), (nc.nav!=null?'<span class="tag-code">净值 '+navFmt(nc.nav)+'</span>':'') ].filter(Boolean).join('');
+    let tds='<td><div class="cname">'+esc(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
+    cols.slice(1).forEach(c=>{ tds+=cellOf(f,c.key); });
+    return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
   }).join('');
-  return '<div class="home-ctable-wrap"><table class="home-ctable"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 // ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------
@@ -7676,8 +7680,8 @@ function renderSyncCfg(){
   --ios-separator: rgba(255,255,255,0.10);
   --ios-handle: #636366;
 }
-.sort-sheet{ position:fixed; inset:0; background:var(--bg); z-index:120; display:none; flex-direction:column; }
-.sort-sheet.show{ display:flex; animation: ssIn .18s ease; }
+.sort-sheet{ position:fixed; inset:0; background:var(--bg); z-index:1100; display:none; flex-direction:column; }
+.sort-sheet.show{ display:flex; animation: ssIn .18s ease; }#catManageMask,#tagManageMask{ z-index:1200; }
 @keyframes ssIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
 .ss-bar{ display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:0.5px solid var(--ios-separator); background:var(--surface); }
 .ss-back{ border:none; background:none; color:var(--accent-on); font-size:16px; cursor:pointer; padding:4px 6px; font-family:inherit; display:flex; align-items:center; }

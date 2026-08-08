@@ -301,7 +301,14 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .scenario-card .sub2 { font-size: 12px; color:var(--text-3); margin:2px 0 0; }.scenario-note { font-size: 14px; color:var(--text-2); margin:12px 0 0; line-height:1.6; background:var(--surface-2); border-radius:8px; padding:8px 10px; }/* ===== 设置弹窗 (sm-) ===== */
 .sm-mask { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; }.sm-mask.show { display:flex; }.sm-modal { background:var(--surface); color:var(--text); width:100%; max-width:560px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.sm-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.sm-head h2 { margin:0; font-size: 18px; font-weight:600; }.sm-x { border:none; background:var(--surface-2); color:var(--text-2); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size: 15px; line-height:1; }@media (hover: hover) { .sm-x:hover {  background:var(--border); color:var(--text);  } }
 .sm-body { padding:14px 18px 22px; overflow:auto; }.sm-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; }.sm-card h3 { margin:0 0 12px; font-size: 14px; font-weight:600; }.sm-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--border-2); }.sm-row:first-of-type { border-top:none; padding-top:0; }.sm-rt { min-width:0; }.sm-rd { font-size: 14px; color:var(--text-3); margin-top:2px; line-height:1.4; }.sm-seg { display:inline-flex; background:rgba(120,120,128,.16); border:none; border-radius:9px; padding:2px; gap:2px; flex-wrap:wrap; flex-shrink:0; }.sm-seg button { border:none; background:transparent; color:var(--text-2); font-size:15px; padding:7px 13px; min-height:32px; border-radius:7px; cursor:pointer; font-family:inherit; white-space:nowrap; transition:color .18s,background .18s,box-shadow .18s; }.sm-seg button.on { background:var(--surface); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.12),0 0.5px 0 rgba(0,0,0,.04); }.sm-sw { display:flex; gap:12px; flex-shrink:0; padding:2px; }.sm-sw-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; position:relative; transition:transform .16s,border-color .16s; }@media (hover: hover) { .sm-sw-dot:hover { transform:scale(1.08); } }.sm-sw-dot::after { content:"\2713"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; opacity:0; transform:scale(.6); transition:opacity .16s,transform .16s; text-shadow:0 1px 2px rgba(0,0,0,.3); }.sm-sw-dot:not(.on){opacity:.5;} .sm-sw-dot.on { transform:scale(1.12); box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent); border-color:transparent; }.sm-sw-dot.on::after { opacity:1; transform:scale(1); }
-.sm-switch { position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0; }.sm-switch input { opacity:0; width:0; height:0; }.sm-slider { position:absolute; inset:0; background:#c4c9d2; border-radius:999px; transition:.2s; cursor:pointer; }.sm-slider:before { content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }.sm-switch input:checked + .sm-slider { background:var(--accent); }.sm-switch input:checked + .sm-slider:before { transform:translateX(19px); }.sm-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.nf-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }.nf-field > label { font-size: 14px; color:var(--text-2); font-weight:500; }.nf-field input, .nf-field select { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface); color:var(--text); font-size: 16px; font-family:inherit; }.nf-field input:focus, .nf-field select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }.nf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }/* 数值输入：数值仍右对齐，占位文字统一靠左 */
+.sm-switch { position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0; }.sm-switch input { opacity:0; width:0; height:0; }.sm-slider { position:absolute; inset:0; background:#c4c9d2; border-radius:999px; transition:.2s; cursor:pointer; }.sm-slider:before { content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }.sm-switch input:checked + .sm-slider { background:var(--accent); }.sm-switch input:checked + .sm-slider:before { transform:translateX(19px); }.sm-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+/* 导出弹窗：自定义勾选行（绕开全局 input appearance reset，保证 iOS 可见） */
+.uw-exp-row { display:flex; align-items:flex-start; gap:10px; padding:8px 4px; cursor:pointer; -webkit-tap-highlight-color:rgba(47,111,237,.12); touch-action:manipulation; }
+.uw-exp-cb { flex:0 0 auto; width:20px; height:20px; margin-top:1px; border:1.5px solid var(--border-strong); border-radius:6px; background:var(--surface); position:relative; transition:background .15s,border-color .15s; box-sizing:border-box; }
+.uw-exp-cb.checked { background:var(--accent); border-color:var(--accent); }
+.uw-exp-cb.checked:after { content:""; position:absolute; left:6px; top:2px; width:5px; height:10px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+.uw-exp-warn .uw-exp-cb { border-color:var(--warn,#e0a83b); }
+.uw-exp-warn .uw-exp-cb.checked { background:var(--warn,#e0a83b); border-color:var(--warn,#e0a83b); }.nf-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }.nf-field > label { font-size: 14px; color:var(--text-2); font-weight:500; }.nf-field input, .nf-field select { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface); color:var(--text); font-size: 16px; font-family:inherit; }.nf-field input:focus, .nf-field select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }.nf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }/* 数值输入：数值仍右对齐，占位文字统一靠左 */
 input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交易：更多选项折叠 */
 .more-toggle { display:flex; align-items:center; gap:6px; width:100%; background:transparent; border:1px dashed var(--border-strong); color:var(--text-2); border-radius:9px; padding:10px 12px; font-size:14px; font-family:inherit; cursor:pointer; margin:2px 0 12px; }.more-toggle:hover { border-color:var(--accent); color:var(--accent); }.more-toggle .arrow { transition:transform .2s; font-size:12px; }.more-toggle.open .arrow { transform:rotate(90deg); }.more-fields { display:none; animation:fadeIn .2s ease; padding-top:2px; }.more-fields.open { display:block; }@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }/* 合并日期时间字段 */
 .dt-wrap { position:relative; }.dt-wrap input { padding-right:34px; }.dt-wrap .cal { position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--text-3); pointer-events:none; }.sm-act { display:flex; align-items:center; gap:9px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:10px; padding:11px 13px; font-size: 14px; cursor:pointer; text-align:left; font-family:inherit; }@media (hover: hover) { .sm-act:hover {  border-color:var(--accent); color:var(--accent);  } }
@@ -5839,64 +5846,102 @@ function exportJSON(){
   // 导出弹窗：核心财务数据（ft_data）始终包含，其余按勾选
   var old=document.getElementById('uwExportModal'); if(old) old.remove();
   var opts=[
-    {grp:'债券', key:'ft_bond', label:'债券买入日/金额'},
-    {grp:'债券', key:'ft_bond_list', label:'债券清单'},
-    {grp:'自选', key:'ft_watch', label:'基金自选（含分组标签）'},
-    {grp:'自选', key:'ft_bond_watch', label:'债券自选池'},
-    {grp:'设置', key:'ft_tags', label:'标签'},
-    {grp:'设置', key:'ft_tag_order', label:'标签顺序'},
-    {grp:'设置', key:'ft_catoverride', label:'分类覆盖'},
-    {grp:'设置', key:'ft_cat_order', label:'分类顺序'},
-    {grp:'设置', key:'ft_scope', label:'账户口径'},
-    {grp:'设置', key:'ft_accounts', label:'自定义账户'},
-    {grp:'设置', key:'ft_account_order', label:'账户顺序'},
-    {grp:'设置', key:'ft_acc_rename', label:'账户改名映射'},
-    {grp:'设置', key:'ft_profile', label:'个人画像'},
-    {grp:'设置', key:'ft_analysis', label:'深度分析'},
-    {grp:'设置', key:'ft_cols', label:'列布局'},
-    {grp:'设置', key:'ft_colorder', label:'列顺序', extra:['ft_colorder_ver']},
-    {grp:'设置', key:'ft_sort', label:'排序', extra:['ft_sort_ver']},
-    {grp:'设置', key:'ft_theme', label:'主题'},
-    {grp:'设置', key:'ft_style', label:'配色风格'},
-    {grp:'设置', key:'ft_accent', label:'强调色'},
-    {grp:'设置', key:'ft_autorefresh', label:'自动刷新'},
-    {grp:'设置', key:'ft_hidden', label:'金额隐藏'},
-    {grp:'设置', key:'ft_alerts', label:'价格预警'},
-    {grp:'设置', key:'ft_growth', label:'资产增长曲线'},
-    {grp:'设置', key:'ft_vault', label:'旧版持仓数据（兼容）'},
-    {grp:'安全', key:'ft_lock_on', label:'应用锁开关'},
-    {grp:'安全', key:'ft_lock_pw', label:'应用锁口令（哈希）'},
-    {grp:'安全', key:'ft_sync_cfg', label:'云同步配置（含 token）'}
+    // ── 账户与持仓数据 ──
+    {grp:'account', key:'ft_bond', label:'债券买入记录', desc:'债券申购/赎回明细'},
+    {grp:'account', key:'ft_bond_list', label:'债券清单', desc:'债基研究与决策工作台'},
+    {grp:'account', key:'ft_watch', label:'基金自选池', desc:'含分组标签与观察状态'},
+    {grp:'account', key:'ft_bond_watch', label:'债券自选池', desc:'纯研究观察，不计入总资产'},
+    // ── 界面与个性化 ──
+    {grp:'prefs', key:'ft_tags', label:'标签体系', desc:'自定义标签定义'},
+    {grp:'prefs', key:'ft_tag_order', label:'标签排序', desc:''},
+    {grp:'prefs', key:'ft_catoverride', label:'分类覆盖', desc:'手动修改的基金分类'},
+    {grp:'prefs', key:'ft_cat_order', label:'分类排序', desc:''},
+    {grp:'prefs', key:'ft_scope', label:'默认查看口径', desc:''},
+    {grp:'prefs', key:'ft_accounts', label:'自定义账户列表', desc:''},
+    {grp:'prefs', key:'ft_account_order', label:'账户显示顺序', desc:''},
+    {grp:'prefs', key:'ft_acc_rename', label:'账户改名映射', desc:''},
+    {grp:'prefs', key:'ft_profile', label:'个人资料', desc:'头像/昵称/身份标签'},
+    {grp:'prefs', key:'ft_analysis', label:'深度分析报告', desc:'基金分析正文'},
+    {grp:'prefs', key:'ft_cols', label:'列布局配置', desc:'持仓表显示列'},
+    {grp:'prefs', key:'ft_colorder', label:'列顺序', desc:'', extra:['ft_colorder_ver']},
+    {grp:'prefs', key:'ft_sort', label:'默认排序方式', desc:'', extra:['ft_sort_ver']},
+    {grp:'prefs', key:'ft_theme', label:'主题模式', desc:'浅色/深色/跟随系统'},
+    {grp:'prefs', key:'ft_style', label:'配色风格', desc:''},
+    {grp:'prefs', key:'ft_accent', label:'强调色', desc:''},
+    {grp:'prefs', key:'ft_autorefresh', label:'自动刷新净值', desc:''},
+    {grp:'prefs', key:'ft_hidden', label:'金额隐蔽模式', desc:''},
+    {grp:'prefs', key:'ft_alerts', label:'价格预警规则', desc:''},
+    {grp:'prefs', key:'ft_growth', label:'资产增长曲线', desc:''},
+    {grp:'prefs', key:'ft_vault', label:'旧版持仓数据', desc:'兼容旧格式'},
+    // ── 安全凭证（默认不勾选，敏感） ──
+    {grp:'security', key:'ft_lock_on', label:'应用锁开关', desc:'是否启用密码锁', checked:false},
+    {grp:'security', key:'ft_lock_pw', label:'应用锁密码哈希', desc:'⚠️ 含密码哈希，分享文件前请取消勾选', checked:false},
+    {grp:'security', key:'ft_sync_cfg', label:'云同步配置', desc:'⚠️ 含 GitHub Token，切勿分享给他人', checked:false}
   ];
+  var GRP_META={
+    account:{icon:'💼', title:'账户与持仓数据'},
+    prefs:{icon:'⚙️', title:'界面与个性化偏好'},
+    security:{icon:'🔒', title:'安全凭证（建议勿导出）'}
+  };
   var mask=document.createElement('div'); mask.id='uwExportModal';
-  mask.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px';
-  var box=document.createElement('div');
-  box.style.cssText='background:var(--surface);color:var(--text);border-radius:14px;max-width:480px;width:100%;max-height:84vh;display:flex;flex-direction:column;padding:18px';
-  var groups={}; opts.forEach(function(o){ (groups[o.grp]=groups[o.grp]||[]).push(o); });
-  var hBody='<h3 style="margin:0 0 4px">导出 JSON</h3>';
-  hBody+='<p class="hint" style="margin:0 0 10px">持仓 / 交易 / 清仓（核心数据）始终包含；下方按需要勾选要一并备份的内容：</p>';
-  Object.keys(groups).forEach(function(g){
-    hBody+='<div style="font-weight:600;margin:10px 0 4px">'+escHtml(g)+'</div>';
-    groups[g].forEach(function(o){
-      hBody+='<label style="display:flex;gap:8px;align-items:center;padding:5px 2px;cursor:pointer"><input type="checkbox" class="uwExp" data-key="'+escHtml(o.key)+'"'+(o.extra?(' data-extra="'+escHtml(o.extra.join(','))+'"'):'')+' checked> '+escHtml(o.label)+'</label>';
-    });
-  });
-  var hFoot='<button class="btn" id="uwExpAll">全选</button><button class="btn" id="uwExpNone">清空</button><span style="flex:1"></span><button class="btn" id="uwExpCancel">取消</button><button class="btn primary" id="uwExpGo">导出选中</button>';
-  box.innerHTML='<div style="flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch">'+hBody+'</div><div style="flex-shrink:0;display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-2)">'+hFoot+'</div>';
-  mask.appendChild(box);
+  mask.className='sm-mask show';
   mask.onclick=function(e){ if(e.target===mask) mask.remove(); };
+  var box=document.createElement('div');
+  box.className='sm-card';
+  box.style.cssText='max-width:460px;width:94%;margin:auto;max-height:80vh;display:flex;flex-direction:column;overflow:hidden';
+  var hBody='<div class="sm-head"><h2>📦 选择导出内容</h2><button class="sm-x" onclick="var m=document.getElementById(\'uwExportModal\');if(m)m.remove()">✕</button></div>';
+  hBody+='<p style="font-size:13px;color:var(--text-2);margin:0 0 12px;line-height:1.5">核心数据（持仓 / 交易 / 清仓 / 净值缓存）始终包含。下方为附加配置项：</p>';
+
+  var groups={}; opts.forEach(function(o){ (groups[o.grp]=groups[o.grp]||[]).push(o); });
+  Object.keys(groups).forEach(function(g){
+    var meta=GRP_META[g]||{};
+    hBody+='<div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;margin-bottom:10px">';
+    hBody+='<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">'+(meta.icon||'')+' '+escHtml(meta.title||g)+'</div>';
+    groups[g].forEach(function(o){
+      var chk=o.checked!==undefined?o.checked:true;
+      var warn=o.label.indexOf('⚠')>=0||(o.desc&&o.desc.indexOf('⚠')>=0);
+      hBody+='<label class="uw-exp-row'+(warn?' uw-exp-warn':'')+'" data-key="'+escHtml(o.key)+'"'+(o.extra?(' data-extra="'+escHtml(o.extra.join(','))+'"'):'')+'>';
+      hBody+='<span class="uw-exp-cb'+(chk?' checked':'')+'"></span>';
+      hBody+='<span style="flex:1;min-width:0"><span style="font-size:15px;color:var(--text)">'+escHtml(o.label)+'</span>';
+      if(o.desc) hBody+='<span style="font-size:12px;color:var(--text-3);display:block;margin-top:1px">'+escHtml(o.desc)+'</span>';
+      hBody+='</span></label>';
+    });
+    hBody+='</div>';
+  });
+
+  var hFoot='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:12px;padding-bottom:calc(4px + env(safe-area-inset-bottom));border-top:1px solid var(--border-2)">';
+  hFoot+='<button class="btn" id="uwExpAll" style="flex:1;min-width:84px">全选</button>';
+  hFoot+='<button class="btn" id="uwExpNone" style="flex:1;min-width:84px">清空</button>';
+  hFoot+='<span style="flex:1"></span>';
+  hFoot+='<button class="btn ghost" id="uwExpCancel">取消</button>';
+  hFoot+='<button class="btn primary" id="uwExpGo" style="flex:1;min-width:84px">确认导出</button>';
+  hFoot+='</div>';
+
+  box.innerHTML='<div style="flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:2px 0">'+hBody+'</div>'+hFoot;
+  mask.appendChild(box);
   document.body.appendChild(mask);
+
+  // 点击行切换 checkbox（自定义实现，绕开全局 input appearance reset）
+  box.querySelectorAll('.uw-exp-row').forEach(function(row){
+    row.addEventListener('click',function(e){
+      if(e.target.closest('button')) return;
+      var cb=row.querySelector('.uw-exp-cb');
+      cb.classList.toggle('checked');
+      e.preventDefault();
+    },{passive:false});
+  });
   function collect(){
     var local={};
-    box.querySelectorAll('input.uwExp:checked').forEach(function(cb){
-      var k=cb.getAttribute('data-key'); var v=localStorage.getItem(k);
+    box.querySelectorAll('.uw-exp-row .uw-exp-cb.checked').forEach(function(cb){
+      var row=cb.closest('.uw-exp-row'); if(!row) return;
+      var k=row.getAttribute('data-key'); var v=localStorage.getItem(k);
       if(v!==null) local[k]=v;
-      var ex=cb.getAttribute('data-extra'); if(ex){ ex.split(',').forEach(function(ek){ var ev=localStorage.getItem(ek); if(ev!==null) local[ek]=ev; }); }
+      var ex=row.getAttribute('data-extra'); if(ex){ ex.split(',').forEach(function(ek){ var ev=localStorage.getItem(ek); if(ev!==null) local[ek]=ev; }); }
     });
     return local;
   }
-  document.getElementById('uwExpAll').onclick=function(){ box.querySelectorAll('input.uwExp').forEach(function(cb){ cb.checked=true; }); };
-  document.getElementById('uwExpNone').onclick=function(){ box.querySelectorAll('input.uwExp').forEach(function(cb){ cb.checked=false; }); };
+  document.getElementById('uwExpAll').onclick=function(){ box.querySelectorAll('.uw-exp-cb').forEach(function(cb){ cb.classList.add('checked'); }); };
+  document.getElementById('uwExpNone').onclick=function(){ box.querySelectorAll('.uw-exp-cb').forEach(function(cb){ cb.classList.remove('checked'); }); };
   document.getElementById('uwExpCancel').onclick=function(){ mask.remove(); };
   document.getElementById('uwExpGo').onclick=function(){
     var local=collect();

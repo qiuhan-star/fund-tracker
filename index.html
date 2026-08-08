@@ -382,14 +382,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 /* 默认账户选择 sheet（iOS 毛玻璃 Action Sheet） */
 .ap-sheet-mask { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:flex-end; justify-content:center; z-index:1100; padding:0 8px 8px; }
 .ap-sheet-mask.show { display:flex; }
-.ap-sheet { width:100%; max-width:398px; background:var(--surface); border:1px solid var(--border); -webkit-backdrop-filter:blur(18px) saturate(180%); backdrop-filter:blur(18px) saturate(180%); border-radius:14px; overflow:hidden; animation:apSheetUp .25s cubic-bezier(.32,.72,0,1); }
+.ap-sheet { width:100%; max-width:398px; background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; animation:apSheetUp .25s cubic-bezier(.32,.72,0,1); }
 @keyframes apSheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
 .ap-sheet-title { text-align:center; font-size:13px; color:var(--text-3); padding:14px 16px 6px; }
 .ap-sheet-opt { width:100%; border:none; background:transparent; padding:14px 16px; font-size:17px; text-align:center; font-family:inherit; border-bottom:1px solid var(--border); cursor:pointer; color:var(--accent); font-weight:500; position:relative; }
 .ap-sheet-opt:last-of-type { border-bottom:none; }
 .ap-sheet-opt.selected { font-weight:700; }
 .ap-sheet-opt.selected::before { content:"\2713 "; }
-.ap-sheet-cancel { margin-top:8px; border-radius:14px; background:var(--surface); border:1px solid var(--border); -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); overflow:hidden; }
+.ap-sheet-cancel { margin-top:8px; border-radius:14px; background:var(--surface); border:1px solid var(--border); overflow:hidden; }
 .ap-sheet-cancel button { width:100%; border:none; background:transparent; padding:14px 16px; font-size:17px; font-weight:600; text-align:center; font-family:inherit; cursor:pointer; color:var(--text); }
 .ap-sheet-msg { text-align:center; font-size:13px; color:var(--text-3); padding:0 16px 12px; line-height:1.45; }
 .ap-sheet-opt.destructive { color:#ff3b30; font-weight:600; }
@@ -7354,7 +7354,8 @@ function renderSyncCfg(){
     ]);
     html+=group('数据与安全',[
       row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')'),
-      row('download','blue','导入与恢复','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
+      row('download','blue','导入与恢复','','<span class="smg-chev">›</span>','openImportModal();closeSettings()'),
+      row('cycle','purple','导入全量备份 (JSON)','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
       row('upload','green','导出备份','','<span class="smg-chev">›</span>','exportJSON();closeSettings()'),
       row('trash','red','清除与重置','','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')',true)
     ]);

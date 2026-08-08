@@ -897,6 +897,92 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 <body>
 <div class="pwa-hint" id="pwaHint">📲 在浏览器菜单选择「添加到主屏幕」，即可像 App 一样全屏使用<span class="x" onclick="try{localStorage.setItem('pwaHintDone','1')}catch(e){};document.getElementById('pwaHint').style.display='none'">×</span></div>
 <script>try{if(localStorage.getItem('pwaHintDone'))document.getElementById('pwaHint').style.display='none';}catch(e){}</script>
+
+<!-- 应用锁遮罩（尽早注入，避免数据闪现） -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-ico">🔒</div>
+    <div class="lock-title">FundTracker</div>
+    <div class="lock-sub">已启用应用锁</div>
+    <input id="lockInput" type="password" class="lock-input" placeholder="输入密码解锁" autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <button class="lock-btn" type="button" onclick="tryUnlock()">解锁</button>
+    <div class="lock-err" id="lockErr"></div>
+    <div class="lock-forgot" onclick="lockForgot()">忘记密码？关闭应用锁（保留数据）</div>
+  </div>
+</div>
+<style>
+.lock-screen{position:fixed;inset:0;z-index:4000;background:linear-gradient(160deg,#1c1c1e,#0b0b0c);display:none;align-items:center;justify-content:center}
+.lock-screen.show{display:flex}
+.lock-box{width:min(86vw,320px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:28px 22px;text-align:center;color:#fff}
+.lock-ico{font-size:40px;line-height:1}
+.lock-title{font-size:20px;font-weight:700;margin-top:8px}
+.lock-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px;margin-bottom:18px}
+.lock-input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-family:inherit;margin-bottom:12px;text-align:center}
+.lock-input:focus{outline:none;border-color:var(--accent)}
+.lock-btn{width:100%;border:none;background:var(--accent);color:#fff;border-radius:12px;padding:13px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer}
+.lock-err{color:#ff6b6b;font-size:13px;min-height:18px;margin-top:10px}
+.lock-forgot{margin-top:16px;font-size:12px;color:rgba(255,255,255,.45);cursor:pointer}
+</style>
+<script>
+(function(){
+  function _lockActive(){ try{ return localStorage.getItem('ft_lock_on')==='1' && !!localStorage.getItem('ft_lock_pw'); }catch(e){ return false; } }
+  function _fb(p){ var h=5381; for(var i=0;i<p.length;i++){ h=((h<<5)+h+p.charCodeAt(i))>>>0; } return 'fb:'+h; }
+  window.hashPw=function(pw){
+    return new Promise(function(res){
+      try{
+        if(window.crypto && crypto.subtle && crypto.subtle.digest){
+          var data=new TextEncoder().encode('ft-lock:'+pw);
+          crypto.subtle.digest('SHA-256',data).then(function(buf){
+            var h=[].map.call(new Uint8Array(buf),function(b){return b.toString(16).padStart(2,'0');}).join('');
+            res('sha256:'+h);
+          }).catch(function(){ res(_fb(pw)); });
+          return;
+        }
+      }catch(e){}
+      res(_fb(pw));
+    });
+  };
+  window.tryUnlock=function(){
+    var inp=document.getElementById('lockInput'), err=document.getElementById('lockErr');
+    if(!inp) return; var v=inp.value; if(!v){ if(err)err.textContent='请输入密码'; return; }
+    window.hashPw(v).then(function(h){
+      var st=null; try{ st=localStorage.getItem('ft_lock_pw'); }catch(e){}
+      if(st && h===st){ var sc=document.getElementById('lockScreen'); if(sc) sc.classList.remove('show'); inp.value=''; if(err)err.textContent=''; }
+      else if(err){ err.textContent='密码错误'; }
+    });
+  };
+  window.lockForgot=function(){
+    if(!confirm('关闭应用锁并保留全部数据？')) return;
+    try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){}
+    var sc=document.getElementById('lockScreen'); if(sc) sc.classList.remove('show');
+    if(typeof toast==='function') toast('应用锁已关闭');
+  };
+  window.onLockToggle=function(){
+    var el=document.getElementById('lockOn'); if(!el) return; var on=el.checked;
+    var row=document.getElementById('lockSetRow');
+    if(on){ if(row) row.style.display=''; if(typeof toast==='function') toast('请设置解锁密码'); }
+    else { if(row) row.style.display='none'; try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){} }
+  };
+  window.saveLockPassword=function(){
+    var p1=document.getElementById('lockPw1'), p2=document.getElementById('lockPw2');
+    if(!p1||!p2) return; var v1=p1.value, v2=p2.value;
+    if(!v1){ if(typeof toast==='function') toast('请输入密码'); p1.focus(); return; }
+    if(v1.length<4){ if(typeof toast==='function') toast('密码至少 4 位'); return; }
+    if(v1!==v2){ if(typeof toast==='function') toast('两次输入不一致'); p2.focus(); return; }
+    window.hashPw(v1).then(function(h){
+      try{ localStorage.setItem('ft_lock_pw',h); localStorage.setItem('ft_lock_on','1'); }catch(e){}
+      p1.value=''; p2.value='';
+      if(typeof toast==='function') toast('✅ 应用锁已启用');
+    });
+  };
+  if(_lockActive()){ var sc=document.getElementById('lockScreen'); if(sc) sc.classList.add('show'); }
+  var _lh=false;
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){ _lh=true; return; }
+    if(_lh && _lockActive()){ var s=document.getElementById('lockScreen'); if(s){ s.classList.add('show'); var i=document.getElementById('lockInput'); if(i) i.value=''; var e=document.getElementById('lockErr'); if(e) e.textContent=''; } }
+  });
+})();
+</script>
 <div class="wrap">
 
   <!-- ================= 首页 ================= -->
@@ -6836,6 +6922,23 @@ function renderSyncCfg(){
         <!-- 安全与隐私 -->
         <section class="panel-section" id="panel-security">
           <h4 class="panel-title">安全与隐私</h4>
+
+          <div class="nset-label">密码与锁</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:default">
+              <div class="left"><div class="title">启用应用锁</div><div class="desc">打开应用或切到后台再回来时需输入密码</div></div>
+              <div class="right"><label class="sm-switch"><input type="checkbox" id="lockOn" onchange="onLockToggle()"><span class="sm-slider"></span></label></div>
+            </div>
+            <div class="panel-row stacked" id="lockSetRow" style="display:none">
+              <div class="left"><div class="title">设置解锁密码</div></div>
+              <div class="right" style="width:100%">
+                <input id="lockPw1" type="password" class="settings-input" placeholder="输入密码（至少 4 位）" autocomplete="off">
+                <input id="lockPw2" type="password" class="settings-input" placeholder="再次确认" autocomplete="off" style="margin-top:8px">
+                <button type="button" class="sm-ghost" onclick="saveLockPassword()" style="margin-top:8px">保存密码</button>
+              </div>
+            </div>
+          </div>
+
           <div class="nset-label">危险区域</div>
           <div class="nset-card">
             <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
@@ -6847,7 +6950,7 @@ function renderSyncCfg(){
               <div class="right"><span class="item-arrow">›</span></div>
             </div>
           </div>
-          <p class="panel-note">应用锁 / 指纹解锁等功能尚未接入，当前仅提供数据清除选项。</p>
+          <p class="panel-note">应用锁已接入：启用并设置密码后，每次打开应用或切到后台再回来都需输入密码（面容 ID / 指纹解锁暂未接入）。锁密码仅保存在本机，不会进入云同步或 JSON 备份。</p>
         </section>
 
         <!-- 关于 -->

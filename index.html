@@ -1239,7 +1239,17 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <div class="card">
         <div class="grid2">
           <div><h2>资产配置</h2><div class="chart-box"><div id="pieSvg" role="img" aria-label="资产配置饼图"></div></div><div class="legend" id="pieLegend"></div></div>
-          <div><h2>盈亏分布</h2><div class="chart-box"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div></div>
+          <div>
+            <div class="sec-head" style="margin-bottom:8px">
+              <h2 style="margin:0">盈亏分布</h2>
+              <div class="seg" id="pnlSeg">
+                <button id="pnlAll" class="on" onclick="setPnlTab('all')">全部</button>
+                <button id="pnlPos" onclick="setPnlTab('pos')">盈利</button>
+                <button id="pnlNeg" onclick="setPnlTab('neg')">亏损</button>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="bar" role="img" aria-label="盈亏柱状图"></canvas></div>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -3261,11 +3271,21 @@ function renderPie(){
   document.getElementById('pieLegend').innerHTML=labels.map((l,i)=>`<span class="pie-leg${l===holdCatFilter?' on':''}" title="点击筛选「${esc(l)}」持仓" onclick="drillToCat('${esc(l)}')"><i style="background:${colors[i]}"></i>${l} ${tot?(data[i]/tot*100).toFixed(1):'0.0'}%</span>`).join('');
 }
 function drillToCat(c){ filterCat(c); switchTab(0); }
+function setPnlTab(t){ try{localStorage.setItem('ft_pnl_tab', t);}catch(e){} renderBar(); }
 function renderBar(){
-  const sorted=[...fundsView].sort((a,b)=>a.ret-b.ret);
+  const all=[...fundsView];
+  const posList=all.filter(f=>(f.ret||0)>0);
+  const negList=all.filter(f=>(f.ret||0)<0);
+  let tab='all';
+  try{ tab=localStorage.getItem('ft_pnl_tab')||'all'; }catch(e){ tab='all'; }
+  if(tab!=='pos' && tab!=='neg') tab='all';
+  const sorted=(tab==='pos'?posList:tab==='neg'?negList:all).slice().sort((a,b)=>a.ret-b.ret);
   const maxAbs=Math.max(0.1, ...sorted.map(f=>Math.abs(f.ret||0)));
-  const box=document.getElementById('bar').parentElement;
-  const canvas=document.getElementById('bar');
+  // 同步分段控件选中态 + 计数（容忍元素缺失，旧渲染/无 DOM 时不报错）
+  ['all','pos','neg'].forEach(t=>{ const b=document.getElementById('pnl'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(b){ b.classList.toggle('on', t===tab); if(t==='pos') b.textContent='盈利 '+posList.length; else if(t==='neg') b.textContent='亏损 '+negList.length; else b.textContent='全部'; } });
+  const canvasEl=document.getElementById('bar'); const box=canvasEl&&canvasEl.parentElement; if(!box) return;
+  const canvas=canvasEl;
   box.style.height='auto';
   if(barChart){ barChart.destroy(); barChart=null; }
   if(canvas) canvas.style.display='none';

@@ -286,10 +286,10 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .dash-pill b{ color:var(--text); }
 .dash-pill .dash-dot{ width:6px; height:6px; border-radius:50%; background:var(--text-3); display:inline-block; }
 .dash-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:14px; padding:14px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:108px; box-sizing:border-box; }
+.dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:14px; padding:12px 10px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:108px; box-sizing:border-box; }
 .dash-head{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-2); }
 .dash-head svg{ width:14px; height:14px; }
-.dash-val{ font-size:20px; font-weight:700; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--text); }
+.dash-val{ font-size:clamp(15px,4.4vw,20px); font-weight:700; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
 .dash-val.pos{ color:var(--up); }
 .dash-val.neg{ color:var(--down); }
 .dash-desc{ font-size:11px; color:var(--text-3); line-height:1.45; }
@@ -566,7 +566,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 详情态：隐藏首页、显示返回栏、仅显示对应 section */
   .settings-panel.mobile-detail .sm-mobile-home { display:none; }
   .settings-panel.mobile-detail .sm-mobile-bar { display:flex; }
-  .settings-panel.mobile-detail { overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--surface-2); padding:0 14px calc(20px + env(safe-area-inset-bottom)); }
+  .settings-panel.mobile-detail { overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--surface-2); padding:0 14px calc(34px + env(safe-area-inset-bottom)); }
   .settings-panel .panel-section { display:none; }
   .settings-panel .panel-section.active { display:block; }
   .settings-panel.mobile-detail .panel-section { padding-top:14px; }

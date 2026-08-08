@@ -517,6 +517,27 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .settings-panel.mobile-detail .panel-title { display:none; }
   .settings-panel.mobile-detail .sm-note { display:none; }
   .settings-panel .app-credit { margin-top:18px; }
+
+  /* 移动端设置二级页：撑满全屏，防止顶部/底部透出底层内容 */
+  .settings-panel.mobile-detail { min-height:100%; padding-top:env(safe-area-inset-top); }
+  .sm-mobile-bar { padding-top:env(safe-area-inset-top); height:auto; min-height:calc(52px + env(safe-area-inset-top)); }
+  .settings-panel.mobile-detail .panel-section:first-child { padding-top:8px; }
+
+  /* 移动端纵向表单：stacked 行在窄屏改为标签在上、控件在下 */
+  .panel-row.stacked { display:block; padding:12px 0; }
+  .panel-row.stacked .left { width:100%; margin-bottom:8px; }
+  .panel-row.stacked .right { width:100%; display:block; }
+  .panel-row.stacked .right .settings-input { width:100%; box-sizing:border-box; }
+
+  /* 应用锁密码区：开关开启后纵向展开 */
+  .lock-form { padding:12px 0; }
+  .lock-form-fields { display:flex; flex-direction:column; gap:10px; }
+  .lock-form-fields .settings-input { width:100%; box-sizing:border-box; }
+  .lock-save-btn { align-self:flex-end; margin-top:2px; }
+
+  /* 数据管理页危险操作：降低视觉权重 */
+  .danger-zone-label { margin-top:28px; color:var(--danger); }
+
   /* iOS 风格：滚动条极薄、仅在滑动时出现（消除 Web 默认粗灰条） */
   .sm-mobile-home, .settings-panel.mobile-detail { scrollbar-width:none; -ms-overflow-style:none; }
   .sm-mobile-home::-webkit-scrollbar, .settings-panel.mobile-detail::-webkit-scrollbar { width:0; height:0; }

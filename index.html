@@ -2936,41 +2936,44 @@ function renderOverview(){
   const trendNote=trendArr().length;
   const mask=v=>hidden?'****':v;
   document.getElementById('overview').innerHTML=`
-    <div class="ov-wrap">
-      <section class="ov-hero">
-        <div class="ov-hero-main">
-          <span class="ov-hero-label">总资产市值 · 账户 ${scopeLabel} <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></span>
-          <span class="ov-hero-value">${mask(M(total))}</span>
-          <span class="ov-hero-sub">累计投入本金 ${mask(M(principal))}</span>
+    <div class="dash-wrap">
+      <section class="dash-hero">
+        <div class="dash-hero-head">
+          <span class="dash-hero-label">总资产市值 · 账户 ${scopeLabel}</span>
+          <button class="dash-eye" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button>
         </div>
-        <div class="ov-hero-meta">
-          <div><span class="lab">今日预估</span><b class="val ${tgcls}">${mask(tg)}</b></div>
-          <div><span class="lab">估值涨跌</span><b class="val ${estCls}">${estLine}</b></div>
-          <div><span class="lab">更新</span><span class="val ov-zero">${updLine}</span></div>
+        <div class="dash-hero-amt">${mask(M(total))}</div>
+        <div class="dash-hero-sub">
+          <span>累计投入本金 ${mask(M(principal))}</span>
+          <span>更新于 ${updLine}</span>
+        </div>
+        <div class="dash-pills">
+          <span class="dash-pill"><i class="dash-dot"></i>今日预估 <b class="${tgcls}">${mask(tg)}</b></span>
+          <span class="dash-pill">估值涨跌 <b class="${estCls}">${estLine}</b></span>
         </div>
       </section>
-      <section class="ov-grid">
-        <div class="ov-card">
-          <div class="ov-head">${IC.win} 持有总收益</div>
-          <div class="ov-val ${holdGain>=0?'ov-pos':'ov-neg'}">${mask((holdGain>=0?'+':'−')+M(Math.abs(holdGain)))}</div>
-          <div class="ov-sub">${holdPct>=0?'+':''}${holdPct.toFixed(2)}%（市值 − 本金）</div>
+      <section class="dash-grid">
+        <div class="dash-card">
+          <div class="dash-head">${IC.win} 持有总收益</div>
+          <div class="dash-val ${holdGain>=0?'pos':'neg'}">${mask((holdGain>=0?'+':'−')+M(Math.abs(holdGain)))}</div>
+          <div class="dash-desc">${holdPct>=0?'+':''}${holdPct.toFixed(2)}%（市值 − 本金）</div>
         </div>
-        <div class="ov-card">
-          <div class="ov-head">${IC.wallet} 已实现盈亏</div>
-          <div class="ov-val ${realized>=0?'ov-pos':'ov-neg'}">${mask((realized>=0?'+':'−')+M(Math.abs(realized)))}</div>
-          <div class="ov-sub">已落袋收益</div>
+        <div class="dash-card">
+          <div class="dash-head">${IC.wallet} 已实现盈亏</div>
+          <div class="dash-val ${realized>=0?'pos':'neg'}">${mask((realized>=0?'+':'−')+M(Math.abs(realized)))}</div>
+          <div class="dash-desc">已落袋收益</div>
         </div>
-        <div class="ov-card">
-          <div class="ov-head">${IC.bars} 基金数 / 胜率</div>
-          <div class="ov-val">${cnt} 只</div>
-          ${hasBattle?`<div class="ov-bar"><span class="ov-bar-pos" style="width:${(win/cnt*100).toFixed(1)}%"></span><span class="ov-bar-neg" style="width:${(lose/cnt*100).toFixed(1)}%"></span></div>`:''}
-          <div class="ov-sub ${hasBattle?'':'muted'}">${winLoseSub}</div>
+        <div class="dash-card">
+          <div class="dash-head">${IC.bars} 基金数 / 胜率</div>
+          <div class="dash-val">${cnt} 只</div>
+          ${hasBattle?`<div class="dash-bar"><span class="db-pos" style="width:${(win/cnt*100).toFixed(1)}%"></span><span class="db-neg" style="width:${(lose/cnt*100).toFixed(1)}%"></span></div>`:''}
+          <div class="dash-desc ${hasBattle?'':'muted'}">${winLoseSub}</div>
         </div>
-        <div class="ov-card">
-          <div class="ov-head">${IC.pie} 赛道集中度</div>
-          <div class="ov-val ${top3>CONFIG.top3Warn?'ov-neg':'ov-pos'}">${topLabel} ${top3.toFixed(0)}%</div>
-          <div class="ov-bar"><span class="ov-bar-c" style="width:${Math.min(100,top3).toFixed(0)}%"></span></div>
-          <div class="ov-sub ${top3>CONFIG.top3Warn?'warn':''}">${top3>CONFIG.top3Warn?'⚠ 偏高，注意分散':(cnt<=1?'单只基金无分散':'持仓较分散')}</div>
+        <div class="dash-card">
+          <div class="dash-head">${IC.pie} 赛道集中度</div>
+          <div class="dash-val ${top3>CONFIG.top3Warn?'neg':'pos'}">${topLabel} ${top3.toFixed(0)}%</div>
+          <div class="dash-bar"><span class="db-c" style="width:${Math.min(100,top3).toFixed(0)}%"></span></div>
+          <div class="dash-desc ${top3>CONFIG.top3Warn?'warn':''}">${top3>CONFIG.top3Warn?'⚠ 偏高，注意分散':(cnt<=1?'单只基金无分散':'持仓较分散')}</div>
         </div>
       </section>
       <section class="ov-trend">

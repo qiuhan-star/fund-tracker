@@ -354,6 +354,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .panel-row .desc { font-size:13px; color:var(--text-3); margin-top:2px; line-height:1.45; }
 .panel-row .right { flex-shrink:0; display:flex; align-items:center; gap:10px; }
 .panel-row .right .settings-input { width:200px; }
+.panel-row .ico{width:32px;height:32px;border-radius:8px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;margin-right:12px}
+.panel-row .ico svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.panel-row .left{flex:1}
 .panel-row.stacked .right .settings-input { width:100%; }
 .panel-note { font-size:12px; color:var(--text-3); margin-top:14px; line-height:1.5; }
 /* 外观与显示：iOS 分组卡片 + 强调色选中态 + 默认账户 action 行 */
@@ -405,7 +408,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .settings-sidebar .tab .ico svg{width:15px;height:15px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .settings-sidebar .tab .lbl{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .settings-sidebar .tab.active{background:var(--surface-3);color:var(--text)}
-.ico.c-orange{background:#FF9500}.ico.c-blue{background:#007AFF}.ico.c-green{background:#34C759}.ico.c-indigo{background:#5856D6}.ico.c-cyan{background:#30B0C7}.ico.c-gray{background:#8E8E93}
+.ico.c-orange{background:#FF9500}.ico.c-blue{background:#007AFF}.ico.c-green{background:#34C759}.ico.c-indigo{background:#5856D6}.ico.c-cyan{background:#30B0C7}.ico.c-gray{background:#8E8E93}.ico.c-red{background:#FF3B30}
 .settings-sidebar .tab.active.t-orange .lbl{color:#d97700}
 .settings-sidebar .tab.active.t-blue .lbl{color:#007AFF}
 .settings-sidebar .tab.active.t-green .lbl{color:#1f9e43}

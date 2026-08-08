@@ -6079,7 +6079,7 @@ function dcaSave(){
   }else{
     dcaPlans.push({ id:genId('dca'), name:name.trim(), account:acc, amount:amount, period:period, day:day, weekday:weekday, start:start, end:end||null, paused:false, createdAt:new Date().toISOString() });
   }
-  silentSave(); dcaResetForm(); dcaRenderList();
+  silentSave(); dcaResetForm(); dcaRenderList(); refreshAssetDca();
   toast('已保存，将在下次刷新时自动记账');
   runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); });
 }

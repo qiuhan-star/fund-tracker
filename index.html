@@ -1628,7 +1628,7 @@ const SAMPLE_TRADE = [
   {name:'示例全球配置(QDII)C', account:'示例账户', date:'2026-07-15', time:'14:30', type:'sell', amount:2000, shares:870.40, nav:2.2985, locked:true}
 ];
 
-let snaps=[], trades=[], navCache={}, dailySnapshots=[], dcaPlans=[];
+let snaps=[], trades=[], navCache={}, dailySnapshots=[], dcaPlans=[], demoTrendSeeded=false;
 let fundsView=[], _allHoldings=[], _allRaw=[];
 const BUILTIN_ACCOUNTS=['本人账户','投资账户','代管账户'];
 // 账户归属：isPersonal=false 表示非本人账户，不计入个人总资产 / 个人仓位
@@ -6554,9 +6554,9 @@ function loadSample(){
   trades = (trades||[]).filter(function(x){ return x && x.account!=='示例账户'; }).concat(JSON.parse(JSON.stringify(SAMPLE_TRADE)));
   navCache={}; seedDemoTrend(); silentSave(); try{ setScopeAcc('all'); }catch(e){} renderTrade(); compute(); switchTab(0); toast('已追加示例数据（你的真实持仓已保留；示例归入独立「示例账户」，不污染真实账本）'); refreshSampleBanner(); refresh().catch(function(e){ console.error('sample refresh failed', e); });
 }
-function seedDemoTrend(){ try{ const now=new Date(), base=90000, arr=[]; for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d); const k=(59-i)/59; const total=Math.round(base*(1+0.22*k)); const principal=Math.round(base*(1+0.20*k)); arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); } dailySnapshots={personal:arr, managed:[], all:arr}; }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; } }
+function seedDemoTrend(){ try{ const now=new Date(), base=90000, arr=[]; for(let i=59;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=fmtDate(d); const k=(59-i)/59; const total=Math.round(base*(1+0.22*k)); const principal=Math.round(base*(1+0.20*k)); arr.push({date:ds, totalAssets:total, principal:principal, totalProfit:total-principal, dayProfit: i===59?null:(total-arr[arr.length-1].totalAssets)}); } dailySnapshots={personal:arr, managed:[], all:arr}; demoTrendSeeded=true; }catch(e){ dailySnapshots={personal:[],managed:[],all:[]}; } }
 function setDemoOff(){ demoOff=true; try{ localStorage.setItem('ft_demo_off','1'); }catch(e){} _bondListCache=null; }
-function removeSampleData(silent){ setDemoOff(); const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !names.has(s.name);}); trades=trades.filter(function(t){return !names.has(t.name);}); const removed=(bS-snaps.length)+(bT-trades.length); if(removed===0){ if(!silent) toast('未检测到示例数据，无需清理'); return removed; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); if(!silent) toast('已移除 '+removed+' 条示例数据（真实数据已保留）'); return removed; }
+function removeSampleData(silent){ const wasDemoOn=!demoOff; const wasDemoTrend=demoTrendSeeded; setDemoOff(); const names=new Set(SAMPLE_SNAP.map(function(s){return s.name;}).concat(SAMPLE_TRADE.map(function(t){return t.name;}))); const bS=snaps.length, bT=trades.length; snaps=snaps.filter(function(s){return !(s&&(s.account==='示例账户'||names.has(s.name)));}); trades=trades.filter(function(t){return !(t&&(t.account==='示例账户'||names.has(t.name)));}); const removed=(bS-snaps.length)+(bT-trades.length); if(wasDemoTrend){ dailySnapshots=normDailySnap(null); demoTrendSeeded=false; } const changed=removed>0||wasDemoOn||wasDemoTrend; if(!changed){ if(!silent) toast('没有可清除的示例数据'); return removed; } silentSave(); renderTrade(); compute(); refreshSampleBanner(); refresh().catch(function(e){}); if(!silent) toast('已清除示例数据（演示债基 / 分析 / 示例趋势已关闭，真实数据已保留）'); return removed; }
 window.removeSampleData=removeSampleData;
 
 

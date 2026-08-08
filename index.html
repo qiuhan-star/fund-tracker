@@ -271,7 +271,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
   .scenario-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; }@media (max-width: 560px) { .scenario-grid { grid-template-columns:1fr; }  }
 .scenario-card .sub2 { font-size: 12px; color:var(--text-3); margin:2px 0 0; }.scenario-note { font-size: 14px; color:var(--text-2); margin:12px 0 0; line-height:1.6; background:var(--surface-2); border-radius:8px; padding:8px 10px; }/* ===== 设置弹窗 (sm-) ===== */
 .sm-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }.sm-mask.show { display:flex; }.sm-modal { background:var(--surface); color:var(--text); width:100%; max-width:560px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.sm-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.sm-head h2 { margin:0; font-size: 18px; font-weight:600; }.sm-x { border:none; background:var(--surface-2); color:var(--text-2); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size: 15px; line-height:1; }@media (hover: hover) { .sm-x:hover {  background:var(--border); color:var(--text);  } }
-.sm-body { padding:14px 18px 22px; overflow:auto; }.sm-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; }.sm-card h3 { margin:0 0 12px; font-size: 14px; font-weight:600; }.sm-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--border-2); }.sm-row:first-of-type { border-top:none; padding-top:0; }.sm-rt { min-width:0; }.sm-rd { font-size: 14px; color:var(--text-3); margin-top:2px; line-height:1.4; }.sm-seg { display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; flex-shrink:0; }.sm-seg button { border:none; background:transparent; color:var(--text-2); font-size: 14px; padding:7px 12px; min-height:40px; border-radius:8px; cursor:pointer; font-family:inherit; white-space:nowrap; }.sm-seg button.on { background:var(--accent); color:#fff; font-weight:600; }.sm-sw { display:flex; gap:10px; flex-shrink:0; }.sm-sw-dot { width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid transparent; outline:2px solid transparent; outline-offset:2px; transition:transform .12s; }@media (hover: hover) { .sm-sw-dot:hover {  transform:scale(1.1);  } }
+.sm-body { padding:14px 18px 22px; overflow:auto; }.sm-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; }.sm-card h3 { margin:0 0 12px; font-size: 14px; font-weight:600; }.sm-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--border-2); }.sm-row:first-of-type { border-top:none; padding-top:0; }.sm-rt { min-width:0; }.sm-rd { font-size: 14px; color:var(--text-3); margin-top:2px; line-height:1.4; }.sm-seg { display:inline-flex; background:rgba(120,120,128,.16); border:none; border-radius:9px; padding:2px; gap:2px; flex-wrap:wrap; flex-shrink:0; }.sm-seg button { border:none; background:transparent; color:var(--text-2); font-size:15px; padding:7px 13px; min-height:32px; border-radius:7px; cursor:pointer; font-family:inherit; white-space:nowrap; transition:color .18s,background .18s,box-shadow .18s; }.sm-seg button.on { background:var(--surface); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.12),0 0.5px 0 rgba(0,0,0,.04); }.sm-sw { display:flex; gap:12px; flex-shrink:0; padding:2px; }.sm-sw-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; position:relative; transition:transform .16s,border-color .16s; }@media (hover: hover) { .sm-sw-dot:hover { transform:scale(1.08); } }.sm-sw-dot::after { content:"\2713"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; opacity:0; transform:scale(.6); transition:opacity .16s,transform .16s; text-shadow:0 1px 2px rgba(0,0,0,.3); }.sm-sw-dot.on { transform:scale(1.14); border-color:rgba(255,255,255,.9); }.sm-sw-dot.on::after { opacity:1; transform:scale(1); }
 .sm-sw-dot.on { outline-color:var(--text); }.sm-switch { position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0; }.sm-switch input { opacity:0; width:0; height:0; }.sm-slider { position:absolute; inset:0; background:#c4c9d2; border-radius:999px; transition:.2s; cursor:pointer; }.sm-slider:before { content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }.sm-switch input:checked + .sm-slider { background:var(--accent); }.sm-switch input:checked + .sm-slider:before { transform:translateX(19px); }.sm-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.nf-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }.nf-field > label { font-size: 14px; color:var(--text-2); font-weight:500; }.nf-field input, .nf-field select { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface); color:var(--text); font-size: 16px; font-family:inherit; }.nf-field input:focus, .nf-field select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }.nf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }/* 数值输入：数值仍右对齐，占位文字统一靠左 */
 input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交易：更多选项折叠 */
 .more-toggle { display:flex; align-items:center; gap:6px; width:100%; background:transparent; border:1px dashed var(--border-strong); color:var(--text-2); border-radius:9px; padding:10px 12px; font-size:14px; font-family:inherit; cursor:pointer; margin:2px 0 12px; }.more-toggle:hover { border-color:var(--accent); color:var(--accent); }.more-toggle .arrow { transition:transform .2s; font-size:12px; }.more-toggle.open .arrow { transform:rotate(90deg); }.more-fields { display:none; animation:fadeIn .2s ease; padding-top:2px; }.more-fields.open { display:block; }@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }/* 合并日期时间字段 */
@@ -333,7 +333,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 /* 设置面板：口径 seg 小屏换行兜底 + 强调色热区加大 + 选中圆点立体感 */
 .sm-seg { flex-wrap:wrap; }
 .sm-sw { padding:4px; }
-.sm-sw-dot.on { box-shadow:0 1px 3px rgba(0,0,0,.18); }
+
 .ios-section-footer { font-size:12px; color:var(--text-3); line-height:1.5; margin:8px 12px 0; padding:6px 0; }.sm-pill { font-size: 14px; color:var(--text-2); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }.sm-ghost { border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:9px; padding:7px 12px; font-size: 14px; cursor:pointer; font-family:inherit; }@media (hover: hover) { .sm-ghost:hover {  border-color:var(--accent); color:var(--accent);  } }
 .danger-text { color:var(--danger); }.sm-danger { border:1px solid var(--danger); background:var(--danger-soft); color:var(--danger); border-radius:10px; padding:10px 14px; font-size: 14px; cursor:pointer; font-family:inherit; font-weight:600; width:100%; margin-top:6px; }@media (hover: hover) { .sm-danger:hover {  background:var(--danger); color:#fff;  } }
 .sm-frow { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }.sm-frow label { font-size: 14px; color:var(--text-2); white-space:nowrap; }@media (max-width:480px) { .sm-frow label { min-width:100%; display:block; margin-bottom:2px; }.sm-frow input { width:100%; }  }
@@ -356,6 +356,34 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .panel-row .right .settings-input { width:200px; }
 .panel-row.stacked .right .settings-input { width:100%; }
 .panel-note { font-size:12px; color:var(--text-3); margin-top:14px; line-height:1.5; }
+/* 外观与显示：iOS 分组卡片 + 强调色选中态 + 默认账户 action 行 */
+#panel-appearance .ap-group { margin:0 0 22px; }
+#panel-appearance .ap-group:last-child { margin-bottom:0; }
+#panel-appearance .ap-gh { font-size:13px; font-weight:600; color:var(--text-3); margin:0 0 7px 14px; letter-spacing:.01em; }
+#panel-appearance .ap-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+#panel-appearance .ap-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; min-height:48px; border-bottom:1px solid var(--border-2); }
+#panel-appearance .ap-row:last-child { border-bottom:none; }
+#panel-appearance .ap-act { cursor:pointer; -webkit-user-select:none; user-select:none; }
+#panel-appearance .ap-act:active { background:var(--surface-2); }
+#panel-appearance .ap-left { flex:1; min-width:0; }
+#panel-appearance .ap-title { font-size:17px; color:var(--text); font-weight:400; line-height:1.25; }
+#panel-appearance .ap-desc { font-size:13px; color:var(--text-3); margin-top:2px; line-height:1.4; }
+#panel-appearance .ap-right { flex-shrink:0; display:flex; align-items:center; gap:8px; }
+#panel-appearance .ap-val { font-size:17px; color:var(--text-3); }
+#panel-appearance .ap-note { font-size:12px; color:var(--text-3); line-height:1.5; margin:8px 14px 0 16px; }
+@media (min-width:641px) { #panel-appearance .ap-title { font-size:15px; } #panel-appearance .ap-val { font-size:15px; } #panel-appearance .ap-desc { font-size:12.5px; } }
+/* 默认账户选择 sheet（iOS 毛玻璃 Action Sheet） */
+.ap-sheet-mask { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:flex-end; justify-content:center; z-index:1100; padding:0 8px 8px; }
+.ap-sheet-mask.show { display:flex; }
+.ap-sheet { width:100%; max-width:398px; background:var(--surface); border:1px solid var(--border); -webkit-backdrop-filter:blur(18px) saturate(180%); backdrop-filter:blur(18px) saturate(180%); border-radius:14px; overflow:hidden; animation:apSheetUp .25s cubic-bezier(.32,.72,0,1); }
+@keyframes apSheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.ap-sheet-title { text-align:center; font-size:13px; color:var(--text-3); padding:14px 16px 6px; }
+.ap-sheet-opt { width:100%; border:none; background:transparent; padding:14px 16px; font-size:17px; text-align:center; font-family:inherit; border-bottom:1px solid var(--border); cursor:pointer; color:var(--accent); font-weight:500; position:relative; }
+.ap-sheet-opt:last-of-type { border-bottom:none; }
+.ap-sheet-opt.selected { font-weight:700; }
+.ap-sheet-opt.selected::before { content:"\2713 "; }
+.ap-sheet-cancel { margin-top:8px; border-radius:14px; background:var(--surface); border:1px solid var(--border); -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); overflow:hidden; }
+.ap-sheet-cancel button { width:100%; border:none; background:transparent; padding:14px 16px; font-size:17px; font-weight:600; text-align:center; font-family:inherit; cursor:pointer; color:var(--text); }
 .danger-zone { background:var(--danger-soft); border-radius:12px; padding:16px 18px; margin-top:18px; }
 .danger-zone .title { color:var(--danger); font-weight:600; font-size:15px; }
 .danger-zone .desc { color:var(--text-2); font-size:13px; margin:4px 0 12px; line-height:1.5; }
@@ -6568,31 +6596,62 @@ function renderSyncCfg(){
         <!-- 外观与显示 -->
         <section class="panel-section" id="panel-appearance">
           <h4 class="panel-title">外观与显示</h4>
-          <div class="panel-row stacked">
-            <div class="left"><div class="title">主题模式</div><div class="desc">跟随系统 / 浅色 / 深色</div></div>
-            <div class="right"><div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div></div>
+
+          <div class="ap-group">
+            <div class="ap-gh">外观</div>
+            <div class="ap-card">
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">主题模式</div></div>
+                <div class="ap-right"><div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">主题风格</div></div>
+                <div class="ap-right"><div class="sm-seg" id="smStyleSeg"><button data-st="classic">经典</button><button data-st="morandi">莫兰迪</button><button data-st="cream">奶油</button></div></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">强调色</div></div>
+                <div class="ap-right"><div class="sm-sw" id="smSwatches"></div></div>
+              </div>
+            </div>
           </div>
-          <div class="panel-row stacked">
-            <div class="left"><div class="title">主题风格</div><div class="desc">经典 / 莫兰迪 / 奶油</div></div>
-            <div class="right"><div class="sm-seg" id="smStyleSeg"><button data-st="classic">经典</button><button data-st="morandi">莫兰迪</button><button data-st="cream">奶油</button></div></div>
+
+          <div class="ap-group">
+            <div class="ap-gh">默认视图</div>
+            <div class="ap-card">
+              <div class="ap-row ap-act" onclick="openScopeSheet()">
+                <div class="ap-left"><div class="ap-title">默认账户</div></div>
+                <div class="ap-right"><span class="ap-val" id="scopeVal">本人账户</span><span class="item-arrow">›</span></div>
+              </div>
+            </div>
+            <p class="ap-note">每次打开应用时默认进入的账户视图。</p>
           </div>
-          <div class="panel-row">
-            <div class="left"><div class="title">强调色 (Accent)</div><div class="desc">主题高亮色</div></div>
-            <div class="right"><div class="sm-sw" id="smSwatches"></div></div>
-          </div>
-          <div class="panel-row stacked">
-            <div class="left"><div class="title">默认资产口径</div><div class="desc">打开后默认进入的账户</div></div>
-            <div class="right"><div class="sm-seg" id="smScopeSeg"><button data-s="本人账户">本人账户</button><button data-s="代管账户">代管账户</button><button data-s="投资账户">投资账户</button><button data-s="all">全量</button></div></div>
-          </div>
-          <div class="panel-row">
-            <div class="left"><div class="title">自动刷新净值</div><div class="desc">打开页面时自动拉取最新净值</div></div>
-            <div class="right"><label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="openSortSheet()">
-            <div class="left"><div class="title">排序与显示顺序</div><div class="desc">调整首页列表的排序规则和列顺序</div></div>
-            <div class="right"><span class="item-arrow">›</span></div>
+
+          <div class="ap-group">
+            <div class="ap-gh">数据</div>
+            <div class="ap-card">
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">自动刷新净值</div><div class="ap-desc">打开页面时自动拉取最新净值</div></div>
+                <div class="ap-right"><label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div>
+              </div>
+              <div class="ap-row ap-act" onclick="openSortSheet()">
+                <div class="ap-left"><div class="ap-title">排序与显示顺序</div><div class="ap-desc">调整首页列表的排序规则和列顺序</div></div>
+                <div class="ap-right"><span class="item-arrow">›</span></div>
+              </div>
+            </div>
           </div>
         </section>
+
+        <!-- 默认账户选择 sheet -->
+        <div class="ap-sheet-mask" id="scopeSheetMask" onclick="closeScopeSheet()">
+          <div class="ap-sheet" onclick="event.stopPropagation()">
+            <div class="ap-sheet-title">选择默认账户</div>
+            <button class="ap-sheet-opt" data-s="本人账户">本人账户</button>
+            <button class="ap-sheet-opt" data-s="代管账户">代管账户</button>
+            <button class="ap-sheet-opt" data-s="投资账户">投资账户</button>
+            <button class="ap-sheet-opt" data-s="all">全量</button>
+          </div>
+          <div class="ap-sheet-cancel" onclick="closeScopeSheet()"><button>取消</button></div>
+        </div>
 
                 <!-- 数据管理 -->
         <section class="panel-section" id="panel-data">
@@ -7038,6 +7097,9 @@ function renderSyncCfg(){
     Array.prototype.forEach.call(mask.querySelectorAll('.settings-sidebar .tab'), function(t){ t.classList.toggle('active', t.getAttribute('data-tab')===name); });
     Array.prototype.forEach.call(mask.querySelectorAll('.panel-section'), function(s){ s.classList.toggle('active', s.id==='panel-'+name); });
   };
+  window.openScopeSheet=function(){ var m=document.getElementById('scopeSheetMask'); if(!m) return; var opts=m.querySelectorAll('.ap-sheet-opt'); Array.prototype.forEach.call(opts,function(o){ o.classList.toggle('selected', o.getAttribute('data-s')===scopeAcc); }); m.classList.add('show'); };
+  window.closeScopeSheet=function(){ var m=document.getElementById('scopeSheetMask'); if(m) m.classList.remove('show'); };
+  document.addEventListener('click',function(e){ var o=e.target.closest && e.target.closest('#scopeSheetMask .ap-sheet-opt'); if(o){ var sd=o.getAttribute('data-s'); setScopeAcc(sd); var v=document.getElementById('scopeVal'); if(v) v.textContent=(sd==='all'?'全量':sd); closeScopeSheet(); } });
   window.renderSettings=function(){ try{
     var t=localStorage.getItem('ft_theme')||'system';
     var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-t')||'')===t); }); }
@@ -7048,6 +7110,7 @@ function renderSyncCfg(){
     else if(sw){ markSwatchSelection(); }
     var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-s')||'')===scopeAcc); }); }
     var ar=document.getElementById('smAutoRefresh'); if(ar){ try{ ar.checked = localStorage.getItem('ft_autorefresh')!=='0'; }catch(e){ ar.checked=true; } }
+    var sv=document.getElementById('scopeVal'); if(sv) sv.textContent = (scopeAcc==='all'?'全量':scopeAcc);
     var cs=document.getElementById('smCacheSize'); if(cs){ try{ var keys=['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh']; var bytes=0; keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) bytes+=v.length; }); cs.textContent='约 '+(bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB'); }catch(e){ cs.textContent='—'; } }
     var ver=document.getElementById('smVersion'); if(ver) ver.textContent='v'+SCHEMA_VERSION;
     if(typeof renderAccountNames==='function') renderAccountNames();

@@ -1810,7 +1810,7 @@ function renderScopeBar(){
   html+='<div class="acc-menu-item acc-menu-add" onclick="addAccount()"><span class="acc-left"><span class="acc-name">＋ 新增账户</span></span></div>';
   menu.innerHTML=html;
   // 同步 Header 账户名（改名/切换后保持显示当前 scope）
-  const nm=document.getElementById('accName'); if(nm) nm.textContent = scopeAcc;
+  const nm=document.getElementById('accName'); if(nm) nm.textContent = (scopeAcc==='all'?'全量':scopeAcc);
 }
 function toggleAccMenu(){
   const m=document.getElementById('accMenu'), t=document.getElementById('accTitle');

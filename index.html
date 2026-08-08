@@ -887,8 +887,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .btn.ghost{background:var(--surface,#fff);color:var(--accent,#3b6fd4);border:1px solid #cfe0fb}
   /* PWA 手机端「添加到主屏幕」提示条 */
   .pwa-hint{display:none;position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#2f6bff;color:#fff;
-    font-size: 14px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));align-items:center;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.15)}
-  .pwa-hint .x{margin-left:auto;cursor:pointer;font-weight:700;padding:0 6px}
+    font-size: 14px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));align-items:center;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.15);pointer-events:none}
+  .pwa-hint .x{margin-left:auto;cursor:pointer;font-weight:700;padding:0 6px;pointer-events:auto}
   @media (max-width:600px){ .pwa-hint{display:flex} }
   .bk-input .unit{white-space:nowrap;flex-shrink:0}
 </style>
@@ -6778,10 +6778,10 @@ function renderSyncCfg(){
         <div class="ap-sheet-mask" id="scopeSheetMask" onclick="closeScopeSheet()">
           <div class="ap-sheet" onclick="event.stopPropagation()">
             <div class="ap-sheet-title">选择默认账户</div>
-            <button class="ap-sheet-opt" data-s="本人账户">本人账户</button>
-            <button class="ap-sheet-opt" data-s="代管账户">代管账户</button>
-            <button class="ap-sheet-opt" data-s="投资账户">投资账户</button>
-            <button class="ap-sheet-opt" data-s="all">全量</button>
+            <button class="ap-sheet-opt" data-s="本人账户" onclick="pickScope(this.getAttribute('data-s'))">本人账户</button>
+            <button class="ap-sheet-opt" data-s="代管账户" onclick="pickScope(this.getAttribute('data-s'))">代管账户</button>
+            <button class="ap-sheet-opt" data-s="投资账户" onclick="pickScope(this.getAttribute('data-s'))">投资账户</button>
+            <button class="ap-sheet-opt" data-s="all" onclick="pickScope(this.getAttribute('data-s'))">全量</button>
           </div>
           <div class="ap-sheet-cancel" onclick="closeScopeSheet()"><button>取消</button></div>
         </div>
@@ -7290,7 +7290,7 @@ function renderSyncCfg(){
   };
   window.openScopeSheet=function(){ var m=document.getElementById('scopeSheetMask'); if(!m) return; var opts=m.querySelectorAll('.ap-sheet-opt'); Array.prototype.forEach.call(opts,function(o){ o.classList.toggle('selected', o.getAttribute('data-s')===scopeAcc); }); m.classList.add('show'); };
   window.closeScopeSheet=function(){ var m=document.getElementById('scopeSheetMask'); if(m) m.classList.remove('show'); };
-  document.addEventListener('click',function(e){ var o=e.target.closest && e.target.closest('#scopeSheetMask .ap-sheet-opt'); if(o){ var sd=o.getAttribute('data-s'); setScopeAcc(sd); var v=document.getElementById('scopeVal'); if(v) v.textContent=(sd==='all'?'全量':sd); closeScopeSheet(); } });
+  window.pickScope=function(sd){ try{ setScopeAcc(sd); }catch(e){} var v=document.getElementById('scopeVal'); if(v) v.textContent=(sd==='all'?'全量':sd); closeScopeSheet(); };
   window.renderSettings=function(){ try{
     var t=localStorage.getItem('ft_theme')||'system';
     var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-t')||'')===t); }); }

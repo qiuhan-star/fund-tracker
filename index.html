@@ -843,6 +843,21 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sync-conflict-label{ font-size:14px; color:var(--text-2); flex-shrink:0; }
   .sync-filewarn{ display:none; margin-top:12px; padding:10px 13px; border-radius:10px; background:var(--danger-bg); color:var(--danger); font-size:13px; line-height:1.45; }
   .sync-filewarn.show{ display:block; }
+  /* 本地文件打开时的顶部提示 Banner（file:// 模式） */
+  .file-warn{ position:fixed; top:0; left:0; right:0; z-index:9999; background:#fff8e6; border-bottom:1px solid #ffe0a3; color:#8a6d1a; padding:11px 14px; font-size:13.5px; line-height:1.55; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  .file-warn .fw-head{ font-weight:700; font-size:14px; }
+  .file-warn .fw-head .fw-ico{ margin-right:5px; }
+  .file-warn .fw-text{ margin-top:2px; color:#8a6d1a; }
+  .file-warn .fw-text code{ background:rgba(0,0,0,.06); padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .file-warn .fw-actions{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
+  .file-warn .fw-btn{ border:none; border-radius:9px; padding:8px 14px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; text-decoration:none; }
+  .file-warn .fw-btn.ghost{ background:rgba(0,0,0,.05); color:#6b561c; }
+  .file-warn .fw-btn.primary{ background:var(--accent); color:#fff; }
+  .file-warn .fw-btn:active{ opacity:.85; }
+  @media (max-width:640px){
+    .file-warn .fw-actions{ flex-direction:column; }
+    .file-warn .fw-btn{ justify-content:center; }
+  }
   .sync-actions{ display:flex; gap:10px; margin-top:6px; }
   .sync-btn{ flex:1; border:none; border-radius:10px; padding:11px 12px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:5px; }
   .sync-btn.primary{ background:var(--accent); color:#fff; }
@@ -1188,6 +1203,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div class="hold-search"><input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" aria-label="搜索基金" oninput="setHoldSearch(this.value)"></div>
         <div id="homeList"></div>
       </div>
+      <div id="dcaSection"></div>
       <div id="bondContent"></div>
     </div>
 
@@ -7055,9 +7071,15 @@ function renderSyncCfg(){
     setTimeout(function(){
       try{
         let b=document.getElementById('fileWarn');
-        if(!b){ b=document.createElement('div'); b.id='fileWarn';
-          b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#fff1f0;border-bottom:1px solid #ffccc7;color:#a8071a;padding:10px 14px;font-size: 14px;line-height:1.65';
-          b.innerHTML='⚠️ 你正以<b>本地文件</b>方式打开，数据只存在本浏览器且刷新/重开可能丢失。请改用线上版 <code style="background:#ffe7e3;padding:1px 5px;border-radius:4px">https://fund-tracker-chi.vercel.app</code> 导入与操作（那里刷新不丢）；当前数据可用「设置 → 导出 JSON」先备份。';
+        if(!b){ b=document.createElement('div'); b.id='fileWarn'; b.className='file-warn';
+          b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999';
+          b.innerHTML=''
+            + '<div class="fw-head"><span class="fw-ico">⚠️</span>当前为本地临时模式</div>'
+            + '<div class="fw-text">数据仅保存在当前浏览器，刷新或清理缓存可能丢失。推荐使用线上稳定版，享受云端同步与备份保障。</div>'
+            + '<div class="fw-actions">'
+            +   '<button type="button" class="fw-btn ghost" onclick="exportJSON()">导出 JSON 备份</button>'
+            +   '<a class="fw-btn primary" href="https://fund-tracker-chi.vercel.app" target="_blank" rel="noopener">前往线上版 ↗</a>'
+            + '</div>';
           document.body.insertBefore(b, document.body.firstChild);
         }
       }catch(e){}
@@ -7869,7 +7891,7 @@ function renderSyncCfg(){
     ]);
     html+=group('偏好设置',[
       row('palette','orange','外观与偏好','','<span class="smg-chev">›</span>','openSettingsDetail(\'appearance\')'),
-      row('cycle','orange','记账与定投偏好', dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭','<span class="smg-chev">›</span>','openSettingsDetail('dca')')
+      row('cycle','orange','记账与定投偏好', dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭','<span class="smg-chev">›</span>','openSettingsDetail(\'dca\')')
     ]);
     html+=group('安全与隐私',[
       row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')')

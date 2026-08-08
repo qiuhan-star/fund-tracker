@@ -6985,6 +6985,18 @@ function renderSyncCfg(){
           </div>
 
           <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出全量备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
+
+          <div class="nset-label danger-zone-label">危险操作</div>
+          <div class="nset-card danger-zone-card">
+            <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
+              <div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="resetApp()">
+              <div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+          </div>
         </section>
         <!-- 个人资料与账号（合并原「账户」+「账号云同步」） -->
         <section class="panel-section" id="panel-account">

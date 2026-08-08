@@ -287,6 +287,33 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .dash-pill .dash-dot{ width:6px; height:6px; border-radius:50%; background:var(--text-3); display:inline-block; }
 .dash-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; }
 .dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:14px; padding:12px 10px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:108px; height:100%; box-sizing:border-box; }
+
+/* 组合风险诊断 + 基金策略便签 + 同类对比（2026-08-09 新增） */
+.risk-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.risk-cell{ background:var(--surface-2,#f1f5f9); border-radius:12px; padding:10px 12px; }
+.risk-cell .rl{ font-size:12px; color:var(--text-3,#94a3b8); }
+.risk-cell .rv{ font-size:20px; font-weight:700; margin-top:2px; }
+.risk-cell .rs{ font-size:11px; color:var(--text-3,#94a3b8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.risk-bar{ display:flex; height:18px; border-radius:9px; overflow:hidden; margin:6px 0 4px; background:var(--surface-2,#f1f5f9); }
+.risk-bar span{ height:100%; font-size:10px; color:#fff; display:flex; align-items:center; justify-content:center; min-width:0; }
+.risk-legend{ display:flex; flex-wrap:wrap; gap:6px 12px; font-size:11px; color:var(--text-2,#3c4654); }
+.risk-legend i{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; }
+.risk-cat{ font-size:12px; color:var(--text-2,#3c4654); margin-top:10px; }
+.risk-cat b{ color:var(--text,#1f2933); }
+.risk-diag{ margin-top:10px; padding:10px 12px; border-radius:12px; font-size:13px; line-height:1.55; }
+.risk-diag.warn{ background:rgba(245,158,11,.12); color:#b45309; }
+.risk-diag.ok{ background:rgba(16,185,129,.12); color:#047857; }
+.note-ta{ width:100%; box-sizing:border-box; min-height:64px; border:1px solid var(--border, rgba(0,0,0,.12)); border-radius:10px; padding:8px 10px; font-family:inherit; font-size:14px; resize:vertical; background:var(--surface,#fff); color:var(--text,#1f2933); margin-top:8px; }
+.note-bar{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+.note-saved{ margin-top:8px; font-size:12px; color:var(--text-3,#94a3b8); white-space:pre-wrap; }
+.note-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:#3b82f6; margin-left:5px; vertical-align:middle; }
+.peer-row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border, rgba(0,0,0,.06)); font-size:13px; }
+.peer-row:last-child{ border-bottom:none; }
+.peer-k{ color:var(--text-2,#3c4654); }
+.peer-v{ font-weight:600; }
+.peer-bad{ color:#dc2626; } .peer-good{ color:#047857; }
+.peer-spark{ margin-top:6px; display:block; }
+
 .dash-head{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-2); }
 .dash-head svg{ width:14px; height:14px; }
 .dash-val{ font-size:clamp(12px,3.8vw,20px); font-weight:700; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); white-space:nowrap; line-height:1.2; }
@@ -1257,6 +1284,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     <!-- Tab 1: 分析 -->
     <div class="tab-panel" id="tp1">
       <div class="card"><div class="cards4" id="overview"></div></div>
+      <div class="card" id="riskCard">
+        <div class="sec-head"><h2 style="margin:0;font-size: 14px">🩺 组合风险诊断 <span class="tag">一键体检</span></h2><span class="hint" style="font-size: 12px">基于当前账户口径</span></div>
+        <div id="riskBody"></div>
+      </div>
       <div class="card" id="accSummaryCard" style="display:none"><div class="sec-head"><h2 style="margin:0;font-size: 14px">按账户汇总</h2><span class="hint" style="font-size: 12px">浮动 + 已实现</span></div><div id="accSummary"></div></div>
       <div class="card">
         <div class="grid2">
@@ -2171,7 +2202,7 @@ function switchTab(i){
   const ms=document.getElementById('marketStatus');
   if(ms) ms.style.display = (i===5)?'flex':'none';
   if(i===0){ renderHomeList(); renderBond(); renderDcaSection(); }
-  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); }
+  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); renderRisk(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderWatchTab(); }
   if(i===5){ loadMarketData(); renderWatch(); refreshWatchQuotes(); }
@@ -3004,7 +3035,7 @@ function renderHomeDense(list, showHead){
     const code=syncCode(f.name);
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}</div><div class="dt-sub">
+      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
         ${code?`<span>#${code}</span>`:''}
         ${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
@@ -3093,7 +3124,7 @@ function renderHomeMobileTable(list){
     // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
     const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
     const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl ].filter(Boolean).join('');
-    let tds='<td><div class="cname">'+esc(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
+    let tds='<td><div class="cname">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
     cols.slice(1).forEach(c=>{ tds+=cellOf(f,c.key); });
     return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
   }).join('');
@@ -4345,7 +4376,7 @@ function render(){
   if(currentView==='home'){
     updateScopeUI();
     renderOverview(); renderAccFilter(); renderHomeList(); renderCatFilter();
-    if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
+    if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); renderRisk(); } renderAdvice();
     if(activeTab===0){ renderBond(); renderDcaSection(); }
     if(activeTab===2){ renderLiquidated(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
@@ -4511,12 +4542,128 @@ async function retroScenarioCards(f){
   }catch(e){ console.error('PU extras',e); return ''; }
 }
 
+
+// ================= 组合风险诊断 + 基金策略便签 + 同类对比（2026-08-09 新增） =================
+let ftFundNotes={};
+try{ ftFundNotes=JSON.parse(localStorage.getItem('ft_notes')||'{}')||{}; }catch(e){ ftFundNotes={}; }
+function saveFundNotes(){ try{ localStorage.setItem('ft_notes', JSON.stringify(ftFundNotes)); }catch(e){} }
+function getNote(name){ return ftFundNotes[name]||''; }
+function setNote(name, text){ const t=(text||'').trim(); if(t) ftFundNotes[name]=t; else delete ftFundNotes[name]; saveFundNotes(); }
+function noteDot(name){ return getNote(name)?'<span class="note-dot" title="有策略便签"></span>':''; }
+function noteCardHtml(name){
+  const t=getNote(name)||'';
+  return '<div class="card" id="noteCard"><div class="sec-head"><h2 style="margin:0;font-size:14px">📝 策略便签 <span class="tag">本地保存</span></h2><span class="hint" style="font-size:12px">随手记一句买卖逻辑</span></div>'
+    +'<textarea id="noteTa" class="note-ta" placeholder="比如：估值分位低，逢跌分批买；止盈线 +20%…">'+esc(t)+'</textarea>'
+    +'<div class="note-bar"><button class="btn sm primary" onclick="saveNote(\''+encodeURIComponent(name)+'\')">保存便签</button><span id="noteMsg" class="hint"></span></div>'
+    +(t?'<div class="note-saved">已保存：'+esc(t)+'</div>':'')+'</div>';
+}
+function saveNote(enc){
+  const name=decodeURIComponent(enc); const ta=document.getElementById('noteTa'); if(!ta) return;
+  setNote(name, ta.value);
+  const m=document.getElementById('noteMsg'); if(m) m.textContent='已保存 ✓';
+  const card=document.getElementById('noteCard'); if(card){
+    const old=card.querySelector('.note-saved');
+    if(ta.value.trim()){ if(old) old.textContent='已保存：'+ta.value.trim(); else { const d=document.createElement('div'); d.className='note-saved'; d.textContent='已保存：'+ta.value.trim(); card.appendChild(d); } }
+    else if(old){ old.remove(); }
+  }
+}
+function peerCardHtml(name){
+  return '<div class="card" id="peerCard"><div class="sec-head"><h2 style="margin:0;font-size:14px">📊 同类对比 & 综合评分 <span class="tag">天天基金</span></h2></div><div id="peerBody"><span class="hint">加载中…（天天基金）</span></div></div>';
+}
+function peerSpark(arr){
+  const pts=arr.slice(-60); if(pts.length<2) return '';
+  const ys=pts.map(function(p){return p.y;}); const min=Math.min.apply(null,ys), max=Math.max.apply(null,ys);
+  const W=300,H=36,pad=2;
+  const xf=function(i){ return pad + i*(W-2*pad)/(pts.length-1); };
+  const yf=function(v){ return pad + (max===min?0:(v-min)/(max-min))*(H-2*pad); };
+  const d=pts.map(function(p,i){ return (i?'L':'M')+xf(i).toFixed(1)+' '+yf(p.y).toFixed(1); }).join(' ');
+  return '<svg class="peer-spark" width="100%" height="36" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><path d="'+d+'" fill="none" stroke="#3b82f6" stroke-width="1.5"/></svg><div class="hint" style="font-size:11px">同类日排名走势（数值越低 = 排名越靠前）</div>';
+}
+function loadPeerCard(f){
+  const body=document.getElementById('peerBody'); if(!body) return;
+  const code=f.code||(getAnalysis(f.name)&&getAnalysis(f.name).code)||null;
+  if(!code){ body.innerHTML='该基金未记录代码，无法加载同类对比；可在「＋ 加一只基金」补全代码后再看。'; return; }
+  const s=document.createElement('script');
+  const done=function(){
+    try{
+      const persent=(window.Data_rateInSimilarPersent||[]).slice();
+      const simType=(window.Data_rateInSimilarType||[]).slice();
+      const pe=(window.Data_performanceEvaluation||{});
+      const typeName=(window.Data_fundTypeName||'');
+      let h='';
+      if(typeName) h+='<div class="peer-row"><span class="peer-k">基金类型</span><span class="peer-v">'+esc(typeName)+'</span></div>';
+      if(persent.length){
+        const last=persent[persent.length-1][1];
+        const good=last<=50;
+        h+='<div class="peer-row"><span class="peer-k">近1年同类收益排名</span><span class="peer-v '+(good?'peer-good':'peer-bad')+'">'+(good?('前 '+last.toFixed(1)+'%'):('后 '+last.toFixed(1)+'%'))+'</span></div>';
+        h+='<div class="hint" style="font-size:11px">优于 '+(100-last).toFixed(1)+'% 的同类基金</div>';
+      }
+      if(simType.length){
+        const last=simType[simType.length-1];
+        h+='<div class="peer-row"><span class="peer-k">同类日排名（越低越好）</span><span class="peer-v">第 '+last.y+' 名</span></div>';
+        h+=peerSpark(simType);
+      }
+      if(pe&&pe.avr){
+        h+='<div class="peer-row"><span class="peer-k">综合评分</span><span class="peer-v">'+esc(pe.avr)+' / 100</span></div>';
+        if(pe.categories&&pe.categories.length) h+='<div style="margin-top:4px">'+pe.categories.map(function(c){return '<span class="tag">'+esc(c)+'</span>';}).join('')+'</div>';
+      }
+      if(!h) h='<p class="hint">未获取到同类数据（可能为纯债/货币，或接口未返回）。</p>';
+      body.innerHTML=h;
+    }catch(e){ body.innerHTML='同类对比解析失败'; }
+    s.remove();
+  };
+  s.onload=done;
+  s.onerror=function(){ body.innerHTML='同类对比接口未连接（天天基金），可稍后重试'; s.remove(); };
+  s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
+  document.body.appendChild(s);
+}
+function renderRisk(){
+  const box=document.getElementById('riskBody'); if(!box) return;
+  const list=fundsView||[];
+  const total=list.reduce(function(a,f){return a+(f.mv||0);},0);
+  if(!list.length||!total){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
+  const sorted=list.slice().sort(function(a,b){return (b.mv||0)-(a.mv||0);});
+  const maxShare=sorted[0];
+  const top3mv=sorted.slice(0,3).reduce(function(a,f){return a+(f.mv||0);},0);
+  const top3pct=top3mv/total*100;
+  const maxpct=(maxShare.mv||0)/total*100;
+  const hhi=list.reduce(function(a,f){const p=(f.mv||0)/total*100; return a+p*p;},0);
+  const assets={}; list.forEach(function(f){const a=f.asset||'股票'; assets[a]=(assets[a]||0)+(f.mv||0);});
+  const ASSET_COL={ '股票':'#ef4444','债券':'#10b981','商品·黄金':'#f59e0b','货币·理财':'#3b82f6','混合':'#8b5cf6' };
+  const catTop=(getCatAllocation()||[]).slice(0,3);
+  const triggered=[];
+  if(maxpct>=30) triggered.push('单一基金「'+maxShare.name+'」占比 '+maxpct.toFixed(1)+'%，偏高');
+  if(top3pct>=70) triggered.push('Top3 集中度 '+top3pct.toFixed(1)+'%，过于集中');
+  if((assets['债券']||0)/total*100<10) triggered.push('债券等防御资产仅 '+((assets['债券']||0)/total*100).toFixed(1)+'%，回撤保护弱');
+  const diagCls = triggered.length?'warn':'ok';
+  const diagText = triggered.length? triggered.join('；')+'。' : '持仓结构较均衡，集中度在合理范围。';
+  const hhiDesc = hhi<1000?'高度分散':hhi<2500?'分散偏均衡':hhi<4000?'偏集中':'高度集中';
+  const barHtml=Object.keys(assets).map(function(k){ const p=assets[k]/total*100; return '<span style="width:'+p.toFixed(2)+'%;background:'+(ASSET_COL[k]||'#94a3b8')+'">'+(p>=9?esc(k):'')+'</span>'; }).join('');
+  const legendHtml=Object.keys(assets).map(function(k){ return '<span><i style="background:'+(ASSET_COL[k]||'#94a3b8')+'"></i>'+esc(k)+' '+(assets[k]/total*100).toFixed(1)+'%</span>'; }).join('');
+  const catHtml = catTop.length?('<div class="risk-cat">板块 Top3：'+catTop.map(function(c){return '<b>'+esc(c[0])+'</b> '+c[1].toFixed(1)+'%';}).join('、')+'</div>'):'';
+  box.innerHTML=
+    '<div class="risk-grid">'
+    +'<div class="risk-cell"><div class="rl">持仓数</div><div class="rv">'+list.length+'</div></div>'
+    +'<div class="risk-cell"><div class="rl">最大单基占比</div><div class="rv">'+maxpct.toFixed(1)+'%</div><div class="rs">'+esc(maxShare.name)+'</div></div>'
+    +'<div class="risk-cell"><div class="rl">Top3 集中度</div><div class="rv">'+top3pct.toFixed(1)+'%</div></div>'
+    +'<div class="risk-cell"><div class="rl">集中度 HHI</div><div class="rv">'+hhi.toFixed(0)+'</div><div class="rs">'+hhiDesc+'</div></div>'
+    +'</div>'
+    +'<div style="margin-top:10px"><div class="risk-cat" style="margin:0 0 2px">股债 / 资产配比</div>'
+    +'<div class="risk-bar">'+barHtml+'</div>'
+    +'<div class="risk-legend">'+legendHtml+'</div></div>'
+    +catHtml
+    +'<div class="risk-diag '+diagCls+'"><b>🩺 诊断：</b>'+diagText+'</div>';
+}
+
 function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
   live.innerHTML += reviewCardHtml(f.name);
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
+  live.innerHTML += noteCardHtml(f.name);
+  live.innerHTML += peerCardHtml(f.name);
+  try{ loadPeerCard(f); }catch(e){ console.error(e); }
   try{ retroScenarioCards(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }
 }
 // ---------- 详情页底部操作栏功能 ----------

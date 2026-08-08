@@ -7524,7 +7524,7 @@ function renderSyncCfg(){
       row('download','blue','导入与恢复','','<span class="smg-chev">›</span>','openImportModal();closeSettings()'),
       row('cycle','purple','导入全量备份 (JSON)','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
       row('upload','green','导出备份','','<span class="smg-chev">›</span>','exportJSON();closeSettings()'),
-      row('trash','red','清除与重置','','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')',true)
+      row('trash','red','清除与重置','','<span class="smg-chev">›</span>','openSettingsDetail(\'data\')',true)
     ]);
     html+=group('关于与帮助',[
       row('chat','green','意见与反馈','','<span class="smg-chev">›</span>','openFeedback()'),
@@ -7666,7 +7666,7 @@ function renderSyncCfg(){
   window.closeCacheSheet=function(){ var m=document.getElementById('cacheSheetMask'); if(m) m.classList.remove('show'); };
   window.doClearCache=function(){ closeCacheSheet(); try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
   window.clearCache=function(){ openCacheSheet(); };
-  window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ ['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_style','ft_autorefresh'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){} location.reload(); };
+  window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置/密码锁/云同步配置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ var keys=[]; for(var i=0;i<localStorage.length;i++){ keys.push(localStorage.key(i)); } keys.forEach(function(k){ if(k && k.indexOf('ft_')===0) localStorage.removeItem(k); }); }catch(e){} location.reload(); };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('click',function(e){ if(e.target.closest && (e.target.closest('#accTitle')||e.target.closest('#accMenu'))) return; closeAccMenu(); });

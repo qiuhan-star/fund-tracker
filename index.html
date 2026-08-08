@@ -1048,6 +1048,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     if(on){
       if(offRow) offRow.style.display='none';
       if(row) row.style.display=''; if(typeof toast==='function') toast('请设置解锁密码');
+      if(typeof refreshLockForm==='function') refreshLockForm();
     } else {
       var cur=null; try{ cur=localStorage.getItem('ft_lock_pw'); }catch(e){}
       if(!cur){ if(row) row.style.display='none'; if(offRow) offRow.style.display='none'; try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){} return; }
@@ -1076,18 +1077,40 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     var ip=document.getElementById('lockOffPw'); if(ip) ip.value='';
     var el=document.getElementById('lockOn'); if(el) el.checked=true;
   };
+  window.refreshLockForm=function(){
+    var p0=document.getElementById('lockPw0'); if(!p0) return;
+    var cur=null; try{ cur=localStorage.getItem('ft_lock_pw'); }catch(e){}
+    p0.style.display = cur ? '' : 'none';
+    var e=document.getElementById('lockChgErr'); if(e) e.style.display='none';
+  };
   window.saveLockPassword=function(){
-    var p1=document.getElementById('lockPw1'), p2=document.getElementById('lockPw2');
+    var p0=document.getElementById('lockPw0'), p1=document.getElementById('lockPw1'), p2=document.getElementById('lockPw2');
     if(!p1||!p2) return; var v1=p1.value, v2=p2.value;
-    if(!v1){ if(typeof toast==='function') toast('请输入密码'); p1.focus(); return; }
+    var cur=null; try{ cur=localStorage.getItem('ft_lock_pw'); }catch(e){}
+    if(cur){
+      if(!p0) return;
+      var v0=p0.value;
+      if(!v0){ if(typeof toast==='function') toast('请输入当前密码'); p0.focus(); return; }
+      window.hashPw(v0).then(function(h0){
+        if(h0!==cur){ var e=document.getElementById('lockChgErr'); if(e){ e.textContent='当前密码错误'; e.style.display=''; } if(typeof toast==='function') toast('当前密码错误'); p0.focus(); return; }
+        _lockSaveCore(p1,p2,p0);
+      });
+      return;
+    }
+    _lockSaveCore(p1,p2,p0);
+  };
+  function _lockSaveCore(p1,p2,p0){
+    var v1=p1.value, v2=p2.value;
+    if(!v1){ if(typeof toast==='function') toast('请输入新密码'); p1.focus(); return; }
     if(v1.length<4){ if(typeof toast==='function') toast('密码至少 4 位'); return; }
     if(v1!==v2){ if(typeof toast==='function') toast('两次输入不一致'); p2.focus(); return; }
     window.hashPw(v1).then(function(h){
       try{ localStorage.setItem('ft_lock_pw',h); localStorage.setItem('ft_lock_on','1'); }catch(e){}
-      p1.value=''; p2.value='';
-      if(typeof toast==='function') toast('✅ 应用锁已启用');
+      p1.value=''; p2.value=''; if(p0) p0.value='';
+      var e=document.getElementById('lockChgErr'); if(e) e.style.display='none';
+      if(typeof toast==='function') toast('✅ 应用锁密码已更新');
     });
-  };
+  }
   if(_lockActive()){ var sc=document.getElementById('lockScreen'); if(sc) sc.classList.add('show'); }
   var _lh=false;
   document.addEventListener('visibilitychange',function(){
@@ -7266,9 +7289,11 @@ function renderSyncCfg(){
             <div class="panel-row stacked lock-form" id="lockSetRow" style="display:none">
               <div class="right" style="width:100%">
                 <div class="lock-form-fields">
-                  <input id="lockPw1" type="password" class="settings-input" placeholder="请输入密码（至少 4 位）" autocomplete="off">
-                  <input id="lockPw2" type="password" class="settings-input" placeholder="请再次确认密码" autocomplete="off">
+                  <input id="lockPw0" type="password" class="settings-input" placeholder="请输入当前密码" autocomplete="off" style="display:none" onkeydown="if(event.key==='Enter')saveLockPassword()">
+                  <input id="lockPw1" type="password" class="settings-input" placeholder="请输入新密码（至少 4 位）" autocomplete="off">
+                  <input id="lockPw2" type="password" class="settings-input" placeholder="请再次确认新密码" autocomplete="off">
                   <button type="button" class="sm-ghost lock-save-btn" onclick="saveLockPassword()">保存密码</button>
+                  <div id="lockChgErr" style="color:#ff3b30;font-size:13px;display:none">当前密码错误</div>
                 </div>
               </div>
             </div>
@@ -7665,7 +7690,7 @@ function renderSyncCfg(){
     else if(sw){ markSwatchSelection(); }
     var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-s')||'')===scopeAcc); }); }
     var ar=document.getElementById('smAutoRefresh'); if(ar){ try{ ar.checked = localStorage.getItem('ft_autorefresh')!=='0'; }catch(e){ ar.checked=true; } }
-    var lo=document.getElementById('lockOn'); if(lo){ try{ var _la=(localStorage.getItem('ft_lock_on')==='1' && !!localStorage.getItem('ft_lock_pw')); lo.checked=_la; var _lr=document.getElementById('lockSetRow'); if(_lr) _lr.style.display=_la?'':'none'; var _lof=document.getElementById('lockOffRow'); if(_lof) _lof.style.display='none'; }catch(e){ lo.checked=false; } }
+    var lo=document.getElementById('lockOn'); if(lo){ try{ var _la=(localStorage.getItem('ft_lock_on')==='1' && !!localStorage.getItem('ft_lock_pw')); lo.checked=_la; var _lr=document.getElementById('lockSetRow'); if(_lr) _lr.style.display=_la?'':'none'; if(typeof refreshLockForm==='function') refreshLockForm(); var _lof=document.getElementById('lockOffRow'); if(_lof) _lof.style.display='none'; }catch(e){ lo.checked=false; } }
     var sv=document.getElementById('scopeVal'); if(sv) sv.textContent = (scopeAcc==='all'?'全量':scopeAcc);
     var dtSeg=document.getElementById('defaultTimeSeg'); if(dtSeg){ var dv=(function(){try{return localStorage.getItem('ft_default_time')||'1500';}catch(e){return '1500';}})(); Array.prototype.forEach.call(dtSeg.querySelectorAll('button'), function(b){ b.classList.toggle('on', b.getAttribute('data-v')===dv); }); }
     var cs=document.getElementById('smCacheSize'); if(cs){ try{ var keys=['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh']; var bytes=0; keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) bytes+=v.length; }); cs.textContent='约 '+(bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB'); }catch(e){ cs.textContent='—'; } }

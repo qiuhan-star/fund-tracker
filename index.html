@@ -6962,7 +6962,6 @@ function renderSyncCfg(){
   window.onImg=function(ev){ var file=ev.target.files&&ev.target.files[0]; if(!file) return; var r=new FileReader(); r.onload=function(){ var u=getUser(); u.img=r.result; u.avatar=null; setUser(u); var a=document.getElementById('profAv'); if(a) a.innerHTML='<img src="'+r.result+'" alt="">'; }; r.readAsDataURL(file); var m=document.getElementById('avMask'); if(m) m.classList.remove('show'); ev.target.value=''; };
   ['profMask','avMask'].forEach(function(id){ var m=document.getElementById(id); if(m) m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('show'); }); });
   window.openFeedback=function(){ if(typeof toast==='function') toast('感谢反馈！欢迎到 GitHub 仓库提交 Issue 或发邮件交流 📮'); };
-  window.openRating=function(){ if(typeof toast==='function') toast('App 上架 App Store 后即可在此评分 ⭐'); };
 })();
 </script>
 
@@ -7241,7 +7240,6 @@ function renderSyncCfg(){
     ]);
     html+=group('关于与帮助',[
       row('chat','green','意见与反馈','','<span class="smg-chev">›</span>','openFeedback()'),
-      row('star','gold','App Store 评分','','<span class="smg-chev">›</span>','openRating()'),
       row('info','gray','关于 FundTracker','','<span class="smg-chev">›</span>','openSettingsDetail(\'about\')')
     ]);
     host.innerHTML=html;

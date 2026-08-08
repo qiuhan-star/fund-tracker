@@ -599,13 +599,18 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   }
 
   /* 5. 选项卡与操作按钮响应式放大（方便手指点击） */
-  .main-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .main-tabs { overflow: hidden; }
   .main-tabs button {
-    flex: 0 0 auto;
-    padding: 10px 12px !important;
-    font-size: 14px !important;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 3px !important;
+    font-size: 12px !important;
+    line-height: 1.2;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+  .main-tabs button .ti, .main-tabs button .tl { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   
   .btn {
     padding: 8px 14px !important; /* 增大触控区域 */
@@ -2531,7 +2536,7 @@ function renderHomeList(){
   }
   // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
   const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
-  box.innerHTML=(holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list))+obsHtml;
+  box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
 
   fillWatchQuotes();

@@ -2593,19 +2593,7 @@ function sortKeyVal(f,k){
   if(k==='day') return nc.navChg!=null?nc.navChg:0;
   if(k==='mv') return f.mv||0;
   if(k==='nav') return nc.nav!=null?nc.nav:0;
-  if(k==='ret'){ const c=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); return (c!=null&&f.mv!=null)?(f.mv-f.mv/(1+c/100)):0; }
-  if(k==='hold') return f.profit||0;
-  if(k==='holdpct') return f.ret||0;
-  return 0;
-}
-
-function sortKeyVal(f,k){
-  const nc=navCache[f.name]||{};
-  if(k==='est') return nc.gszzl||0;
-  if(k==='day') return nc.navChg!=null?nc.navChg:0;
-  if(k==='mv') return f.mv||0;
-  if(k==='nav') return nc.nav!=null?nc.nav:0;
-  if(k==='ret'){ const c=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); return (c!=null&&f.mv!=null)?(f.mv-f.mv/(1+c/100)):0; }
+  if(k==='ret') return dayGainOf(f)||0;
   if(k==='hold') return f.profit||0;
   if(k==='holdpct') return f.ret||0;
   return 0;
@@ -2751,6 +2739,12 @@ function renderHomeDense(list, showHead){
 // 列表子项与账户总卡片共用此函数，保证「账户总当日收益 = 各子项之和」。
 function dayGainOf(f){ const nc=navCache[f.name]||{}; const chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); if(chg==null||f.mv==null) return null; return f.mv - f.mv/(1+chg/100); }
 
+function weightedEstChg(){
+  let _wsum=0,_pw=0;
+  fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
+  return _pw>0?(_wsum/_pw):null;
+}
+
 function renderHomeMobileTable(list){
   // 列跟随「≡ 列」开关（colVis）+ 顺序（colOrder）；不再写死 4 列，多列时外层横滑
   const cols=[{key:'name',label:'基金名称'}];
@@ -2882,8 +2876,7 @@ function renderOverview(){
   const winLoseSub=hasBattle?`${win} 盈 / ${lose} 亏${flat?` / ${flat}平`:''}`:'样本过少，暂不统计胜率';
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
-  let _wsum=0,_pw=0; fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
-  const estPct=_pw>0?(_wsum/_pw):null;
+  const estPct=weightedEstChg();
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const updLine=lastSyncLabel();
@@ -2945,8 +2938,7 @@ function renderTrendSection(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
-  let _wsum=0,_pw=0; fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
-  const estPct=_pw>0?(_wsum/_pw):null;
+  const estPct=weightedEstChg();
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?effAccount('代管账户'):'个人');
@@ -5570,7 +5562,7 @@ async function refresh(){
 // 计划结构：{ id, name, account, amount, day(每月几号), start('YYYY-MM'), end('YYYY-MM'|null 无限), paused, createdAt }
 // 自动生成的买入交易标记：{ dcaId, dcaPeriod:'YYYY-MM' }，便于幂等去重与计划管理展示。
 function genId(p){ return p+(Date.now().toString(36))+Math.random().toString(36).slice(2,6); }
-function pad2(n){ return ('0'+n).slice(-2); }
+
 function parseYMD(s){ const a=String(s).split('-').map(Number); return new Date(a[0], (a[1]||1)-1, a[2]||1); }
 const _WD=['周一','周二','周三','周四','周五','周六','周日'];
 function wdName(n){ return _WD[(((n||1)-1)%7+7)%7]; }

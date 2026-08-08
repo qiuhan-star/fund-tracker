@@ -5722,17 +5722,29 @@ function exportJSON(){
     {grp:'自选', key:'ft_watch', label:'基金自选（含分组标签）'},
     {grp:'自选', key:'ft_bond_watch', label:'债券自选池'},
     {grp:'设置', key:'ft_tags', label:'标签'},
+    {grp:'设置', key:'ft_tag_order', label:'标签顺序'},
     {grp:'设置', key:'ft_catoverride', label:'分类覆盖'},
+    {grp:'设置', key:'ft_cat_order', label:'分类顺序'},
     {grp:'设置', key:'ft_scope', label:'账户口径'},
     {grp:'设置', key:'ft_accounts', label:'自定义账户'},
+    {grp:'设置', key:'ft_account_order', label:'账户顺序'},
+    {grp:'设置', key:'ft_acc_rename', label:'账户改名映射'},
     {grp:'设置', key:'ft_profile', label:'个人画像'},
     {grp:'设置', key:'ft_analysis', label:'深度分析'},
     {grp:'设置', key:'ft_cols', label:'列布局'},
-    {grp:'设置', key:'ft_sort', label:'排序', extra:['ft_sort_ver']},
     {grp:'设置', key:'ft_colorder', label:'列顺序', extra:['ft_colorder_ver']},
+    {grp:'设置', key:'ft_sort', label:'排序', extra:['ft_sort_ver']},
     {grp:'设置', key:'ft_theme', label:'主题'},
+    {grp:'设置', key:'ft_style', label:'配色风格'},
     {grp:'设置', key:'ft_accent', label:'强调色'},
-    {grp:'设置', key:'ft_autorefresh', label:'自动刷新'}
+    {grp:'设置', key:'ft_autorefresh', label:'自动刷新'},
+    {grp:'设置', key:'ft_hidden', label:'金额隐藏'},
+    {grp:'设置', key:'ft_alerts', label:'价格预警'},
+    {grp:'设置', key:'ft_growth', label:'资产增长曲线'},
+    {grp:'设置', key:'ft_vault', label:'旧版持仓数据（兼容）'},
+    {grp:'安全', key:'ft_lock_on', label:'应用锁开关'},
+    {grp:'安全', key:'ft_lock_pw', label:'应用锁口令（哈希）'},
+    {grp:'安全', key:'ft_sync_cfg', label:'云同步配置（含 token）'}
   ];
   var mask=document.createElement('div'); mask.id='uwExportModal';
   mask.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px';
@@ -6547,7 +6559,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_catoverride','ft_cols','ft_colorder'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }

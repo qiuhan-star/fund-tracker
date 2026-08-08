@@ -6575,24 +6575,36 @@ function renderSyncCfg(){
           </div>
         </div>
 
-        <!-- 快捷功能 -->
+        <!-- 快捷操作 -->
         <section class="panel-section active" id="panel-shortcuts">
-          <h4 class="panel-title">快捷功能</h4>
-          <div class="panel-row" style="cursor:pointer" onclick="openAllTrades();closeSettings()">
-            <div class="left"><div class="title">📒 全部交易记录</div><div class="desc">查看、筛选、编辑所有历史买入 / 卖出 / 转换</div></div>
-            <div class="right"><span class="item-arrow">›</span></div>
+          <h4 class="panel-title">快捷操作</h4>
+
+          <div class="nset-label">资产管理快捷入口</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:pointer" onclick="openAllTrades();closeSettings()">
+              <span class="ico c-indigo"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 11h8M8 15h5"/></svg></span>
+              <div class="left"><div class="title">全部交易记录</div><div class="desc">查看、筛选、编辑所有历史买入 / 卖出 / 转换</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="openDcaModal();closeSettings()">
+              <span class="ico c-green"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h8"/><rect x="16" y="14" width="4" height="4" rx="1"/></svg></span>
+              <div class="left"><div class="title">定投计划管理</div><div class="desc">按月 / 按周 / 双周 / 按日 自动补记买入</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
           </div>
-          <div class="panel-row" style="cursor:pointer" onclick="openDcaModal();closeSettings()">
-            <div class="left"><div class="title">🗓️ 定投计划管理</div><div class="desc">按月 / 按周 / 双周 / 按日 自动补记买入</div></div>
-            <div class="right"><span class="item-arrow">›</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="saveLocal();closeSettings()">
-            <div class="left"><div class="title">💾 保存下载</div><div class="desc">把当前页面以 .html 形式保存到本地</div></div>
-            <div class="right"><span class="item-arrow">›</span></div>
-          </div>
-          <div class="panel-row" style="cursor:pointer" onclick="window.print();closeSettings()">
-            <div class="left"><div class="title">🖨 导出 PDF</div><div class="desc">调用浏览器打印生成 PDF 报告</div></div>
-            <div class="right"><span class="item-arrow">›</span></div>
+
+          <div class="nset-label">快速记账偏好</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:default">
+              <span class="ico c-cyan"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+              <div class="left"><div class="title">默认交易时间</div><div class="desc">新记账默认填 15:00（收盘后结算）</div></div>
+              <div class="right">
+                <div class="sm-seg" id="defaultTimeSeg" role="tablist">
+                  <button type="button" data-v="1500" class="on" onclick="setDefaultTradeTime('1500',this)">15:00</button>
+                  <button type="button" data-v="now" onclick="setDefaultTradeTime('now',this)">当前</button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

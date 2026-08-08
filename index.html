@@ -5652,10 +5652,20 @@ function exportJSON(){
     var obj={schemaVersion:SCHEMA_VERSION, updatedAt:new Date().toISOString(), snaps:snaps, trades:trades, navCache:navCache, daily_snapshots:dailySnapshots};
     if(Object.keys(local).length) obj._local=local;
     var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-data.json'; a.click();
+    var url=URL.createObjectURL(blob);
+    var isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if(isSafari){
+      // Safari 不支持 Blob + <a download> 程序化下载，改在新标签页打开由用户保存
+      var w=window.open(url,'_blank');
+      if(!w){ try{ if(navigator.clipboard) navigator.clipboard.writeText(url); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); }
+    } else {
+      var a=document.createElement('a'); a.href=url; a.download='fund-data.json';
+      document.body.appendChild(a); try{ a.click(); }catch(e){} document.body.removeChild(a);
+    }
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, isSafari?60000:3000);
     try{ localStorage.setItem('ft_last_export', new Date().toISOString().slice(0,10)); }catch(e){}
     mask.remove();
-    toast('已导出 fund-data.json'+(Object.keys(local).length?('（含 '+Object.keys(local).length+' 项附加内容）'):''));
+    toast(isSafari ? ('已在新的标签页打开 JSON，点右上角分享 → 存储到文件 即可保存'+(Object.keys(local).length?('（含 '+Object.keys(local).length+' 项附加内容）'):'')) : ('已导出 fund-data.json'+(Object.keys(local).length?('（含 '+Object.keys(local).length+' 项附加内容）'):'')));
   };
 }
 
@@ -5685,10 +5695,14 @@ function exportHoldingsCSV(){
   }
   if(!_allRaw.length && !liq.length){ toast('暂无可导出的数据'); return; }
   const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-holdings.csv'; a.click();
-  toast('已导出 持仓+清仓 fund-holdings.csv（含全部账户）');
+  const url=URL.createObjectURL(blob);
+  const isSafariC=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if(isSafariC){ var wC=window.open(url,'_blank'); if(!wC){ try{ if(navigator.clipboard) navigator.clipboard.writeText(url); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); } }
+  else { const aC=document.createElement('a'); aC.href=url; aC.download='fund-holdings.csv'; document.body.appendChild(aC); try{ aC.click(); }catch(e){} document.body.removeChild(aC); }
+  setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, isSafariC?60000:3000);
+  toast(isSafariC?'已在新的标签页打开 CSV，点右上角分享 → 存储到文件 即可保存':'已导出 持仓+清仓 fund-holdings.csv（含全部账户）');
 }
-function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n说明：删除本说明行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投；费用可留空）\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='fund-import-template.csv'; a.click(); toast('已下载 CSV 模板（仅含表头，填真实交易即可）'); }
+function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n说明：删除本说明行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投；费用可留空）\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const isSafariT=/^((?!chrome|android).)*safari/i.test(navigator.userAgent); if(isSafariT){ var wT=window.open(url,'_blank'); if(!wT){ try{ if(navigator.clipboard) navigator.clipboard.writeText(url); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); } } else { const aT=document.createElement('a'); aT.href=url; aT.download='fund-import-template.csv'; document.body.appendChild(aT); try{ aT.click(); }catch(e){} document.body.removeChild(aT); } setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, isSafariT?60000:3000); toast(isSafariT?'已在新的标签页打开 CSV 模板，点右上角分享 → 存储到文件 即可保存':'已下载 CSV 模板（仅含表头，填真实交易即可）'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();
@@ -6961,7 +6975,7 @@ function renderSyncCfg(){
   window.uploadImg=function(){ var f=document.getElementById('profImgUp'); if(f) f.click(); };
   window.onImg=function(ev){ var file=ev.target.files&&ev.target.files[0]; if(!file) return; var r=new FileReader(); r.onload=function(){ var u=getUser(); u.img=r.result; u.avatar=null; setUser(u); var a=document.getElementById('profAv'); if(a) a.innerHTML='<img src="'+r.result+'" alt="">'; }; r.readAsDataURL(file); var m=document.getElementById('avMask'); if(m) m.classList.remove('show'); ev.target.value=''; };
   ['profMask','avMask'].forEach(function(id){ var m=document.getElementById(id); if(m) m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('show'); }); });
-  window.openFeedback=function(){ if(typeof toast==='function') toast('感谢反馈！欢迎到 GitHub 仓库提交 Issue 或发邮件交流 📮'); };
+  window.openFeedback=function(){ window.open('https://github.com/qiuhan-star/fund-tracker/issues','_blank'); };
 })();
 </script>
 

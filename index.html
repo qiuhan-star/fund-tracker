@@ -2593,7 +2593,19 @@ function sortKeyVal(f,k){
   if(k==='day') return nc.navChg!=null?nc.navChg:0;
   if(k==='mv') return f.mv||0;
   if(k==='nav') return nc.nav!=null?nc.nav:0;
-  if(k==='ret') return dayGainOf(f)||0;
+  if(k==='ret'){ const c=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); return (c!=null&&f.mv!=null)?(f.mv-f.mv/(1+c/100)):0; }
+  if(k==='hold') return f.profit||0;
+  if(k==='holdpct') return f.ret||0;
+  return 0;
+}
+
+function sortKeyVal(f,k){
+  const nc=navCache[f.name]||{};
+  if(k==='est') return nc.gszzl||0;
+  if(k==='day') return nc.navChg!=null?nc.navChg:0;
+  if(k==='mv') return f.mv||0;
+  if(k==='nav') return nc.nav!=null?nc.nav:0;
+  if(k==='ret'){ const c=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); return (c!=null&&f.mv!=null)?(f.mv-f.mv/(1+c/100)):0; }
   if(k==='hold') return f.profit||0;
   if(k==='holdpct') return f.ret||0;
   return 0;
@@ -2739,8 +2751,139 @@ function renderHomeDense(list, showHead){
 // 列表子项与账户总卡片共用此函数，保证「账户总当日收益 = 各子项之和」。
 function dayGainOf(f){ const nc=navCache[f.name]||{}; const chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); if(chg==null||f.mv==null) return null; return f.mv - f.mv/(1+chg/100); }
 
-function weightedEstChg(){
-  const estPct=weightedEstChg();
+function renderHomeMobileTable(list){
+  // 列跟随「≡ 列」开关（colVis）+ 顺序（colOrder）；不再写死 4 列，多列时外层横滑
+  const cols=[{key:'name',label:'基金名称'}];
+  colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
+  const arrow=k=> holdSort===k ? (holdSortDir==='asc'?'▲':'▼') : '';
+  const nameTh='<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>';
+  const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
+  const head='<tr>'+nameTh+cols.slice(1).map(c=>numTh(c.key,c.label)).join('')+'<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>'+'</tr>';
+  const navDate=fd=>{ const nc=navCache[fd.name]||{}; return (nc.date!=null)?String(nc.date).slice(5):''; };
+  const cellOf=(fd,key)=>{
+    const nc=navCache[fd.name]||{};
+    if(key==='day'){ const d=(nc.navChg!=null)?nc.navChg:null; return d!=null?'<td class="cnum '+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+(fd.ret>=0?'+':'')+fd.ret.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='nav'){ return nc.nav!=null?'<td class="cnum">'+navFmt(nc.nav)+'<div class="csub" style="margin-top:2px">'+navDate(fd)+'</div></td>':'<td class="cnum zero">—</td>'; }
+    if(key==='est'){ const g=(nc.gszzl!=null)?nc.gszzl:null; return g!=null?'<td class="cnum '+(g>=0?'pos':'neg')+'">'+(g>=0?'+':'')+g.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+    if(key==='mv'){ return fd.mv!=null?'<td class="cnum">'+M(fd.mv)+'</td>':'<td class="cnum zero">—</td>'; }
+    return '<td></td>';
+  };
+  const rows=list.map(f=>{
+    const nc=navCache[f.name]||{};
+    const code=syncCode(f.name);
+    const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
+    // 持仓行副信息：分类 + 自定义标签 + 代码/持仓额 + 净值；不再显示账户类标签（代管账户/小号/本人等）
+    const subParts=[ (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, (code?(f.mv!=null?('<span class="tag-code">#'+code+' · 持仓 ¥'+M(f.mv)+'</span>'):('<span class="tag-code">#'+code+'</span>')):(f.mv!=null?'<span class="tag-code">持仓 ¥'+M(f.mv)+'</span>':'')), (nc.nav!=null?'<span class="tag-code">净值 '+navFmt(nc.nav)+'</span>':'') ].filter(Boolean).join('');
+    let tds='<td><div class="cname">'+esc(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
+    cols.slice(1).forEach(c=>{ tds+=cellOf(f,c.key); });
+    return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
+  }).join('');
+  return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+// ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------
+function groupSortKey(dim,k){
+  if(dim==='asset'){ const o=['股票','债券','商品·黄金','货币·理财','混合']; const i=o.indexOf(k); return i<0?99:i; }
+  if(dim==='market'){ return k==='国内'?0:1; }
+  return 0; // 账户：保持原顺序
+}
+function grpLabel(dim,k){
+  if(dim==='asset') return k;
+  if(dim==='market') return k==='海外'?'🌏 海外':'🏠 国内';
+  return k;
+}
+function renderGrouped(list){
+  const dim=(holdGroupBy==='asset')?'asset':'market';
+  const groups={};
+  list.forEach(f=>{ const k=(f[dim]||(dim==='account'?effAccount('本人账户'):'其他')); (groups[k]=groups[k]||[]).push(f); });
+  const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));
+  return order.map((k,idx)=>{
+    const sub=groups[k];
+    const mvSum=sub.reduce((a,f)=>a+(f.mv||0),0);
+    const head=`<div class="grp-head"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div>`;
+    return head + renderHomeDense(sub, idx===0);
+  }).join('');
+}
+
+function goDetail(enc, acc){
+  const f=findFund(decodeURIComponent(enc), acc);
+  if(f && f.isBond){ openBondDrawer(f.code); return; } // 债基无交易/净值详情，点开抽屉看深度信息
+  pendingAcc=acc||null; location.hash='#/fund/'+enc;
+}
+
+// ---------- 分析（概览/饼/柱/建议）----------
+// 首页总览趋势：本金虚线 vs 市值实线（按当前账户口径），缝隙＝真实收益
+function principalUpTo(dateStr, scope){
+  let p=0;
+  trades.forEach(t=>{
+    if((t.type||'fund')==='stock') return;
+    const inScope = scope==='all'?true:(scope==='managed'? !accIsPersonal(accOf(t)) : accIsPersonal(accOf(t)));
+    if(!inScope) return;
+    if(t.date && t.date <= dateStr){
+      const ty=t.type||'buy', amt=+t.amount||0;
+      if(ty==='buy'||ty==='convert') p+=amt; else if(ty==='sell'||ty==='convert_out') p-=amt;
+    }
+  });
+  getBondFunds().forEach(b=>{ const inScope = scope==='all'?true:(scope==='managed'? !accIsPersonal(b.acc) : accIsPersonal(b.acc)); if(inScope && b.since && b.since<=dateStr) p+=bondAmt(b); });
+  return p;
+}
+// 口径兜底：当前口径桶空但全量桶有数据（旧迁移/仅看全量口径时积累），回退展示全量，避免空白
+function trendArr(){
+  if(!dailySnapshots) return [];
+  if(Array.isArray(dailySnapshots)) return dailySnapshots;
+  const a=(dailySnapshots[currentScope]||[]);
+  if(a.length) return a;
+  return (dailySnapshots.all||[]);
+}
+function overviewTrendSvg(){
+  const arr=trendArr();
+  if(!arr.length) return '';
+  const W=1000,H=170,pad=10,n=arr.length;
+  const mkt=arr.map(s=>s.totalAssets);
+  const pri=arr.map(s=> (s.principal!=null? s.principal : principalUpTo(s.date,currentScope)) );
+  const all=mkt.concat(pri), min=Math.min.apply(null,all), max=Math.max.apply(null,all), span=(max-min)||1;
+  const X=i=> n===1? W/2 : (i/(n-1))*W;
+  const Y=v=> H-pad-((v-min)/span)*(H-pad*2);
+  let mktP='',priP='';
+  mkt.forEach((v,i)=>{ mktP+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
+  pri.forEach((v,i)=>{ priP+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' '; if(i<n-1) priP+='L'+X(i+1).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
+  let svg='<svg class="ov-spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">';
+  if(n>1){ const area='M'+X(0)+' '+H+' '+mktP.replace(/^M/,'L')+' '+'L'+X(n-1)+' '+H+' Z'; svg+='<path d="'+area+'" fill="#7c93c9" fill-opacity="0.10"/>'; }
+  svg+='<path d="'+priP+'" fill="none" stroke="#8a8f99" stroke-width="1.6" stroke-dasharray="5 4"/>';
+  svg+='<path d="'+mktP+'" fill="none" stroke="#7c93c9" stroke-width="2.2" stroke-linejoin="round"/>';
+  if(n===1) svg+='<circle cx="'+X(0).toFixed(1)+'" cy="'+Y(mkt[0]).toFixed(1)+'" r="3" fill="#7c93c9"/>';
+  svg+='</svg>';
+  return svg;
+}
+const IC={
+  win:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a1 1 0 0 1-1-1V7z"/><path d="M3 7V5a1 1 0 0 1 1-1h12v3"/><circle cx="17" cy="13" r="1.2"/></svg>',
+  bars:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20v-3"/></svg>',
+  pie:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9h9a9 9 0 1 0-9-9z"/><path d="M12 3a9 9 0 0 1 9 9h-9z"/></svg>',
+  trend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/></svg>'
+};
+function renderOverview(){
+  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  const realized=fundsView.reduce((a,f)=>a+(f.realized||0),0);
+  const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length, flat=fundsView.filter(f=>f.ret===0).length;
+  const cnt=fundsView.length;
+  let principal=0;
+  // f.cost 已是正确成本基准：有逐笔交易走 FIFO，纯快照回退 costPx×份额（buildFundsView 算好），直接求和即可，勿用交易流重算（会漏掉无交易流的快照基金）
+  fundsView.forEach(f=>{ principal+=(f.cost||0); });
+  const holdGain=total-principal, holdPct=principal>0?holdGain/principal*100:0;
+  const topN=Math.min(3,Math.max(1,cnt));
+  const topItems=getCatAllocation().slice(0,topN);
+  const top3=topItems.reduce((a,b)=>a+(b&&b[1]||0),0);
+  const topLabel=topN===cnt?'全部集中度':'Top'+topN;
+  const hasBattle=cnt>=3;
+  const winLoseSub=hasBattle?`${win} 盈 / ${lose} 亏${flat?` / ${flat}平`:''}`:'样本过少，暂不统计胜率';
+  const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
+  const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
+  let _wsum=0,_pw=0; fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
+  const estPct=_pw>0?(_wsum/_pw):null;
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const updLine=lastSyncLabel();
@@ -2802,7 +2945,8 @@ function renderTrendSection(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
-  const estPct=weightedEstChg();
+  let _wsum=0,_pw=0; fundsView.forEach(f=>{ const _nc=navCache[f.name]; if(_nc&&_nc.gszzl!=null){ _wsum+=_nc.gszzl*f.mv; _pw+=f.mv; } });
+  const estPct=_pw>0?(_wsum/_pw):null;
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const scopeLabel=currentScope==='all'?'全量':(currentScope==='managed'?effAccount('代管账户'):'个人');
@@ -5426,7 +5570,7 @@ async function refresh(){
 // 计划结构：{ id, name, account, amount, day(每月几号), start('YYYY-MM'), end('YYYY-MM'|null 无限), paused, createdAt }
 // 自动生成的买入交易标记：{ dcaId, dcaPeriod:'YYYY-MM' }，便于幂等去重与计划管理展示。
 function genId(p){ return p+(Date.now().toString(36))+Math.random().toString(36).slice(2,6); }
-
+function pad2(n){ return ('0'+n).slice(-2); }
 function parseYMD(s){ const a=String(s).split('-').map(Number); return new Date(a[0], (a[1]||1)-1, a[2]||1); }
 const _WD=['周一','周二','周三','周四','周五','周六','周日'];
 function wdName(n){ return _WD[(((n||1)-1)%7+7)%7]; }
@@ -6849,18 +6993,6 @@ function renderSyncCfg(){
           </div>
 
           <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出全量备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
-
-          <div class="nset-label">危险区域</div>
-          <div class="nset-card">
-            <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
-              <div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div>
-              <div class="right"><span class="item-arrow">›</span></div>
-            </div>
-            <div class="panel-row" style="cursor:pointer" onclick="resetApp()">
-              <div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div>
-              <div class="right"><span class="item-arrow">›</span></div>
-            </div>
-          </div>
         </section>
         <!-- 个人资料与账号（合并原「账户」+「账号云同步」） -->
         <section class="panel-section" id="panel-account">
@@ -6929,6 +7061,17 @@ function renderSyncCfg(){
             </div>
           </div>
 
+          <div class="nset-label">危险区域</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
+              <div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+            <div class="panel-row" style="cursor:pointer" onclick="resetApp()">
+              <div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div>
+              <div class="right"><span class="item-arrow">›</span></div>
+            </div>
+          </div>
           <p class="panel-note">应用锁已接入：启用并设置密码后，每次打开应用或切到后台再回来都需输入密码（面容 ID / 指纹解锁暂未接入）。锁密码仅保存在本机，不会进入云同步或 JSON 备份。</p>
         </section>
 

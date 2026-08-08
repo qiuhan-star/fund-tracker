@@ -645,20 +645,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     -webkit-overflow-scrolling: touch;
   }
 
-  /* 7b. 移动端持仓列表行：名称 + 当日收益同屏，无卡片盒子，仅细分隔线 */
-  .ml-list { display:block; }
-  .ml-row { padding:9px 2px; border-bottom:1px solid var(--border); cursor:pointer; }
-  .ml-row:active { background:rgba(255,255,255,.04); }
-  .ml-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-  .ml-name { font-size:13px; font-weight:600; line-height:1.3; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ml-ret { font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; flex-shrink:0; line-height:1.15; }
-  .ml-ret.zero { color:var(--text-3); }
-  .ml-ret-pct { display:block; font-size:12px; font-weight:600; margin-top:2px; }
-  .ml-sub { display:flex; flex-wrap:wrap; gap:5px 6px; align-items:center; margin-top:5px; font-size:12px; color:var(--text-3); }
-  .ml-sub .tag { font-size:12px; }
-  .ml-day.pos { color:var(--up); } .ml-day.neg { color:var(--down); }
-  .ml-nav { color:var(--text-3); }
-  .ml-code { color:var(--text-3); }
 
   /* 8. 图表容器高度调整，防止占用过多屏幕空间 */
   .chart-box, .am-chart {
@@ -2662,14 +2648,7 @@ function renderHomeList(){
     if(obsHtml) fillWatchQuotes();
     return;
   }
-  // 当日涨跌（卡片）：显示收盘后最后确认的官方涨跌幅（navChg），与估算涨跌(estTag)区分
-  const dayFmt=f=>{ const _n=navCache[f.name]; if(_n&&_n.navChg!=null) return `<span class="hl-sep">|</span><span class="est confirm ${_n.navChg>=0?'pos':'neg'}">收 ${_n.navChg>=0?'+':''}${_n.navChg.toFixed(2)}%</span>`; return ''; };
-  const isMobile=window.matchMedia('(max-width:640px)').matches;
-  if(isMobile){
-    box.innerHTML=renderHomeMobile(list)+obsHtml;
-  } else {
-    box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
-  }
+  box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
 
   fillWatchQuotes();
@@ -2736,36 +2715,6 @@ function renderHomeDense(list, showHead){
     ${(showHead===false)?'':'<thead><tr>'+headHtml+'</tr></thead>'}
     <tbody>${rows}</tbody>
   </table>`;
-}
-// ---------- 移动端持仓列表行（名称 + 当日收益同屏，无卡片盒子）----------
-function renderHomeMobile(list){
-  const rows=list.map(f=>{
-    const nc=navCache[f.name]||{};
-    const code=syncCode(f.name);
-    // 当日收益：优先盘中估算涨跌(gszzl)，无估算退回官方当日涨跌(navChg)
-    const _chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null);
-    let retHtml;
-    if(_chg!=null && f.mv!=null){
-      const _amt=f.mv-f.mv/(1+_chg/100);
-      const cls=_amt>=0?'pos':'neg';
-      retHtml=`<div class="ml-ret ${cls}">${_amt>=0?'+':''}${M(_amt)}<span class="ml-ret-pct">当日 ${_chg>=0?'+':''}${_chg.toFixed(2)}%</span></div>`;
-    } else {
-      retHtml=`<div class="ml-ret zero">—<span class="ml-ret-pct">待刷新</span></div>`;
-    }
-    const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?`<span class="tag tag-owner">${accOwner(f.account)}</span>`:'';
-    const sub=[`<span class="tag tag-${f.cat}">${f.cat}</span>`];
-    if(code) sub.push(`<span class="ml-code">#${code}</span>`);
-    if(nc.nav!=null) sub.push(`<span class="ml-nav">净值 ${navFmt(nc.nav)}</span>`);
-    if(nc.navChg!=null) sub.push(`<span class="ml-day ${nc.navChg>=0?'pos':'neg'}">收 ${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</span>`);
-    if(f.account&&effAccount(f.account)!==effAccount('本人账户')) sub.push(`<span class="tag">${effAccount(f.account)}</span>`);
-    if(ownerTag) sub.push(ownerTag);
-    const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
-    return `<div class="ml-row" onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">
-      <div class="ml-top"><div class="ml-name">${esc(f.name)}</div>${retHtml}</div>
-      <div class="ml-sub">${sub.join('')}${attrTags}</div>
-    </div>`;
-  }).join('');
-  return `<div class="ml-list">${rows}</div>`;
 }
 
 // ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------

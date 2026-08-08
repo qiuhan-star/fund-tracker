@@ -720,14 +720,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .home-ctable{ border-collapse:collapse; font-size:12px; min-width:100%; table-layout:fixed; }
   .home-ctable th{ padding:9px 8px 7px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; white-space:nowrap; cursor:pointer; user-select:none; overflow:hidden; }
-  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); width:110px; min-width:110px; max-width:110px; }
+  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); width:124px; min-width:124px; max-width:124px; }
   .home-ctable thead th.th-col{ cursor:default; width:34px; }
   .home-ctable th .sub{ font-weight:400; display:block; font-size:10px; margin-top:1px; }
   .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }
   .home-ctable th.sort-on{ color:var(--accent); font-weight:700; }
   .home-ctable th.sort-on .arrow{ color:var(--accent); }
   .home-ctable td{ padding:9px 8px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; white-space:nowrap; overflow:hidden; }
-  .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); width:110px; min-width:110px; max-width:110px; }
+  .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); width:124px; min-width:124px; max-width:124px; }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
   .home-ctable .cname{ font-size:14px; font-weight:600; color:var(--text); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%; }
@@ -1805,12 +1805,12 @@ function renderScopeBar(){
     html+='</span></div>';
   });
   html+='<div class="acc-menu-item'+(scopeAcc==='all'?' on':'')+'" data-acc="all" onclick="pickAcc(this.dataset.acc)">';
-  html+='<span class="acc-left"><span class="acc-check">'+(scopeAcc==='all'?'✓':'')+'</span><span class="acc-name">全量</span></span>';
+  html+='<span class="acc-left"><span class="acc-check">'+(scopeAcc==='all'?'✓':'')+'</span><span class="acc-name">全部</span></span>';
   html+='<span class="acc-right"><span class="acc-cnt">'+cntOf('all')+'只</span></span></div>';
   html+='<div class="acc-menu-item acc-menu-add" onclick="addAccount()"><span class="acc-left"><span class="acc-name">＋ 新增账户</span></span></div>';
   menu.innerHTML=html;
   // 同步 Header 账户名（改名/切换后保持显示当前 scope）
-  const nm=document.getElementById('accName'); if(nm) nm.textContent = (scopeAcc==='all'?'全量':scopeAcc);
+  const nm=document.getElementById('accName'); if(nm) nm.textContent = (scopeAcc==='all'?'全部':scopeAcc);
 }
 function toggleAccMenu(){
   const m=document.getElementById('accMenu'), t=document.getElementById('accTitle');
@@ -3237,7 +3237,7 @@ function renderOverview(){
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const updLine=lastSyncLabel();
-  const scopeLabel=currentScope==='all'?'全量':(curAccount||'');
+  const scopeLabel=currentScope==='all'?'全部':(curAccount||'');
   const trendSvg=overviewTrendSvg();
   const trendNote=trendArr().length;
   const mask=v=>hidden?'****':v;
@@ -3301,7 +3301,7 @@ function renderTrendSection(){
   const estPct=weightedEstChg();
   const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
-  const scopeLabel=currentScope==='all'?'全量':(curAccount||'');
+  const scopeLabel=currentScope==='all'?'全部':(curAccount||'');
   const updLine=lastSyncLabel();
   const mask=v=>hidden?'****':v;
   box.innerHTML=`
@@ -7405,7 +7405,7 @@ function renderSyncCfg(){
               <button class="ap-sheet-opt" data-s="本人账户" onclick="pickScope(this.getAttribute('data-s'))">本人账户</button>
               <button class="ap-sheet-opt" data-s="代管账户" onclick="pickScope(this.getAttribute('data-s'))">代管账户</button>
               <button class="ap-sheet-opt" data-s="投资账户" onclick="pickScope(this.getAttribute('data-s'))">投资账户</button>
-              <button class="ap-sheet-opt" data-s="all" onclick="pickScope(this.getAttribute('data-s'))">全量</button>
+              <button class="ap-sheet-opt" data-s="all" onclick="pickScope(this.getAttribute('data-s'))">全部</button>
             </div>
             <div class="ap-sheet-cancel" onclick="closeScopeSheet()"><button>取消</button></div>
           </div>
@@ -7968,7 +7968,7 @@ function renderSyncCfg(){
   };
   window.openScopeSheet=function(){ var m=document.getElementById('scopeSheetMask'); if(!m) return; var opts=m.querySelectorAll('.ap-sheet-opt'); Array.prototype.forEach.call(opts,function(o){ o.classList.toggle('selected', o.getAttribute('data-s')===scopeAcc); }); m.classList.add('show'); };
   window.closeScopeSheet=function(){ var m=document.getElementById('scopeSheetMask'); if(m) m.classList.remove('show'); };
-  window.pickScope=function(sd){ try{ setScopeAcc(sd); }catch(e){} var v=document.getElementById('scopeVal'); if(v) v.textContent=(sd==='all'?'全量':sd); closeScopeSheet(); };
+  window.pickScope=function(sd){ try{ setScopeAcc(sd); }catch(e){} var v=document.getElementById('scopeVal'); if(v) v.textContent=(sd==='all'?'全部':sd); closeScopeSheet(); };
   window.renderSettings=function(){ try{
     var t=localStorage.getItem('ft_theme')||'system';
     var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-t')||'')===t); }); }
@@ -7980,7 +7980,7 @@ function renderSyncCfg(){
     var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(b){ b.classList.toggle('on', (b.getAttribute('data-s')||'')===scopeAcc); }); }
     var ar=document.getElementById('smAutoRefresh'); if(ar){ try{ ar.checked = localStorage.getItem('ft_autorefresh')!=='0'; }catch(e){ ar.checked=true; } }
     var lo=document.getElementById('lockOn'); if(lo){ try{ var _la=(localStorage.getItem('ft_lock_on')==='1' && !!localStorage.getItem('ft_lock_pw')); lo.checked=_la; var _lr=document.getElementById('lockSetRow'); if(_lr) _lr.style.display=_la?'':'none'; if(typeof refreshLockForm==='function') refreshLockForm(); var _lof=document.getElementById('lockOffRow'); if(_lof) _lof.style.display='none'; }catch(e){ lo.checked=false; } }
-    var sv=document.getElementById('scopeVal'); if(sv) sv.textContent = (scopeAcc==='all'?'全量':scopeAcc);
+    var sv=document.getElementById('scopeVal'); if(sv) sv.textContent = (scopeAcc==='all'?'全部':scopeAcc);
     var dtSeg=document.getElementById('defaultTimeSeg'); if(dtSeg){ var dv=(function(){try{return localStorage.getItem('ft_default_time')||'1500';}catch(e){return '1500';}})(); Array.prototype.forEach.call(dtSeg.querySelectorAll('button'), function(b){ b.classList.toggle('on', b.getAttribute('data-v')===dv); }); }
     var cs=document.getElementById('smCacheSize'); if(cs){ try{ var keys=['ft_data','ft_vault','ft_scope','ft_theme','ft_accent','ft_autorefresh']; var bytes=0; keys.forEach(function(k){ var v=localStorage.getItem(k); if(v) bytes+=v.length; }); cs.textContent='约 '+(bytes<1024?bytes+' B':(bytes/1024).toFixed(0)+' KB'); }catch(e){ cs.textContent='—'; } }
     var ver=document.getElementById('smVersion'); if(ver) ver.textContent='v'+SCHEMA_VERSION;

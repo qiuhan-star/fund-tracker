@@ -255,6 +255,31 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   }
 @media print { :root {--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}body {background:var(--surface);}.wrap {max-width:none;padding:0;}.more-menu,.main-tabs,.scope-bar,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask {display:none!important;}.card {box-shadow:none;border:1px solid #ddd;break-inside:avoid;}.hint {display:none!important;}td input,td select {border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}.mcard {border:1px solid #eee;}.sub {margin-bottom:6px;}#updated {display:none;}
    }
+/* ===== 资产总额仪表盘重构：1+2+2 全宽高密度（mobile-first，桌面自适应） ===== */
+.dash-wrap{ width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; }
+.dash-hero{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:18px; padding:16px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+.dash-hero-head{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--text-2); }
+.dash-eye{ background:none; border:none; cursor:pointer; font-size:15px; line-height:1; padding:2px 4px; color:var(--text-3); }
+.dash-hero-amt{ font-size:32px; font-weight:700; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); }
+.dash-hero-sub{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; color:var(--text-2); margin-top:4px; flex-wrap:wrap; }
+.dash-pills{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.dash-pill{ display:inline-flex; align-items:center; gap:5px; background:var(--surface-2); border:1px solid var(--border, rgba(0,0,0,.06)); border-radius:999px; padding:5px 10px; font-size:12px; color:var(--text-2); font-variant-numeric:tabular-nums; }
+.dash-pill b{ color:var(--text); }
+.dash-pill .dash-dot{ width:6px; height:6px; border-radius:50%; background:var(--text-3); display:inline-block; }
+.dash-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:14px; padding:14px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:108px; box-sizing:border-box; }
+.dash-head{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-2); }
+.dash-head svg{ width:14px; height:14px; }
+.dash-val{ font-size:20px; font-weight:700; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.01em; color:var(--text); }
+.dash-val.pos{ color:var(--up); }
+.dash-val.neg{ color:var(--down); }
+.dash-desc{ font-size:11px; color:var(--text-3); line-height:1.45; }
+.dash-desc.muted{ color:var(--text-3); }
+.dash-desc.warn{ color:var(--warn); }
+.dash-bar{ height:5px; border-radius:999px; background:var(--surface-2); overflow:hidden; margin:8px 0 4px; border:1px solid var(--border, rgba(0,0,0,.06)); display:flex; }
+.dash-bar .db-pos{ background:var(--up); height:100%; }
+.dash-bar .db-neg{ background:var(--down); height:100%; }
+.dash-bar .db-c{ background:var(--warn); height:100%; }
 /* 隐藏数字输入框原生微调箭头 */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }input[type="number"] { -moz-appearance: textfield; }/* 数值输入框内文字右对齐（与列对齐一致） */

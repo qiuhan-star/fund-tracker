@@ -274,7 +274,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .bk-skip { border:1px solid rgba(198,132,10,.5); background:transparent; color:#9a6a08; padding:6px 12px; border-radius:8px; font-size: 14px; cursor:pointer; font-family:inherit; }/* 平行宇宙复盘推演 */
   .scenario-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; }@media (max-width: 560px) { .scenario-grid { grid-template-columns:1fr; }  }
 .scenario-card .sub2 { font-size: 12px; color:var(--text-3); margin:2px 0 0; }.scenario-note { font-size: 14px; color:var(--text-2); margin:12px 0 0; line-height:1.6; background:var(--surface-2); border-radius:8px; padding:8px 10px; }/* ===== 设置弹窗 (sm-) ===== */
-.sm-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }.sm-mask.show { display:flex; }.sm-modal { background:var(--surface); color:var(--text); width:100%; max-width:560px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.sm-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.sm-head h2 { margin:0; font-size: 18px; font-weight:600; }.sm-x { border:none; background:var(--surface-2); color:var(--text-2); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size: 15px; line-height:1; }@media (hover: hover) { .sm-x:hover {  background:var(--border); color:var(--text);  } }
+.sm-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; }.sm-mask.show { display:flex; }.sm-modal { background:var(--surface); color:var(--text); width:100%; max-width:560px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.sm-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.sm-head h2 { margin:0; font-size: 18px; font-weight:600; }.sm-x { border:none; background:var(--surface-2); color:var(--text-2); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size: 15px; line-height:1; }@media (hover: hover) { .sm-x:hover {  background:var(--border); color:var(--text);  } }
 .sm-body { padding:14px 18px 22px; overflow:auto; }.sm-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; }.sm-card h3 { margin:0 0 12px; font-size: 14px; font-weight:600; }.sm-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--border-2); }.sm-row:first-of-type { border-top:none; padding-top:0; }.sm-rt { min-width:0; }.sm-rd { font-size: 14px; color:var(--text-3); margin-top:2px; line-height:1.4; }.sm-seg { display:inline-flex; background:rgba(120,120,128,.16); border:none; border-radius:9px; padding:2px; gap:2px; flex-wrap:wrap; flex-shrink:0; }.sm-seg button { border:none; background:transparent; color:var(--text-2); font-size:15px; padding:7px 13px; min-height:32px; border-radius:7px; cursor:pointer; font-family:inherit; white-space:nowrap; transition:color .18s,background .18s,box-shadow .18s; }.sm-seg button.on { background:var(--surface); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.12),0 0.5px 0 rgba(0,0,0,.04); }.sm-sw { display:flex; gap:12px; flex-shrink:0; padding:2px; }.sm-sw-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; position:relative; transition:transform .16s,border-color .16s; }@media (hover: hover) { .sm-sw-dot:hover { transform:scale(1.08); } }.sm-sw-dot::after { content:"\2713"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; opacity:0; transform:scale(.6); transition:opacity .16s,transform .16s; text-shadow:0 1px 2px rgba(0,0,0,.3); }.sm-sw-dot.on { transform:scale(1.14); border-color:rgba(255,255,255,.9); }.sm-sw-dot.on::after { opacity:1; transform:scale(1); }
 .sm-sw-dot.on { outline-color:var(--text); }.sm-switch { position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0; }.sm-switch input { opacity:0; width:0; height:0; }.sm-slider { position:absolute; inset:0; background:#c4c9d2; border-radius:999px; transition:.2s; cursor:pointer; }.sm-slider:before { content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }.sm-switch input:checked + .sm-slider { background:var(--accent); }.sm-switch input:checked + .sm-slider:before { transform:translateX(19px); }.sm-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.nf-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }.nf-field > label { font-size: 14px; color:var(--text-2); font-weight:500; }.nf-field input, .nf-field select { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface); color:var(--text); font-size: 16px; font-family:inherit; }.nf-field input:focus, .nf-field select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }.nf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }/* 数值输入：数值仍右对齐，占位文字统一靠左 */
 input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交易：更多选项折叠 */
@@ -1873,7 +1873,21 @@ function showQuotaBanner(){
   b.classList.add('show');
 }
 function dismissQuotaBar(){ const b=document.getElementById('quotaBar'); if(b) b.classList.remove('show'); }
-function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent); if(isSafari){ const w=window.open(url,'_blank'); if(!w){ try{ if(navigator.clipboard) navigator.clipboard.writeText(url); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); } } else { const a=document.createElement('a'); a.href=url; a.download='fund-data-'+ts+'.json'; document.body.appendChild(a); try{ a.click(); }catch(e){} document.body.removeChild(a); } setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, isSafari?60000:3000); document.getElementById('updated').textContent='已保存并下载存档 '+ts; toast('已保存并下载存档'); }
+// 统一的下载助手：桌面端直接下载；iOS Safari 忽略 download 属性，会改为打开文件，
+// 用户再点底部「分享」→「存储到文件」即可保存。不再用 window.open(blob)（iOS 上常被拦截/打不开）。
+function ftDownload(blob, filename, okMsg, iosMsg){
+  try{
+    var url=URL.createObjectURL(blob);
+    var isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    var a=document.createElement('a'); a.href=url; if(filename) a.download=filename;
+    document.body.appendChild(a);
+    try{ a.click(); }catch(e){}
+    setTimeout(function(){ try{ if(a.parentNode) a.parentNode.removeChild(a); }catch(e){} }, 120);
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 60000);
+    toast(isSafari ? (iosMsg||'已打开文件，点底部「分享」→「存储到文件」保存') : (okMsg||'已导出'));
+  }catch(e){ toast('导出失败：'+(e&&e.message?e.message:e)); }
+}
+function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); const blob=new Blob([JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots},null,2)],{type:'application/json'}); ftDownload(blob,'fund-data-'+ts+'.json','已保存并下载存档'); document.getElementById('updated').textContent='已保存并下载存档 '+ts; }
 
 // ---------- 设置弹窗（逻辑见 openSettings / closeSettings / renderSettings，位于文件末尾 <script>） ----------
 
@@ -3843,7 +3857,7 @@ function reviewCancel(){ reviewEditing=null; reviewDraft=null; reviewSheetClose(
 function reviewDel(id){ if(!confirm('确定删除这条复盘笔记？')) return; reviewNotes=reviewNotes.filter(x=>x.id!==id); reviewSave(); reviewRender(reviewCurFund); }
 function reviewFill(id){ const e=document.getElementById('rvOf'+id); if(!e) return; e.innerHTML='<div class="rv-of"><label><input type="radio" name="rvh'+id+'" value="1"> 兑现了</label><label><input type="radio" name="rvh'+id+'" value="0"> 没兑现</label><textarea id="rvOn'+id+'" placeholder="复盘结论：当时判断对在哪/错在哪，下次怎么改"></textarea><button class="btn tiny" onclick="reviewSaveOutcome('+id+')">保存回看</button></div>'; }
 function reviewSaveOutcome(id){ const n=reviewNotes.find(x=>x.id===id); if(!n) return; const hit=document.querySelector('input[name="rvh'+id+'"]:checked'); const note=(document.getElementById('rvOn'+id).value||'').trim(); n.outcome={hit:!!(hit&&hit.value==='1'),note}; reviewSave(); reviewRender(reviewCurFund); }
-function reviewDownload(name,text,type){ const b=new Blob([text],{type:type||'text/plain;charset=utf-8'}); const u=URL.createObjectURL(b); const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent); if(isSafari){ const w=window.open(u,'_blank'); if(!w){ try{ if(navigator.clipboard) navigator.clipboard.writeText(u); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); } } else { const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); try{ a.click(); }catch(e){} a.remove(); } setTimeout(function(){URL.revokeObjectURL(u);},isSafari?60000:1000); }
+function reviewDownload(name,text,type){ const b=new Blob([text],{type:type||'text/plain;charset=utf-8'}); ftDownload(b,name,'已导出 '+name,'已打开文件，点底部「分享」→「存储到文件」保存'); }
 function reviewExportMD(){
   if(!reviewNotes.length){ alert('还没有笔记可导出'); return; }
   let md='# 个人复盘 & 调仓笔记\n\n> 导出时间 '+new Date().toLocaleString('zh-CN')+'\n\n';
@@ -5738,20 +5752,10 @@ function exportJSON(){
     var obj={schemaVersion:SCHEMA_VERSION, updatedAt:new Date().toISOString(), snaps:snaps, trades:trades, navCache:navCache, daily_snapshots:dailySnapshots};
     if(Object.keys(local).length) obj._local=local;
     var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
-    var url=URL.createObjectURL(blob);
-    var isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    if(isSafari){
-      // Safari 不支持 Blob + <a download> 程序化下载，改在新标签页打开由用户保存
-      var w=window.open(url,'_blank');
-      if(!w){ try{ if(navigator.clipboard) navigator.clipboard.writeText(url); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); }
-    } else {
-      var a=document.createElement('a'); a.href=url; a.download='fund-data.json';
-      document.body.appendChild(a); try{ a.click(); }catch(e){} document.body.removeChild(a);
-    }
-    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, isSafari?60000:3000);
+    var extra=(Object.keys(local).length?('（含 '+Object.keys(local).length+' 项附加内容）'):'');
+    ftDownload(blob,'fund-data.json','已导出 fund-data.json'+extra,'已打开文件，点底部「分享」→「存储到文件」保存'+extra);
     try{ localStorage.setItem('ft_last_export', new Date().toISOString().slice(0,10)); }catch(e){}
     mask.remove();
-    toast(isSafari ? ('已在新的标签页打开 JSON，点右上角分享 → 存储到文件 即可保存'+(Object.keys(local).length?('（含 '+Object.keys(local).length+' 项附加内容）'):'')) : ('已导出 fund-data.json'+(Object.keys(local).length?('（含 '+Object.keys(local).length+' 项附加内容）'):'')));
   };
 }
 
@@ -5781,14 +5785,9 @@ function exportHoldingsCSV(){
   }
   if(!_allRaw.length && !liq.length){ toast('暂无可导出的数据'); return; }
   const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const isSafariC=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  if(isSafariC){ var wC=window.open(url,'_blank'); if(!wC){ try{ if(navigator.clipboard) navigator.clipboard.writeText(url); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); } }
-  else { const aC=document.createElement('a'); aC.href=url; aC.download='fund-holdings.csv'; document.body.appendChild(aC); try{ aC.click(); }catch(e){} document.body.removeChild(aC); }
-  setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, isSafariC?60000:3000);
-  toast(isSafariC?'已在新的标签页打开 CSV，点右上角分享 → 存储到文件 即可保存':'已导出 持仓+清仓 fund-holdings.csv（含全部账户）');
+  ftDownload(blob,'fund-holdings.csv','已导出 持仓+清仓 fund-holdings.csv（含全部账户）','已打开文件，点底部「分享」→「存储到文件」保存');
 }
-function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n说明：删除本说明行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投；费用可留空）\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const isSafariT=/^((?!chrome|android).)*safari/i.test(navigator.userAgent); if(isSafariT){ var wT=window.open(url,'_blank'); if(!wT){ try{ if(navigator.clipboard) navigator.clipboard.writeText(url); }catch(e){} toast('浏览器拦截了新标签页，已复制数据链接，请手动打开保存'); } } else { const aT=document.createElement('a'); aT.href=url; aT.download='fund-import-template.csv'; document.body.appendChild(aT); try{ aT.click(); }catch(e){} document.body.removeChild(aT); } setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, isSafariT?60000:3000); toast(isSafariT?'已在新的标签页打开 CSV 模板，点右上角分享 → 存储到文件 即可保存':'已下载 CSV 模板（仅含表头，填真实交易即可）'); }
+function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用\n说明：删除本说明行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投；费用可留空）\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); ftDownload(blob,'fund-import-template.csv','已下载 CSV 模板（仅含表头，填真实交易即可）','已打开文件，点底部「分享」→「存储到文件」保存'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();

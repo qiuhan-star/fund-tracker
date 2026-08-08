@@ -637,6 +637,30 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     border-radius: 12px !important;
   }
 
+  /* 移动端持仓紧凑表格：4 列同屏（名称/涨跌幅/当日收益/持有收益），不横滑 */
+  .home-ctable-wrap{ background:var(--surface); border-radius:12px; overflow:hidden; margin:0; }
+  .home-ctable{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+  .home-ctable th{ padding:9px 4px 7px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; white-space:nowrap; cursor:pointer; user-select:none; }
+  .home-ctable th:first-child{ text-align:left; padding-left:12px; width:38%; }
+  .home-ctable th:nth-child(2){ width:18%; }
+  .home-ctable th:nth-child(3){ width:22%; }
+  .home-ctable th:nth-child(4){ width:22%; padding-right:12px; }
+  .home-ctable th .sub{ font-weight:400; display:block; font-size:10px; margin-top:1px; }
+  .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }
+  .home-ctable th.sort-on{ color:var(--accent); }
+  .home-ctable th.sort-on .arrow{ color:var(--accent); }
+  .home-ctable td{ padding:9px 4px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; }
+  .home-ctable td:first-child{ text-align:left; padding-left:12px; }
+  .home-ctable td:last-child{ padding-right:12px; }
+  .home-ctable tbody tr{ cursor:pointer; }
+  .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
+  .home-ctable .cname{ font-size:12.5px; font-weight:600; color:var(--text); line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .home-ctable .csub{ font-size:10.5px; color:var(--text-3); margin-top:4px; display:flex; gap:4px; align-items:center; flex-wrap:wrap; line-height:1.2; }
+  .home-ctable .csub span{ white-space:nowrap; }
+  .home-ctable .tag-code{ color:var(--text-3); }
+  .home-ctable .cnum{ font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.2; }
+  .home-ctable .cnum.zero{ color:var(--text-3); font-weight:500; }
+  .home-ctable .pos{ color:var(--up); } .home-ctable .neg{ color:var(--down); }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table {
     display: block;
@@ -2648,7 +2672,12 @@ function renderHomeList(){
     if(obsHtml) fillWatchQuotes();
     return;
   }
-  box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
+  const isMobile=window.matchMedia('(max-width:640px)').matches;
+  if(isMobile && holdGroupBy==='none'){
+    box.innerHTML=renderHomeMobileTable(list)+obsHtml;
+  } else {
+    box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
+  }
   syncColSetChecks();
 
   fillWatchQuotes();
@@ -2715,6 +2744,38 @@ function renderHomeDense(list, showHead){
     ${(showHead===false)?'':'<thead><tr>'+headHtml+'</tr></thead>'}
     <tbody>${rows}</tbody>
   </table>`;
+}
+
+function renderHomeMobileTable(list){
+  const arrow=k=> holdSort===k ? (holdSortDir==='asc'?'▲':'▼') : '▼';
+  const hd=(k,label,sub)=>'<th class="'+(holdSort===k?'sort-on':'')+'" onclick="setSort(\''+k+'\')">'+label+(sub?'<span class="sub">'+sub+'</span>':'')+'<span class="arrow">'+arrow(k)+'</span></th>';
+  const head='<tr>'
+    + '<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>'
+    + hd('day','涨跌幅')
+    + hd('ret','当日收益','08-08')
+    + hd('hold','持有收益','08-08')
+    + '</tr>';
+  const rows=list.map(f=>{
+    const nc=navCache[f.name]||{};
+    const code=syncCode(f.name);
+    const ownerTag=(currentScope==='all'&&accOwner(f.account)!=='本人'&&accOwner(f.account)!==f.account)?'<span class="tag tag-owner">'+accOwner(f.account)+'</span>':'';
+    const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
+    const _chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null);
+    const _day=(nc.navChg!=null)?nc.navChg:null;
+    let dayHtml = (_day!=null) ? '<div class="cnum '+(_day>=0?'pos':'neg')+'">'+( _day>=0?'+':'')+_day.toFixed(2)+'%</div>' : '<div class="cnum zero">—</div>';
+    let retHtml;
+    if(_chg!=null && f.mv!=null){ const _amt=f.mv-f.mv/(1+_chg/100); retHtml='<div class="cnum '+(_amt>=0?'pos':'neg')+'">'+( _amt>=0?'+':'')+M(_amt)+'</div>'; }
+    else retHtml='<div class="cnum zero">—</div>';
+    let holdHtml = (f.profit!=null) ? '<div class="cnum '+(f.profit>=0?'pos':'neg')+'">'+(f.profit>=0?'+':'')+M(f.profit)+'</div>' : '<div class="cnum zero">—</div>';
+    const subParts=[ (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, (code?'<span class="tag-code">#'+code+'</span>':''), (nc.nav!=null?'<span class="tag-code">'+navFmt(nc.nav)+'</span>':''), (f.mv!=null?'<span class="tag-code">已更新 ¥'+M(f.mv)+'</span>':''), ((f.account&&effAccount(f.account)!==effAccount('本人账户'))?'<span class="tag">'+effAccount(f.account)+'</span>':''), ownerTag ].filter(Boolean).join('');
+    return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'
+      + '<td><div class="cname">'+esc(f.name)+'</div><div class="csub">'+subParts+'</div></td>'
+      + '<td>'+dayHtml+'</td>'
+      + '<td>'+retHtml+'</td>'
+      + '<td>'+holdHtml+'</td>'
+      + '</tr>';
+  }).join('');
+  return '<div class="home-ctable-wrap"><table class="home-ctable"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 // ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------

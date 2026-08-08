@@ -7043,28 +7043,16 @@ function renderSyncCfg(){
               <div class="left"><div class="title">启用应用锁</div><div class="desc">打开应用或切到后台再回来时需输入密码</div></div>
               <div class="right"><label class="sm-switch"><input type="checkbox" id="lockOn" onchange="onLockToggle()"><span class="sm-slider"></span></label></div>
             </div>
-            <div class="panel-row stacked" id="lockSetRow" style="display:none">
-              <div class="left"><div class="title">设置解锁密码</div></div>
-              <div class="right" style="width:100%">
-                <input id="lockPw1" type="password" class="settings-input" placeholder="输入密码（至少 4 位）" autocomplete="off">
-                <input id="lockPw2" type="password" class="settings-input" placeholder="再次确认" autocomplete="off" style="margin-top:8px">
-                <button type="button" class="sm-ghost" onclick="saveLockPassword()" style="margin-top:8px">保存密码</button>
+            <div class="panel-row stacked lock-form" id="lockSetRow" style="display:none">
+              <div class="right lock-form-fields">
+                <input id="lockPw1" type="password" class="settings-input" placeholder="请输入密码（至少 4 位）" autocomplete="off">
+                <input id="lockPw2" type="password" class="settings-input" placeholder="请再次确认密码" autocomplete="off">
+                <button type="button" class="sm-ghost lock-save-btn" onclick="saveLockPassword()">保存密码</button>
               </div>
             </div>
           </div>
 
-          <div class="nset-label">危险区域</div>
-          <div class="nset-card">
-            <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()">
-              <div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div>
-              <div class="right"><span class="item-arrow">›</span></div>
-            </div>
-            <div class="panel-row" style="cursor:pointer" onclick="resetApp()">
-              <div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div>
-              <div class="right"><span class="item-arrow">›</span></div>
-            </div>
-          </div>
-          <p class="panel-note">应用锁已接入：启用并设置密码后，每次打开应用或切到后台再回来都需输入密码（面容 ID / 指纹解锁暂未接入）。锁密码仅保存在本机，不会进入云同步或 JSON 备份。</p>
+          <p class="panel-note">应用锁说明：启用并设置密码后，每次打开应用或切到后台再返回时需输入密码。面容 ID / 指纹解锁暂未接入。锁密码仅保存在本机，不会进入云同步或 JSON 备份。</p>
         </section>
 
         <!-- 关于 -->

@@ -54,17 +54,17 @@ function ensureECharts(cb){
     --text:#1f2329; --text-2:#5a6270; --text-3:#8a8f99;
     --accent:#2f6fed; --accent-strong:#2560d4; --accent-on:#1677ff;
     --accent-text:#2f6bd6; --accent-soft:#eaf1fd;
-    --up:#c0392b; --down:#27ae60; --danger:#e24b4b; --warn:#e0a800;
+    --up:#e5453b; --down:#15a86a; --danger:#e24b4b; --warn:#e0a800;
     --up-bg:#fdeaea; --down-bg:#eafaf0; --warn-bg:#fffdf5; --good-bg:#f5fdf7; --danger-bg:#fdf5f5;
     --axis:#dddddd; --grid:rgba(0,0,0,.05); --shadow:0 6px 20px rgba(0,0,0,.1);
-    --card:#fff; --input:#fff;
+    --card:#fff; --input:#fff; --cname-fs:13.5px; --cname-fw:600; --td-pad:10px; --tag-fs:9.5px; --tag-radius:7px;
   }[data-theme="dark"] {
     --bg:#0b0f17; --surface:#141b29; --surface-2:#1a2233; --surface-3:#1e2633;
     --border:#243047; --border-2:#1c2434; --border-3:#222c40; --border-strong:#31405c;
     --text:#e8eef7; --text-2:#9fb0c7; --text-3:#6b7c97;
     --accent:#3b82f6; --accent-strong:#2f6bed; --accent-on:#4f8dff;
     --accent-text:#6ea8ff; --accent-soft:#16233f;
-    --up:#f6465d; --down:#0ecb81; --danger:#ff5d6c; --warn:#e0a83b;
+    --up:#e5453b; --down:#15a86a; --danger:#ff5d6c; --warn:#e0a83b;
     --up-bg:rgba(246,70,93,.15); --down-bg:rgba(14,203,129,.15); --warn-bg:rgba(224,168,59,.12); --good-bg:rgba(14,203,129,.12); --danger-bg:rgba(255,93,108,.12);
     --axis:#31405c; --grid:rgba(255,255,255,.06); --shadow:0 6px 22px rgba(0,0,0,.5);
     --card:var(--surface); --input:var(--surface-3);
@@ -753,20 +753,20 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }
   .home-ctable th.sort-on{ color:var(--accent); font-weight:700; }
   .home-ctable th.sort-on .arrow{ color:var(--accent); }
-  .home-ctable td{ padding:14px 10px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; white-space:nowrap; overflow:hidden; }
+  .home-ctable td{ padding:var(--td-pad) 10px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; white-space:nowrap; overflow:hidden; }
   .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); width:148px; min-width:148px; max-width:148px; }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
-  .home-ctable .cname{ font-size:14px; font-weight:700; color:var(--text); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%; }
+  .home-ctable .cname{ font-size:var(--cname-fs); font-weight:var(--cname-fw); color:var(--text); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%; }
   .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }
   .home-ctable .csub span{ white-space:nowrap; }
   .home-ctable .tag-code{ color:var(--text-3); font-size:10px; font-variant-numeric:tabular-nums; }
-  .home-ctable .csub .tag{ font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; }
+  .home-ctable .csub .tag{ font-size:var(--tag-fs); padding:2px 7px; border-radius:var(--tag-radius); font-weight:600; }
   .home-ctable .cnum{ font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.25; white-space:nowrap; width:71px; overflow:hidden; }
   .home-ctable .cnum.zero{ color:var(--text-3); font-weight:500; }
   .home-ctable .pos{ color:var(--up); } .home-ctable .neg{ color:var(--down); }
   .home-ctable tbody tr:last-child td{ border-bottom:none; }
-  .home-ctable .a-streak{ font-size:10px; padding:2px 7px; border-radius:20px; background:var(--up-bg); color:var(--up); font-weight:600; white-space:nowrap; display:inline-flex; align-items:center; }
+  .home-ctable .a-streak{ font-size:var(--tag-fs); padding:2px 7px; border-radius:var(--tag-radius); background:var(--up-bg); color:var(--up); font-weight:600; white-space:nowrap; display:inline-flex; align-items:center; }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table {
     display: block;
@@ -3933,12 +3933,13 @@ function buildLiquidatedView(){
     const acc=ref.acc, name=ref.name;
     const tr=trades.filter(function(t){ return accOf(t)===acc && t.name===name; }).slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
     if(!tr.length) return;
-    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null, lots=[], sellFee=0, sellNavW=0, sellShW=0;
+    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null, lots=[], sellFee=0, sellNavW=0, sellShW=0, lastNav=0;
     tr.forEach(function(t){
       const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
-      const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
-      if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } }
-      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }
+      let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
+      if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;   // 转换常不带净值 → 用最近买入净值近似（与持仓视图一致）
+      if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; }
+      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); const sellPx=nav>0?nav:lastNav; realized+=(sellPx-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }
       else if(ty==='dividend'){ div+=amt; if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }
       else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }
       else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }
@@ -3947,8 +3948,16 @@ function buildLiquidatedView(){
       if(ty==='sell'){ if(!lastSell||t.date>lastSell) lastSell=t.date; if(!firstBuy) firstBuy=t.date; }
     });
     const EPS=1e-6;
+    const hasSell = tr.some(function(t){ return t.type==='sell' || t.type==='convert_out'; });
+    // 清仓修正（与持仓视图一致）：转换转出无净值时已在上面用近似净值减份额；若仍残留极小份额（浮点/净值波动），或"已赎回金额≥90%总投入"（稳健判定，抗净值漂移），均视为已清仓
+    if(hasSell && shares>EPS){
+      const snapLiq = snaps.find(function(s){ return (s.type||'fund')!=='stock' && accOf(s)===acc && s.name===name; });
+      const _nav = navCache[name] ? navCache[name].nav : (snapLiq&&snapLiq.mv&&snapLiq.shares? snapLiq.mv/snapLiq.shares : 0);
+      const _rmv = _nav>0 ? shares*_nav : 0;
+      if(_rmv < 1 || (shares < 1 && _rmv <= 0)) shares=0;
+    }
     if(totalSell<=0) return;     // 没卖过 → 不算清仓
-    if(shares>EPS) return;       // 仍持有 → 不算清仓
+    if(shares>EPS && !(totalBuy>0 && totalSell>=0.9*totalBuy)) return;   // 仍持有且未达"赎回≥90%" → 不算清仓
     const avgSellNav = sellShW>0 ? sellNavW/sellShW : 0;
     const cat=guessCat(name);
     const days=(firstBuy&&lastSell)?Math.max(0,Math.round((new Date(lastSell)-new Date(firstBuy))/864e5)):0;

@@ -1044,8 +1044,37 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   window.onLockToggle=function(){
     var el=document.getElementById('lockOn'); if(!el) return; var on=el.checked;
     var row=document.getElementById('lockSetRow');
-    if(on){ if(row) row.style.display=''; if(typeof toast==='function') toast('请设置解锁密码'); }
-    else { if(row) row.style.display='none'; try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){} }
+    var offRow=document.getElementById('lockOffRow');
+    if(on){
+      if(offRow) offRow.style.display='none';
+      if(row) row.style.display=''; if(typeof toast==='function') toast('请设置解锁密码');
+    } else {
+      var cur=null; try{ cur=localStorage.getItem('ft_lock_pw'); }catch(e){}
+      if(!cur){ if(row) row.style.display='none'; if(offRow) offRow.style.display='none'; try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){} return; }
+      // 关闭需验证当前密码：先保持开启态，弹出验证行
+      el.checked=true;
+      if(offRow){ offRow.style.display=''; var ip=document.getElementById('lockOffPw'); if(ip){ ip.value=''; if(ip.focus) ip.focus(); } var er=document.getElementById('lockOffErr'); if(er) er.style.display='none'; }
+    }
+  };
+  window.confirmLockOff=function(){
+    var ip=document.getElementById('lockOffPw'), er=document.getElementById('lockOffErr');
+    if(!ip) return; var v=ip.value; if(!v){ if(er){ er.textContent='请输入密码'; er.style.display=''; } return; }
+    window.hashPw(v).then(function(h){
+      var st=null; try{ st=localStorage.getItem('ft_lock_pw'); }catch(e){}
+      if(st && h===st){
+        try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){}
+        var offRow=document.getElementById('lockOffRow'); if(offRow) offRow.style.display='none';
+        var row=document.getElementById('lockSetRow'); if(row) row.style.display='none';
+        var el=document.getElementById('lockOn'); if(el) el.checked=false;
+        if(typeof toast==='function') toast('✅ 应用锁已关闭');
+      } else { if(er){ er.textContent='密码错误'; er.style.display=''; } ip.value=''; if(ip.focus) ip.focus(); }
+    });
+  };
+  window.cancelLockOff=function(){
+    var offRow=document.getElementById('lockOffRow'); if(offRow) offRow.style.display='none';
+    var er=document.getElementById('lockOffErr'); if(er) er.style.display='none';
+    var ip=document.getElementById('lockOffPw'); if(ip) ip.value='';
+    var el=document.getElementById('lockOn'); if(el) el.checked=true;
   };
   window.saveLockPassword=function(){
     var p1=document.getElementById('lockPw1'), p2=document.getElementById('lockPw2');

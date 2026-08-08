@@ -743,29 +743,30 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   }
 
   /* 移动端持仓表格：列可配置（跟随「≡ 列」开关）+ 列多时横向滚动；基金名列固定左侧 */
-  .home-ctable-wrap{ background:var(--surface); border-radius:12px; overflow:hidden; margin:0; }
+  .home-ctable-wrap{ background:var(--surface); margin:0; }
   .home-ctable-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .home-ctable{ border-collapse:collapse; font-size:12px; min-width:100%; table-layout:fixed; }
-  .home-ctable th{ padding:9px 8px 7px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; white-space:nowrap; cursor:pointer; user-select:none; overflow:hidden; }
-  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); width:124px; min-width:124px; max-width:124px; }
+  .home-ctable{ border-collapse:collapse; font-size:13px; min-width:100%; table-layout:fixed; }
+  .home-ctable th{ padding:10px 10px 8px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; letter-spacing:.3px; white-space:nowrap; cursor:pointer; user-select:none; overflow:hidden; }
+  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); width:148px; min-width:148px; max-width:148px; }
   .home-ctable thead th.th-col{ cursor:default; width:34px; }
   .home-ctable th .sub{ font-weight:400; display:block; font-size:10px; margin-top:1px; }
   .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }
   .home-ctable th.sort-on{ color:var(--accent); font-weight:700; }
   .home-ctable th.sort-on .arrow{ color:var(--accent); }
-  .home-ctable td{ padding:9px 8px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; white-space:nowrap; overflow:hidden; }
-  .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); width:124px; min-width:124px; max-width:124px; }
+  .home-ctable td{ padding:14px 10px; border-bottom:1px solid var(--border); text-align:right; vertical-align:top; white-space:nowrap; overflow:hidden; }
+  .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); width:148px; min-width:148px; max-width:148px; }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
-  .home-ctable .cname{ font-size:14px; font-weight:600; color:var(--text); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%; }
-  .home-ctable .csub{ font-size:10px; color:var(--text-3); margin-top:4px; display:flex; gap:4px; align-items:center; flex-wrap:wrap; line-height:1.2; }
+  .home-ctable .cname{ font-size:15px; font-weight:700; color:var(--text); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:100%; }
+  .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }
   .home-ctable .csub span{ white-space:nowrap; }
-  .home-ctable .tag-code{ color:var(--text-3); font-size:9px; }
-  .home-ctable .csub .tag{ font-size:9px; padding:1px 5px; border-radius:4px; }
-  .home-ctable .cnum{ font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.2; white-space:nowrap; width:60px; overflow:hidden; }
+  .home-ctable .tag-code{ color:var(--text-3); font-size:11px; font-variant-numeric:tabular-nums; }
+  .home-ctable .csub .tag{ font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; }
+  .home-ctable .cnum{ font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.25; white-space:nowrap; width:71px; overflow:hidden; }
   .home-ctable .cnum.zero{ color:var(--text-3); font-weight:500; }
   .home-ctable .pos{ color:var(--up); } .home-ctable .neg{ color:var(--down); }
-  .home-ctable .a-streak{ font-size:9px; padding:1px 5px; border-radius:4px; background:var(--up-bg); color:var(--up); font-weight:600; white-space:nowrap; display:inline-flex; align-items:center; }
+  .home-ctable tbody tr:last-child td{ border-bottom:none; }
+  .home-ctable .a-streak{ font-size:10px; padding:2px 7px; border-radius:20px; background:var(--up-bg); color:var(--up); font-weight:600; white-space:nowrap; display:inline-flex; align-items:center; }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table {
     display: block;
@@ -3103,7 +3104,7 @@ function renderHomeMobileTable(list){
   colOrder.forEach(k=>{ if(colVis[k] && !primary.includes(k)) cols.push({key:k,label:COL_DEFS[k]}); });
   const arrow=k=> holdSort===k ? (holdSortDir==='asc'?'▲':'▼') : '';
   const nameTh='<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>';
-  const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" style="width:60px" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
+  const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" style="width:71px" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
   const head='<tr>'+nameTh+cols.slice(1).map(c=>numTh(c.key,c.label)).join('')+'<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>'+'</tr>';
   const navDate=fd=>{ const nc=navCache[fd.name]||{}; return (nc.date!=null)?String(nc.date).slice(5):''; };
   const cellOf=(fd,key)=>{
@@ -6557,6 +6558,15 @@ function importMyExtras(){
   document.body.appendChild(inp); inp.click();
 }
 
+function applyBannerOffset(){
+  try{
+    var wrap=document.querySelector('.wrap'); if(!wrap) return;
+    var fw=document.getElementById('fileWarn'), sw=document.getElementById('sampleWarn');
+    var h=0; if(fw) h+=fw.offsetHeight; if(sw) h+=sw.offsetHeight;
+    wrap.style.paddingTop='calc(20px + env(safe-area-inset-top) + '+h+'px)';
+  }catch(e){}
+}
+window.addEventListener('resize', applyBannerOffset);
 function refreshSampleBanner(){
   try{
     var dismiss=+(localStorage.getItem('ft_sample_dismiss')||0);
@@ -6568,9 +6578,10 @@ function refreshSampleBanner(){
       el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9990;background:#fff7e6;border-bottom:1px solid #ffd591;color:#874d00;padding:9px 14px;font-size: 14px;line-height:1.6;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center';
       el.innerHTML='⚠️ <b>当前显示的是内置示例数据，不是你的真实持仓。</b> <button id="sampleImportBtn" style="background:#fa8c16;color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size: 14px;margin-left:4px">导入本人账户数据</button> <button id="sampleDismissBtn" style="background:transparent;color:#874d00;border:1px solid #ffd591;border-radius:6px;padding:4px 10px;cursor:pointer;font-size: 14px;margin-left:4px">知道了</button>';
       document.body.appendChild(el);
-      document.getElementById('sampleImportBtn').onclick=function(){ el.remove(); importJSON(); };
-      document.getElementById('sampleDismissBtn').onclick=function(){ try{ localStorage.setItem('ft_sample_dismiss', Date.now()+86400000*7); }catch(e){} el.remove(); };
+      document.getElementById('sampleImportBtn').onclick=function(){ el.remove(); applyBannerOffset(); importJSON(); };
+      document.getElementById('sampleDismissBtn').onclick=function(){ try{ localStorage.setItem('ft_sample_dismiss', Date.now()+86400000*7); }catch(e){} el.remove(); applyBannerOffset(); };
       var fw=document.getElementById('fileWarn'); if(fw){ el.style.top=fw.offsetHeight+'px'; }
+      applyBannerOffset();
     }
   }catch(e){}
 }
@@ -7360,6 +7371,7 @@ function renderSyncCfg(){
             +   '<a class="fw-btn primary" href="https://fund-tracker-chi.vercel.app" target="_blank" rel="noopener">前往线上版 ↗</a>'
             + '</div>';
           document.body.insertBefore(b, document.body.firstChild);
+          applyBannerOffset();
         }
       }catch(e){}
     },150);

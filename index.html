@@ -476,6 +476,28 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sm-irow .txt { flex:1; min-width:0; }
   .sm-irow .txt .t { font-size:17px; color:var(--text); }
   .sm-irow .chev { color:var(--text-3); font-size:20px; flex-shrink:0; }
+  /* v3 移动首页：居中个人资料卡 */
+  .sm-profile { text-align:center; padding:14px 16px 18px; cursor:pointer; }
+  .sm-profile:active { opacity:.85; }
+  .sm-profile-av { width:84px; height:84px; border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto; box-shadow:0 4px 16px rgba(0,0,0,.10); border:3px solid var(--surface); overflow:hidden; }
+  .sm-profile-av img { width:100%; height:100%; object-fit:cover; }
+  .sm-profile-name { font-size:21px; font-weight:700; margin:12px 0 7px; color:var(--text); }
+  .sm-profile-tag { display:inline-block; font-size:12px; font-weight:600; color:var(--accent); background:var(--accent-soft); padding:4px 11px; border-radius:13px; }
+  /* v3 分组卡片（统一线性图标） */
+  .sm-gtitle { font-size:12px; color:var(--text-3); font-weight:600; padding:0 8px 7px; letter-spacing:.02em; }
+  .smg-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .smg-row { display:flex; align-items:center; gap:12px; padding:13px 14px; cursor:pointer; position:relative; }
+  .smg-row:active { background:var(--surface-2); }
+  .smg-row+.smg-row::before { content:''; position:absolute; top:0; left:54px; right:0; height:1px; background:var(--border-2); }
+  .smg-ic { width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .smg-ic svg { width:18px; height:18px; display:block; }
+  .smg-txt { flex:1; min-width:0; }
+  .smg-t { font-size:16px; color:var(--text); }
+  .smg-d { font-size:13px; color:var(--text-3); margin-top:2px; }
+  .smg-trail { font-size:14px; color:var(--text-3); display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  .smg-chev { color:var(--text-3); font-size:20px; }
+  .smg-btn { color:var(--accent); font-size:14px; font-weight:500; background:none; border:none; padding:4px 6px; border-radius:6px; cursor:pointer; font-family:inherit; }
+  .smg-row.danger .smg-t { color:#ff3b30; }
 
   /* 返回栏（二级页顶部） */
   .sm-mobile-bar { display:none; align-items:center; height:52px; padding:0 6px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:3; }
@@ -618,14 +640,17 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     height: 180px !important;
   }
 
-  /* 9. 市场风向：指数卡片固定双列、增大点击区 */
-  .idx-list { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  .idx-chip { padding: 10px 12px !important; min-height: 78px !important; }
-  .idx-name { font-size: 14px !important; }
+  /* 9. 市场风向：指数卡片改为横向滚动（修复 3 卡右侧留白 + 信息密度低） */
+  .idx-list { display: flex !important; flex-direction: row; align-items: flex-start; gap: 8px !important; overflow-x: auto !important; padding: 4px 4px 8px !important; margin: 0 !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .idx-list::-webkit-scrollbar { display: none; }
+  .idx-chip { flex: 0 0 148px !important; padding: 9px 11px !important; min-height: 0 !important; box-sizing: border-box; }
+  .idx-name { font-size: 13px !important; }
   .idx-val { font-size: 15px !important; }
-  .idx-pct { font-size: 14px !important; }
-  .idx-mktstatus { font-size: 12px !important; }
-  .idx-grp-h { font-size: 14px !important; margin-bottom: 8px !important; }
+  .idx-pct { font-size: 12px !important; }
+  .idx-mktstatus { font-size: 11px !important; }
+  .idx-spark { margin-top: 4px !important; }
+  .idx-nospark { margin-top: 4px !important; font-size: 11px !important; }
+  .idx-grp-h { font-size: 13px !important; margin-bottom: 6px !important; }
   .idx-head-right { flex-wrap: wrap !important; gap: 6px !important; justify-content: flex-end !important; }
   .idx-toggle { padding: 5px 10px !important; font-size: 14px !important; }
 
@@ -6557,20 +6582,10 @@ function renderSyncCfg(){
         </div>
         <div class="sm-mobile-home" id="smMobileHome">
           <div class="sm-mobile-home-head"><h1>设置</h1><button class="sm-mobile-close" onclick="closeSettings()" aria-label="关闭">✕</button></div>
-          <div class="sm-ipcard" onclick="openProfile()">
-            <div class="avatar" id="smAvatar">Q</div>
-            <div class="pinfo"><div class="pn"><span id="smNick">QQa</span><span class="edithint">编辑</span></div><div class="ps" id="smTag">个人资料与账号 · 云同步已开启</div></div>
-            <span class="chev">›</span>
-          </div>
-          <div class="sm-statbar" id="smStatbar" onclick="cloudPush(true)">
-            <div class="sm-stat-ic">☁</div>
-            <div class="sm-stat-txt" id="smStatTxt">本地数据 · —</div>
-            <button type="button" class="sm-stat-btn" onclick="event.stopPropagation();cloudPush(true)">同步</button>
-          </div>
-          <div class="sm-privrow" onclick="toggleHidden()">
-            <div class="sm-priv-ic">🙈</div>
-            <div class="sm-priv-txt"><div class="t">资产隐蔽模式</div><div class="d" id="smPrivDsc">关闭 · 金额正常显示</div></div>
-            <span class="sm-priv-sw" id="privSw"><i></i></span>
+          <div class="sm-profile" onclick="openProfile()">
+            <div class="sm-profile-av" id="smAvatar">Q</div>
+            <div class="sm-profile-name" id="smNick">QQa</div>
+            <div class="sm-profile-tag" id="smTag">个人资料与账号</div>
           </div>
           <div id="smMobileGroups"></div>
           <div class="app-credit">
@@ -6934,6 +6949,8 @@ function renderSyncCfg(){
   window.uploadImg=function(){ var f=document.getElementById('profImgUp'); if(f) f.click(); };
   window.onImg=function(ev){ var file=ev.target.files&&ev.target.files[0]; if(!file) return; var r=new FileReader(); r.onload=function(){ var u=getUser(); u.img=r.result; u.avatar=null; setUser(u); var a=document.getElementById('profAv'); if(a) a.innerHTML='<img src="'+r.result+'" alt="">'; }; r.readAsDataURL(file); var m=document.getElementById('avMask'); if(m) m.classList.remove('show'); ev.target.value=''; };
   ['profMask','avMask'].forEach(function(id){ var m=document.getElementById(id); if(m) m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('show'); }); });
+  window.openFeedback=function(){ if(typeof toast==='function') toast('感谢反馈！欢迎到 GitHub 仓库提交 Issue 或发邮件交流 📮'); };
+  window.openRating=function(){ if(typeof toast==='function') toast('App 上架 App Store 后即可在此评分 ⭐'); };
 })();
 </script>
 
@@ -7176,19 +7193,45 @@ function renderSyncCfg(){
     {id:'about',color:'#8e8e93',icon:'__info__',title:'关于'}
   ];
   var SM_MOBILE_GROUPS=[['appearance','shortcuts'],['data','security'],['about']];
+    var SMG_ICONS={
+    cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 01-.5-7.97A5 5 0 0116 9.2 4 4 0 0117.5 18H7z"/></svg>',
+    eyeoff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7c-1.4.9-2.8 1.6-4.2 2.1"/><path d="M9.5 9.6a3 3 0 004.3 4.2"/><path d="M3 3l18 18"/></svg>',
+    palette:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18c1.5 0 2-1 2-2s-.5-1.5-.5-2.5.5-1.5.5-2.5-1-2-2-2-1.5 1-1.5 2 .5 1.5.5 2.5-.5 1.5-.5 2.5 1 2 2 2z"/></svg>',
+    cycle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>',
+    lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
+    download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>',
+    upload:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M7 13l5-5 5 5"/><path d="M5 3h14"/></svg>',
+    trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>',
+    chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L4 21l1.9-5.4A8 8 0 1121 12z"/></svg>',
+    info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>',
+    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>'
+  };
   window.renderMobileSettingsHome=function(){
     var host=document.getElementById('smMobileGroups'); if(!host) return;
+    var B={blue:'rgba(0,122,255,.14)',purple:'rgba(175,82,222,.14)',orange:'rgba(255,149,0,.14)',green:'rgba(52,199,89,.14)',red:'rgba(255,59,48,.14)',gray:'rgba(142,142,147,.16)',gold:'rgba(255,204,0,.18)'};
+    var F={blue:'#007aff',purple:'#af52de',orange:'#ff9500',green:'#34c759',red:'#ff3b30',gray:'#8e8e93',gold:'#d9a400'};
+    function group(t,rows){ return '<div class="sm-group"><div class="sm-gtitle">'+t+'</div><div class="smg-card">'+rows.join('')+'</div></div>'; }
+    function row(icon,c,t,d,trail,onclick,danger){ return '<div class="smg-row'+(danger?' danger':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span class="smg-ic" style="background:'+B[c]+';color:'+F[c]+'">'+SMG_ICONS[icon]+'</span><div class="smg-txt"><div class="smg-t">'+t+'</div>'+(d?'<div class="smg-d">'+d+'</div>':'')+'</div><div class="smg-trail">'+trail+'</div></div>'; }
     var html='';
-    SM_MOBILE_GROUPS.forEach(function(g){
-      html+='<div class="sm-group"><div class="sm-icard">';
-      g.forEach(function(id){
-        var c=null; for(var i=0;i<SM_MOBILE_CATS.length;i++){ if(SM_MOBILE_CATS[i].id===id) c=SM_MOBILE_CATS[i]; }
-        if(!c) return;
-        var ico = c.icon==='__info__' ? '<span class="info-i">i</span>' : '<span class="e">'+c.icon+'</span>';
-        html+='<div class="sm-irow" onclick="openSettingsDetail(\''+c.id+'\')"><span class="sm-iicon" style="background:'+c.color+'">'+ico+'</span><div class="txt"><div class="t">'+c.title+'</div></div><span class="chev">›</span></div>';
-      });
-      html+='</div></div>';
-    });
+    html+=group('数据与云端',[
+      row('cloud','blue','本地云同步','<span id="smStatTxt">本地数据 · —</span>','<button type="button" class="smg-btn" onclick="event.stopPropagation();cloudPush(true)">同步</button>','cloudPush(true)'),
+      row('eyeoff','purple','资产隐蔽模式','<span id="smPrivDsc">关闭 · 金额正常显示</span>','<span class="sm-priv-sw" id="privSw"><i></i></span>','toggleHidden()')
+    ]);
+    html+=group('偏好设置',[
+      row('palette','orange','外观与显示','','<span class="smg-chev">›</span>','openSettingsDetail(\'appearance\')'),
+      row('cycle','orange','周期与定投计划','','<span class="smg-chev">›</span>','openDcaModal();closeSettings()')
+    ]);
+    html+=group('数据与安全',[
+      row('lock','red','密码与锁','面容 ID / 密码解锁（待接入）','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')'),
+      row('download','blue','导入与恢复','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
+      row('upload','green','导出备份','','<span class="smg-chev">›</span>','exportJSON();closeSettings()'),
+      row('trash','red','清除与重置','','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')',true)
+    ]);
+    html+=group('关于与帮助',[
+      row('chat','green','意见与反馈','','<span class="smg-chev">›</span>','openFeedback()'),
+      row('star','gold','App Store 评分','','<span class="smg-chev">›</span>','openRating()'),
+      row('info','gray','关于 FundTracker','','<span class="smg-chev">›</span>','openSettingsDetail(\'about\')')
+    ]);
     host.innerHTML=html;
   };
   window.openSettingsDetail=function(id){

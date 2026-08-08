@@ -2534,6 +2534,8 @@ function toggleSortHeader(key){
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
 let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true,holdpct:true};
+let colExtraTouched=false;
+try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['est','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
 const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',mv:'持仓金额',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率'};
 const COL_KEYS=['nav','est','day','mv','ret','hold','holdpct'];
@@ -2543,7 +2545,7 @@ function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(
 let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
 try{ if(localStorage.getItem('ft_colorder_ver')!==COL_ORDER_VER){ colOrder=DEFAULT_COL_ORDER.slice(); saveColOrder(); } }catch(e){}
-function toggleCol(k,on){ colVis[k]=!!on; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e){} renderColSet(); renderHomeList(); }
+function toggleCol(k,on){ colVis[k]=!!on; colExtraTouched=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_cols_extra','1'); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }
 function renderColSet(){
@@ -2980,6 +2982,7 @@ function renderHomeList(){
   const isMobile=window.matchMedia('(max-width:640px)').matches;
   if(isMobile && holdGroupBy==='none'){
     box.innerHTML=renderHomeMobileTable(list)+obsHtml;
+    ensureStreakLabels(list);
   } else {
     box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   }
@@ -3061,9 +3064,15 @@ function weightedEstChg(){
 }
 
 function renderHomeMobileTable(list){
-  // 列跟随「≡ 列」开关（colVis）+ 顺序（colOrder）；不再写死 4 列，多列时外层横滑
+  // 手机端默认固定 3 个数字列（估值涨跌 / 官方涨跌 / 当日收益），一屏放得下不横滑；
+  // 若用户曾主动操作过「≡ 列」（ft_cols_extra 标记），则回到全列跟随 colVis/colOrder 逻辑
+  const baseKeys=['est','day','ret'];
   const cols=[{key:'name',label:'基金名称'}];
-  colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
+  if(colExtraTouched){
+    colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
+  } else {
+    baseKeys.forEach(k=>{ cols.push({key:k,label:COL_DEFS[k]}); });
+  }
   const arrow=k=> holdSort===k ? (holdSortDir==='asc'?'▲':'▼') : '';
   const nameTh='<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>';
   const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
@@ -3084,13 +3093,51 @@ function renderHomeMobileTable(list){
     const nc=navCache[f.name]||{};
     const code=syncCode(f.name);
     const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
-    // 持仓行副信息：分类 + 自定义标签 + 代码/持仓额 + 净值；不再显示账户类标签（代管账户/小号/本人等）
-    const subParts=[ (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, (code?'<span class="tag-code">#'+code+'</span>':'') ].filter(Boolean).join('');
+    // 持仓行副信息：先代码 → 分类 → 连涨标签 → 自定义标签；不再显示账户类标签（代管账户/小号/本人等）
+    const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
+    const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), streakEl, attrTags ].filter(Boolean).join('');
     let tds='<td><div class="cname">'+esc(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
     cols.slice(1).forEach(c=>{ tds+=cellOf(f,c.key); });
     return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
   }).join('');
   return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+// ---------- 连涨天数标签（基于天天基金历史净值序列，当天缓存）----------
+let streakCache={};
+try{ streakCache=JSON.parse(localStorage.getItem('ft_streak')||'{}')||{}; }catch(e){ streakCache={}; }
+function saveStreakCache(){ try{ localStorage.setItem('ft_streak',JSON.stringify(streakCache)); }catch(e){} }
+function calcStreakDays(arr){
+  if(!Array.isArray(arr)||arr.length<2) return 0;
+  let n=0;
+  for(let i=arr.length-1;i>0;i--){ if(arr[i].nav>arr[i-1].nav) n++; else break; }
+  return n;
+}
+const _streakBusy={}, _streakQueue=[]; let _streakRunning=0;
+function ensureStreakLabels(list){
+  const today=fmtDate(new Date());
+  list.forEach(f=>{
+    const code=syncCode(f.name); if(!code) return;
+    const c=streakCache[code];
+    if(c && c.d===today){ applyStreak(code, c.days); return; }
+    if(_streakBusy[code]) return;
+    _streakBusy[code]=1; _streakQueue.push(code);
+  });
+  pumpStreaks();
+}
+function pumpStreaks(){
+  // 串行抓取：fetchNavHistory 共用全局 Data_netWorthTrend，并发会互相覆盖，必须逐只等结果
+  if(_streakRunning>=1 || !_streakQueue.length) return;
+  const code=_streakQueue.shift(); _streakRunning=1;
+  fetchNavHistory(code).then(arr=>{
+    const days=calcStreakDays(arr);
+    streakCache[code]={days:days, d:fmtDate(new Date())}; saveStreakCache();
+    applyStreak(code, days);
+  }).catch(()=>{}).finally(()=>{ _streakRunning=0; pumpStreaks(); });
+}
+function applyStreak(code, days){
+  const el=document.querySelector('.a-streak[data-code="'+code+'"]');
+  if(!el) return;
+  if(days>=2){ el.textContent='连涨'+days+'天'; el.style.display=''; }
 }
 
 // ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------

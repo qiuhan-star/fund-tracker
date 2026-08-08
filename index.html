@@ -641,10 +641,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable-wrap{ background:var(--surface); border-radius:12px; overflow:hidden; margin:0; }
   .home-ctable{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
   .home-ctable th{ padding:9px 4px 7px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; white-space:nowrap; cursor:pointer; user-select:none; }
-  .home-ctable th:first-child{ text-align:left; padding-left:12px; width:38%; }
-  .home-ctable th:nth-child(2){ width:18%; }
-  .home-ctable th:nth-child(3){ width:22%; }
-  .home-ctable th:nth-child(4){ width:22%; padding-right:12px; }
+  .home-ctable th:first-child{ text-align:left; padding-left:12px; width:44%; }
+  .home-ctable th:nth-child(2){ width:16%; }
+  .home-ctable th:nth-child(3){ width:20%; }
+  .home-ctable th:nth-child(4){ width:20%; padding-right:12px; }
   .home-ctable th .sub{ font-weight:400; display:block; font-size:10px; margin-top:1px; }
   .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }
   .home-ctable th.sort-on{ color:var(--accent); }
@@ -654,7 +654,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable td:last-child{ padding-right:12px; }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
-  .home-ctable .cname{ font-size:12.5px; font-weight:600; color:var(--text); line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .home-ctable .cname{ font-size:11px; font-weight:600; color:var(--text); line-height:1.25; white-space:nowrap; }
   .home-ctable .csub{ font-size:10.5px; color:var(--text-3); margin-top:4px; display:flex; gap:4px; align-items:center; flex-wrap:wrap; line-height:1.2; }
   .home-ctable .csub span{ white-space:nowrap; }
   .home-ctable .tag-code{ color:var(--text-3); }
@@ -2623,7 +2623,7 @@ function renderHomeList(){
   // 已清仓（净份额=0 且无市值）不进活跃持仓列表，只在「清仓」Tab 展示
   list=list.filter(f=> !(f.shares===0 && !f.isBond && !(f.mv>0)) );
   // 动态标题：跟随当前账户
-  const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=curAccount==='全部'?'全部持仓':(curAccount===effAccount('本人账户')?effAccount('本人账户')+'持仓':curAccount+'的持仓');
+  const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=(curAccount==='全部'||!curAccount)?'全部持仓':(effAccount(curAccount)+'持仓');
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
   // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }

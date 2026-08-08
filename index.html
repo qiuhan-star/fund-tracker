@@ -1512,6 +1512,18 @@ let _cfgCorrupt=false;
 try{ CUSTOM_ACCOUNTS=JSON.parse(localStorage.getItem('ft_accounts')||'[]'); }catch(e){ console.warn('账户配置数据损坏，已重置为默认', e); _cfgCorrupt=true; }
 CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNT_META[a]) ACCOUNT_META[a]={isPersonal:true, owner:'本人'}; });
 function loadCustomAccounts(){ ACCOUNTS=[...effBuiltins()]; CUSTOM_ACCOUNTS.forEach(a=>{ if(a && !ACCOUNTS.includes(a)) ACCOUNTS.push(a); }); }
+// 导入时遇到 CSV/粘贴里出现的账户名（非已知账户）→ 注册为自定义账户，避免塌缩进「本人账户」或成孤儿账户（下拉/口径筛选都找不到）
+function registerImportAccount(name){
+  name = normalizeAccount(name);
+  if(!name) return name;
+  const eff = effAccount(name);
+  const known = effBuiltins().concat(CUSTOM_ACCOUNTS).map(effAccount);
+  if(known.indexOf(eff)>=0) return name; // 已存在（含被改名映射的同名）则不重复建
+  CUSTOM_ACCOUNTS.push(name);
+  try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
+  loadCustomAccounts();
+  return name;
+}
 loadCustomAccounts();
 // 账户显示顺序（用户可在设置里拖动/上下调整）；为空则按默认（内置+自定义+数据账户）
 function loadAccountOrder(){ try{ const a=JSON.parse(localStorage.getItem('ft_account_order')||'null'); return Array.isArray(a)?a:null; }catch(e){ return null; } }
@@ -5975,6 +5987,8 @@ function parseCSV(text, defaultAcc, forceAcc){
     if(!(amount||nav)) continue;
     added.push({name,date,type,amount,nav,fee,account,shares:sh});
   }
+  // 注册导入中出现的未知账户，避免塌缩进「本人账户」或成孤儿账户（下拉/口径筛选都找不到）
+  const _accSeen={}; added.forEach(t=>{ const a=normalizeAccount(t.account); if(a && !_accSeen[a]){ _accSeen[a]=1; registerImportAccount(a); } });
   if(!added.length) return {count:0, dup:0, rows:[]};
   // 增量更新（upsert）：同名+同日+同金额+同账户 视为同一笔。已存在且净值相同→跳过；已存在但缺净值/净值不同→用新行补全或覆盖（支持补净值或修正后重导，不生成重复交易）
   const normNum=v=>(v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):'';
@@ -6122,6 +6136,8 @@ function commitPasteImport(){
   const added=res.count;
   if(added===0&&res.dup===0){ toast('未识别到交易行'); return; }
   if(added===0&&res.dup>0){ toast('全部 '+res.dup+' 笔均已存在，无需重复导入'); closeImportModal(); return; }
+  // 注册粘贴导入中出现的未知账户（与 CSV 导入一致）
+  const _paSeen={}; res.rows.forEach(t=>{ const a=normalizeAccount(t.account); if(a && !_paSeen[a]){ _paSeen[a]=1; registerImportAccount(a); } });
   trades=trades.concat(res.rows);
   removeSampleData(true); // 导入即清掉内置示例，避免示例与真实数据共存
   compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('paste import refresh failed', e); });

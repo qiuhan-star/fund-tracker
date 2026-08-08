@@ -363,6 +363,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .panel-row .left{flex:1}
 .panel-row.stacked .right .settings-input { width:100%; }
 .panel-note { font-size:12px; color:var(--text-3); margin-top:14px; line-height:1.5; }
+/* 应用锁密码表单：开关开启后纵向展开 */
+.lock-form-fields { display:flex; flex-direction:column; gap:10px; }
+.lock-form-fields .settings-input { width:100%; box-sizing:border-box; }
+.lock-save-btn { align-self:flex-end; margin-top:2px; }
 /* 外观与偏好：iOS 分组卡片 + 强调色选中态 + 默认账户 action 行 */
 #panel-appearance .ap-group { margin:0 0 22px; }
 #panel-appearance .ap-group:last-child { margin-bottom:0; }

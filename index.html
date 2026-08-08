@@ -5718,7 +5718,8 @@ function importJSON(){
       setTimeout(()=>{ location.reload(); }, 800);
     }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
     r.readAsText(f); };
-  inp.click();
+  inp.style.cssText='position:fixed;left:-9999px;top:0';
+  document.body.appendChild(inp); inp.click();
 }
 
 function importMyExtras(){
@@ -5733,7 +5734,8 @@ function importMyExtras(){
       setTimeout(()=>{ location.reload(); }, 800);
     }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
     r.readAsText(f); };
-  inp.click();
+  inp.style.cssText='position:fixed;left:-9999px;top:0';
+  document.body.appendChild(inp); inp.click();
 }
 
 function refreshSampleBanner(){
@@ -5788,7 +5790,8 @@ function importCSV(){
         compute(); renderTrade(); silentSave(); refresh().catch(function(e){ console.error('csv import refresh failed', e); }); toast('已导入 '+added+' 笔交易（CSV）· 正在拉取净值…'+(res.dup?(' · 跳过重复 '+res.dup+' 笔'):'')); }
       catch(e){ alert('CSV 解析失败：'+e.message); } };
     r.readAsText(f,'utf-8'); };
-  inp.click();
+  inp.style.cssText='position:fixed;left:-9999px;top:0';
+  document.body.appendChild(inp); inp.click();
 }
 function parseCSV(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());

@@ -757,7 +757,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); width:148px; min-width:148px; max-width:148px; }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
-  .home-ctable .cname{ font-size:var(--cname-fs); font-weight:var(--cname-fw); color:var(--text); line-height:1.3; display:block; max-width:100%; }
+  .home-ctable .cname{ font-size:var(--cname-fs); font-weight:var(--cname-fw); color:var(--text); line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }
   .home-ctable .csub span{ white-space:nowrap; }
   .home-ctable .tag-code{ color:var(--text-3); font-size:10px; font-variant-numeric:tabular-nums; }
@@ -3125,7 +3125,7 @@ function renderHomeMobileTable(list){
     // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
     const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
     const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl ].filter(Boolean).join('');
-    let tds='<td><div class="cname">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
+    let tds='<td><div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
     cols.slice(1).forEach(c=>{ tds+=cellOf(f,c.key); });
     return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
   }).join('');

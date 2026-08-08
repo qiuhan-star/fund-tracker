@@ -3075,7 +3075,7 @@ function renderHomeMobileTable(list){
   }
   const arrow=k=> holdSort===k ? (holdSortDir==='asc'?'▲':'▼') : '';
   const nameTh='<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>';
-  const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
+  const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" style="width:62px" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
   const head='<tr>'+nameTh+cols.slice(1).map(c=>numTh(c.key,c.label)).join('')+'<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>'+'</tr>';
   const navDate=fd=>{ const nc=navCache[fd.name]||{}; return (nc.date!=null)?String(nc.date).slice(5):''; };
   const cellOf=(fd,key)=>{

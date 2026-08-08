@@ -850,8 +850,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .file-warn .fw-text{ margin-top:2px; color:#8a6d1a; }
   .file-warn .fw-text code{ background:rgba(0,0,0,.06); padding:1px 5px; border-radius:4px; font-size:12.5px; }
   .file-warn .fw-actions{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
-  .file-warn .fw-btn{ border:none; border-radius:9px; padding:8px 14px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; text-decoration:none; }
-  .file-warn .fw-btn.ghost{ background:rgba(0,0,0,.05); color:#6b561c; }
+  .file-warn .fw-btn{ border:1px solid transparent; border-radius:8px; padding:8px 14px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; text-decoration:none; }
+  .file-warn .fw-btn.ghost{ background:#fff; color:#78350F; border-color:#FCD34D; }
   .file-warn .fw-btn.primary{ background:var(--accent); color:#fff; }
   .file-warn .fw-btn:active{ opacity:.85; }
   @media (max-width:640px){
@@ -1958,7 +1958,7 @@ function migrate(raw){
   const _accNorm=a=> normalizeAccount(a);
   (data.trades||[]).forEach(t=>{ t.account=_accNorm(t.account); });
   (data.snaps||[]).forEach(s=>{ if(s.account) s.account=_accNorm(s.account); });
-  (data.daily_snapshots||[]).forEach(d=>{ if(d.account) d.account=_accNorm(d.account); });
+  ['personal','managed','all'].forEach(k=>{ (data.daily_snapshots[k]||[]).forEach(d=>{ if(d&&d.account) d.account=_accNorm(d.account); }); });
   (data.dcaPlans||[]).forEach(p=>{ if(p&&p.account) p.account=_accNorm(p.account); if(p&&!p.period) p.period='month'; });
   return data;
 }
@@ -2110,7 +2110,7 @@ function switchTab(i){
   // 市场风向为公共市场数据，切换为"数据源/刷新状态"栏
   const ms=document.getElementById('marketStatus');
   if(ms) ms.style.display = (i===5)?'flex':'none';
-  if(i===0){ renderHomeList(); renderBond(); }
+  if(i===0){ renderHomeList(); renderBond(); renderDcaSection(); }
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderWatchTab(); }
@@ -4215,7 +4215,7 @@ function render(){
     updateScopeUI();
     renderOverview(); renderAccFilter(); renderHomeList(); renderCatFilter();
     if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); } renderAdvice();
-    if(activeTab===0){ renderBond(); }
+    if(activeTab===0){ renderBond(); renderDcaSection(); }
     if(activeTab===2){ renderLiquidated(); }
   } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
   restoreFocus();
@@ -7278,6 +7278,14 @@ function renderSyncCfg(){
               <button class="ap-sheet-opt" data-s="all" onclick="pickScope(this.getAttribute('data-s'))">全量</button>
             </div>
             <div class="ap-sheet-cancel" onclick="closeScopeSheet()"><button>取消</button></div>
+          </div>
+        </div>
+
+        <div class="ap-sheet-mask" id="defAccMask" onclick="closeDefAccSheet()">
+          <div class="ap-sheet" onclick="event.stopPropagation()">
+            <div class="ap-sheet-title">快速记账默认账户</div>
+            <div class="ap-sheet-group" id="defAccOpts"></div>
+            <div class="ap-sheet-cancel" onclick="closeDefAccSheet()"><button>取消</button></div>
           </div>
         </div>
 

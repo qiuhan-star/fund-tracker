@@ -757,7 +757,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable td:first-child{ text-align:left; position:sticky; left:0; z-index:1; background:var(--surface); width:148px; min-width:148px; max-width:148px; }
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
-  .home-ctable .cname{ font-size:var(--cname-fs); font-weight:var(--cname-fw); color:var(--text); line-height:1.3; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; max-width:100%; }
+  .home-ctable .cname{ font-size:var(--cname-fs); font-weight:var(--cname-fw); color:var(--text); line-height:1.3; display:block; max-width:100%; }
   .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }
   .home-ctable .csub span{ white-space:nowrap; }
   .home-ctable .tag-code{ color:var(--text-3); font-size:10px; font-variant-numeric:tabular-nums; }
@@ -3933,13 +3933,12 @@ function buildLiquidatedView(){
     const acc=ref.acc, name=ref.name;
     const tr=trades.filter(function(t){ return accOf(t)===acc && t.name===name; }).slice().sort(function(a,b){ return a.date.localeCompare(b.date); });
     if(!tr.length) return;
-    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null, lots=[], sellFee=0, sellNavW=0, sellShW=0, lastNav=0;
+    let shares=0, cost=0, realized=0, totalBuy=0, totalSell=0, div=0, firstBuy=null, lastSell=null, lots=[], sellFee=0, sellNavW=0, sellShW=0;
     tr.forEach(function(t){
       const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
-      let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
-      if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;   // 转换常不带净值 → 用最近买入净值近似（与持仓视图一致）
-      if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; }
-      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); const sellPx=nav>0?nav:lastNav; realized+=(sellPx-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }
+      const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
+      if(ty==='buy'||ty==='convert'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } }
+      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }
       else if(ty==='dividend'){ div+=amt; if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }
       else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }
       else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }
@@ -3948,14 +3947,9 @@ function buildLiquidatedView(){
       if(ty==='sell'){ if(!lastSell||t.date>lastSell) lastSell=t.date; if(!firstBuy) firstBuy=t.date; }
     });
     const EPS=1e-6;
-    const hasSell = tr.some(function(t){ return t.type==='sell' || t.type==='convert_out'; });
-    // 清仓修正（与持仓视图一致）：转换转出无净值时已在上面用近似净值减份额；若仍残留极小份额（浮点/净值波动），或"已赎回金额≥90%总投入"（稳健判定，抗净值漂移），均视为已清仓
-    if(hasSell && shares>EPS){
-      const snapLiq = snaps.find(function(s){ return (s.type||'fund')!=='stock' && accOf(s)===acc && s.name===name; });
-      const _nav = navCache[name] ? navCache[name].nav : (snapLiq&&snapLiq.mv&&snapLiq.shares? snapLiq.mv/snapLiq.shares : 0);
-      const _rmv = _nav>0 ? shares*_nav : 0;
-      if(_rmv < 1 || (shares < 1 && _rmv <= 0)) shares=0;
-    }
+    // 清仓判定：有卖出/转换转出 且（净份额≈0 或 已赎回金额≥90%总投入）。
+    // 金额占比作稳健兜底——转换转出常不带净值、FIFO 用实时净值近似会产生极小残留，仅凭份额≈0 会漏判；
+    // 金额占比与净值无关，可可靠识别"已基本赎回"的基金（已赎回≥90%即视为清仓）。
     if(totalSell<=0) return;     // 没卖过 → 不算清仓
     if(shares>EPS && !(totalBuy>0 && totalSell>=0.9*totalBuy)) return;   // 仍持有且未达"赎回≥90%" → 不算清仓
     const avgSellNav = sellShW>0 ? sellNavW/sellShW : 0;

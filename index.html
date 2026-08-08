@@ -192,7 +192,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .idx-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; box-sizing: border-box; }.idx-dot-open { background: #3a8fd6; box-shadow: 0 0 0 2px rgba(58,143,214,.16); }/* 交易中：蓝 */
   .idx-dot-closed { background: #b6bcc4; }/* 已收盘：灰 */
   .idx-status { font-size: 12px; color: var(--text-3); display: inline-flex; align-items: center; gap: 3px; }/* 指数迷你走势 Sparkline（A股真分时 / 港股近30日日线 / 美股降级不画假图） */
-  .idx-spark { display: block; margin-top: 5px; line-height: 0; }.idx-sparkcap { display: block; margin-top: 2px; font-size: 12px; color: var(--text-3); letter-spacing: .2px; line-height: 1; }.idx-nospark { display: block; margin-top: 6px; font-size: 12px; color: var(--text-2); letter-spacing: .3px; min-height: 14px; }/* 赛道 / 主题：高密度网格卡 + 紧凑表格 */.market-grid-dense { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 8px; }.mkt-card { background: var(--surface-3); border: 1px solid var(--border); border-radius: 12px; padding: 10px 11px; }.mkt-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 8px; }.mkt-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.mkt-tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 5px; white-space: nowrap; font-variant-numeric: tabular-nums; }.mkt-tag.pos { background: var(--up-bg); color: var(--up); }.mkt-tag.neg { background: var(--down-bg); color: var(--down); }.mkt-tag.zero { background: var(--surface-2); color: var(--text-3); }.mkt-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }.mkt-m { display: flex; flex-direction: column; gap: 1px; }.mkt-m .lbl { font-size: 11px; color: var(--text-3); }.mkt-m b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }.mkt-pe { margin-top: 8px; display: flex; align-items: center; gap: 6px; }.mkt-pe .lbl { font-size: 11px; color: var(--text-3); flex: none; }.mkt-pe-track { flex: 1; height: 6px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }.mkt-pe-fill { display: block; height: 100%; border-radius: 4px; }.mkt-pe-val { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }.mkt-rep { margin-top: 7px; font-size: 11px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.mkt-rep b { color: var(--text-2); font-weight: 600; }.mkt-repc { font-size: 11px; color: var(--text-3); margin-left: 4px; font-variant-numeric: tabular-nums; }.tag-err { background: rgba(216,69,58,.14); color: #d8453a; border: 1px solid rgba(216,69,58,.4); }.hidden { display: none !important; }/* 大盘趋势：一键折叠 + 点击放大 */
+  .idx-spark { display: block; margin-top: 5px; line-height: 0; }.idx-sparkcap { display: block; margin-top: 2px; font-size: 12px; color: var(--text-3); letter-spacing: .2px; line-height: 1; }.idx-nospark { display: block; margin-top: 6px; font-size: 12px; color: var(--text-2); letter-spacing: .3px; min-height: 14px; }/* 赛道 / 主题：高密度网格卡 + 紧凑表格 */.market-grid-dense { display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 12px; width: 100%; }@media (min-width: 1400px) { .market-grid-dense { grid-template-columns: repeat(6, minmax(0, 1fr)); } }@media (min-width: 1100px) and (max-width: 1399px) { .market-grid-dense { grid-template-columns: repeat(5, minmax(0, 1fr)); } }@media (min-width: 860px) and (max-width: 1099px) { .market-grid-dense { grid-template-columns: repeat(4, minmax(0, 1fr)); } }@media (min-width: 640px) and (max-width: 859px) { .market-grid-dense { grid-template-columns: repeat(3, minmax(0, 1fr)); } }@media (max-width: 639px) { .market-grid-dense { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }.mkt-card { background: var(--surface-3); border: 1px solid var(--border); border-radius: 12px; padding: 12px 13px; display: flex; flex-direction: column; }.mkt-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }.mkt-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.mkt-tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; white-space: nowrap; font-variant-numeric: tabular-nums; }.mkt-tag.pos { background: var(--up-bg); color: var(--up); }.mkt-tag.neg { background: var(--down-bg); color: var(--down); }.mkt-tag.zero { background: var(--surface-2); color: var(--text-3); }.mkt-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }.mkt-m { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }.mkt-m .lbl { font-size: 11px; color: var(--text-3); white-space: nowrap; }.mkt-m b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }.mkt-pe { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 4px; }.mkt-pe .lbl { font-size: 11px; color: var(--text-3); flex: none; }.mkt-pe-track { flex: 1; min-width: 40px; height: 6px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }.mkt-pe-fill { display: block; height: 100%; border-radius: 4px; }.mkt-pe-val { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; min-width: 28px; text-align: right; }.mkt-rep { margin-top: 8px; font-size: 11px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.mkt-rep b { color: var(--text-2); font-weight: 600; }.mkt-repc { font-size: 11px; color: var(--text-3); margin-left: 4px; font-variant-numeric: tabular-nums; }.tag-err { background: rgba(216,69,58,.14); color: #d8453a; border: 1px solid rgba(216,69,58,.4); }.hidden { display: none !important; }/* 大盘趋势：一键折叠 + 点击放大 */
   .idx-head-right { display: inline-flex; align-items: center; gap: 8px; }.idx-toggle { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border: 1px solid var(--accent-soft); border-radius: 6px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }@media (hover: hover) { .idx-toggle:hover {  background: var(--accent-soft);  } }
 .idx-collapsed .idx-spark, .idx-collapsed .idx-nospark { display: none; }.idx-modal { position: fixed; inset: 0; background: rgba(20,24,31,.45); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }.idx-modal.show { display: flex; }.idx-modal-card { background:var(--surface); border-radius: 14px; width: min(680px, 94vw); max-height: 90vh; overflow: auto; box-shadow: 0 12px 44px rgba(0,0,0,.28); }.idx-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }.idx-modal-head h3 { margin: 0; font-size: 18px; color: var(--text); }.idx-modal-x { background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: var(--text-3); padding: 2px 6px; border-radius: 6px; }@media (hover: hover) { .idx-modal-x:hover {  background: var(--border-3); color: var(--text-2);  } }
 .idx-modal-body { padding: 16px 18px 20px; }.idx-modal-chart { border: 1px solid var(--border-2); border-radius: 10px; background: var(--surface-3); padding: 8px; }/* 主题 / 板块热力（统一规格网格，不表示面积） */
@@ -5876,7 +5876,6 @@ function navOnOrBefore(hist, dateStr){
 let _dcaRunning=false;
 async function runDcaPlans(){
   if(_dcaRunning) return;
-  if(!dcaAutoEnabled()) return;
   const active=dcaPlans.filter(p=>p && !p.paused);
   if(!active.length) return;
   const today=new Date(); today.setHours(0,0,0,0);
@@ -5896,7 +5895,7 @@ async function runDcaPlans(){
         if(nav==null) continue; // 拉不到该日净值：跳过，下次刷新自动补（不伪造）
         const amt=+(plan.amount||0); if(amt<=0) continue;
         const sh=amt/nav;
-        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:defaultTradeTimeVal(), type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey});
+        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:'15:00', type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey});
         booked.add(per.periodKey);
         added++;
       }
@@ -5907,67 +5906,6 @@ async function runDcaPlans(){
 }
 function dcaPlanOf(name){ return dcaPlans.filter(p=>p.name===name); }
 function dcaBookedCount(plan){ return trades.filter(t=>t.dcaId===plan.id).length; }
-
-// 全局偏好：自动补记总开关 / 默认记账时间 / 快速记账默认账户
-function dcaAutoEnabled(){ try{ return localStorage.getItem('ft_dca_auto')!=='0'; }catch(e){ return true; } }
-function getDefaultTradeTime(){ try{ return localStorage.getItem('ft_default_time')||'1500'; }catch(e){ return '1500'; } }
-function defaultTradeTimeVal(){ const v=getDefaultTradeTime(); if(v==='now'){ const d=new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes()); } return '15:00'; } }
-function defBookAcc(){ try{ const a=localStorage.getItem('ft_def_acc'); if(a) return a; }catch(e){} return effAccount('本人账户'); } }
-function dcaActiveCount(){ return dcaPlans.filter(p=>p&&!p.paused).length; }
-function dcaDueCount(){
-  const t=new Date(); const todayStr=t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate());
-  let n=0;
-  dcaPlans.forEach(function(p){ if(p.paused) return; const periods=dcaPeriods(p, todayStr); const booked=new Set(trades.filter(x=>x.dcaId===p.id).map(x=>x.dcaPeriod)); periods.forEach(function(per){ if(!booked.has(per.periodKey)) n++; }); });
-  return n;
-}
-function buildDcaSection(){
-  const total=dcaPlans.length, active=dcaActiveCount();
-  let h='<div class="card dca-sec-card"><div class="sec-head"><h2 style="margin:0;font-size:15px">🗓️ 定投计划</h2><span class="hint" style="font-size:12px;margin-left:auto">已设 '+total+' 个 · 进行中 '+active+'</span></div>';
-  if(!dcaPlans.length){
-    h+='<div class="dca-empty">还没有定投计划。点「＋ 新增定投计划」开启自动记账。</div>';
-  } else {
-    h+=dcaPlans.map(function(p){
-      const booked=dcaBookedCount(p);
-      const periods=dcaPeriods(p, new Date().getFullYear()+'-'+pad2(new Date().getMonth()+1)+'-'+pad2(new Date().getDate()));
-      const due=periods.filter(function(per){ return !dcaIsBooked(p, per.periodKey); }).length;
-      const _per=p.period||'month';
-      const freq = _per==='month' ? ('每月 '+escHtml(String(p.day||1))+' 号')
-                 : _per==='week' ? ('每周 '+wdName(p.weekday||1))
-                 : _per==='biweek' ? ('每两周 '+wdName(p.weekday||1))
-                 : '每个交易日';
-      const status=p.paused?'<span class="tag tag-cur">已暂停</span>':(due?'<span class="tag tag-attr">待记账 '+due+' 期</span>':'<span class="tag">进行中</span>');
-      return '<div class="dca-sec-item">'
-        +'<div class="dca-sec-top"><span class="dca-sec-name">'+escHtml(p.name)+'</span>'+status+'</div>'
-        +'<div class="dca-sec-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期</div>'
-        +'<div class="dca-sec-acts">'
-          +'<button class="btn sm" onclick="openDcaModal(\''+encodeURIComponent(p.name)+'\')">管理</button>'
-          +'<button class="btn sm" onclick="dcaToggle(\''+escHtml(p.id)+'\')">'+(p.paused?'恢复':'暂停')+'</button>'
-          +'<button class="btn sm danger-text" onclick="dcaDelete(\''+escHtml(p.id)+'\')">删除</button>'
-        +'</div>'
-      +'</div>';
-    }).join('');
-  }
-  h+='<button class="dca-add-btn" onclick="openDcaModal()">＋ 新增定投计划</button>';
-  h+='</div>';
-  return h;
-}
-function renderDcaSection(){ const el=document.getElementById('dcaSection'); if(el) el.innerHTML=buildDcaSection(); }
-window.refreshAssetDca=function(){ renderDcaSection(); };
-function renderDcaPanel(){
-  var sw=document.getElementById('dcaAutoSw'); if(sw) sw.checked=dcaAutoEnabled();
-  var seg=document.getElementById('defaultTimeSeg'); if(seg){ var dv=getDefaultTradeTime(); Array.prototype.forEach.call(seg.querySelectorAll('button'), function(b){ b.classList.toggle('on', b.getAttribute('data-v')===dv); }); }
-  var av=document.getElementById('dcaDefAccVal'); if(av) av.textContent=defBookAcc();
-  var pill=document.getElementById('dcaStatusPill');
-  if(pill){ if(!dcaAutoEnabled()){ pill.textContent='⏸ 自动补记已关闭'; pill.className='dca-status-pill off'; } else { var due=dcaDueCount(); pill.textContent='✅ 已开启 '+dcaActiveCount()+' 个定投计划'+(due?(' · 待补记 '+due+' 期'):''); pill.className='dca-status-pill'; } }
-  var note=document.getElementById('dcaNote'); if(note){ note.textContent = dcaAutoEnabled()? '关闭后定投计划不会在刷新时自动买入，可随时在「资产 → 定投计划」手动管理。已自动记账的买入记录不会删除。' : '当前已关闭自动补记，定投计划只在「资产 → 定投计划」手动管理。'; }
-}
-window.setDcaAuto=function(on){ try{ localStorage.setItem('ft_dca_auto', on?'1':'0'); }catch(e){} if(typeof renderDcaPanel==='function') renderDcaPanel(); };
-window.openDefAccSheet=function(){
-  var box=document.getElementById('defAccOpts'); if(box){ try{ var list=effBuiltins().concat(CUSTOM_ACCOUNTS); var cur=defBookAcc(); box.innerHTML=list.map(function(a){ return '<button class="ap-sheet-opt'+(a===cur?' selected':'')+'" onclick="pickDefAcc(\''+escHtml(a)+'\')">'+escHtml(a)+'</button>'; }).join(''); }catch(e){ box.innerHTML=''; } }
-  var m=document.getElementById('defAccMask'); if(m) m.classList.add('show');
-};
-window.closeDefAccSheet=function(){ var m=document.getElementById('defAccMask'); if(m) m.classList.remove('show'); };
-window.pickDefAcc=function(a){ try{ localStorage.setItem('ft_def_acc', a); }catch(e){} closeDefAccSheet(); if(typeof renderDcaPanel==='function') renderDcaPanel(); };
 
 // ---------- 定投计划管理弹窗 ----------
 let _dcaEditId=null;
@@ -6047,13 +5985,13 @@ function dcaEdit(id){
 }
 function dcaToggle(id){
   const p=dcaPlans.find(x=>x.id===id); if(!p) return;
-  p.paused=!p.paused; silentSave(); dcaRenderList(); refreshAssetDca();
+  p.paused=!p.paused; silentSave(); dcaRenderList();
   if(!p.paused){ runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); }); }
 }
 function dcaDelete(id){
   const p=dcaPlans.find(x=>x.id===id); if(!p) return;
   if(!confirm('删除定投计划「'+p.name+'」？\n已自动记账的买入记录保留（不会被删除）。')) return;
-  dcaPlans=dcaPlans.filter(x=>x.id!==id); silentSave(); dcaRenderList(); refreshAssetDca(); dcaResetForm();
+  dcaPlans=dcaPlans.filter(x=>x.id!==id); silentSave(); dcaRenderList(); dcaResetForm();
 }
 function dcaSave(){
   const name=(document.getElementById('dcaName')||{}).value||'';
@@ -6079,7 +6017,7 @@ function dcaSave(){
   }else{
     dcaPlans.push({ id:genId('dca'), name:name.trim(), account:acc, amount:amount, period:period, day:day, weekday:weekday, start:start, end:end||null, paused:false, createdAt:new Date().toISOString() });
   }
-  silentSave(); dcaResetForm(); dcaRenderList(); refreshAssetDca();
+  silentSave(); dcaResetForm(); dcaRenderList();
   toast('已保存，将在下次刷新时自动记账');
   runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); });
 }
@@ -7823,6 +7761,7 @@ function renderSyncCfg(){
   var SM_MOBILE_CATS=[
     {id:'appearance',color:'#007aff',icon:'🎨',title:'外观与偏好'},
     {id:'shortcuts',color:'#ff9500',icon:'⚡️',title:'快捷操作'},
+    {id:'dca',color:'#ff9500',icon:'cycle',title:'记账与定投偏好'},
     {id:'data',color:'#30b0c7',icon:'💾',title:'数据管理'},
     {id:'security',color:'#34c759',icon:'🔒',title:'安全与隐私'},
     {id:'account',color:'#5856d6',icon:'👤',title:'个人资料与账号'},
@@ -7855,7 +7794,7 @@ function renderSyncCfg(){
     ]);
     html+=group('偏好设置',[
       row('palette','orange','外观与偏好','','<span class="smg-chev">›</span>','openSettingsDetail(\'appearance\')'),
-      row('cycle','orange','周期与定投计划','','<span class="smg-chev">›</span>','openDcaModal();closeSettings()')
+      row('cycle','orange','记账与定投偏好', dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭','<span class="smg-chev">›</span>','openSettingsDetail('dca')')
     ]);
     html+=group('安全与隐私',[
       row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')')

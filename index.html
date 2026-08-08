@@ -68,7 +68,7 @@ function ensureECharts(cb){
     --up-bg:rgba(246,70,93,.15); --down-bg:rgba(14,203,129,.15); --warn-bg:rgba(224,168,59,.12); --good-bg:rgba(14,203,129,.12); --danger-bg:rgba(255,93,108,.12);
     --axis:#31405c; --grid:rgba(255,255,255,.06); --shadow:0 6px 22px rgba(0,0,0,.5);
     --card:var(--surface); --input:var(--surface-3);
-  }* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; line-height: 1.55; }input, select, textarea, button { -webkit-appearance: none; appearance: none; }html { width: 100%; height: 100%; overflow-x: hidden; }body { width: 100%; min-height: 100%; margin: 0; overflow-x: hidden; position: relative; }.wrap { width: 100%; max-width: 920px; margin: 0 auto; box-sizing: border-box; overflow-x: hidden; padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); }h1 { font-size: 18px; margin: 0 0 2px; font-weight: 600; }.sub { color: var(--text-3); font-size: 14px; margin: 0; }.card { background:var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }.card h2 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }.cards4 { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 10px; }.mcard { background: var(--surface-2); border-radius: 10px; padding: 12px; }.mcard .lbl { font-size: 12px; color: var(--text-3); margin: 0 0 5px; }.mcard .val { font-size: 18px; font-weight: 600; margin: 0; }
+  }* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; line-height: 1.55; }input, select, textarea, button { -webkit-appearance: none; appearance: none; }html { width: 100%; height: 100%; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }body { width: 100%; min-height: 100%; margin: 0; overflow-x: hidden; position: relative; }::-webkit-scrollbar { display: none; }.wrap { width: 100%; max-width: 920px; margin: 0 auto; box-sizing: border-box; overflow-x: hidden; padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); }h1 { font-size: 18px; margin: 0 0 2px; font-weight: 600; }.sub { color: var(--text-3); font-size: 14px; margin: 0; }.card { background:var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }.card h2 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }.cards4 { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 10px; }.mcard { background: var(--surface-2); border-radius: 10px; padding: 12px; }.mcard .lbl { font-size: 12px; color: var(--text-3); margin: 0 0 5px; }.mcard .val { font-size: 18px; font-weight: 600; margin: 0; }
 /* iOS 右侧抛空根治兜底：钳死所有卡片/图表/分段控件宽度，flex/grid 子项允许收缩，画布锁宽 */
 .wrap, .card, .chart-box, .ov-wrap, .ov-hero, .ov-grid, .ov-card, .grid2, .cards4, .main-tabs, .scope-bar, .topbar { max-width: 100%; overflow-x: hidden; box-sizing: border-box; }
 .wrap > *, .card > *, .grid2 > *, .ov-grid > *, .ov-hero > *, .ov-wrap > *, .main-tabs > *, .scope-bar > *, .topbar > * { min-width: 0; }
@@ -299,7 +299,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .bk-skip { border:1px solid rgba(198,132,10,.5); background:transparent; color:#9a6a08; padding:6px 12px; border-radius:8px; font-size: 14px; cursor:pointer; font-family:inherit; }/* 平行宇宙复盘推演 */
   .scenario-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; }@media (max-width: 560px) { .scenario-grid { grid-template-columns:1fr; }  }
 .scenario-card .sub2 { font-size: 12px; color:var(--text-3); margin:2px 0 0; }.scenario-note { font-size: 14px; color:var(--text-2); margin:12px 0 0; line-height:1.6; background:var(--surface-2); border-radius:8px; padding:8px 10px; }/* ===== 设置弹窗 (sm-) ===== */
-.sm-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; }.sm-mask.show { display:flex; }.sm-modal { background:var(--surface); color:var(--text); width:100%; max-width:560px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.sm-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.sm-head h2 { margin:0; font-size: 18px; font-weight:600; }.sm-x { border:none; background:var(--surface-2); color:var(--text-2); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size: 15px; line-height:1; }@media (hover: hover) { .sm-x:hover {  background:var(--border); color:var(--text);  } }
+.sm-mask { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:flex-start; justify-content:center; z-index:1000; padding:24px 12px calc(24px + env(safe-area-inset-bottom)); overflow:auto; }.sm-mask.show { display:flex; }.sm-modal { background:var(--surface); color:var(--text); width:100%; max-width:560px; border-radius:16px; box-shadow:var(--shadow); border:1px solid var(--border); margin:auto 0; max-height:calc(100vh - 48px); display:flex; flex-direction:column; }.sm-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:16px 16px 0 0; z-index:1; }.sm-head h2 { margin:0; font-size: 18px; font-weight:600; }.sm-x { border:none; background:var(--surface-2); color:var(--text-2); width:30px; height:30px; border-radius:8px; cursor:pointer; font-size: 15px; line-height:1; }@media (hover: hover) { .sm-x:hover {  background:var(--border); color:var(--text);  } }
 .sm-body { padding:14px 18px 22px; overflow:auto; }.sm-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; }.sm-card h3 { margin:0 0 12px; font-size: 14px; font-weight:600; }.sm-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--border-2); }.sm-row:first-of-type { border-top:none; padding-top:0; }.sm-rt { min-width:0; }.sm-rd { font-size: 14px; color:var(--text-3); margin-top:2px; line-height:1.4; }.sm-seg { display:inline-flex; background:rgba(120,120,128,.16); border:none; border-radius:9px; padding:2px; gap:2px; flex-wrap:wrap; flex-shrink:0; }.sm-seg button { border:none; background:transparent; color:var(--text-2); font-size:15px; padding:7px 13px; min-height:32px; border-radius:7px; cursor:pointer; font-family:inherit; white-space:nowrap; transition:color .18s,background .18s,box-shadow .18s; }.sm-seg button.on { background:var(--surface); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.12),0 0.5px 0 rgba(0,0,0,.04); }.sm-sw { display:flex; gap:12px; flex-shrink:0; padding:2px; }.sm-sw-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; position:relative; transition:transform .16s,border-color .16s; }@media (hover: hover) { .sm-sw-dot:hover { transform:scale(1.08); } }.sm-sw-dot::after { content:"\2713"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; opacity:0; transform:scale(.6); transition:opacity .16s,transform .16s; text-shadow:0 1px 2px rgba(0,0,0,.3); }.sm-sw-dot:not(.on){opacity:.5;} .sm-sw-dot.on { transform:scale(1.12); box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent); border-color:transparent; }.sm-sw-dot.on::after { opacity:1; transform:scale(1); }
 .sm-switch { position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0; }.sm-switch input { opacity:0; width:0; height:0; }.sm-slider { position:absolute; inset:0; background:#c4c9d2; border-radius:999px; transition:.2s; cursor:pointer; }.sm-slider:before { content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }.sm-switch input:checked + .sm-slider { background:var(--accent); }.sm-switch input:checked + .sm-slider:before { transform:translateX(19px); }.sm-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.nf-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }.nf-field > label { font-size: 14px; color:var(--text-2); font-weight:500; }.nf-field input, .nf-field select { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface); color:var(--text); font-size: 16px; font-family:inherit; }.nf-field input:focus, .nf-field select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }.nf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }/* 数值输入：数值仍右对齐，占位文字统一靠左 */
 input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交易：更多选项折叠 */
@@ -586,8 +586,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     max-width: 100%; box-sizing: border-box; overflow-x: hidden;
     padding: calc(12px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(100px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left)) !important; /* 顶部安全区 + 底部 FAB 按钮空间 */
   }
-  /* iOS 全宽无缝卡片流：移动端主内容贴边、去卡片框改分隔线 */
-  .wrap { padding-left: env(safe-area-inset-left) !important; padding-right: env(safe-area-inset-right) !important; }
+  /* iOS 全宽无缝卡片流：移动端保留安全区 + 12px 基础边距，避免文字贴边被屏幕圆角/刘海裁切 */
+  .wrap { padding-left: calc(12px + env(safe-area-inset-left)) !important; padding-right: calc(12px + env(safe-area-inset-right)) !important; }
   .wrap .card { border-radius: 0; border-left: none; border-right: none; margin-bottom: 0; }
   
   body { 
@@ -6841,7 +6841,7 @@ function renderSyncCfg(){
 <!-- ================= 设置弹窗 ================= -->
 <div class="sm-mask" id="settingsMask" onclick="if(event.target===this)closeSettings()">
   <div class="sm-modal settings-modal" role="dialog" aria-label="设置">
-    <div class="sm-head"><h2>⚙️ 设置</h2><button class="sm-x" onclick="closeSettings()" aria-label="关闭">✕</button></div>
+    <div class="sm-head"><h2>设置与偏好</h2><button class="sm-x" onclick="closeSettings()" aria-label="关闭">✕</button></div>
     <div class="sm-body settings-body">
       <aside class="settings-sidebar">
         <button class="tab active t-orange" data-tab="shortcuts" onclick="settingsTab('shortcuts')"><span class="ico c-orange"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></span><span class="lbl">快捷操作</span></button>
@@ -6966,6 +6966,7 @@ function renderSyncCfg(){
               <button class="ap-sheet-opt destructive" onclick="doClearCache()">清除缓存</button>
             </div>
             <div class="ap-sheet-cancel" onclick="closeCacheSheet()"><button>取消</button></div>
+          </div>
         </div>
 
                 <!-- 数据管理 -->
@@ -7852,13 +7853,15 @@ function fetchFundInfoUnified(code){
 function calcWatchBuy(){
   const cap=+(document.getElementById('uwCap').value)||0;
   const pct=+(document.getElementById('uwPct').value)||0;
-  const total=+(document.getElementById('uwTotal').value)||1;
+  const totalRaw=+(document.getElementById('uwTotal').value)||0;
+  // 总市值为 0（无持仓）时，用预备买入资金作分母，首笔建仓占比 = sug / cap = pct%；cap 也为 0 时无法计算
+  const total=totalRaw>0?totalRaw:(cap>0?cap:0);
   const box=document.getElementById('wtBuyRes'); if(!box) return;
   const catSum={}; _allHoldings.forEach(function(f){ const c=f.cat||guessCat(f.name); catSum[c]=(catSum[c]||0)+(f.mv||0); });
   const bondSum={}; getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ const t=bondTypeOf(f); bondSum[t]=(bondSum[t]||0)+bondAmt(f); });
   const rows=[];
-  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const v=((catSum[c]||0)+sug)/total; rows.push({name:x.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
-  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const v=((bondSum[t]||0)+sug)/total; rows.push({name:f.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
+  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const v=total>0?((catSum[c]||0)+sug)/total:null; rows.push({name:x.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
+  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const v=total>0?((bondSum[t]||0)+sug)/total:null; rows.push({name:f.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
   if(!rows.length){ box.innerHTML='<div class="line"><span class="nm" style="color:var(--text-3)">暂无自选可测算</span></div>'; return; }
   box.innerHTML=rows.map(function(r){
     const afterHtml=r.after!=null?'（占比 '+(r.after*100).toFixed(1)+'%）':'';
@@ -7898,8 +7901,8 @@ function uwRow(it){
   var codeHtml=it.code?'<span class="code">'+escAttr(it.code)+'</span>':'';
   var bondAttr=it.isBond?' data-bond="1"':'';
   var acts=it.isBond
-    ? '<span class="sa del" onclick="delByData(this)">删除</span>'
-    : '<span class="sa act" onclick="openByData(this)">记账</span><span class="sa del" onclick="rmByData(this)">删除</span>';
+    ? '<span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="delByData(this)">删除</span>'
+    : '<span class="sa act" data-name="'+escAttr(it.name||'')+'" onclick="openByData(this)">记账</span><span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this)">删除</span>';
   return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'">'
     +'<div class="swipe-inner">'
       +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
@@ -8037,7 +8040,8 @@ function renderWatchTab(){
     +'.wt-search .lens{color:var(--text-3);font-size:14px;line-height:1;display:inline-flex;width:16px;flex:0 0 16px;align-items:center;justify-content:center}'
     +'.wt-search input{flex:1;border:0;background:transparent;outline:0;font-size:15px;color:var(--text);min-width:0}'
     +'.wt-search input::placeholder{color:var(--text-3)}'
-    +'.wt-search .cam{color:var(--accent);font-size:14px;font-weight:600;white-space:nowrap;margin-left:8px;padding-left:10px;border-left:1px solid var(--border-2)}'
+    +'.wt-search .cam{background:transparent;border:none;color:var(--accent);font-size:18px;padding:4px 6px;margin-left:4px;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}'
+    +'.wt-search .cam:active{background:var(--surface-2)}'
     +'.wt .sec-cap{display:flex;align-items:baseline;gap:8px;padding:18px 16px 8px;font-size:20px;font-weight:700;color:var(--text)}'
     +'.wt .sec-cap .count{font-size:14px;font-weight:500;color:var(--text-3)}'
     +'.wt .sec-cap .more{margin-left:auto;font-size:14px;font-weight:600;color:var(--accent)}'
@@ -8046,28 +8050,31 @@ function renderWatchTab(){
     +'.wt .card{background:var(--surface);border-radius:14px;overflow:hidden;margin:0 14px 14px;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}'
     +'.wt .grp-head{font-size:13px;font-weight:600;color:var(--text-2);padding:14px 16px 6px}'
     +'.wt-empty-ceremony{margin:56px auto 0;max-width:460px;text-align:center;padding:0 16px}'    +'.wt-empty-ceremony .ico{font-size:56px;line-height:1}'    +'.wt-empty-ceremony .ttl{margin-top:18px;font-size:19px;font-weight:700;color:var(--text)}'    +'.wt-empty-ceremony .desc{margin-top:10px;font-size:14px;color:var(--text-3);line-height:1.7}'    +'.wt-empty-ceremony .btn{margin-top:22px;display:inline-flex;align-items:center;gap:6px;border:0;background:var(--accent);color:#fff;font-size:15px;font-weight:600;padding:12px 22px;border-radius:12px;cursor:pointer;font-family:inherit}'    +'.wt-empty-ceremony .hint{margin-top:18px;font-size:12px;color:var(--text-3)}'
-    +'.wrow{position:relative;overflow:hidden;background:var(--surface)}'
+    +'.wrow{position:relative;overflow:hidden;background:var(--surface);display:flex}'
     +'.wrow:not(:first-child)::after{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--border-2)}'
-    +'.wrow .swipe-inner{position:relative;background:var(--surface);transition:transform .2s;will-change:transform}'
+    +'.wrow .swipe-inner{position:relative;flex:1;min-width:0;background:var(--surface);transition:transform .2s;will-change:transform;z-index:1}'
     +'.wrow .r1{display:flex;align-items:center;gap:8px;padding:12px 16px 0}'
     +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}'
-    +'.wrow .name{font-size:15px;font-weight:600;color:var(--text)}'
-    +'.wrow .code{font-size:12px;color:var(--text-3);margin-left:3px;font-variant-numeric:tabular-nums}'
-    +'.wrow .nav{margin-left:auto;font-size:15px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right}'
+    +'.wrow .name{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    +'.wrow .code{font-size:12px;color:var(--text-3);margin-left:3px;font-variant-numeric:tabular-nums;flex-shrink:0}'
+    +'.wrow .nav{margin-left:auto;font-size:15px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right;flex-shrink:0}'
     +'.wrow .r2{display:flex;align-items:baseline;justify-content:space-between;padding:5px 16px 12px;font-size:12px;color:var(--text-3)}'
     +'.wrow .r2 .acc-tag{color:var(--text-2)}'
     +'.wrow .r2 .y1{font-variant-numeric:tabular-nums}'
-    +'.wrow .swipe-actions{position:absolute;top:0;right:0;height:100%;display:flex}'
-    +'.wrow .swipe-actions .sa{display:flex;align-items:center;justify-content:center;width:72px;color:#fff;font-size:13px;font-weight:600}'
+    +'.wrow .swipe-actions{position:absolute;top:0;right:0;height:100%;display:flex;z-index:0}'
+    +'.wrow .swipe-actions .sa{display:flex;align-items:center;justify-content:center;width:72px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;-webkit-user-select:none;user-select:none}'
     +'.wrow .swipe-actions .sa.act{background:var(--accent)}'
     +'.wrow .swipe-actions .sa.del{background:var(--up,#d93025)}'
     +'@keyframes wtSwipeHint{0%,100%{transform:translateX(0)}22%{transform:translateX(-34px)}44%{transform:translateX(0)}}'
     +'.wrow.hint .swipe-inner{animation:wtSwipeHint 1.7s ease .6s 2}'
     +'.wt-calc-card{padding:14px 16px}'
     +'.wt-calc-card .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}'
-    +'.wt-calc-card .calc-cell{background:var(--surface-2);border-radius:12px;padding:11px 13px}'
-    +'.wt-calc-card .calc-cell .lbl{font-size:12px;color:var(--text-3);margin-bottom:3px}'
+    +'.wt-calc-card .calc-cell{background:var(--surface-2);border:1px solid var(--border-strong);border-radius:12px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}'
+    +'.wt-calc-card .calc-cell:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-on)}'
+    +'.wt-calc-card .calc-cell .lbl{font-size:12px;color:var(--text-3);margin-bottom:5px}'
     +'.wt-calc-card .calc-cell .ipt{width:100%;border:0;background:transparent;outline:0;font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}'
+    +'.wt-calc-card .pct-wrap{display:flex;align-items:baseline;gap:4px}'
+    +'.wt-calc-card .pct-suf{font-size:20px;font-weight:700;color:var(--text-2)}'
     +'.wt-calc-card .calc-sub{display:flex;align-items:baseline;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--text-3)}'
     +'.wt-calc-card .calc-sub .val{font-size:16px;font-weight:700;color:var(--text-2);font-variant-numeric:tabular-nums}'
     +'.wt-calc-card .calc-res{margin-top:8px;border-top:1px solid var(--border-2);padding-top:2px}'
@@ -8110,7 +8117,7 @@ function renderWatchTab(){
   const isEmptyWatch = (!items.length && !bWatch.length);
   bc.innerHTML=STYLE
     +'<div class="wt">'
-    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><span class="cam" onclick="uwPickImage()">📷 截图</span><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
+    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><button type="button" class="cam" onclick="uwPickImage()" title="截图识别基金代码">📷</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
     +'<div class="wt-split'+(isEmptyWatch?' single':'')+'">'
       +'<div class="wt-col">'
         +'<div class="sec-cap"><span>自选清单</span><span class="count">('+items.length+')</span><span class="more" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'按分组 ▾')+'</span></div>'
@@ -8121,7 +8128,7 @@ function renderWatchTab(){
           +'<div class="sec-cap"><span>买入决策 &amp; 仓位测算</span>'+(items.length?'<span class="tag-ok">已测算</span>':'<span class="tag-idle">待测算</span>')+'<span class="info-trigger" onclick="openWatchInfo()">ⓘ</span></div>'
           +'<div class="card wt-calc-card">'
             +'<div class="calc-grid"><div class="calc-cell"><div class="lbl">预备买入资金（¥）</div><input id="uwCap" class="ipt" type="number" value="5000"></div>'
-              +'<div class="calc-cell"><div class="lbl">单只上限（自动 %）</div><input id="uwPct" class="ipt" type="number" value="15"></div></div>'
+              +'<div class="calc-cell"><div class="lbl">单只上限（自动 %）</div><div class="pct-wrap"><input id="uwPct" class="ipt" type="number" value="15"><span class="pct-suf">%</span></div></div></div>'
             +'<div class="calc-sub"><span class="lbl">组合当前总市值（¥）· 自动读取</span><span class="val">'+Math.round(total).toLocaleString()+'</span></div>'
             +'<input id="uwTotal" type="hidden" value="'+Math.round(total)+'">'
             +'<div class="calc-res" id="wtBuyRes"></div>'

@@ -868,8 +868,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     min-width: 148px;
     max-width: 148px;
   }
-  /* 名称列永不横向溢出压到相邻列：长名在列内换行（覆盖 .dense-table 的 white-space:nowrap），并 overflow:hidden 兜底 */
-  .dense-table td:first-child { overflow: hidden; }
+  /* 名称列永不横向溢出压到相邻列：长名在列内换行（覆盖 .dense-table 的 white-space:nowrap）；不用 overflow:hidden（会破坏吸左 sticky 定位） */
   .dense-table td:first-child .dt-name { white-space: normal; overflow-wrap: anywhere; }
   /* dense 表名称列吸左固定（横滑不丢基金名），浅底色防文字穿透 */
   .dense-table th:first-child, .dense-table td:first-child { position: sticky; left: 0; z-index: 2; background: var(--surface); }

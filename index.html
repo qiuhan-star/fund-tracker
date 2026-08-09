@@ -2697,11 +2697,13 @@ function openDrawerPrefill(name){
   const f=document.getElementById('dr-fund'); if(f) f.value=name||'';
   const ty=document.getElementById('dr-type'); if(ty){ const b=ty.querySelector('option[value="buy"]'); if(b) b.selected=true; }
 }
-function loadWatch(){ try{ const w=JSON.parse(localStorage.getItem('ft_watch')||'[]'); if(Array.isArray(w)){ let dirty=false; w.forEach(function(x){ if(x && !x.grp){ x.grp=guessCat(x.name||''); dirty=true; } }); if(dirty){ try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} } return w; } return []; }catch(e){ return []; } }
+function loadWatch(){ try{ const w=JSON.parse(localStorage.getItem('ft_watch')||'[]'); if(Array.isArray(w)){ let dirty=false; w.forEach(function(x){ if(x && !x.grp){ x.grp=guessCat(x.name||''); dirty=true; } if(x && !x.account){ x.account='本人账户'; dirty=true; } }); if(dirty){ try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} } return w; } return []; }catch(e){ return []; } }
+function currentWatchAcc(){ return (curAccount&&curAccount!=='全部')?effAccount(curAccount):effAccount(scopeAcc!=='all'?scopeAcc:'本人账户'); }
+function watchInScope(x){ const a=effAccount(x&&x.account); if(!a) return true; if(curAccount==='全部') return true; return a===effAccount(curAccount); }
 function addWatch(code, name){
   const w=loadWatch();
   if(w.some(function(x){ return x.code===code; })){ toast('已在自选中'); closeRankMenu(); return; }
-  w.push({code:code, name:name, grp: guessCat(name)});
+  w.push({code:code, name:name, grp: guessCat(name), account: currentWatchAcc()});
   try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
   renderWatch(); toast('已加自选 · '+esc(name)); closeRankMenu();
 }
@@ -2739,7 +2741,7 @@ function refreshWatchQuotes(){
 function renderWatch(){
   const ul=document.getElementById('watch-list'); const empty=document.getElementById('watch-empty');
   if(!ul) return;
-  const w=loadWatch();
+  const w=loadWatch().filter(watchInScope);
   if(!w.length){ ul.innerHTML=''; if(empty) empty.style.display=''; return; }
   if(empty) empty.style.display='none';
   ul.innerHTML=w.map(function(x){
@@ -8846,14 +8848,14 @@ function addUnifiedWatch(){
   if(/^\d{6}$/.test(v)){ fetchFundInfoUnified(v); el.value=''; return; }
   const w=loadWatch();
   if(w.some(function(x){ return x.name===v; })){ alert('已在自选'); return; }
-  w.push({code:'', name:v, grp: guessCat(v)}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+  w.push({code:'', name:v, grp: guessCat(v), account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
   renderWatchTab();
 }
 function fetchFundInfoUnified(code){
   const s=document.createElement('script');
   const timer=setTimeout(function(){
     const w=loadWatch();
-    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:''}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
+    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:'', account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
     renderWatchTab(); toast('自动拉取失败，已加入基金自选，请手动补全名称');
   }, 10000);
   s.onload=function(){
@@ -8874,12 +8876,12 @@ function fetchFundInfoUnified(code){
       } else {
         const w=loadWatch();
         if(w.some(function(x){ return x.code===code; })){ toast('已在自选'); return; }
-        w.push({code:code, name:nm||('（'+code+'）待补全'), grp: guessCat(nm||'')}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+        w.push({code:code, name:nm||('（'+code+'）待补全'), grp: guessCat(nm||''), account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
         renderWatchTab(); toast(nm?('已加基金自选 '+nm):'已建卡，请补全名称');
       }
     }catch(e){
       const w=loadWatch();
-      if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:''}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
+      if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:'', account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
       renderWatchTab(); toast('自动拉取异常，已加入基金自选');
     }
     s.remove();
@@ -8887,7 +8889,7 @@ function fetchFundInfoUnified(code){
   s.onerror=function(){
     clearTimeout(timer);
     const w=loadWatch();
-    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:''}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
+    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:'', account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
     renderWatchTab(); toast('自动拉取失败，已加入基金自选');
   };
   s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
@@ -9073,7 +9075,7 @@ function markHint(html){ return html.replace('class="wrow"','class="wrow hint"')
 function renderWatchTab(){
   const bc=document.getElementById('tp3'); if(!bc) return;
   loadBond();
-  const fWatch=loadWatch();
+  const fWatch=loadWatch().filter(watchInScope);
   const bWatch=loadBondWatch().filter(bondWsInScope);
   const scopedBonds=getBondFunds().filter(function(f){ return scopeMatches(f.acc); });
 
@@ -9081,7 +9083,7 @@ function renderWatchTab(){
   const items=[];
   fWatch.forEach(function(x){
     const held=_allHoldings.find(function(f){ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
-    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name});
+    items.push({isBond:false, code:x.code||'', name:x.name, acc:x.account||'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name});
   });
   bWatch.forEach(function(f){
     items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code});

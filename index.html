@@ -1106,7 +1106,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .cb-card .sub2 { font-size: 12px; color: var(--text-3); }
 
 .bar-list { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
-.bar-row { display: grid; grid-template-columns: 110px 1fr 100px; align-items: center; gap: 12px; font-size: 13px; }
+.bar-row { display: grid; grid-template-columns: 124px 1fr 100px; align-items: center; gap: 12px; font-size: 13px; }
 .bar-info { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .bar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--accent); }
 .cb-card .bar-name { font-weight: 600; color: var(--text); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: none; flex: 1 1 auto; min-width: 0; }
@@ -1117,6 +1117,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .bar-ret-col { text-align: right; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; justify-content: center; }
 .bar-amount { font-size: 13px; font-weight: 700; color: var(--text); }
 .bar-pnl { font-size: 11px; font-weight: 600; margin-top: 1px; }
+/* 盈亏分布基金名：不截断，太长换到第二行（2 行封顶），word-break 防溢出到别的列 */
+.chart-box .bar-name { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-word; max-width: none; line-height: 1.35; }
 
 .pos { color: var(--up) !important; }
 .neg { color: var(--down) !important; }
@@ -1124,7 +1126,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
 @media (max-width: 680px) {
   .ov-hero-value { font-size: 32px; }
-  .bar-row { grid-template-columns: 90px 1fr 85px; gap: 8px; }
+  .bar-row { grid-template-columns: 104px 1fr 85px; gap: 8px; }
   .bar-pct { display: none; }
 }
 

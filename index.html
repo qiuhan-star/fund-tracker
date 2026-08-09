@@ -399,7 +399,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .dca-row .field .suffix { color:var(--text-2); font-size:16px; }
 .dca-section-hint { font-size:12px; color:var(--text-3); margin:-6px 0 8px 2px; line-height:1.4; }
 .dca-save-btn { display:block; width:100%; border:none; background:var(--accent); color:#fff; border-radius:12px; padding:15px; font-size:17px; font-weight:600; font-family:inherit; margin-top:18px; }
-.dca-footer { font-size:11px; color:var(--text-3); line-height:1.45; text-align:center; padding:14px 10px 6px; }
+.dca-footer { font-size:11px; color:var(--text-3); line-height:1.6; text-align:center; padding:14px 10px calc(6px + env(safe-area-inset-bottom)); }
 .sm-act span { font-size: 18px; }.sm-note { font-size: 14px; color:var(--text-3); margin:12px 0 0; line-height:1.5; }
 /* 数据与安全：iOS 分组列表（替代原 sm-grid 按钮矩阵） */
 .ios-section { margin-bottom:18px; }
@@ -6171,8 +6171,8 @@ function dcaPeriods(plan, today){
   const out=[]; if(!plan||!plan.start) return out;
   const period=plan.period||'month';
   const todayD=parseYMD(today);
-  const [sy,sm]=plan.start.split('-').map(Number);
-  const startD=new Date(sy, sm-1, 1);
+  const [sy,sm,sd]=plan.start.split('-').map(Number);
+  const startD=new Date(sy, sm-1, sd || 1);
   let endD=null;
   if(plan.end){
     const e=plan.end.split('-').map(Number);
@@ -6342,13 +6342,14 @@ function openDcaModal(name){
 }
 function closeDcaModal(){ const m=document.getElementById('dcaMask'); if(m) m.classList.remove('show'); }
 function dcaSetPeriod(p){
+  const row=document.getElementById('dcaTimeRow');
   const wrap=document.getElementById('dcaTimeField');
-  if(!wrap) return;
+  if(!wrap || !row) return;
   if(p==='day'){
-    wrap.className='field';
-    wrap.innerHTML='<span class="static-time">每个交易日</span>';
+    row.style.display='none';
     return;
   }
+  row.style.display='';
   wrap.className='field has-chevron';
   if(p==='month'){
     let opts=''; for(let i=1;i<=28;i++) opts+='<option'+(i===1?' selected':'')+'>'+i+'日</option>';
@@ -6360,7 +6361,8 @@ function dcaSetPeriod(p){
 function dcaResetForm(){
   _dcaEditId=null;
   const t=document.getElementById('dcaSheetTitle'); if(t) t.textContent='新增定投计划';
-  ['dcaName','dcaAmount','dcaStart','dcaEnd'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
+  ['dcaName','dcaAmount','dcaEnd'].forEach(function(id){ const el=document.getElementById(id); if(el) el.value=''; });
+  const dcaStart=document.getElementById('dcaStart'); if(dcaStart){ dcaStart.value=new Date().toISOString().slice(0,10); }
   const acc=document.getElementById('dcaAcc'); if(acc && acc.options.length) acc.selectedIndex=0;
   const per=document.getElementById('dcaPeriod'); if(per) per.value='month';
   dcaSetPeriod('month');
@@ -6389,12 +6391,14 @@ function dcaRenderList(){
       +'</div>';
   }).join('');
 }
+function dcaNormStart(v){ if(!v) return ''; const a=v.split('-'); if(a.length===2) return v+'-01'; return v; }
+function dcaNormEnd(v){ if(!v) return ''; const a=v.split('-'); if(a.length===2){ const [y,m]=a.map(Number); return y+'-'+pad2(m)+'-'+pad2(new Date(y,m,0).getDate()); } return v; }
 function dcaEdit(id){
   const p=dcaPlans.find(x=>x.id===id); if(!p) return;
   _dcaEditId=id;
   const t=document.getElementById('dcaSheetTitle'); if(t) t.textContent='编辑定投计划';
   const setV=function(i,v){ const el=document.getElementById(i); if(el) el.value=v; };
-  setV('dcaName',p.name); setV('dcaAmount',p.amount); setV('dcaStart',p.start); setV('dcaEnd',p.end||'');
+  setV('dcaName',p.name); setV('dcaAmount',p.amount); setV('dcaStart',dcaNormStart(p.start)); setV('dcaEnd',dcaNormEnd(p.end||''));
   const acc=document.getElementById('dcaAcc'); if(acc){ let ok=false; Array.prototype.forEach.call(acc.options,function(o){ if(o.value===p.account){ o.selected=true; ok=true; } }); if(!ok && acc.options.length){ acc.selectedIndex=0; } }
   const per=document.getElementById('dcaPeriod'); if(per){ per.value=p.period||'month'; dcaSetPeriod(per.value); }
   if(p.period==='month'){ const d=document.getElementById('dcaDay'); if(d) d.value=p.day||1; }
@@ -6426,8 +6430,8 @@ function dcaSave(){
   }
   if(!name.trim()){ toast('请填写基金名称'); return; }
   if(!(amount>0)){ toast('请填写有效的单期金额'); return; }
-  if(!start){ toast('请选择起始月份'); return; }
-  if(end && end<start){ toast('结束月份不能早于起始月份'); return; }
+  if(!start){ toast('请选择起始日期'); return; }
+  if(end && end<start){ toast('结束日期不能早于起始日期'); return; }
   if(_dcaEditId){
     const p=dcaPlans.find(x=>x.id===_dcaEditId);
     if(p){ p.name=name.trim(); p.account=acc; p.amount=amount; p.period=period; p.day=day; p.weekday=weekday; p.start=start; p.end=end||null; }

@@ -3017,9 +3017,8 @@ function renderHomeList(){
     return;
   }
   const isMobile=window.matchMedia('(max-width:640px)').matches;
-  if(isMobile){
-    // 移动端统一走横滑表格皮肤：不分组直接渲染，分组用组头行分隔（与不分组字体/列宽一致）
-    box.innerHTML=(holdGroupBy==='none'?renderHomeMobileTable(list):renderGroupedMobile(list))+obsHtml;
+  if(isMobile && holdGroupBy==='none'){
+    box.innerHTML=renderHomeMobileTable(list)+obsHtml;
     ensureStreakLabels(list);
   } else {
     box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
@@ -3042,8 +3041,8 @@ function renderHomeDense(list, showHead){
     let tds='';
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
-        <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
         ${code?`<span>#${code}</span>`:''}
+        <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
         ${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
       </div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
@@ -3202,22 +3201,6 @@ function renderGrouped(list){
     const head=`<div class="grp-head"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div>`;
     return head + renderHomeDense(sub, idx===0);
   }).join('');
-}
-// 移动端分组视图：与「不分组」共用同一套横滑表格皮肤，组头以跨列分隔行呈现，保证字体/列宽一致
-function renderGroupedMobile(list){
-  const dim=(holdGroupBy==='asset')?'asset':'market';
-  const groups={};
-  list.forEach(f=>{ const k=(f[dim]||'其他'); (groups[k]=groups[k]||[]).push(f); });
-  const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));
-  const cols=homeMobileCols();
-  const colspan=cols.length+1; // 含「≡ 列」
-  const rows=order.map(k=>{
-    const sub=groups[k];
-    const mvSum=sub.reduce((a,f)=>a+(f.mv||0),0);
-    const headRow='<tr class="grp-mob"><td colspan="'+colspan+'" class="grp-head-cell"><span class="grp-name">'+grpLabel(dim,k)+'</span><span class="grp-meta">'+sub.length+' 只 · <b>'+M(mvSum)+'</b></span></td></tr>';
-    return headRow + sub.map(f=>homeMobileRow(f,cols)).join('');
-  }).join('');
-  return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+homeMobileHead(cols)+'</thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 function goDetail(enc, acc){
@@ -8493,11 +8476,6 @@ function renderSyncCfg(){
 .grp-head:first-child{ margin-top:4px; }
 .grp-name{ font-weight:700; font-size: 14px; color:var(--text); }
 .grp-meta{ margin-left:auto; font-size: 14px; color:var(--text-3); }
-/* 移动端横滑表格里的分组头行（资产大类/市场区域，与不分组共用一套皮肤） */
-.home-ctable .grp-mob td{ background:var(--surface-3); border-bottom:1px solid var(--border-3); }
-.home-ctable .grp-mob .grp-head-cell{ padding:10px 14px 8px; }
-.home-ctable .grp-mob .grp-name{ font-size:14px; }
-.home-ctable .grp-mob .grp-meta{ font-size:12px; }
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }
 .bond-drawer.open{ display:block; }
 .bd-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45); }

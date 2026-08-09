@@ -1054,27 +1054,32 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sync-up-arrow{ width:15px; height:15px; }
   .sync-foot{ margin:10px 0 0; font-size:12px; color:var(--text-3); line-height:1.5; }
 
-/* XIRR/定投模拟 现代化卡片风格（替代旧 .calc-row/.co-row/.xr-row 老人机外观） */
-.xirr-card .sec-title { font-size:15px; font-weight:700; margin:18px 0 12px; display:flex; align-items:center; gap:6px; }
+/* 定投/XIRR 测算卡片：紧凑一体化结果 + 卡片内 Tab 切换 */
+.xirr-card h2 { font-size: 18px; margin-bottom: 6px; }
+.xirr-card > h2 .tag { font-size: 12px; vertical-align: middle; margin-left: 6px; }
+.xirr-card .xirr-seg { display: flex; gap: 6px; margin: 12px 0 14px; }
+.xirr-card .xirr-seg button { flex: 1; border: 1px solid var(--border-2); background: var(--surface-2); border-radius: 10px; padding: 9px 8px; font-size: 14px; font-weight: 600; color: var(--text-2); cursor: pointer; font-family: inherit; transition: all .15s; }
+.xirr-card .xirr-seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.xirr-card .xirr-panel { display: none; }
+.xirr-card .xirr-panel.on { display: block; }
+.xirr-card .sec-title { font-size:15px; font-weight:700; margin:0 0 12px; display:flex; align-items:center; gap:6px; }
 .xirr-card .sec-title::before { content:''; width:4px; height:16px; background:var(--accent); border-radius:2px; }
-.xirr-card .dca-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px; }
-.xirr-card .fc { background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:14px; transition:border-color .15s,box-shadow .15s; cursor:text; }
+.xirr-card .dca-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.xirr-card .fc { background:var(--surface-2); border:1px solid var(--border-2); border-radius:10px; padding:10px; transition:border-color .15s,box-shadow .15s; cursor:text; }
 .xirr-card .fc:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
-.xirr-card .fc-label { font-size:12px; color:var(--text-3); margin-bottom:6px; }
+.xirr-card .fc-label { font-size:11px; color:var(--text-3); margin-bottom:4px; }
 .xirr-card .fc-input { display:flex; align-items:baseline; gap:4px; }
-.xirr-card .fc-input input { width:100%; border:none; background:transparent; font-size:24px; font-weight:700; color:var(--text); font-family:inherit; outline:none; font-variant-numeric:tabular-nums; padding:0; }
-.xirr-card .fc-input .u { font-size:14px; color:var(--text-3); font-weight:500; flex:0 0 auto; }
-.xirr-card .dca-banner { background:linear-gradient(135deg,var(--accent) 0%, #4f85ff 100%); border-radius:12px; padding:18px; color:#fff; margin-bottom:14px; }
-.xirr-card .dca-banner .bl { font-size:13px; opacity:.92; margin-bottom:4px; }
-.xirr-card .dca-banner .bv { font-size:30px; font-weight:800; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; }
-.xirr-card .dca-banner .bs { font-size:13px; opacity:.92; margin-top:8px; }
-.xirr-card .dca-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-.xirr-card .dca-kpi { background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:12px; text-align:center; }
-.xirr-card .dca-kpi .kl { font-size:12px; color:var(--text-3); margin-bottom:4px; }
-.xirr-card .dca-kpi .kv { font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; }
+.xirr-card .fc-input input { width:100%; border:none; background:transparent; font-size:16px; font-weight:700; color:var(--text); font-family:inherit; outline:none; font-variant-numeric:tabular-nums; padding:0; }
+.xirr-card .fc-input .u { font-size:11px; color:var(--text-3); font-weight:500; flex:0 0 auto; }
+.xirr-card .dca-banner { background:linear-gradient(135deg,var(--accent) 0%, #4f85ff 100%); border-radius:16px; padding:18px 20px; color:#fff; box-shadow:0 8px 20px -4px rgba(37,99,235,.25); }
+.xirr-card .dca-banner .bl { font-size:12px; opacity:.85; }
+.xirr-card .dca-banner .bv { font-size:30px; font-weight:800; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; margin:4px 0 14px; }
+.xirr-card .dca-sub-grid { display:grid; grid-template-columns:repeat(3,1fr); padding-top:12px; border-top:1px solid rgba(255,255,255,.15); }
+.xirr-card .dca-sub-item label { display:block; font-size:10.5px; opacity:.75; margin-bottom:2px; }
+.xirr-card .dca-sub-item span { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
 .xirr-card .xr-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
 .xirr-card .xr-item { display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:10px 12px; }
-.xirr-card .xr-date { flex:0 0 104px; font-size:14px; color:var(--text-2); font-variant-numeric:tabular-nums; border:none; background:transparent; font-family:inherit; outline:none; padding:0; }
+.xirr-card .xr-date { flex:0 0 auto; min-width:104px; font-size:14px; color:var(--text-2); font-variant-numeric:tabular-nums; border:none; background:transparent; font-family:inherit; outline:none; padding:0; white-space:nowrap; }
 .xirr-card .xr-amt { flex:1; min-width:0; font-size:18px; font-weight:700; text-align:right; border:none; background:transparent; font-family:inherit; outline:none; font-variant-numeric:tabular-nums; padding:0; color:var(--text); }
 .xirr-card .xr-pill { border:none; border-radius:99px; padding:5px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; flex:0 0 auto; }
 .xirr-card .xr-pill.out { background:var(--accent-soft); color:var(--accent); }
@@ -1089,27 +1094,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .xirr-card .xr-result .rv.neg { color:var(--up); }
 .xirr-card .xr-result .rn { font-size:12px; color:var(--text-3); margin-top:8px; line-height:1.5; }
 
-/* XIRR/定投模拟卡片字号层级瘦身 */
-.xirr-card h2 { font-size: 18px; margin-bottom: 8px; }
-.xirr-card > h2 .tag { font-size: 12px; vertical-align: middle; margin-left: 6px; }
-.xirr-card > p.hint { font-size: 12px; line-height: 1.5; margin-bottom: 14px; }
-.xirr-card .am-h { font-size: 15px; margin: 14px 0 6px; }
-.xirr-card .calc-row { font-size: 13px; }
-.xirr-card .calc-row label { flex: 0 0 64px; font-size: 13px; color: var(--text-3); }
-.xirr-card .calc-row input.num { width: 88px; height: 32px; padding: 0 8px; font-size: 13px; font-weight: normal; line-height: 1; box-sizing: border-box; }
-.xirr-card .calc-row .hint { font-size: 13px; padding: 0; color: var(--text-3); }
-.xirr-card .co-row { font-size: 13px; padding: 3px 0; }
-.xirr-card .co-row span { font-size: 13px; color: var(--text-3); }
-.xirr-card .co-row b { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.xirr-card .xr-row { margin: 4px 0; gap: 5px; }
-.xirr-card .xr-date,
-.xirr-card .xr-amt,
-.xirr-card .xr-dir { height: 32px; padding: 0 6px; font-size: 13px; font-weight: normal; border-radius: 6px; box-sizing: border-box; }
-.xirr-card .xr-date { flex: 0 0 112px; }
-.xirr-card .xr-amt { flex: 1 1 70px; min-width: 0; text-align: right; }
-.xirr-card .xr-dir { flex: 0 0 72px; }
-.xirr-card .xr-row .del { padding: 0 8px; height: 32px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
-.xirr-card .btn.sm { font-size: 13px; padding: 3px 10px; margin-top: 4px; }
 
 @media (max-width: 380px) {
   .ov-grid { grid-template-columns: 1fr; }
@@ -1579,27 +1563,27 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         </div>
         <div id="trackGrid" class="market-grid-dense"></div>
         <div id="trackTable" class="hidden"><table class="market-table"><thead><tr><th>赛道</th><th>今日</th><th>近1月</th><th>近1年</th><th>1年分位</th></tr></thead><tbody id="trackTbody"></tbody></table></div>
-        <p class="hint" style="font-size:12px;margin-top:8px">赛道=精选行业ETF（东方财富实时K线）。「1年分位」为近1年收盘价所处区间位置（价位分位，非PE估值分位）；真PE估值分位需接入乐咕/蛋卷长序列后补。</p>
-      </div>
-
-      <div class="card">
-        <div class="sec-head"><h2 style="margin:0;font-size: 14px">🔥 板块资金流向 <span class="tag tag-sample" id="flowTag">示例</span></h2><span class="hint" style="font-size: 12px" id="flowHint">暂无免费实时接口，以下为示例数据</span></div>
-        <div class="flow-grid">
-          <div class="flow-col inflow-bg"><h4 class="flow-title text-up">▲ 主力净流入 Top 5</h4><ul id="inflow-list" class="flow-list"></ul></div>
-          <div class="flow-col outflow-bg"><h4 class="flow-title text-down">▼ 主力净流出 Top 5</h4><ul id="outflow-list" class="flow-list"></ul></div>
+      <div class="card xirr-card">
+        <h2>定投模拟 / 真实年化（XIRR）</h2>
+        <div class="xirr-seg">
+          <button class="on" onclick="switchXirrTab('dca',this)">定投模拟</button>
+          <button onclick="switchXirrTab('xirr',this)">真实年化（XIRR）</button>
+        </div>
+        <div class="xirr-panel on" id="xirrPanelDca">
+          <div class="dca-grid">
+            <div class="fc" onclick="document.getElementById('dcaMon').focus()"><div class="fc-label">每月定投</div><div class="fc-input"><input id="dcaMon" type="number" value="1000" oninput="calcDCA()"><span class="u">元</span></div></div>
+            <div class="fc" onclick="document.getElementById('dcaRate').focus()"><div class="fc-label">预期年化</div><div class="fc-input"><input id="dcaRate" type="number" value="10" oninput="calcDCA()"><span class="u">%</span></div></div>
+            <div class="fc" onclick="document.getElementById('dcaYrs').focus()"><div class="fc-label">定投年数</div><div class="fc-input"><input id="dcaYrs" type="number" value="5" oninput="calcDCA()"><span class="u">年</span></div></div>
+          </div>
+          <div id="dcaOut" class="calc-out"></div>
+        </div>
+        <div class="xirr-panel" id="xirrPanelXirr">
+          <div class="sec-title">真实年化（XIRR）</div>
+          <div id="xirrRows"></div>
+          <button class="xr-add" onclick="xirrAddRow()">＋ 添加一笔现金流</button>
+          <div id="xirrOut" class="calc-out"></div>
         </div>
       </div>
-
-      <div class="card" id="capCard">
-        <div class="sec-head"><h2 style="margin:0;font-size: 14px">💱 北向 / 南向资金 <span class="tag tag-sample" id="capTag">示例</span></h2><span class="hint" id="capHint" style="font-size: 12px">东方财富·沪深港通</span></div>
-        <div class="cap-grid">
-          <div class="cap-col nb-bg"><h4 class="cap-title">🟢 北向资金（陆股通）</h4><div id="nbVal" class="cap-val">—</div><div class="cap-sub">净买额 · 当日</div></div>
-          <div class="cap-col sb-bg"><h4 class="cap-title">🔵 南向资金（港股通）</h4><div id="sbVal" class="cap-val">—</div><div class="cap-sub">净买额 · 当日</div></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="sec-head"><h2 style="margin:0;font-size: 14px">🏆 市场动态与关注榜 <span class="tag tag-sample">示例</span></h2>
           <div class="sub-tabs">
             <button class="sub-btn active" onclick="switchRankTab('top', this)">🚀 今日领涨</button>
             <button class="sub-btn" onclick="switchRankTab('hot', this)">🔥 高关注度</button>
@@ -2430,36 +2414,45 @@ const MARKET_RANK = {
     { code: '164824', name: '工银瑞信印度市场', type: '指数型', est: '+1.30%', w1: '+4.2%' },
     { code: '001632', name: '天弘中证食品饮料C', type: '指数型', est: '+1.95%', w1: '+3.0%' },
     { code: '501016', name: '国泰中证申万证券', type: '指数型', est: '+1.55%', w1: '+2.6%' }
-  ],
-  hot: [
-    { code: '001180', name: '易方达中小盘混合', type: '混合型', est: '+0.85%', w1: '+1.2%' },
-    { code: '110011', name: '易方达中小盘', type: '股票型', est: '-0.32%', w1: '+0.5%' },
-    { code: '003003', name: '华夏半导体芯片ETF', type: '指数型', est: '+2.95%', w1: '+8.1%' },
-    { code: '161725', name: '招商中证白酒指数', type: '指数型', est: '+2.10%', w1: '+3.8%' },
-    { code: '320007', name: '诺安成长混合', type: '混合型', est: '+3.10%', w1: '+6.5%' },
-    { code: '163406', name: '兴全合润混合', type: '混合型', est: '+1.20%', w1: '+2.4%' },
-    { code: '519674', name: '银河创新成长混合', type: '混合型', est: '+3.45%', w1: '+7.0%' },
-    { code: '001714', name: '工银瑞信文体产业', type: '混合型', est: '+0.95%', w1: '+1.8%' },
-    { code: '002001', name: '华夏回报混合', type: '混合型', est: '+0.60%', w1: '+1.1%' },
-    { code: '011609', name: '国泰中证动漫游戏ETF联接C', type: '指数型', est: '+4.02%', w1: '+9.1%' },
-    { code: '010198', name: '易方达竞争优势企业', type: '混合型', est: '-0.45%', w1: '+0.8%' },
-    { code: '012348', name: '富国中证科技50ETF联接C', type: '指数型', est: '+3.45%', w1: '+7.2%' }
-  ]
-};
-function fetchCapitalFlow(){
-  return new Promise(resolve=>{
-    const timer=setTimeout(()=>resolve(null),5000);
-    const cb='cf_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    window[cb]=d=>{
-      clearTimeout(timer);
-      try{
-        const diff=(d&&d.data&&d.data.diff)||[];
-        if(!diff.length){ resolve(null); }
-        else {
-          const arr=diff.map(x=>({name:x.f14, net:+(x.f62||0)})).filter(x=>x.name);
-          const fmt=v=>{ const yi=v/1e8; return (yi>=0?'+':'')+yi.toFixed(1)+'亿'; };
-          const inflow=arr.filter(x=>x.net>0).sort((a,b)=>b.net-a.net).slice(0,5).map(x=>({name:x.name, amount:fmt(x.net)}));
+let xirrFlows=[{date:'2024-01-01',amt:1000,dir:'out'},{date:'2025-01-01',amt:1000,dir:'out'},{date:'2026-01-01',amt:2650,dir:'in'}];
+function calcDCA(){
+  const mon=+document.getElementById('dcaMon').value||0, yrs=+document.getElementById('dcaYrs').value||0, rate=(+document.getElementById('dcaRate').value||0)/100, n=yrs*12;
+  const out=document.getElementById('dcaOut'); if(!out) return;
+  if(mon<=0||n<=0){ out.innerHTML='<span class="hint">填入每月定投金额与年数</span>'; return; }
+  const fv = rate===0 ? mon*n : mon*((Math.pow(1+rate/12,n)-1)/(rate/12));
+  const invested=mon*n, profit=fv-invested, roi=invested>0?profit/invested*100:0;
+  out.innerHTML='<div class="dca-banner"><div class="bl">预期期末资产（元）</div><div class="bv">'+M(fv)+'</div>'
+    +'<div class="dca-sub-grid">'
+    +'<div class="dca-sub-item"><label>本金投入</label><span>'+M(invested)+'</span></div>'
+    +'<div class="dca-sub-item"><label>预期收益</label><span>'+(profit>=0?'+':'')+M(profit)+' ('+(roi>=0?'+':'')+roi.toFixed(1)+'%)</span></div>'
+    +'<div class="dca-sub-item" style="text-align:right"><label>本金倍数</label><span>'+(invested>0?(fv/invested).toFixed(2):'0')+'×</span></div>'
+    +'</div></div>';
+}
+function xirr(flows){
+  const fs=flows.map(f=>({t:new Date(f.date), amt:(f.dir==='in'?1:-1)*Math.abs(parseFloat(f.amt)||0)}))
+    .filter(f=>!isNaN(f.t.getTime()) && f.amt!==0).sort((a,b)=>a.t-b.t);
+  if(fs.length<2) return null;
+  const d0=fs[0].t, npv=r=>fs.reduce((s,f)=>s+f.amt/Math.pow(1+r,(f.t-d0)/86400000/365),0);
+  let lo=-0.9999, hi=10, fLo=npv(lo), fHi=npv(hi); if(fLo*fHi>0) return null;
+  for(let k=0;k<200;k++){ const mid=(lo+hi)/2, fv=npv(mid); if(Math.abs(fv)<1e-7) return mid; if(fLo*fv<0) hi=mid; else lo=mid; }
+  return (lo+hi)/2;
+}
+function renderXirr(){ const box=document.getElementById('xirrRows'); if(!box) return;
+  box.innerHTML='<div class="xr-list">'+xirrFlows.map((f,i)=>'<div class="xr-item"><input class="xr-date" type="date" value="'+f.date+'" onchange="xirrFlows['+i+'].date=this.value;calcXIRR()"><input class="xr-amt" type="number" value="'+f.amt+'" oninput="xirrFlows['+i+'].amt=+this.value;calcXIRR()"><button class="xr-pill '+(f.dir==='out'?'out':'in')+'" onclick="xirrFlows['+i+'].dir=(xirrFlows['+i+'].dir===\'out\'?\'in\':\'out\');renderXirr();calcXIRR()">'+(f.dir==='out'?'投入':'赎回')+'</button><button class="xr-del" onclick="xirrDelRow('+i+')">✕</button></div>').join('')+'</div>';
+}
+function xirrAddRow(){ const last=xirrFlows[xirrFlows.length-1]; const d=(last&&last.date)?last.date:new Date().toISOString().slice(0,10); xirrFlows.push({date:d,amt:1000,dir:'out'}); renderXirr(); calcXIRR(); }
+function xirrDelRow(i){ if(xirrFlows.length<=2){ toast('至少保留两笔现金流'); return; } xirrFlows.splice(i,1); renderXirr(); calcXIRR(); }
+function calcXIRR(){ const box=document.getElementById('xirrOut'); if(!box) return; const r=xirr(xirrFlows);
+  if(r===null){ box.innerHTML='<span class="hint">需至少两笔、且「投入/赎回」方向不同的现金流</span>'; return; }
+  const pct=r*100; box.innerHTML='<div class="xr-result"><div class="rl">年化内部收益率（XIRR）</div><div class="rv '+(r>=0?'':'neg')+'">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</div><div class="rn">根据你输入的 '+xirrFlows.length+' 笔现金流时间与金额计算</div></div>';
+}
+function switchXirrTab(tab, btn){
+  const seg=btn.parentElement, panDca=document.getElementById('xirrPanelDca'), panXirr=document.getElementById('xirrPanelXirr');
+  [...seg.children].forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(tab==='dca'){ panDca.classList.add('on'); panXirr.classList.remove('on'); calcDCA(); }
+  else { panDca.classList.remove('on'); panXirr.classList.add('on'); renderXirr(); calcXIRR(); }
+}
           const outflow=arr.filter(x=>x.net<0).sort((a,b)=>a.net-b.net).slice(0,5).map(x=>({name:x.name, amount:fmt(x.net)}));
           resolve({inflow:inflow, outflow:outflow, ok:true});
         }

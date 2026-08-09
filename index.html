@@ -814,6 +814,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-streak{ font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; white-space:nowrap; display:inline-flex; align-items:center; }
   .dense-streak.streak-up{ background:var(--up-bg); color:var(--up); }
   .dense-streak.streak-down{ background:var(--down-bg); color:var(--down); }
+  /* dense 名称列副行两行结构：行1 = 代码+分类+标签（紧凑 10-11px），行2 = 连涨/连跌 独立一行左对齐 */
+  .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; }
+  .dense-table .dt-sub .tag { font-size: 10px; padding: 1px 6px; border-radius: 6px; }
+  .dense-table .dcode { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table {
     display: block;
@@ -3148,12 +3153,7 @@ function renderHomeList(){
     if(obsHtml) fillWatchQuotes();
     return;
   }
-  const isMobile=window.matchMedia('(max-width:640px)').matches;
-  if(isMobile && holdGroupBy==='none'){
-    box.innerHTML=renderHomeMobileTable(list)+obsHtml;
-  } else {
-    box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
-  }
+  box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
   ensureStreakLabels(list);
@@ -3203,10 +3203,9 @@ function denseRowsHtml(list){
     let tds='';
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
-        ${code?`<span>#${code}</span>`:''}
+        ${code?`<span class="dcode">#${code}</span>`:''}
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
-        ${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}
-      </div></td>`;
+      </div><div class="dt-streak">${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
       else if(c.key==='day'){

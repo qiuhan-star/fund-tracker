@@ -3212,7 +3212,7 @@ function renderHomeList(){
   list=list.filter(f=> !(f.shares===0 && !f.isBond && !(f.mv>0)) );
   // 动态标题：跟随当前账户
   const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=(curAccount==='全部'||!curAccount)?'全部持仓':(effAccount(curAccount)+'持仓');
-  if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
+  if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q) || (f.cat||'').toLowerCase().includes(q)); }
   // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }
   // 自选（未持仓）区块 —— 始终在列表底部展示

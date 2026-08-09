@@ -8189,6 +8189,7 @@ function renderSyncCfg(){
     var html='';
     html+=group('同步与隐私',[
       row('cloud','blue','本地云同步','<span id="smStatTxt">本地数据 · —</span>','<button type="button" class="smg-btn" onclick="event.stopPropagation();cloudPush(true)">同步</button>','cloudPush(true)'),
+      row('cloud','blue','云同步设置','配置 GitHub 仓库与令牌','<span class="smg-chev">›</span>','openSettingsDetail(\'account\')'),
       row('eyeoff','purple','资产隐蔽模式','<span id="smPrivDsc">关闭 · 金额正常显示</span>','<span class="sm-priv-sw" id="privSw"><i></i></span>','toggleHidden()')
     ]);
     html+=group('偏好设置',[

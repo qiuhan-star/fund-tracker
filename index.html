@@ -305,6 +305,14 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .lq-opp-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .lq-empty{background:var(--surface);border:1px dashed var(--border-strong);border-radius:12px;padding:22px 14px;text-align:center;font-size:12.5px;color:var(--text-3);line-height:1.6}
 
+/* 清仓判断标记（⭐观察 / ✗放弃） */
+.lq-mark-btn{font-size:13px;line-height:1;padding:3px 7px;border-radius:6px;background:var(--surface-3);border:1px solid var(--border-2);color:var(--text-3);cursor:pointer;white-space:nowrap}
+.lq-mark{font-size:10.5px;padding:2px 6px;border-radius:5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.lq-mark.m-observe{color:#b45309;background:#fef3c7;border:1px solid #fcd34d}
+.lq-mark.m-drop{color:#6b7280;background:var(--surface-3);border:1px solid var(--border-strong)}
+.sheet-head{padding:14px 16px;font-size:13px;font-weight:700;color:var(--text-3);text-align:center;border-bottom:1px solid var(--border)}
+
+
 /* 当前 vs 建议 双柱对比（自包含，替代 Chart.js） */
 .cmp-leg2 { display:flex; gap:16px; flex-wrap:wrap; font-size: 14px; color:var(--text-2); margin:4px 0 8px; align-items:center; }
 .cmp-leg2 .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle; }
@@ -1753,6 +1761,17 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     </div>
     <button class="sheet-cancel" onclick="closeDetailMore()">取消</button>
   </div>
+  <div class="sheet-mask" id="liqMarkMask" onclick="closeLiqMark()"></div>
+  <div class="sheet" id="liqMarkSheet">
+    <div class="sheet-card">
+      <div class="sheet-head">清仓判断标记</div>
+      <button class="sheet-row" onclick="setLiqMark('observe')">⭐ 观察（可能再入场）</button>
+      <button class="sheet-row" onclick="setLiqMark('drop')">✗ 放弃（认为没价值）</button>
+      <button class="sheet-row danger" id="liqMarkClear" onclick="setLiqMark('')">清除标记</button>
+    </div>
+    <button class="sheet-cancel" onclick="closeLiqMark()">取消</button>
+  </div>
+
   <div class="sheet-mask" id="rvMask" onclick="reviewSheetClose()"></div>
   <div class="sheet" id="rvSheet">
     <div class="sheet-card rv-sheet-card">
@@ -4355,6 +4374,21 @@ function buildLiquidatedView(){
 function goLiq(el){ goDetail(el.dataset.nm, el.dataset.acc); }
 function setLiqSort(btn){ liqSort=btn.dataset.s; renderLiquidated(); }
 function setLiqGroup(btn){ liqGroup=btn.dataset.g; renderLiquidated(); }
+
+let liqMarks=null;
+function getLiqMarks(){ if(!liqMarks){ try{ liqMarks=JSON.parse(localStorage.getItem('ft_liq_marks')||'{}'); }catch(e){ liqMarks={}; } if(!liqMarks||typeof liqMarks!=='object'||Array.isArray(liqMarks)) liqMarks={}; } return liqMarks; }
+function saveLiqMarks(){ try{ localStorage.setItem('ft_liq_marks', JSON.stringify(getLiqMarks())); }catch(e){} }
+function markChip(acc,name){
+  const k=acc+'||'+name, m=getLiqMarks()[k];
+  if(m==='observe') return '<span class="lq-mark m-observe" onclick="event.stopPropagation();openLiqMark(this)" data-k="'+esc(k)+'">⭐ 观察</span>';
+  if(m==='drop') return '<span class="lq-mark m-drop" onclick="event.stopPropagation();openLiqMark(this)" data-k="'+esc(k)+'">✗ 放弃</span>';
+  return '<span class="lq-mark-btn" onclick="event.stopPropagation();openLiqMark(this)" data-k="'+esc(k)+'">☆</span>';
+}
+let liqMarkKey=null;
+function openLiqMark(el){ const k=el.dataset.k; if(!k) return; liqMarkKey=k; document.getElementById('liqMarkClear').style.display=getLiqMarks()[k]?'block':'none'; document.getElementById('liqMarkMask').classList.add('show'); document.getElementById('liqMarkSheet').classList.add('show'); }
+function closeLiqMark(){ const m=document.getElementById('liqMarkMask'),s=document.getElementById('liqMarkSheet'); if(m)m.classList.remove('show'); if(s)s.classList.remove('show'); }
+function setLiqMark(v){ if(liqMarkKey){ if(v) getLiqMarks()[liqMarkKey]=v; else delete getLiqMarks()[liqMarkKey]; saveLiqMarks(); } closeLiqMark(); renderLiquidated(); }
+
 function renderLiquidated(){
   const box=document.getElementById('tp2'); if(!box) return;
   let list=buildLiquidatedView();
@@ -4388,7 +4422,7 @@ function renderLiquidated(){
   function card(f){
     const c=f.realized>=0?'c-green':'c-red';
     return '<div class="lq-card '+c+'" onclick="goLiq(this)" data-nm="'+encodeURIComponent(f.name||'')+'" data-acc="'+esc(f.account)+'">'
-      +'<div class="lq-top"><span class="lq-name">'+esc(f.name||'—')+'<span class="lq-tag">'+esc(f.cat)+'</span></span>'
+      +'<div class="lq-top"><span class="lq-name">'+esc(f.name||'—')+'<span class="lq-tag">'+esc(f.cat)+'</span>'+markChip(f.account,f.name)+'</span>'
       +'<span class="lq-pl '+cls(f.realized)+'">'+sign(f.realized)+M(f.realized)+'</span></div>'
       +'<div class="lq-mid"><b class="'+cls(f.retPct)+'">'+sign(f.retPct)+f.retPct.toFixed(1)+'%</b><span class="dot">·</span>投入 '+M(f.totalBuy)+'<span class="dot">·</span>持有 '+f.days+'天</div>'
       +'<div class="lq-sub">清仓 '+(f.lastSell||'—')+'<span class="dot">·</span>年化 '+(f.annual!=null?sign(f.annual)+f.annual.toFixed(1)+'%':'—')+'</div>'
@@ -4401,7 +4435,7 @@ function renderLiquidated(){
     const save=avgBuyNav>0&&f.avgSellNav>0?f.totalBuy-(f.totalSell/f.avgSellNav)*curNav:null;
     const lvl=diff<=-10?'深跌':(diff<=-5?'回落':'');
     return '<div class="lq-card c-blue" onclick="goLiq(this)" data-nm="'+encodeURIComponent(f.name||'')+'" data-acc="'+esc(f.account)+'">'
-      +'<div class="lq-top"><span class="lq-name">'+esc(f.name||'—')+'<span class="lq-tag">'+esc(f.cat)+'</span><span class="lq-tag lq-opp">入场候选</span>'+(lvl?'<span class="lq-tag lq-opp">'+lvl+'</span>':'')+'</span>'
+      +'<div class="lq-top"><span class="lq-name">'+esc(f.name||'—')+'<span class="lq-tag">'+esc(f.cat)+'</span><span class="lq-tag lq-opp">入场候选</span>'+(lvl?'<span class="lq-tag lq-opp">'+lvl+'</span>':'')+markChip(f.account,f.name)+'</span>'
       +'<span class="lq-pl '+cls(diff)+'">'+sign(diff)+diff.toFixed(1)+'%</span></div>'
       +'<div class="lq-mid">'+(vsCost!=null?'较当初成本 <b class="'+cls(vsCost)+'">'+sign(vsCost)+vsCost.toFixed(1)+'%</b><span class="dot">·</span>':'')+'卖出 '+navFmt(f.avgSellNav)+'<span class="dot">·</span>当前 '+navFmt(curNav)+'</div>'
       +'<div class="lq-sub">当初成本 ≈'+(avgBuyNav>0?navFmt(avgBuyNav):'—')+'<span class="dot">·</span>卖出时 '+sign(f.retPct)+f.retPct.toFixed(1)+'%'+(save!=null&&save>0?'<span class="dot">·</span>现在买回同份额约省 <b class="pos">'+M(save)+'</b>':'')+'</div>'
@@ -4414,7 +4448,7 @@ function renderLiquidated(){
   let bodyHtml='';
   if(liqGroup==='opp'){
     const cand=list.filter(function(f){ const c=curNavOf(f); return c!=null&&f.avgSellNav>0&&c<f.avgSellNav; })
-      .sort(function(a,b){ return (curNavOf(a)/a.avgSellNav)-(curNavOf(b)/b.avgSellNav); });
+      .sort(function(a,b){ const ma=getLiqMarks()[a.account+'||'+a.name]==='observe'?0:1, mb=getLiqMarks()[b.account+'||'+b.name]==='observe'?0:1; if(ma!==mb) return ma-mb; return (curNavOf(a)/a.avgSellNav)-(curNavOf(b)/b.avgSellNav); });
     bodyHtml = cand.length
       ? '<div class="lq-opp-hd"><span class="lq-opp-dot"></span>清仓后仍在下跌的基金——现在买入比当时卖出更便宜，跌得越深越靠前，可重点观察</div>'+cand.map(function(f){ return oppCard(f,curNavOf(f)); }).join('')
       : '<div class="lq-empty">当前没有净值低于卖出价的清仓基金，暂无入场候选</div>';
@@ -6903,6 +6937,7 @@ function exportJSON(){
     {grp:'prefs', key:'ft_alerts', label:'价格预警规则', desc:''},
     {grp:'prefs', key:'ft_growth', label:'资产增长曲线', desc:''},
     {grp:'prefs', key:'ft_vault', label:'旧版持仓数据', desc:'兼容旧格式'},
+    {grp:'prefs', key:'ft_liq_marks', label:'清仓判断标记', desc:'⭐观察/✗放弃'},
     // ── 安全凭证（默认不勾选，敏感） ──
     {grp:'security', key:'ft_lock_on', label:'应用锁开关', desc:'是否启用密码锁', checked:false},
     {grp:'security', key:'ft_lock_pw', label:'应用锁密码哈希', desc:'⚠️ 含密码哈希，分享文件前请取消勾选', checked:false},
@@ -7771,7 +7806,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw','ft_liq_marks'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }

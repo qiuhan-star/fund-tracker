@@ -8352,14 +8352,14 @@ function renderSyncCfg(){
       row('cycle','orange','记账与定投偏好', dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭','<span class="smg-chev">›</span>','openSettingsDetail(\'dca\')')
     ]);
     html+=group('安全与隐私',[
-      row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security')'),
-      row('eyeoff','purple','资产隐蔽模式','<span id="smPrivDsc">关闭 · 金额正常显示</span>','<span class="sm-priv-sw"><i></i></span>','toggleHidden()'),'<span class="smg-chev">›</span>','openSettingsDetail(\'security\')')
+      row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')'),
+      row('eyeoff','purple','资产隐蔽模式','<span id="smPrivDsc">关闭 · 金额正常显示</span>','<span class="sm-priv-sw"><i></i></span>','toggleHidden()')
     ]);
     html+=group('数据管理',[
       row('download','blue','导入交易 (CSV)','','<span class="smg-chev">›</span>','openImportModal();closeSettings()'),
       row('cycle','purple','恢复全量备份 (JSON)','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
       row('upload','green','导出备份','','<span class="smg-chev">›</span>','exportJSON();closeSettings()'),
-      row('trash','red','数据管理','含导入/导出/清除与重置',','<span class="smg-chev">›</span>','openSettingsDetail(\'data\')',true)
+      row('trash','red','数据管理','含导入/导出/清除与重置','<span class="smg-chev">›</span>','openSettingsDetail(\'data\')',true)
     ]);
     html+=group('关于与帮助',[
       row('chat','green','意见与反馈','','<span class="smg-chev">›</span>','openFeedback()'),

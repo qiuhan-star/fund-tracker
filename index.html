@@ -875,6 +875,34 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .bond-tbl input.amt-in { width: 72px !important; }
   .bond-tbl input.date-in { width: 120px !important; }
   .bond-tbl input.mini-in { width: 64px !important; }
+  /* 债基明细手机卡片（≤600px 由 isMobile() 控制渲染） */
+  .bcard{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer}
+  .bcard .bc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .bcard .bc-name{font-size:15px;font-weight:600;line-height:1.3}
+  .bcard .bc-code{font-size:12px;color:var(--text-3);margin-top:1px}
+  .bcard .bc-acc{font-size:12px;color:var(--accent-text);background:var(--accent-soft);border:1px solid rgba(58,91,217,.25);padding:1px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+  .bcard .bc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+  .bcard .bc-label{font-size:13px;color:var(--text-3);flex-shrink:0}
+  .bcard .bc-amt input,.bcard .bc-date input{border:none;background:rgba(128,128,128,.10);color:var(--text);font-family:inherit;font-size:14px;padding:5px 9px;border-radius:8px;-webkit-appearance:none;appearance:none;transition:background .15s}
+  .bcard .bc-amt input{width:104px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+  .bcard .bc-date input{width:130px}
+  .bcard .bc-amt input::-webkit-inner-spin-button,.bcard .bc-amt input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  .bcard .bc-amt input{-moz-appearance:textfield}
+  .bcard .bc-amt input:focus,.bcard .bc-date input:focus{background:var(--accent-soft);outline:none}
+  .bcard .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .bcard .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-2)}
+  .bcard .tag-dur{background:rgba(58,110,165,.16);color:#7fb0e0;border-color:rgba(58,110,165,.4)}
+  .bcard .tag-credit{background:var(--surface);color:var(--text-2)}
+  .bcard .tag-mix{background:rgba(199,119,0,.14);color:#d99a3a;border-color:rgba(199,119,0,.35)}
+  .bcard .tag-lock{background:var(--accent-soft);color:var(--accent-text);border-color:rgba(58,91,217,.4)}
+  .bcard .st{border-radius:10px;padding:10px 12px;margin-top:11px;border-left:3px solid var(--text-3);background:rgba(154,160,170,.08)}
+  .bcard .st.ok{border-left-color:var(--ok,#1f9d55);background:rgba(31,157,85,.08)}
+  .bcard .st.warn{border-left-color:var(--warn,#e0962a);background:rgba(224,150,42,.10)}
+  .bcard .st.lock{border-left-color:var(--lock,#3a5bd9);background:rgba(58,91,217,.08)}
+  .bcard .st .st-txt{font-size:14px;font-weight:700}
+  .bcard .st.ok .st-txt{color:var(--ok,#1f9d55)} .bcard .st.warn .st-txt{color:var(--warn,#e0962a)} .bcard .st.lock .st-txt{color:var(--lock,#3a5bd9)} .bcard .st.none .st-txt{color:var(--text-3)}
+  .bcard .st .st-sub{font-size:12px;color:var(--text-2);margin-top:2px}
+  [data-theme="dark"] .bcard .bc-amt input,[data-theme="dark"] .bcard .bc-date input{background:rgba(255,255,255,.10)}
 
   /* 15. 基金榜单表：横向滚动 */
   .market-table { min-width: 560px !important; }
@@ -3103,7 +3131,13 @@ function renderHomeList(){
     if(obsHtml) fillWatchQuotes();
     return;
   }
-  box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
+  const isMobile=window.matchMedia('(max-width:640px)').matches;
+  if(isMobile && holdGroupBy==='none'){
+    box.innerHTML=renderHomeMobileTable(list)+obsHtml;
+    ensureStreakLabels(list);
+  } else {
+    box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
+  }
   syncColSetChecks();
   bindTableScrollFade();
 
@@ -3787,6 +3821,29 @@ function sellPreviewConfirm(name, acc, amount, nav, fee, shares, date){
 }
 function bondAmt(f){ return (bondState.amts&&bondState.amts[f.code]!=null)?bondState.amts[f.code]:f.amt; }
 function bondDate(f){  if(bondState.dates&&bondState.dates[f.code]) return bondState.dates[f.code];  const fb=firstBuyDate(f.name, f.acc);  if(fb) return fb;  return (f.date||BOND_DEF_DATES[f.code])||'';}
+function bondDetailCards(bonds, today){
+  if(!bonds || !bonds.length) return '<div class="sub2" style="color:#9aa0aa;padding:10px 2px">本人账户暂无债基持仓。</div>';
+  return bonds.map(function(f){
+    var st=bondStatus(f,today);
+    var tag=f.mix?'<span class="tag tag-mix">含股票</span>':'';
+    var lockTxt=f.lock>0?'<span class="tag tag-lock">'+f.lock+'个月锁</span>':'';
+    var durTxt=(f.dur&&f.dur!=='\u2014')?'<span class="tag tag-dur">'+escHtml(f.dur)+'</span>':'';
+    var creTxt=(f.credit&&f.credit!=='\u2014')?'<span class="tag tag-credit">'+escHtml(f.credit)+'</span>':'';
+    var riskTag=(f.risk&&f.risk!=='\u2014')?'<span class="tag">'+escHtml(f.risk)+'</span>':'';
+    var ownerTag=(currentScope==='all'&&accOwner(f.acc)!=='\u672c\u4eba'&&accOwner(f.acc)!==f.acc)?('<span class="bc-acc own">'+escHtml(accOwner(f.acc))+'</span>'):'';
+    var accTag='<span class="bc-acc">'+escHtml(effAccount(f.acc))+'</span>'+ownerTag;
+    var bar=(st.barPct!=null)?('<div class="cmp-bar"><div class="fill bar-'+st.barCls+'" style="width:'+st.barPct+'%"></div></div>'):'';
+    var stCls=st.cls.replace('st-','');
+    return '<div class="bcard" onclick="openBondDrawer(\''+escJs(f.code)+'\')\">'
+      +'<div class="bc-head"><div><div class="bc-name">'+escHtml(f.name)+'</div><div class="bc-code">'+escHtml(f.code)+'</div></div>'+accTag+'</div>'
+      +'<div class="bc-row"><span class="bc-label">金额(¥)</span><span class="bc-amt"><input type="number" value="'+bondAmt(f)+'" data-code="'+escHtml(f.code)+'" onchange="setBondAmt(this.dataset.code,this.value)" onclick="event.stopPropagation()"></span></div>'
+      +'<div class="tags">'+riskTag+durTxt+creTxt+tag+lockTxt+'</div>'
+      +'<div class="bc-row"><span class="bc-label">买入日</span><span class="bc-date"><input type="date" value="'+bondDate(f)+'" data-code="'+escHtml(f.code)+'" onchange="setBondDate(this.dataset.code,this.value)" onclick="event.stopPropagation()"></span></div>'
+      +'<div class="st '+stCls+'"><div class="st-txt">'+st.txt+'</div><div class="st-sub">'+st.sub+'</div>'+bar+'</div>'
+    +'</div>';
+  }).join('');
+}
+
 function bondStatus(f,today){
   const pd=bondDate(f);
   if(!pd) return {txt:'未填买入日',cls:'st-none',sub:'点表格「买入日」填写',barPct:null,barCls:''};
@@ -3921,8 +3978,9 @@ function renderBond(){
 
   const segHtml=['all','hold','watch'].map(function(f){ return '<button data-f="'+f+'"'+(f===bondCmpFilter?' class="on"':'')+' onclick="setBondCmp('+escJs(f)+',this)">'+({'all':'全部','hold':'仅持仓','watch':'仅自选'})[f]+'</button>'; }).join('');
 
+  var detailHtml = isMobile() ? bondDetailCards(scopedBonds, today) : '<div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:14px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid var(--border-2);padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:var(--text-3);font-weight:600;white-space:nowrap}.bond-tbl .nm{color:var(--text-3);font-size:12px}.tag-mix{display:inline-block;background:rgba(199,119,0,.14);color:#d99a3a;border:1px solid rgba(199,119,0,.35);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.tag-lock{display:inline-block;background:var(--accent-soft);color:var(--accent-text);border:1px solid rgba(58,91,217,.4);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:var(--text-3)}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:14px;color:var(--text-2)}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid var(--border-strong);border-radius:6px;padding:3px 5px;font-size:14px;background:var(--surface-2);color:var(--text)}.mcard.hl{background:var(--accent-soft);border-color:rgba(58,91,217,.4)}.tbl-wrap{overflow-x:auto}.tag-dur{display:inline-block;background:rgba(58,110,165,.16);color:#7fb0e0;border:1px solid rgba(58,110,165,.4);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.tag-credit{display:inline-block;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border-strong);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.cmp-bar{height:6px;background:var(--border-2);border-radius:3px;margin-top:5px;overflow:hidden}.cmp-bar .fill{height:100%;border-radius:3px}.bar-green{background:#1f9d55}.bar-amber{background:#e0962a}.bar-blue{background:#3a5bd9}.addbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.addbar input{border:1px solid var(--border-strong);border-radius:8px;padding:7px 10px;font-size:16px;font-family:inherit;width:200px;background:var(--surface-2);color:var(--text)}.mini-in{border:1px solid var(--border-strong);border-radius:6px;padding:3px 5px;font-size:14px;width:74px;background:var(--surface-2);color:var(--text)}.mini-in.num{width:58px}.seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;margin-bottom:8px}.seg button{border:none;background:var(--surface);padding:6px 14px;font-size:14px;cursor:pointer;color:var(--text-2);font-family:inherit}.seg button.on{background:var(--accent);color:#fff}.pool-h{display:inline-block;background:var(--accent-soft);color:var(--accent-text);padding:1px 7px;border-radius:6px;font-size:12px}.pool-w{display:inline-block;background:rgba(199,119,0,.14);color:#d99a3a;padding:1px 7px;border-radius:6px;font-size:12px}.alert{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.6}.alert.red{background:rgba(216,69,58,.12);border:1px solid rgba(216,69,58,.4);color:#e8736a}.alert.amber{background:rgba(224,168,59,.12);border:1px solid rgba(224,168,59,.4);color:#d99a3a}.alert.ok{background:rgba(31,157,69,.12);border:1px solid rgba(31,157,69,.4);color:#4caf6e}.alert .ttl{font-weight:700}.suggest{border-left:3px solid var(--accent);background:var(--accent-soft);padding:8px 12px;margin:6px 0;border-radius:0 8px 8px 0;font-size:14px;line-height:1.6}.suggest b{color:var(--accent-text)}.placeholder{background:var(--surface-2);border:1px dashed var(--border-strong);border-radius:10px;padding:14px;color:var(--text-3);font-size:14px}.btn.tiny{padding:2px 8px;font-size:12px;border-radius:7px;cursor:pointer;font-family:inherit;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-2)}.btn.tiny.danger{background:var(--surface-2);color:#d8453a;border:1px solid rgba(216,69,58,.4)}</style>'
-    +'<div class="card"><h2>本人账户债基明细 · 卖出时点 &amp; 锁定期</h2><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>账户</th><th>金额(¥)</th><th>类型/久期/信用</th><th>买入日</th><th>卖出状态</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+    +'<div class="card"><h2>本人账户债基明细 · 卖出时点 &amp; 锁定期</h2>'+detailHtml+'</div>'
     ''
     +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
     +'<div class="card"><h2>同质化预警 <span class="hint">（持仓 + 自选，防不知不觉买成同一类）</span></h2>'+warnHtml+'</div>'

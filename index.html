@@ -1456,7 +1456,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         </div>
         <div class="cat-scroll-row"><div class="cat-scroll" id="catFilter"></div></div>
         <div class="sr-row">
-          <input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" aria-label="搜索基金" oninput="setHoldSearch(this.value)">
+          <input id="holdSearchInput" type="search" placeholder="🔍 搜索基金名称 / 代码…" aria-label="搜索基金" oninput="holdSearchInputEv(event)" oncompositionstart="holdComp=true" oncompositionend="holdComp=false;setHoldSearch(this.value)">
           <button type="button" class="flt-btn" id="filterBtn" onclick="toggleFilterPop(event)">筛选<span class="flt-caret"></span><span class="flt-badge" id="filterBadge" style="display:none"></span></button>
           <div class="filter-pop" id="filterPop" style="display:none">
             <div class="pop-sec">标签</div>
@@ -1744,7 +1744,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <div class="sm-body">
         <div class="nf-field" style="position:relative">
           <label>基金名称 / 代码</label>
-          <input id="af-input" list="af-name" autocomplete="off" placeholder="代码或名称（支持天天基金检索）" oninput="afInput()" />
+          <input id="af-input" list="af-name" autocomplete="off" placeholder="代码或名称（支持天天基金检索）" oninput="afInputEv(event)" oncompositionstart="afComp=true" oncompositionend="afComp=false;afInput()" />
           <datalist id="af-name"></datalist>
           <div id="af-suggest" class="af-suggest" style="display:none" onclick="afSuggestClick(event)"></div>
         </div>
@@ -2838,6 +2838,8 @@ function colDragEnd(e){
   document.querySelectorAll('.dense-table th').forEach(t=>t.classList.remove('col-dragging','col-dragover'));
 }
 document.addEventListener('click', function(e){ if(!e.target.closest('.col-toggle') && !e.target.closest('.col-pop')){ const p=document.getElementById('colPop'); if(p) p.classList.remove('show'); } });
+let holdComp=false;
+function holdSearchInputEv(e){ if(e.isComposing||holdComp) return; setHoldSearch(e.target.value); }
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
 // ---------- 标签筛选（你打的标签 + 自动「观察」，可多选叠加）----------
@@ -3203,7 +3205,7 @@ function renderHomeList(){
   renderTagFilter();
   renderGroupBy();
   updateFilterBadge();
-  var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si) _si.value=holdSearch;
+  var _si=document.getElementById('holdSearchInput'); if(_si && document.activeElement!==_si && !holdComp) _si.value=holdSearch;
   let list=[...fundsView];
   // 最终防线：确保列表严格匹配当前账户（防御上游 fundsView 意外混入）
   if(curAccount && curAccount!=='全部') list=list.filter(f=> (effAccount(f.account)||effAccount('本人账户'))===curAccount || (effAccount(f.acc)||effAccount('本人账户'))===curAccount);
@@ -5643,6 +5645,8 @@ function searchFunds(keyword){
     document.body.appendChild(s);
   });
 }
+let afComp=false;
+function afInputEv(e){ if(e.isComposing||afComp) return; afInput(); }
 function afInput(){
   const el=document.getElementById('af-input'); const box=document.getElementById('af-suggest');
   const v=(el?el.value:'').trim();
@@ -9120,9 +9124,9 @@ function renderWatchTab(){
     +'.wrow{position:relative;overflow:hidden;background:var(--surface);display:flex}'
     +'.wrow:not(:first-child)::after{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--border-2)}'
     +'.wrow .swipe-inner{position:relative;flex:1;min-width:0;background:var(--surface);transition:transform .2s;will-change:transform;z-index:1}'
-    +'.wrow .r1{display:flex;align-items:center;gap:8px;padding:12px 16px 0}'
-    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}.wrow .buy-flag{flex:0 0 30px;height:30px;border:none;background:transparent;font-size:16px;line-height:1;border-radius:50%;cursor:pointer;padding:0;margin-left:6px;flex-shrink:0;opacity:.35;filter:grayscale(1);transition:opacity .15s,filter .15s,background .15s;-webkit-tap-highlight-color:transparent}.wrow .buy-flag.on{opacity:1;filter:none;background:var(--surface-2)}'
-    +'.wrow .name{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}'
+    +'.wrow .r1{display:flex;align-items:center;gap:8px;padding:12px 16px 0;position:relative;padding-right:48px}'
+    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}.wrow .buy-flag{position:absolute;right:12px;top:8px;width:30px;height:30px;border:none;background:transparent;font-size:16px;line-height:1;border-radius:50%;cursor:pointer;padding:0;opacity:.35;filter:grayscale(1);transition:opacity .15s,filter .15s,background .15s;-webkit-tap-highlight-color:transparent;z-index:5}.wrow .buy-flag.on{opacity:1;filter:none;background:var(--surface-2)}'
+    +'.wrow .name{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:60px}'
     +'.wrow .code{font-size:12px;color:var(--text-3);margin-left:3px;font-variant-numeric:tabular-nums;flex-shrink:0}'
     +'.wrow .nav{margin-left:auto;font-size:15px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right;flex-shrink:0}'
     +'.wrow .r2{display:flex;align-items:baseline;justify-content:space-between;padding:5px 16px 12px;font-size:12px;color:var(--text-3)}'

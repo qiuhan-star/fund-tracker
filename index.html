@@ -915,6 +915,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 13. 交易流水列表：强制横向滚动，不折行 */
   .table-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
   .table-scroll table { min-width: 640px !important; }
+  /* dense 表专用：缩 560 让偏移 90 下名称 chip 留在屏内（覆盖上一条通用 min-width） */
+  .table-scroll .dense-table { min-width: 560px !important; }
   .table-scroll th, .table-scroll td { white-space: nowrap !important; }
 
   /* 14. 债基明细/对比/自选表：强制横向滚动 */

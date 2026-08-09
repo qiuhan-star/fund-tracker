@@ -8918,11 +8918,11 @@ function addUnifiedWatch(){
   renderWatchTab();
 }
 function fetchFundInfoUnified(code){
+  toast('正在识别 '+code+'…');
   const s=document.createElement('script');
   const timer=setTimeout(function(){
     const w=loadWatch();
-    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:'', account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
-    renderWatchTab(); toast('自动拉取失败，已加入基金自选，请手动补全名称');
+    renderWatchTab(); toast('未找到基金代码 '+code+'，请检查后重试');
   }, 10000);
   s.onload=function(){
     clearTimeout(timer);
@@ -8947,16 +8947,14 @@ function fetchFundInfoUnified(code){
       }
     }catch(e){
       const w=loadWatch();
-      if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:'', account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
-      renderWatchTab(); toast('自动拉取异常，已加入基金自选');
+      renderWatchTab(); toast('未找到基金代码 '+code+'，请检查后重试');
     }
     s.remove();
   };
   s.onerror=function(){
     clearTimeout(timer);
     const w=loadWatch();
-    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:'', account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
-    renderWatchTab(); toast('自动拉取失败，已加入基金自选');
+    renderWatchTab(); toast('未找到基金代码 '+code+'，请检查后重试');
   };
   s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
   document.body.appendChild(s);
@@ -9250,7 +9248,7 @@ function renderWatchTab(){
   const isEmptyWatch = (!items.length && !bWatch.length);
   bc.innerHTML=STYLE
     +'<div class="wt">'
-    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><button type="button" class="cam" onclick="uwPickImage()" title="截图识别基金代码">📷</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
+    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><button type="button" class="cam" onclick="addUnifiedWatch()" title="搜索/添加（等同回车）">＋</button><button type="button" class="cam" onclick="uwPickImage()" title="截图识别基金代码">📷</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
     +'<div class="wt-split'+(isEmptyWatch?' single':'')+'">'
       +'<div class="wt-col">'
         +'<div class="sec-cap"><span>自选清单</span><span class="count">('+items.length+')</span><span class="more" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'按分组 ▾')+'</span></div>'

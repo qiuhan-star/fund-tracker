@@ -922,7 +922,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .bcard .bc-acc.own{color:var(--warn,#e0a800)}
   .bcard .bc-acc.own::before{background:var(--warn,#e0a800)}
   .bcard .bc-body{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:6px 0 12px;margin-bottom:10px;border-bottom:1px solid var(--border)}
-  .bcard .bc-tags{display:flex;gap:3px;flex-wrap:nowrap;overflow:hidden;min-width:0;align-items:center}
+  .bcard .bc-tags{display:flex;gap:3px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;min-width:0;align-items:center;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .bcard .tag{display:inline-flex;align-items:center;font-size:10.5px;padding:2px 6px;border-radius:5px;font-weight:500;background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);white-space:nowrap}
   .bcard .tag-dur{color:var(--accent-text);background:var(--accent-soft);border-color:transparent;font-weight:600}
   .bcard .tag-credit{color:var(--text-3);background:transparent;border-color:transparent}
@@ -961,6 +961,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .bcard .st-days{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0;text-align:right}
   [data-theme="dark"] .bcard .bc-amt-val input{color:var(--text)}
   [data-theme="dark"] .bcard .bc-buy-date input{color:var(--text-3)}
+  [data-theme="dark"] .bcard .st.lock{background:rgba(59,130,246,.12)}
+  [data-theme="dark"] .bcard .st.lock::before{background:#60a5fa}
+  [data-theme="dark"] .bcard .st.lock .st-ico{background:#60a5fa}
+  [data-theme="dark"] .bcard .st.lock .st-txt{color:#93c5fd}
 
   /* 15. 基金榜单表：横向滚动 */
   .market-table { min-width: 560px !important; }

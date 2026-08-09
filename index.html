@@ -3188,6 +3188,19 @@ function sortKeyVal(f,k){
   return 0;
 }
 
+// 移动端持仓表初始左移 60px：scrollTo 兼容 iOS Safari（直接赋值 scrollLeft 在 -webkit-overflow-scrolling:touch 容器上不生效），每次渲染尝试直到用户手动滚动
+var holdOffOnce=false;
+function applyHoldInitOffset(box){
+  if(holdOffOnce || !window.matchMedia('(max-width:640px)').matches) return;
+  requestAnimationFrame(function(){
+    var _sc=box.querySelector('.table-scroll');
+    if(!_sc) return;
+    if(_sc.scrollWidth > _sc.clientWidth){
+      try{ _sc.scrollTo(60,0); }catch(e){ _sc.scrollLeft=60; }
+      _sc.addEventListener('scroll', function(){ holdOffOnce=true; }, {once:true, passive:true});
+    }
+  });
+}
 function renderHomeList(){
   syncColSetChecks();
   renderCatFilter();
@@ -3255,13 +3268,8 @@ function renderHomeList(){
   box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
-  // 移动端：初始左移 60px（rAF 延迟到 layout 完成后设置，避免 innerHTML 刚替换时 scrollWidth 未更新导致失效）
-  if(window.matchMedia('(max-width:640px)').matches){
-    requestAnimationFrame(function(){
-      var _sc=box.querySelector('.table-scroll');
-      if(_sc && _sc.scrollWidth > _sc.clientWidth) _sc.scrollLeft = 60;
-    });
-  }
+  // 移动端：初始左移 60px（iOS Safari scrollTo + 每次渲染重试，直到用户手动滚动才停止覆盖）
+  applyHoldInitOffset(box);
   ensureStreakLabels(list);
 
   fillWatchQuotes();

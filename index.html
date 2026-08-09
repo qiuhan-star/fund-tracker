@@ -871,6 +871,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 名称列永不横向溢出压到相邻列：长名在列内换行（覆盖 .dense-table 的 white-space:nowrap），并 overflow:hidden 兜底 */
   .dense-table td:first-child { overflow: hidden; }
   .dense-table td:first-child .dt-name { white-space: normal; overflow-wrap: anywhere; }
+  /* dense 表名称列吸左固定（横滑不丢基金名），浅底色防文字穿透 */
+  .dense-table th:first-child, .dense-table td:first-child { position: sticky; left: 0; z-index: 2; background: var(--surface); }
+  .dense-table th:first-child { z-index: 3; }
 
   /* 8. 图表容器高度调整，防止占用过多屏幕空间 */
   .chart-box, .am-chart {
@@ -912,7 +915,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .tr-add-grid button { width: 100% !important; padding: 10px !important; font-size: 14px !important; }
 
   /* 13. 交易流水列表：强制横向滚动，不折行 */
-  .table-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding-right: 16px !important; box-sizing: border-box !important; }
+  .table-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
   .table-scroll table { min-width: 640px !important; }
   .table-scroll th, .table-scroll td { white-space: nowrap !important; }
 
@@ -3252,6 +3255,11 @@ function renderHomeList(){
   box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
+  // 移动端：名称列吸左固定，初始左移 48px 露出更多数据列（右侧数字不被右缘裁切）
+  if(window.matchMedia('(max-width:640px)').matches){
+    var _sc=box.querySelector('.table-scroll');
+    if(_sc && _sc.scrollWidth > _sc.clientWidth) _sc.scrollLeft = 48;
+  }
   ensureStreakLabels(list);
 
   fillWatchQuotes();

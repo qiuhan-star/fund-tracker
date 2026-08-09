@@ -265,6 +265,46 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .calc-row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size: 14px; }.calc-row label { flex:0 0 72px; color:var(--text-3); }.calc-row input.num { width:96px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; }.calc-out { margin-top:10px; }.co-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-2); font-size: 14px; }.co-row span { color:var(--text-3); }.co-row b { font-variant-numeric:tabular-nums; }.xr-row { display:flex; gap:6px; align-items:center; margin:5px 0; }.xr-row .xr-date { flex:0 0 132px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size: 14px; }.xr-row .xr-amt { flex:1; min-width:0; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; text-align:right; }.xr-row .xr-dir { padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size: 14px; }h4.am-h .n { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; background: var(--accent); color: #fff; border-radius: 6px; font-size: 12px; font-weight: 700; }.am-toggle { display: flex; gap: 6px; margin-bottom: 8px; }.am-toggle button { border: 1px solid var(--border-strong); background:var(--surface); border-radius: 8px; padding: 4px 13px; font-size: 14px; cursor: pointer; font-family: inherit; }.am-toggle button.on { background: var(--accent); color: #fff; border-color: var(--accent); }.am-empty { padding: 28px 18px; text-align: center; color: var(--text-3); font-size: 14px; line-height: 2; }table.am-t { width: 100%; border-collapse: collapse; font-size: 14px; }table.am-t th, table.am-t td { padding: 6px 7px; text-align: left; border-bottom: 1px solid var(--border-2); }table.am-t th { color: var(--text-3); font-weight: 500; font-size: 12px; }.am-inline .pos { color: var(--up); }.am-inline .neg { color: var(--down); }.am-inline .zero { color: var(--text-3); }.am-tag { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 12px; background: var(--border-3); color: var(--text-2); }.am-tag.st { background: var(--up-bg); color: var(--up); }.am-tag.eq { background: var(--accent-soft); color: var(--accent); }.am-tag.pcb { background: var(--warn-bg); color: #b8760a; }.am-tag.ch { background: var(--down-bg); color: #0f6e56; }.am-foot { margin-top: 12px; font-size: 14px; }/* 清仓列表：卡片式布局（替代 13 列宽表格） */
   .liq-list { display: flex; flex-direction: column; gap: 10px; }.liq-row { background: var(--surface-2); border: 1px solid var(--border-3); border-radius: 10px; padding: 12px 14px; transition: box-shadow .15s; }@media (hover: hover) { .liq-row:hover {  box-shadow: 0 2px 10px rgba(0,0,0,.06);  } }
 .liq-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }.liq-nm { font-weight: 600; font-size: 14px; color: var(--text); line-height: 1.35; flex: 1; min-width: 0; word-break: break-word; }.liq-date { font-size: 12px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }.liq-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px 16px; margin-bottom: 6px; }.liq-metric { display: flex; flex-direction: column; gap: 1px; }.liq-lbl { font-size: 12px; color: var(--text-3); }.liq-val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }.liq-highlight .liq-val { font-size: 15px; }.liq-foot { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }.liq-meta { }.liq-hold { margin-left: auto; font-style: italic; }.liq-hold .pos { color: var(--up); }.liq-hold .neg { color: var(--down); }.liq-sub { font-variant-numeric: tabular-nums; }.liq-action { margin-top: 6px; text-align: right; }.liq-impact { margin-top:14px; padding:12px 14px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:10px; }.liq-impact .lbl { margin:0 0 8px; font-size: 14px; color:var(--text-3); font-weight:600; }.liq-imp-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; font-size: 14px; }.liq-imp-cat { flex:0 0 84px; color:var(--text-2); }.liq-imp-bar { flex:1; height:9px; background:var(--border-3); border-radius:999px; overflow:hidden; }.liq-imp-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:999px; }.liq-imp-val { flex:0 0 auto; color:var(--text-2); font-variant-numeric:tabular-nums; }.am-foot a { color: var(--accent); }.cmp-bar { margin-top: 6px; }
+
+/* 清仓分析 v2：紧凑卡 + 分组/排序/入场机会 */
+.liq-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.liq-sum .it{background:var(--surface);border:1px solid var(--border-3);border-radius:12px;padding:10px 6px;text-align:center}
+.liq-sum .lb{font-size:11px;color:var(--text-3)}
+.liq-sum .vl{font-size:16px;font-weight:800;color:var(--text);margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.liq-ctrl{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.liq-seg{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border-3);border-radius:12px;padding:4px}
+.liq-seg button{flex:1;border:none;background:transparent;border-radius:9px;padding:8px 4px;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:inherit}
+.liq-seg button.on{background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.08);color:var(--text)}
+.liq-seg button.s-realized.on{color:var(--accent)}
+.liq-seg button.s-ret.on{color:#7c3aed}
+.liq-seg button.s-loss.on{color:var(--up)}
+.lq-list{display:flex;flex-direction:column}
+.lq-card{background:var(--surface);border:1px solid var(--border-3);border-radius:12px;padding:11px 13px;margin-bottom:9px;position:relative;cursor:pointer;transition:box-shadow .15s}
+.lq-card:active{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.lq-card::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0}
+.lq-card.c-red::before{background:var(--up)}
+.lq-card.c-green::before{background:var(--down)}
+.lq-card.c-blue::before{background:var(--accent)}
+.lq-top{display:flex;align-items:center;gap:8px}
+.lq-name{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--text);line-height:1.35;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lq-tag{font-size:10.5px;padding:1.5px 6px;border-radius:5px;background:var(--surface-3);border:1px solid var(--border-2);color:var(--text-3);font-weight:500;white-space:nowrap}
+.lq-opp{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.25);color:var(--accent);font-weight:600}
+.lq-pl{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px;white-space:nowrap}
+.lq-mid{display:flex;align-items:center;gap:4px;margin-top:5px;font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.lq-mid b{font-weight:700}
+.lq-mid .dot,.lq-sub .dot{color:var(--border-strong);margin:0 2px}
+.lq-sub{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.lq-grp{margin-bottom:12px}
+.lq-grp-head{display:flex;align-items:baseline;gap:8px;margin:2px 2px 8px}
+.lq-grp-name{font-size:14px;font-weight:700;color:var(--text)}
+.lq-grp-meta{font-size:11.5px;color:var(--text-3);flex:1}
+.lq-grp-pl{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.lq-grp-in{display:flex;flex-direction:column;gap:9px}
+.lq-grp .lq-card{margin-bottom:0}
+.lq-opp-hd{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-2);background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.16);border-radius:10px;padding:8px 11px;margin-bottom:10px;line-height:1.4}
+.lq-opp-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.lq-empty{background:var(--surface);border:1px dashed var(--border-strong);border-radius:12px;padding:22px 14px;text-align:center;font-size:12.5px;color:var(--text-3);line-height:1.6}
+
 /* 当前 vs 建议 双柱对比（自包含，替代 Chart.js） */
 .cmp-leg2 { display:flex; gap:16px; flex-wrap:wrap; font-size: 14px; color:var(--text-2); margin:4px 0 8px; align-items:center; }
 .cmp-leg2 .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle; }
@@ -4271,7 +4311,7 @@ function renderTimelines(){
 }
 
 // ---------- 计算 ----------
-let liqSort='realized';
+let liqSort='realized'; let liqGroup='flat';
 function buildLiquidatedView(){
   const out=[];
   const names=new Set();
@@ -4307,72 +4347,98 @@ function buildLiquidatedView(){
     const annual=(days>0&&totalBuy>0&&(realized/totalBuy)>-1)?(Math.pow(1+realized/totalBuy,365/days)-1)*100:null;
     out.push({name:name, account:acc, cat:cat, totalBuy:totalBuy, totalSell:totalSell, div:div, realized:realized, days:days, firstBuy:firstBuy, lastSell:lastSell, retPct:retPct, annual:annual, win:realized>=0, sellFee:sellFee, avgSellNav:avgSellNav});
   });
-  out.sort(function(a,b){ return liqSort==='ret' ? (b.retPct-a.retPct) : (b.realized-a.realized); });
+  out.sort(function(a,b){ if(liqSort==='ret') return b.retPct-a.retPct; if(liqSort==='loss') return a.realized-b.realized; return b.realized-a.realized; });
   return out;
 }
 function goLiq(el){ goDetail(el.dataset.nm, el.dataset.acc); }
-function setLiqSort(s){ liqSort=s; renderLiquidated(); }
+function setLiqSort(btn){ liqSort=btn.dataset.s; renderLiquidated(); }
+function setLiqGroup(btn){ liqGroup=btn.dataset.g; renderLiquidated(); }
 function renderLiquidated(){
   const box=document.getElementById('tp2'); if(!box) return;
   let list=buildLiquidatedView();
   // 按当前账户口径过滤（与持仓列表逻辑一致：scopeMatches 判大口径，curAccount 判子账户）
   if(currentScope!=='all') list=list.filter(function(f){ return scopeMatches(f.account); });
   if(curAccount && curAccount!=='全部') list=list.filter(function(f){ return (effAccount(f.account)||effAccount('本人账户'))===curAccount; });
-  let sumR=0, sumB=0, sumS=0, wins=0, sumD=0, sumRetPct=0; const catMap={};
-  list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; sumRetPct+=f.retPct; if(f.win) wins++; catMap[f.cat]=(catMap[f.cat]||0)+f.totalBuy; });
-  const cnt=list.length, winRate=cnt?wins/cnt*100:0, avgD=cnt?Math.round(sumD/cnt):0, avgRet=cnt?sumRetPct/cnt:0;
+  let sumR=0,sumB=0,sumS=0,wins=0,sumRetPct=0; const catMap={};
+  list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumRetPct+=f.retPct; if(f.win) wins++; catMap[f.cat]=(catMap[f.cat]||0)+f.totalBuy; });
+  const cnt=list.length, avgRet=cnt?sumRetPct/cnt:0;
   const cls=function(v){ return v>=0?'pos':'neg'; }, sign=function(v){ return v>=0?'+':''; };
-  const sum='<div class="cards4">'
-    +'<div class="mcard"><p class="lbl">清仓基金数</p><p class="val">'+cnt+'</p></div>'
-    +'<div class="mcard"><p class="lbl">累计已实现盈亏</p><p class="val '+cls(sumR)+'">'+sign(sumR)+M(sumR)+'</p></div>'
-    +'<div class="mcard"><p class="lbl">累计投入</p><p class="val">'+M(sumB)+'</p></div>'
-    +'<div class="mcard"><p class="lbl">累计赎回</p><p class="val">'+M(sumS)+'</p></div>'
-    +'<div class="mcard"><p class="lbl">平均收益率</p><p class="val '+cls(avgRet)+'">'+sign(avgRet)+avgRet.toFixed(2)+'%</p></div>'
-    +'<div class="mcard"><p class="lbl">胜率（赚/亏）</p><p class="val">'+(cnt?wins+'/'+cnt:'—')+'</p><p class="lbl" style="margin:4px 0 0">'+winRate.toFixed(0)+'%</p></div>'
-    +'<div class="mcard"><p class="lbl">平均持有天数</p><p class="val">'+(cnt?avgD:'—')+'</p></div>'
+  const curNavOf=function(f){ const c=navCache[f.name]; return (c&&c.nav!=null)?+c.nav:null; };
+  const sum='<div class="liq-sum">'
+    +'<div class="it"><div class="lb">清仓基金</div><div class="vl">'+cnt+'</div></div>'
+    +'<div class="it"><div class="lb">累计盈亏</div><div class="vl '+cls(sumR)+'">'+sign(sumR)+M(sumR)+'</div></div>'
+    +'<div class="it"><div class="lb">平均收益率</div><div class="vl '+cls(avgRet)+'">'+sign(avgRet)+avgRet.toFixed(1)+'%</div></div>'
+    +'<div class="it"><div class="lb">胜率</div><div class="vl">'+(cnt?wins+'/'+cnt:'—')+'</div></div>'
     +'</div>';
-  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button></span></div><p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
+  const ctrl='<div class="liq-ctrl">'
+    +'<div class="liq-seg">'
+    +'<button class="'+(liqGroup==='flat'?'on':'')+'" data-g="flat" onclick="setLiqGroup(this)">全部</button>'
+    +'<button class="'+(liqGroup==='cat'?'on':'')+'" data-g="cat" onclick="setLiqGroup(this)">按类别分组</button>'
+    +'<button class="'+(liqGroup==='opp'?'on':'')+'" data-g="opp" onclick="setLiqGroup(this)">入场机会</button>'
+    +'</div>'
+    +'<div class="liq-seg">'
+    +'<button class="s-realized '+(liqSort==='realized'?'on':'')+'" data-s="realized" onclick="setLiqSort(this)">按盈亏</button>'
+    +'<button class="s-ret '+(liqSort==='ret'?'on':'')+'" data-s="ret" onclick="setLiqSort(this)">按收益率</button>'
+    +'<button class="s-loss '+(liqSort==='loss'?'on':'')+'" data-s="loss" onclick="setLiqSort(this)">亏损优先</button>'
+    +'</div>'
+    +'</div>';
+  const head='<div class="sec-head"><h2>清仓分析 · 已全部赎回的基金</h2></div>'+sum+ctrl;
+  function card(f){
+    const c=f.realized>=0?'c-green':'c-red';
+    return '<div class="lq-card '+c+'" onclick="goLiq(this)" data-nm="'+encodeURIComponent(f.name||'')+'" data-acc="'+esc(f.account)+'">'
+      +'<div class="lq-top"><span class="lq-name">'+esc(f.name||'—')+'<span class="lq-tag">'+esc(f.cat)+'</span></span>'
+      +'<span class="lq-pl '+cls(f.realized)+'">'+sign(f.realized)+M(f.realized)+'</span></div>'
+      +'<div class="lq-mid"><b class="'+cls(f.retPct)+'">'+sign(f.retPct)+f.retPct.toFixed(1)+'%</b><span class="dot">·</span>投入 '+M(f.totalBuy)+'<span class="dot">·</span>持有 '+f.days+'天</div>'
+      +'<div class="lq-sub">清仓 '+(f.lastSell||'—')+'<span class="dot">·</span>年化 '+(f.annual!=null?sign(f.annual)+f.annual.toFixed(1)+'%':'—')+'</div>'
+      +'</div>';
+  }
+  function oppCard(f,curNav){
+    const diff=(curNav/f.avgSellNav-1)*100;
+    const avgBuyNav=f.totalSell>0?(f.totalBuy*f.avgSellNav/f.totalSell):0;
+    const vsCost=avgBuyNav>0?(curNav/avgBuyNav-1)*100:null;
+    const save=avgBuyNav>0&&f.avgSellNav>0?f.totalBuy-(f.totalSell/f.avgSellNav)*curNav:null;
+    const lvl=diff<=-10?'深跌':(diff<=-5?'回落':'');
+    return '<div class="lq-card c-blue" onclick="goLiq(this)" data-nm="'+encodeURIComponent(f.name||'')+'" data-acc="'+esc(f.account)+'">'
+      +'<div class="lq-top"><span class="lq-name">'+esc(f.name||'—')+'<span class="lq-tag">'+esc(f.cat)+'</span><span class="lq-tag lq-opp">入场候选</span>'+(lvl?'<span class="lq-tag lq-opp">'+lvl+'</span>':'')+'</span>'
+      +'<span class="lq-pl '+cls(diff)+'">'+sign(diff)+diff.toFixed(1)+'%</span></div>'
+      +'<div class="lq-mid">'+(vsCost!=null?'较当初成本 <b class="'+cls(vsCost)+'">'+sign(vsCost)+vsCost.toFixed(1)+'%</b><span class="dot">·</span>':'')+'卖出 '+navFmt(f.avgSellNav)+'<span class="dot">·</span>当前 '+navFmt(curNav)+'</div>'
+      +'<div class="lq-sub">当初成本 ≈'+(avgBuyNav>0?navFmt(avgBuyNav):'—')+'<span class="dot">·</span>卖出时 '+sign(f.retPct)+f.retPct.toFixed(1)+'%'+(save!=null&&save>0?'<span class="dot">·</span>现在买回同份额约省 <b class="pos">'+M(save)+'</b>':'')+'</div>'
+      +'</div>';
+  }
   if(!cnt){
     box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。</div></div>';
     return;
   }
-  const rows=list.map(function(f){
-    const enc=encodeURIComponent(f.name||'');
-    const curNav=(navCache[f.name]&&navCache[f.name].nav!=null)?+navCache[f.name].nav:null;
-    let holdCell='<span class="liq-sub">—</span>';
-    if(curNav!=null && f.avgSellNav>0){
-      const curVal=f.totalSell*(curNav/f.avgSellNav), hp=(curNav/f.avgSellNav-1)*100;
-      holdCell='<span class="liq-sub '+cls(curVal-f.totalSell)+'">'+M(curVal)+' ('+sign(hp)+hp.toFixed(1)+'%)</span>';
-    }
-    return '<div class="liq-row">'
-      +'<div class="liq-head"><span class="liq-nm">'+esc(f.name||'—')+'</span>'
-      +'<span class="tag">'+esc(f.cat)+'</span><span class="tag">'+esc(f.account)+'</span>'
-      +'<span class="liq-date">'+(f.lastSell||'—')+'</span></div>'
-      +'<div class="liq-body">'
-      +'<div class="liq-metric"><span class="liq-lbl">投入</span><span class="liq-val">'+M(f.totalBuy)+'</span></div>'
-      +'<div class="liq-metric"><span class="liq-lbl">赎回</span><span class="liq-val">'+M(f.totalSell)+'</span></div>'
-      +'<div class="liq-metric liq-highlight"><span class="liq-lbl">盈亏</span><span class="liq-val '+cls(f.realized)+'">'+sign(f.realized)+M(f.realized)+'</span></div>'
-      +'<div class="liq-metric liq-highlight"><span class="liq-lbl">收益率</span><span class="liq-val '+cls(f.retPct)+'">'+sign(f.retPct)+f.retPct.toFixed(2)+'%</span></div>'
-      +'</div>'
-      +'<div class="liq-foot">'
-      +'<span class="liq-sg" data-sg="1" data-nm="'+enc+'">申购状态…</span>'
-      +'<span class="liq-meta">持有 '+f.days+'天</span>'
-      +'<span class="liq-meta">'+(f.avgSellNav>0?'卖出价 '+navFmt(f.avgSellNav):'')+'</span>'
-      +'<span class="liq-meta">'+(f.sellFee>0?'税费 '+M(f.sellFee):'')+'</span>'
-      +'<span class="liq-meta">'+(f.annual!=null?'年化 '+sign(f.annual)+f.annual.toFixed(1)+'%':'')+'</span>'
-      +'<span class="liq-hold">继续持有≈'+holdCell+'</span>'
-      +'</div>'
-      +'<div class="liq-action"><button class="btn sm primary" data-nm="'+enc+'" data-acc="'+esc(f.account)+'" onclick="goLiq(this)">查看 →</button></div>'
-      +'</div>';
-  }).join('');
+  let bodyHtml='';
+  if(liqGroup==='opp'){
+    const cand=list.filter(function(f){ const c=curNavOf(f); return c!=null&&f.avgSellNav>0&&c<f.avgSellNav; })
+      .sort(function(a,b){ return (curNavOf(a)/a.avgSellNav)-(curNavOf(b)/b.avgSellNav); });
+    bodyHtml = cand.length
+      ? '<div class="lq-opp-hd"><span class="lq-opp-dot"></span>清仓后仍在下跌的基金——现在买入比当时卖出更便宜，跌得越深越靠前，可重点观察</div>'+cand.map(function(f){ return oppCard(f,curNavOf(f)); }).join('')
+      : '<div class="lq-empty">当前没有净值低于卖出价的清仓基金，暂无入场候选</div>';
+  }else if(liqGroup==='cat'){
+    const cats={};
+    list.forEach(function(f){ (cats[f.cat]=cats[f.cat]||[]).push(f); });
+    const keys=Object.keys(cats).sort(function(a,b){ const sa=cats[a].reduce(function(x,f){return x+f.realized;},0), sb=cats[b].reduce(function(x,f){return x+f.realized;},0); return sb-sa; });
+    bodyHtml=keys.map(function(k){
+      const arr=cats[k], sub=arr.reduce(function(x,f){return x+f.realized;},0), buy=arr.reduce(function(x,f){return x+f.totalBuy;},0);
+      return '<div class="lq-grp"><div class="lq-grp-head"><span class="lq-grp-name">'+esc(k)+'</span>'
+        +'<span class="lq-grp-meta">'+arr.length+' 只 · 投入 '+M(buy)+'</span>'
+        +'<span class="lq-grp-pl '+cls(sub)+'">'+sign(sub)+M(sub)+'</span></div>'
+        +'<div class="lq-grp-in">'+arr.map(card).join('')+'</div></div>';
+    }).join('');
+  }else{
+    bodyHtml=list.map(card).join('');
+  }
   const catKeys=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];});
   const impact=catKeys.length?'<div class="liq-impact"><p class="lbl">清仓资金去向（按类别 · 累计投入）</p>'+catKeys.map(function(c){
     const v=catMap[c], pct=sumB>0?v/sumB*100:0;
     return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(c)+'</span><span class="liq-imp-bar"><i style="width:'+pct.toFixed(1)+'%"></i></span><span class="liq-imp-val">'+M(v)+' · '+pct.toFixed(0)+'%</span></div>';
   }).join('')+'</div>':'';
-  box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+impact+'</div>';
+  box.innerHTML='<div class="card">'+head+'<div class="lq-list" style="margin-top:12px">'+bodyHtml+'</div>'+impact+'</div>';
   fillLiqStatus();
 }
+
 
 
 
@@ -8972,7 +9038,7 @@ function uwRow(it){
     : '<span class="sa act" data-name="'+escAttr(it.name||'')+'" onclick="openByData(this)">记账</span><span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this)">删除</span>';
   return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'">'
     +'<div class="swipe-inner">'
-      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
+      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span><button type="button" class="wrow-x" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this);event.stopPropagation()" aria-label="删除此自选">✕</button></div>'
       +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="wgrp" data-key="'+escAttr(it.isBond?(it.code||''):it.name)+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="watchGrpMenu(this)">📁 '+escHtml(it.grp||'未分组')+'</span><span class="y1">近1年 '+it.y1+'</span></div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
@@ -9121,7 +9187,7 @@ function renderWatchTab(){
     +'.wrow:not(:first-child)::after{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--border-2)}'
     +'.wrow .swipe-inner{position:relative;flex:1;min-width:0;background:var(--surface);transition:transform .2s;will-change:transform;z-index:1}'
     +'.wrow .r1{display:flex;align-items:center;gap:8px;padding:12px 16px 0}'
-    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}'
+    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}.wrow .wrow-x{flex:0 0 28px;height:28px;border:none;background:transparent;color:var(--text-3);font-size:16px;line-height:1;border-radius:50%;cursor:pointer;padding:0;margin-left:2px;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s}.wrow .wrow-x:active{background:var(--surface-2);color:var(--up)}'
     +'.wrow .name{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
     +'.wrow .code{font-size:12px;color:var(--text-3);margin-left:3px;font-variant-numeric:tabular-nums;flex-shrink:0}'
     +'.wrow .nav{margin-left:auto;font-size:15px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right;flex-shrink:0}'

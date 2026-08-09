@@ -462,6 +462,23 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 #panel-appearance .ap-val { font-size:17px; color:var(--text-3); }
 #panel-appearance .ap-note { font-size:12px; color:var(--text-3); line-height:1.5; margin:8px 14px 0 16px; }
 @media (min-width:641px) { #panel-appearance .ap-title { font-size:15px; } #panel-appearance .ap-val { font-size:15px; } #panel-appearance .ap-desc { font-size:12.5px; } }
+#panel-analysis .ap-group { margin:0 0 22px; }
+#panel-analysis .ap-group:last-child { margin-bottom:0; }
+#panel-analysis .ap-gh { font-size:13px; font-weight:600; color:var(--text-3); margin:0 0 7px 14px; letter-spacing:.01em; }
+#panel-analysis .ap-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+#panel-analysis .ap-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; min-height:48px; border-bottom:1px solid var(--border-2); }
+#panel-analysis .ap-row:last-child { border-bottom:none; }
+#panel-analysis .ap-act { cursor:pointer; -webkit-user-select:none; user-select:none; }
+#panel-analysis .ap-act:active { background:var(--surface-2); }
+#panel-analysis .ap-left { flex:1; min-width:0; }
+#panel-analysis .ap-title { font-size:17px; color:var(--text); font-weight:400; line-height:1.25; }
+#panel-analysis .ap-desc { font-size:13px; color:var(--text-3); margin-top:2px; line-height:1.4; }
+#panel-analysis .ap-right { flex-shrink:0; display:flex; align-items:center; gap:8px; }
+#panel-analysis .ap-val { font-size:17px; color:var(--text-3); }
+#panel-analysis .ap-note { font-size:12px; color:var(--text-3); line-height:1.5; margin:8px 14px 0 16px; }
+#panel-analysis input.anum { width:60px; border:1px solid var(--border); background:var(--surface-2); border-radius:8px; padding:7px 8px; font-size:15px; text-align:center; font-family:inherit; color:var(--text); }
+#panel-analysis .unit { font-size:13px; color:var(--text-3); }
+@media (min-width:641px) { #panel-analysis .ap-title { font-size:15px; } #panel-analysis .ap-val { font-size:15px; } #panel-analysis .ap-desc { font-size:12.5px; } }
 /* 默认账户选择 sheet（iOS 毛玻璃 Action Sheet） */
 .ap-sheet-mask { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:flex-end; justify-content:center; z-index:1100; padding:24px 8px calc(16px + env(safe-area-inset-bottom)); }
 .ap-sheet-mask.show { display:flex; }
@@ -4605,9 +4622,9 @@ function loadPeerCard(f){
       if(simType.length){
         const last=simType[simType.length-1];
         h+='<div class="peer-row"><span class="peer-k">同类日排名（越低越好）</span><span class="peer-v">第 '+last.y+' 名</span></div>';
-        h+=peerSpark(simType);
+        if(loadAnalysisCfg().peer.spark) h+=peerSpark(simType);
       }
-      if(pe&&pe.avr){
+      if(pe&&pe.avr && loadAnalysisCfg().peer.score){
         h+='<div class="peer-row"><span class="peer-k">综合评分</span><span class="peer-v">'+esc(pe.avr)+' / 100</span></div>';
         if(pe.categories&&pe.categories.length) h+='<div style="margin-top:4px">'+pe.categories.map(function(c){return '<span class="tag">'+esc(c)+'</span>';}).join('')+'</div>';
       }
@@ -4621,9 +4638,48 @@ function loadPeerCard(f){
   s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
   document.body.appendChild(s);
 }
+function loadAnalysisCfg(){
+  var def={ maxShare:30, top3:70, bond:10, preset:'balanced',
+            show:{count:true,hhi:true,alloc:true,cat:true},
+            peer:{spark:true,score:true} };
+  try{ var s=localStorage.getItem('ft_analysis_cfg'); if(s){ var o=JSON.parse(s); if(o){
+    if(typeof o.maxShare==='number')def.maxShare=o.maxShare;
+    if(typeof o.top3==='number')def.top3=o.top3;
+    if(typeof o.bond==='number')def.bond=o.bond;
+    def.preset=o.preset||'balanced';
+    if(o.show)def.show=Object.assign(def.show,o.show);
+    if(o.peer)def.peer=Object.assign(def.peer,o.peer);
+  } } }catch(e){}
+  return def;
+}
+function saveAnalysisCfg(cfg){ try{ localStorage.setItem('ft_analysis_cfg', JSON.stringify(cfg)); }catch(e){} }
+function setRiskPreset(p, btn){
+  var presets={ conservative:{maxShare:20,top3:50,bond:20}, balanced:{maxShare:30,top3:70,bond:10}, aggressive:{maxShare:40,top3:85,bond:5} };
+  var cfg=loadAnalysisCfg(); var pr=presets[p]||presets.balanced;
+  cfg.preset=p; cfg.maxShare=pr.maxShare; cfg.top3=pr.top3; cfg.bond=pr.bond; saveAnalysisCfg(cfg);
+  var seg=document.getElementById('riskPresetSeg'); if(seg){ Array.prototype.forEach.call(seg.querySelectorAll('button'),function(b){ b.classList.toggle('on', b.getAttribute('data-p')===p); }); }
+  ['thMaxShare','thTop3','thBond'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=(id==='thMaxShare'?cfg.maxShare:(id==='thTop3'?cfg.top3:cfg.bond)); });
+  if(typeof renderRisk==='function') renderRisk();
+}
+function setRiskTh(key, val){
+  var cfg=loadAnalysisCfg(); var n=parseFloat(val); if(isNaN(n)) return;
+  if(key==='maxShare')cfg.maxShare=n; else if(key==='top3')cfg.top3=n; else if(key==='bond')cfg.bond=n;
+  cfg.preset=''; saveAnalysisCfg(cfg);
+  var seg=document.getElementById('riskPresetSeg'); if(seg){ Array.prototype.forEach.call(seg.querySelectorAll('button'),function(b){ b.classList.toggle('on', b.getAttribute('data-p')===cfg.preset); }); }
+  if(typeof renderRisk==='function') renderRisk();
+}
+function toggleRiskItem(key, on){
+  var cfg=loadAnalysisCfg(); if(!cfg.show)cfg.show={}; cfg.show[key]=!!on; saveAnalysisCfg(cfg);
+  if(typeof renderRisk==='function') renderRisk();
+}
+function togglePeerItem(key, on){
+  var cfg=loadAnalysisCfg(); if(!cfg.peer)cfg.peer={}; cfg.peer[key]=!!on; saveAnalysisCfg(cfg);
+  try{ var dn=(typeof detailName!=='undefined')?detailName:null; if(dn){ var f=fundsView.find(function(x){return x.name===dn;}); if(f) loadPeerCard(f); } }catch(e){}
+}
 function renderRisk(){
   const box=document.getElementById('riskBody'); if(!box) return;
   const list=fundsView||[];
+  const cfg=loadAnalysisCfg();
   const total=list.reduce(function(a,f){return a+(f.mv||0);},0);
   if(!list.length||!total){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
   const sorted=list.slice().sort(function(a,b){return (b.mv||0)-(a.mv||0);});
@@ -4636,27 +4692,25 @@ function renderRisk(){
   const ASSET_COL={ '股票':'#ef4444','债券':'#10b981','商品·黄金':'#f59e0b','货币·理财':'#3b82f6','混合':'#8b5cf6' };
   const catTop=(getCatAllocation()||[]).slice(0,3);
   const triggered=[];
-  if(maxpct>=30) triggered.push('单一基金「'+maxShare.name+'」占比 '+maxpct.toFixed(1)+'%，偏高');
-  if(top3pct>=70) triggered.push('Top3 集中度 '+top3pct.toFixed(1)+'%，过于集中');
-  if((assets['债券']||0)/total*100<10) triggered.push('债券等防御资产仅 '+((assets['债券']||0)/total*100).toFixed(1)+'%，回撤保护弱');
+  if(maxpct>=cfg.maxShare) triggered.push('单一基金「'+maxShare.name+'」占比 '+maxpct.toFixed(1)+'%，偏高');
+  if(top3pct>=cfg.top3) triggered.push('Top3 集中度 '+top3pct.toFixed(1)+'%，过于集中');
+  if((assets['债券']||0)/total*100<cfg.bond) triggered.push('债券等防御资产仅 '+((assets['债券']||0)/total*100).toFixed(1)+'%，回撤保护弱');
   const diagCls = triggered.length?'warn':'ok';
   const diagText = triggered.length? triggered.join('；')+'。' : '持仓结构较均衡，集中度在合理范围。';
   const hhiDesc = hhi<1000?'高度分散':hhi<2500?'分散偏均衡':hhi<4000?'偏集中':'高度集中';
   const barHtml=Object.keys(assets).map(function(k){ const p=assets[k]/total*100; return '<span style="width:'+p.toFixed(2)+'%;background:'+(ASSET_COL[k]||'#94a3b8')+'">'+(p>=9?esc(k):'')+'</span>'; }).join('');
   const legendHtml=Object.keys(assets).map(function(k){ return '<span><i style="background:'+(ASSET_COL[k]||'#94a3b8')+'"></i>'+esc(k)+' '+(assets[k]/total*100).toFixed(1)+'%</span>'; }).join('');
   const catHtml = catTop.length?('<div class="risk-cat">板块 Top3：'+catTop.map(function(c){return '<b>'+esc(c[0])+'</b> '+c[1].toFixed(1)+'%';}).join('、')+'</div>'):'';
-  box.innerHTML=
-    '<div class="risk-grid">'
-    +'<div class="risk-cell"><div class="rl">持仓数</div><div class="rv">'+list.length+'</div></div>'
-    +'<div class="risk-cell"><div class="rl">最大单基占比</div><div class="rv">'+maxpct.toFixed(1)+'%</div><div class="rs">'+esc(maxShare.name)+'</div></div>'
-    +'<div class="risk-cell"><div class="rl">Top3 集中度</div><div class="rv">'+top3pct.toFixed(1)+'%</div></div>'
-    +'<div class="risk-cell"><div class="rl">集中度 HHI</div><div class="rv">'+hhi.toFixed(0)+'</div><div class="rs">'+hhiDesc+'</div></div>'
-    +'</div>'
-    +'<div style="margin-top:10px"><div class="risk-cat" style="margin:0 0 2px">股债 / 资产配比</div>'
-    +'<div class="risk-bar">'+barHtml+'</div>'
-    +'<div class="risk-legend">'+legendHtml+'</div></div>'
-    +catHtml
-    +'<div class="risk-diag '+diagCls+'"><b>🩺 诊断：</b>'+diagText+'</div>';
+  var cells=[];
+  if(cfg.show.count) cells.push('<div class="risk-cell"><div class="rl">持仓数</div><div class="rv">'+list.length+'</div></div>');
+  cells.push('<div class="risk-cell"><div class="rl">最大单基占比</div><div class="rv">'+maxpct.toFixed(1)+'%</div><div class="rs">'+esc(maxShare.name)+'</div></div>');
+  if(cfg.show.hhi) cells.push('<div class="risk-cell"><div class="rl">Top3 集中度</div><div class="rv">'+top3pct.toFixed(1)+'%</div></div><div class="risk-cell"><div class="rl">集中度 HHI</div><div class="rv">'+hhi.toFixed(0)+'</div><div class="rs">'+hhiDesc+'</div></div>');
+  else cells.push('<div class="risk-cell"><div class="rl">Top3 集中度</div><div class="rv">'+top3pct.toFixed(1)+'%</div></div>');
+  var inner='<div class="risk-grid">'+cells.join('')+'</div>';
+  if(cfg.show.alloc) inner+='<div style="margin-top:10px"><div class="risk-cat" style="margin:0 0 2px">股债 / 资产配比</div><div class="risk-bar">'+barHtml+'</div><div class="risk-legend">'+legendHtml+'</div></div>';
+  if(cfg.show.cat) inner+=catHtml;
+  inner+='<div class="risk-diag '+diagCls+'"><b>🩺 诊断：</b>'+diagText+'</div>';
+  box.innerHTML=inner;
 }
 
 function renderDetailLive(arg){
@@ -7455,6 +7509,7 @@ function renderSyncCfg(){
         <button class="tab t-cyan" data-tab="data" onclick="settingsTab('data')"><span class="ico c-cyan"><svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 18z"/></svg></span><span class="lbl">数据管理</span></button>
         <button class="tab t-green" data-tab="security" onclick="settingsTab('security')"><span class="ico c-green"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="lbl">安全与隐私</span></button>
         <button class="tab t-indigo" data-tab="account" onclick="settingsTab('account')"><span class="ico c-indigo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg></span><span class="lbl">账户</span></button>
+        <button class="tab t-cyan" data-tab="analysis" onclick="settingsTab('analysis')"><span class="ico c-cyan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 15l5-5 4 3 6-7"/></svg></span><span class="lbl">分析偏好</span></button>
         <button class="tab t-gray" data-tab="about" onclick="settingsTab('about')"><span class="ico c-gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.6" r=".8" style="fill:#fff;stroke:none"/></svg></span><span class="lbl">关于</span></button>
       </aside>
       <main class="settings-panel">
@@ -7558,6 +7613,77 @@ function renderSyncCfg(){
               </div>
             </div>
             <p class="ap-note">每次打开应用时默认进入的账户视图；首页列表的排序与列顺序也在此调整。</p>
+          </div>
+        </section>
+
+        <!-- 分析偏好 -->
+        <section class="panel-section" id="panel-analysis">
+          <h4 class="panel-title">分析偏好</h4>
+
+          <div class="ap-group">
+            <div class="ap-gh">风险诊断阈值</div>
+            <div class="ap-card">
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">预设档位</div><div class="ap-desc">切换后自动填入下方三档预警线</div></div>
+                <div class="ap-right">
+                  <div class="seg" id="riskPresetSeg">
+                    <button type="button" data-p="conservative" onclick="setRiskPreset('conservative',this)">保守</button>
+                    <button type="button" data-p="balanced" class="on" onclick="setRiskPreset('balanced',this)">均衡</button>
+                    <button type="button" data-p="aggressive" onclick="setRiskPreset('aggressive',this)">激进</button>
+                  </div>
+                </div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">单基占比预警线</div><div class="ap-desc">单只基金占比超过即预警</div></div>
+                <div class="ap-right"><input class="anum" id="thMaxShare" type="number" inputmode="decimal" value="30" oninput="setRiskTh('maxShare',this.value)"><span class="unit">%</span></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">Top3 集中度预警线</div><div class="ap-desc">前三大持仓合计超此即预警</div></div>
+                <div class="ap-right"><input class="anum" id="thTop3" type="number" inputmode="decimal" value="70" oninput="setRiskTh('top3',this.value)"><span class="unit">%</span></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">防御资产下限</div><div class="ap-desc">债券等防御资产低于此即提示回撤保护弱</div></div>
+                <div class="ap-right"><input class="anum" id="thBond" type="number" inputmode="decimal" value="10" oninput="setRiskTh('bond',this.value)"><span class="unit">%</span></div>
+              </div>
+            </div>
+            <p class="ap-note">均衡档＝单基≤30% / Top3≤70% / 防御≥10%。改完即时生效，随账户本地保存。</p>
+          </div>
+
+          <div class="ap-group">
+            <div class="ap-gh">风险卡显示项</div>
+            <div class="ap-card">
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">持仓数</div></div>
+                <div class="ap-right"><label class="sm-switch"><input type="checkbox" id="showCount" onchange="toggleRiskItem('count',this.checked)"><span class="sm-slider"></span></label></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">集中度 HHI</div></div>
+                <div class="ap-right"><label class="sm-switch"><input type="checkbox" id="showHhi" onchange="toggleRiskItem('hhi',this.checked)"><span class="sm-slider"></span></label></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">股债 / 资产配比条</div></div>
+                <div class="ap-right"><label class="sm-switch"><input type="checkbox" id="showAlloc" onchange="toggleRiskItem('alloc',this.checked)"><span class="sm-slider"></span></label></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">板块 Top3</div></div>
+                <div class="ap-right"><label class="sm-switch"><input type="checkbox" id="showCat" onchange="toggleRiskItem('cat',this.checked)"><span class="sm-slider"></span></label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ap-group">
+            <div class="ap-gh">同类对比卡</div>
+            <div class="ap-card">
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">同类排名走势</div><div class="ap-desc">详情页同类日排名迷你走势图</div></div>
+                <div class="ap-right"><label class="sm-switch"><input type="checkbox" id="showPeerSpark" onchange="togglePeerItem('spark',this.checked)"><span class="sm-slider"></span></label></div>
+              </div>
+              <div class="ap-row">
+                <div class="ap-left"><div class="ap-title">综合评分五维</div><div class="ap-desc">天天基金五维能力评分</div></div>
+                <div class="ap-right"><label class="sm-switch"><input type="checkbox" id="showPeerScore" onchange="togglePeerItem('score',this.checked)"><span class="sm-slider"></span></label></div>
+              </div>
+            </div>
+            <p class="ap-note">同类对比数据来自天天基金公开接口；无网络或基金无代码时自动隐藏对应模块。</p>
           </div>
         </section>
 
@@ -8155,6 +8281,15 @@ function renderSyncCfg(){
     if(typeof renderSyncCfg==='function') renderSyncCfg();
     if(typeof renderMobileSettingsHome==='function') renderMobileSettingsHome();
     if(typeof renderProfileCard==='function') renderProfileCard();
+    try{ var ac=loadAnalysisCfg();
+      var segA=document.getElementById('riskPresetSeg'); if(segA){ Array.prototype.forEach.call(segA.querySelectorAll('button'),function(b){ b.classList.toggle('on', b.getAttribute('data-p')===ac.preset); }); }
+      var tm=document.getElementById('thMaxShare'); if(tm) tm.value=ac.maxShare;
+      var tt=document.getElementById('thTop3'); if(tt) tt.value=ac.top3;
+      var tb=document.getElementById('thBond'); if(tb) tb.value=ac.bond;
+      ['showCount','showHhi','showAlloc','showCat'].forEach(function(id){ var el=document.getElementById(id); if(el) el.checked=!!ac.show[id.replace('show','').toLowerCase()]; });
+      var ss=document.getElementById('showPeerSpark'); if(ss) ss.checked=!!ac.peer.spark;
+      var sco=document.getElementById('showPeerScore'); if(sco) sco.checked=!!ac.peer.score;
+    }catch(e){}
   }catch(e){ console.error(e); } };
   /* 移动端 iOS 分组列表首页：彩色圆角图标 + 分组卡片 */
   var SM_MOBILE_CATS=[
@@ -8164,6 +8299,7 @@ function renderSyncCfg(){
     {id:'data',color:'#30b0c7',icon:'💾',title:'数据管理'},
     {id:'security',color:'#34c759',icon:'🔒',title:'安全与隐私'},
     {id:'account',color:'#5856d6',icon:'👤',title:'个人资料与账号'},
+    {id:'analysis',color:'#30b0c7',icon:'chart',title:'分析偏好'},
     {id:'about',color:'#8e8e93',icon:'__info__',title:'关于'}
   ];
   var SM_MOBILE_GROUPS=[['appearance','shortcuts'],['data','security'],['about']];
@@ -8178,7 +8314,8 @@ function renderSyncCfg(){
     trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2"/><path d="M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>',
     chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L4 21l1.9-5.4A8 8 0 1121 12z"/></svg>',
     info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>',
-    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>'
+    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>',
+    chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 15l5-5 4 3 6-7"/></svg>'
   };
   window.renderMobileSettingsHome=function(){
     var host=document.getElementById('smMobileGroups'); if(!host) return;
@@ -8194,6 +8331,7 @@ function renderSyncCfg(){
     ]);
     html+=group('偏好设置',[
       row('palette','orange','外观与偏好','','<span class="smg-chev">›</span>','openSettingsDetail(\'appearance\')'),
+      row('chart','blue','分析偏好','','<span class="smg-chev">›</span>','openSettingsDetail(\'analysis\')'),
       row('cycle','orange','记账与定投偏好', dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭','<span class="smg-chev">›</span>','openSettingsDetail(\'dca\')')
     ]);
     html+=group('安全与隐私',[

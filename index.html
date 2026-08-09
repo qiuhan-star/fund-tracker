@@ -88,25 +88,25 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .pf-panel { background: var(--surface-2); border: 1px solid var(--border-3); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }.pf-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }.pf-lab { font-size: 14px; color: var(--text-2); min-width: 68px; font-weight: 500; }.pf-seg { display: inline-flex; background:var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden; }.pf-seg button { border: none; background: transparent; padding: 5px 14px; font-size: 14px; color: var(--text-2); cursor: pointer; font-family: inherit; border-right: 1px solid var(--border-3); }.pf-seg button:last-child { border-right: none; }.pf-seg button.on { background: var(--accent); color: #fff; }.pf-note { font-size: 12px; color: var(--text-3); margin: 4px 0 0; }/* 当前 vs 建议 对比 */
   .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 12px; }
 /* ===== 市场风向/赛道卡片（补齐缺失样式，防移动端挤压） ===== */
-.market-grid-dense { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:12px; }
-.mkt-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 13px; display:flex; flex-direction:column; gap:10px; box-shadow:0 2px 8px rgba(0,0,0,.03); }
-.mkt-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.mkt-name { font-size:15px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-.mkt-badge { font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; flex-shrink:0; padding:2px 6px; border-radius:5px; }
-.mkt-badge.up { color:var(--up); background:var(--up-bg); }
-.mkt-badge.down { color:var(--down); background:var(--down-bg); }
+.market-grid-dense { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:10px; }
+.mkt-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:11px 12px; display:flex; flex-direction:column; gap:6px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.mkt-top { display:flex; align-items:center; gap:7px; }
+.mkt-rank { font-size:10.5px; font-weight:800; color:#fff; background:var(--accent); border-radius:5px; padding:1px 5px; flex-shrink:0; }
+.mkt-name { font-size:14px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+.mkt-badge { font-size:11.5px; font-weight:700; font-variant-numeric:tabular-nums; flex-shrink:0; padding:2px 6px; border-radius:5px; }
+.mkt-badge.pos { color:var(--up); background:var(--up-bg); }
+.mkt-badge.neg { color:var(--down); background:var(--down-bg); }
 .mkt-badge.zero { color:var(--text-3); background:var(--surface-3); }
-.mkt-metrics { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px 12px; }
-.mkt-m { display:flex; flex-direction:column; align-items:flex-start; text-align:left; min-width:0; }
-.mkt-m .lbl { font-size:10.5px; color:var(--text-3); }
-.mkt-m .val { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
-.mkt-m .val.up { color:var(--up); }
-.mkt-m .val.down { color:var(--down); }
-.mkt-m .val.zero { color:var(--text-3); }
-.q-wrap { margin-top:2px; }
-.q-head { display:flex; align-items:center; justify-content:space-between; font-size:10.5px; color:var(--text-2); margin-bottom:4px; }
-.q-track { height:4px; background:var(--surface-3); border-radius:2px; overflow:hidden; }
-.q-fill { display:block; height:100%; background:var(--accent); border-radius:2px; }
+.mkt-rs { font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.mkt-rs.pos { color:var(--up); }
+.mkt-rs.neg { color:var(--down); }
+.mkt-rs.zero { color:var(--text-3); }
+.mkt-sub { font-size:10.5px; color:var(--text-3); }
+.mkt-sp { width:100%; height:32px; display:block; }
+.mkt-sp.up polyline { stroke:var(--up); }
+.mkt-sp.up path { fill:var(--up); }
+.mkt-sp.down polyline { stroke:var(--down); }
+.mkt-sp.down path { fill:var(--down); }
 /* 赛道紧凑表格（全量时间维度：右对齐 + 等宽数字 + 首列吸顶 + 横滑） */
 .tbl-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .mkt-table { width:100%; border-collapse:collapse; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
@@ -235,16 +235,15 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .flt-badge { position: absolute; top: -5px; right: -5px; min-width: 15px; height: 15px; border-radius: 8px; background: var(--up); color: #fff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; }
   #idxList, #idxListD { display: flex; flex-direction: column; gap: 12px; }.idx-grp { min-width: 0; }.idx-grp-h { font-size: 12px; font-weight: 600; color: var(--text-2); margin: 0 0 6px 2px; padding-left: 6px; border-left: 3px solid var(--accent); line-height: 1.2; }/* 全球组：默认收起，点击标题才展开并拉取外围指数 */
   .idx-grp-global.collapsed .idx-grp-body { display: none; }.idx-grp-toggle { cursor: pointer; display: flex; align-items: center; gap: 5px; }@media (hover: hover) { .idx-grp-toggle:hover {  color: var(--accent);  } }
-.idx-caret { display: inline-block; transition: transform .15s ease; font-size: 12px; }.idx-grp-global:not(.collapsed) .idx-caret { transform: rotate(90deg); }.idx-grp-count { font-size: 12px; font-weight: 500; color: var(--text-3); background: var(--surface-2); border-radius: 9px; padding: 0 7px; margin-left: 1px; }.idx-chip { display: flex; flex-direction: column; gap: 2px; background: var(--surface-3); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; min-height: 112px; }@media (hover: hover) { .idx-chip:hover {  background: var(--surface-2); border-color: var(--border-strong);  } }.idx-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }.idx-extra { display: flex; gap: 8px; margin-top: 5px; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; flex-wrap: wrap; }.idx-extra b { color: var(--text-2); font-weight: 600; }
+.idx-caret { display: inline-block; transition: transform .15s ease; font-size: 12px; }.idx-grp-global:not(.collapsed) .idx-caret { transform: rotate(90deg); }.idx-grp-count { font-size: 12px; font-weight: 500; color: var(--text-3); background: var(--surface-2); border-radius: 9px; padding: 0 7px; margin-left: 1px; }.idx-chip { display: flex; flex-direction: column; gap: 2px; background: var(--surface-3); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; }@media (hover: hover) { .idx-chip:hover {  background: var(--surface-2); border-color: var(--border-strong);  } }.idx-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }.idx-extra { display: flex; gap: 8px; margin-top: 5px; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; flex-wrap: wrap; }.idx-extra b { color: var(--text-2); font-weight: 600; }
 /* 拉不到数据的指数：淡灰占位卡（不隐藏；不用 opacity 以免文字对比度塌掉，违反 WCAG） */
-  .idx-chip-empty { border-style: dashed; background: var(--surface-2); }.idx-name { font-size: 14px; color: var(--text-2); }
-  .idx-fold { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; background: var(--surface-3); border: 1px dashed var(--border-2); border-radius: 8px; padding: 7px 11px; cursor: pointer; transition: background .15s; }.idx-fold .idx-name { font-size: 13px; color: var(--text-2); }.idx-fold-hint { margin-left: auto; font-size: 11px; color: var(--text-3); }.idx-fold-chev { font-size: 13px; color: var(--text-3); }/* 点位 + 涨跌幅：默认同一行（4 位数正好放下，跟在后面）；5 位数放不下时涨跌幅优雅换到下一行，不会把数字从中断开 */
+  .idx-chip-empty { border-style: dashed; background: var(--surface-2); }.idx-name { font-size: 14px; color: var(--text-2); }/* 点位 + 涨跌幅：默认同一行（4 位数正好放下，跟在后面）；5 位数放不下时涨跌幅优雅换到下一行，不会把数字从中断开 */
   /* 点位 + 涨跌幅：强制同一行（nowrap），5 位数也不会掉到下一行；字体与卡片宽度已调到最长组合也能单行容纳 */
   .idx-pricerow { display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; }.idx-val { font-size: 19px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }.idx-pct { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }.idx-mktstatus { font-size: 12px; color: var(--text-3); margin-top: 1px; display: inline-flex; align-items: center; gap: 3px; }/* 市场状态圆点：严格中性色，红绿只留给涨跌 */
   .idx-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; box-sizing: border-box; }.idx-dot-open { background: #3a8fd6; box-shadow: 0 0 0 2px rgba(58,143,214,.16); }/* 交易中：蓝 */
   .idx-dot-closed { background: #b6bcc4; }/* 已收盘：灰 */
   .idx-status { font-size: 12px; color: var(--text-3); display: inline-flex; align-items: center; gap: 3px; }/* 指数迷你走势 Sparkline（A股真分时 / 港股近30日日线 / 美股降级不画假图） */
-  .idx-spark { display: block; margin-top: 5px; line-height: 0; }.idx-sparkcap { display: block; margin-top: 2px; font-size: 12px; color: var(--text-3); letter-spacing: .2px; line-height: 1; }.idx-nospark { display: block; margin-top: 6px; font-size: 12px; color: var(--text-2); letter-spacing: .3px; min-height: 14px; }/* 赛道 / 主题：高密度网格卡 + 紧凑表格 */.market-grid-dense { display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 12px; width: 100%; }@media (min-width: 1400px) { .market-grid-dense { grid-template-columns: repeat(6, minmax(0, 1fr)); } }@media (min-width: 1100px) and (max-width: 1399px) { .market-grid-dense { grid-template-columns: repeat(5, minmax(0, 1fr)); } }@media (min-width: 860px) and (max-width: 1099px) { .market-grid-dense { grid-template-columns: repeat(4, minmax(0, 1fr)); } }@media (min-width: 640px) and (max-width: 859px) { .market-grid-dense { grid-template-columns: repeat(3, minmax(0, 1fr)); } }@media (max-width: 639px) { .market-grid-dense { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }.mkt-card { background: var(--surface-3); border: 1px solid var(--border); border-radius: 12px; padding: 12px 13px; display: flex; flex-direction: column; }.mkt-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }.mkt-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.mkt-tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; white-space: nowrap; font-variant-numeric: tabular-nums; }.mkt-tag.pos { background: var(--up-bg); color: var(--up); }.mkt-tag.neg { background: var(--down-bg); color: var(--down); }.mkt-tag.zero { background: var(--surface-2); color: var(--text-3); }.mkt-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }.mkt-m { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }.mkt-m .lbl { font-size: 11px; color: var(--text-3); white-space: nowrap; }.mkt-m b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }.mkt-pe { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 4px; }.mkt-pe .lbl { font-size: 11px; color: var(--text-3); flex: none; }.mkt-pe-track { flex: 1; min-width: 40px; height: 6px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }.mkt-pe-fill { display: block; height: 100%; border-radius: 4px; }.mkt-pe-val { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; min-width: 28px; text-align: right; }.mkt-rep { margin-top: 8px; font-size: 11px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.mkt-rep b { color: var(--text-2); font-weight: 600; }.mkt-repc { font-size: 11px; color: var(--text-3); margin-left: 4px; font-variant-numeric: tabular-nums; }.tag-err { background: rgba(216,69,58,.14); color: #d8453a; border: 1px solid rgba(216,69,58,.4); }.sec-head-l { display: flex; align-items: center; gap: 10px; }.mkt-legend { display: inline-flex; align-items: center; gap: 4px; margin-left: 2px; font-size: 11px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; vertical-align: middle; }.hidden { display: none !important; }/* 大盘趋势：一键折叠 + 点击放大 */
+  .idx-spark { display: block; margin-top: 5px; line-height: 0; }.idx-sparkcap { display: block; margin-top: 2px; font-size: 12px; color: var(--text-3); letter-spacing: .2px; line-height: 1; }.idx-nospark { display: block; margin-top: 6px; font-size: 12px; color: var(--text-2); letter-spacing: .3px; min-height: 14px; }.tag-err { background: rgba(216,69,58,.14); color: #d8453a; border: 1px solid rgba(216,69,58,.4); }.sec-head-l { display: flex; align-items: center; gap: 10px; }.mkt-legend { display: inline-flex; align-items: center; gap: 4px; margin-left: 2px; font-size: 11px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; vertical-align: middle; }.hidden { display: none !important; }/* 大盘趋势：一键折叠 + 点击放大 */
   .idx-head-right { display: inline-flex; align-items: center; gap: 8px; }.idx-toggle { font-size: 12px; color: var(--accent-text); background: var(--accent-soft); border: 1px solid var(--accent-soft); border-radius: 6px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }@media (hover: hover) { .idx-toggle:hover {  background: var(--accent-soft);  } }
 .idx-collapsed .idx-spark, .idx-collapsed .idx-nospark { display: none; }.idx-modal { position: fixed; inset: 0; background: rgba(20,24,31,.45); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }.idx-modal.show { display: flex; }.idx-modal-card { background:var(--surface); border-radius: 14px; width: min(680px, 94vw); max-height: 90vh; overflow: auto; box-shadow: 0 12px 44px rgba(0,0,0,.28); }.idx-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }.idx-modal-head h3 { margin: 0; font-size: 18px; color: var(--text); }.idx-modal-x { background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: var(--text-3); padding: 2px 6px; border-radius: 6px; }@media (hover: hover) { .idx-modal-x:hover {  background: var(--border-3); color: var(--text-2);  } }
 .idx-modal-body { padding: 16px 18px 20px; }.idx-modal-chart { border: 1px solid var(--border-2); border-radius: 10px; background: var(--surface-3); padding: 8px; }/* 主题 / 板块热力（统一规格网格，不表示面积） */
@@ -400,13 +399,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .num input, td.num input { text-align: right; }/* ===== 市场风向 Tab（适配项目主题变量，支持亮/暗） ===== */
   .text-up { color: var(--up); }.text-down { color: var(--down); }.font-bold { font-weight: 700; }.tag-sample { background: var(--warn); color: #fff; font-size: 12px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }.tag-live { background: var(--up); color: #fff; font-size: 12px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }.flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }@media (max-width: 600px) { .flow-grid { grid-template-columns: 1fr; }  }
 .flow-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }.inflow-bg { background: rgba(192,57,43,.05); }.outflow-bg { background: rgba(39,174,96,.05); }.cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }@media (max-width: 600px) { .cap-grid { grid-template-columns: 1fr; }  }
-.cap-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }.nb-bg { background: rgba(31,157,85,.06); }.sb-bg { background: rgba(58,90,217,.06); }.cap-title { margin: 0 0 6px; font-size: 14px; font-weight: 600; }.cap-val { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }.cap-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }.holdings-tbl td.code, .holdings-tbl th { font-variant-numeric: tabular-nums; }.flow-title { font-size: .9rem; margin: 0 0 8px; font-weight: 600; }.flow-list { list-style: none; padding: 0; margin: 0; }.flow-list li { display: flex; justify-content: space-between; padding: 6px 0; font-size: .85rem; border-bottom: 1px dashed var(--border-2); }.flow-list li:last-child { border-bottom: none; }.sub-tabs { display: flex; gap: 8px; }.sub-btn { background: var(--surface); border: 1px solid var(--border-strong); padding: 4px 10px; border-radius: 14px; font-size: .8rem; cursor: pointer; color: var(--text-2); font-family: inherit; }.sub-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }.market-table { width: 100%; border-collapse: collapse; margin-top: 8px; }.market-table th, .market-table td { padding: 10px 8px; text-align: left; font-size: .85rem; border-bottom: 1px solid var(--border-2); }.market-table th { color: var(--text-3); font-weight: 500; font-size: 12px; }.rank-row { cursor:pointer; }
-  /* 榜单：名称+类型合并吸左固定（横滑不丢基金名）；类型 chip 紧跟名称；代码独立一行 */
-  .market-table th:first-child, .market-table td:first-child { position: sticky; left: 0; z-index: 2; background: var(--bg); }
-  .market-table th:first-child { z-index: 3; }
-  .rank-row .rname { font-weight: bold; }
-  .rank-row .rtype { display: inline-flex; align-items: center; margin-left: 6px; padding: 1px 7px; border-radius: 6px; background: var(--surface-3); color: var(--text-2); font-size: 11px; font-weight: 500; vertical-align: 1px; }
-  .rank-row .rcode { font-size: 11px; color: var(--text-3); margin-top: 2px; font-variant-numeric: tabular-nums; }@media (hover: hover) { .rank-row:hover {  background:var(--surface-2);  } }
+.cap-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }.nb-bg { background: rgba(31,157,85,.06); }.sb-bg { background: rgba(58,90,217,.06); }.cap-title { margin: 0 0 6px; font-size: 14px; font-weight: 600; }.cap-val { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }.cap-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }.holdings-tbl td.code, .holdings-tbl th { font-variant-numeric: tabular-nums; }.flow-title { font-size: .9rem; margin: 0 0 8px; font-weight: 600; }.flow-list { list-style: none; padding: 0; margin: 0; }.flow-list li { display: flex; justify-content: space-between; padding: 6px 0; font-size: .85rem; border-bottom: 1px dashed var(--border-2); }.flow-list li:last-child { border-bottom: none; }.sub-tabs { display: flex; gap: 8px; }.sub-btn { background: var(--surface); border: 1px solid var(--border-strong); padding: 4px 10px; border-radius: 14px; font-size: .8rem; cursor: pointer; color: var(--text-2); font-family: inherit; }.sub-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }.market-table { width: 100%; border-collapse: collapse; margin-top: 8px; }.market-table th, .market-table td { padding: 10px 8px; text-align: left; font-size: .85rem; border-bottom: 1px solid var(--border-2); }.market-table th { color: var(--text-3); font-weight: 500; font-size: 12px; }.rank-row { cursor:pointer; }@media (hover: hover) { .rank-row:hover {  background:var(--surface-2);  } }
 .rank-act { text-align:center; }.rank-plus { display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-text);font-weight:700;font-size: 15px; }.rank-more-row td { padding:6px 8px; text-align:center; }.rank-more-btn { width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text-2); border-radius:8px; padding:8px; font-size: 14px; cursor:pointer; font-family:inherit; transition:.15s; }@media (hover: hover) { .rank-more-btn:hover {  border-color:var(--accent); color:var(--accent);  } }
 .rank-menu { position:fixed;z-index:9000;min-width:184px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);padding:8px; }.rm-title { font-size: 14px;font-weight:600;padding:4px 8px 8px;color:var(--text-2);border-bottom:1px solid var(--border-3);margin-bottom:6px; }.rm-title .rm-code { font-weight:400;color:var(--text-3);font-size: 12px; }.rm-btn { display:block;width:100%;text-align:left;background:none;border:none;padding:8px 10px;border-radius:7px;font-size: 14px;color:var(--text);cursor:pointer; }@media (hover: hover) { .rm-btn:hover {  background:var(--accent-soft);color:var(--accent-text);  } }
 .watch-list { list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px; }.watch-item { display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border-3);border-radius:8px; }.watch-name { font-weight:600;font-size: 14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }.watch-code { font-size: 12px;color:var(--text-3); }.watch-acts { display:flex;gap:4px; }.watch-item { cursor:pointer; }.watch-held { font-size: 12px;font-weight:600;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border-3);border-radius:6px;padding:2px 7px;white-space:nowrap; }.watch-quote { font-size: 14px;font-weight:600;color:var(--text-2);min-width:76px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap; }/* 首页「仅自选」视图：观察中（自选但未持仓）区块 */
@@ -886,18 +879,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
   /* 9. 市场风向：指数卡片改为横向滚动（修复 3 卡右侧留白 + 信息密度低） */
   .idx-list { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
-  /* 指数卡按组内数量自适应列数：1 张=整行宽（港股不再孤零零），3 张=3 列（修复 2+1 孤立错位） */
-  .idx-list.cols-1 { grid-template-columns: 1fr !important; }
-  .idx-list.cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
-  .cols-3 .idx-chip { padding: 7px 8px !important; min-height: 112px !important; }
-  .cols-3 .idx-name { font-size: 12px !important; }
-  .cols-3 .idx-val { font-size: 16px !important; }
-  .cols-3 .idx-pct { font-size: 11px !important; }
-  .cols-3 .idx-extra { flex-direction: column; gap: 2px !important; margin-top: 4px !important; font-size: 10px !important; }
-  .cols-3 .idx-extra span { white-space: nowrap; }
-  .cols-3 .idx-nospark { margin-top: 3px !important; font-size: 10px !important; }
   .idx-list::-webkit-scrollbar { display: none; }
-  .idx-chip { flex: 1 1 auto !important; width: auto !important; padding: 9px 11px !important; min-height: 112px !important; box-sizing: border-box; }
+  .idx-chip { flex: 1 1 auto !important; width: auto !important; padding: 9px 11px !important; min-height: 0 !important; box-sizing: border-box; }
   .idx-name { font-size: 13px !important; }
   .idx-val { font-size: 19px !important; }
   .idx-pct { font-size: 12px !important; }
@@ -1002,9 +985,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 15. 基金榜单表：横向滚动 */
   .market-table { min-width: 560px !important; }
   .market-table th, .market-table td { white-space: nowrap !important; }
-  /* 榜单吸左列：固定 216px + 允许名称换行/省略（覆盖 nowrap） */
-  .market-table th:first-child, .market-table td:first-child { width: 216px !important; min-width: 216px !important; max-width: 216px !important; white-space: normal !important; }
-  .rank-row .rname { display: inline-block; max-width: 122px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
 
   /* 16. 移动端横向溢出总兜底 + 双列布局塌成单列 */
   html, body { overflow-x: hidden; }
@@ -1133,7 +1113,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
 @media (max-width: 380px) {
   .ov-grid { grid-template-columns: 1fr; }
-  .mkt-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); gap:6px 10px; }
 }
 /* 按账户汇总：横向滑动卡片 */
 .acc-hscroll{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding:2px 2px 8px;margin:0 -2px;max-width:100%;}
@@ -1592,7 +1571,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
             <span class="mkt-legend" title="本页遵循国内习惯：红色=上涨，绿色=下跌">🔴 涨 🟢 跌</span>
           </div>
           <div class="seg">
-            <button id="tkGrid" class="on" onclick="setTrackView('grid')">网格</button>
+            <button id="tkGrid" class="on" onclick="setTrackView('grid')">相对强度</button>
             <button id="tkTable" onclick="setTrackView('table')">紧凑表格</button>
           </div>
         </div>
@@ -1603,7 +1582,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
             <button class="sub-btn" onclick="switchRankTab('hot', this)">🔥 高关注度</button>
           </div>
         </div>
-        <div class="table-scroll"><table class="market-table"><thead><tr><th>基金代码 / 名称</th><th>日估算涨跌</th><th>近1周</th><th>操作</th></tr></thead><tbody id="rank-table-body"></tbody></table></div>
+        <div class="table-scroll"><table class="market-table"><thead><tr><th>基金代码 / 名称</th><th>类型</th><th>日估算涨跌</th><th>近1周</th><th>操作</th></tr></thead><tbody id="rank-table-body"></tbody></table></div>
         <p class="hint" style="font-size: 12px;margin-top:8px">示例榜单，待接入天天基金 JSONP 接口后显示真实排行。</p>
       </div>
 
@@ -2512,13 +2491,41 @@ const TRACK_SECTORS=[
   {name:'中概互联',secid:'1.513050', rep:'易方达中概互联网ETF',      repc:'513050'},
   {name:'科创50',  secid:'1.588000', rep:'科创50ETF',               repc:'588000'}
 ];
-let TRACK_STATE=TRACK_SECTORS.map(function(s){ return {name:s.name, secid:s.secid, rep:s.rep, repc:s.repc, today:null, w1:null, m1:null, m3:null, m6:null, y1:null, pct:null}; });
+let TRACK_STATE=TRACK_SECTORS.map(function(s){ return {name:s.name, secid:s.secid, rep:s.rep, repc:s.repc, today:null, w1:null, m1:null, m3:null, m6:null, y1:null, pct:null, line:null}; });
 let TRACK_BUSY=false;
+const TRACK_BENCH_SECID='1.000300';
+let TRACK_BENCH={name:'\u6caa\u6df1300', secid:TRACK_BENCH_SECID, m3:null, line:null};
 function _tkCls(n){ return n>0?'pos':n<0?'neg':'zero'; }
 function _tkArrow(n){ return n>0?'\u25b2':n<0?'\u25bc':''; }
 function _tkPct(n){ return _tkArrow(n)+Math.abs(n).toFixed(2)+'%'; }
 function _tkPeColor(p){ return p>=70?'var(--up)':p>=40?'var(--warn)':'var(--down)'; }
 function _tkVal(v){ return v==null?'\u2014':_tkPct(v); }
+function _tkSpark(arr, up){
+  if(!arr||arr.length<2) return '';
+  const w=100,h=30,pad=1;
+  let mn=Infinity,mx=-Infinity;
+  for(let i=0;i<arr.length;i++){ if(arr[i]<mn)mn=arr[i]; if(arr[i]>mx)mx=arr[i]; }
+  const rng=(mx-mn)||1;
+  const pts=arr.map(function(v,i){
+    const x=pad+(w-2*pad)*i/(arr.length-1);
+    const y=h-pad-(h-2*pad)*(v-mn)/rng;
+    return [x.toFixed(1),y.toFixed(1)];
+  });
+  const poly=pts.map(function(p){return p[0]+','+p[1];}).join(' ');
+  const f=pts[0], l=pts[pts.length-1];
+  const area='M'+f[0]+','+f[1]+' L'+pts.slice(1).map(function(p){return p[0]+','+p[1];}).join(' L')+' L'+l[0]+','+h+' L'+f[0]+','+h+' Z';
+  return '<svg class="mkt-sp '+(up?'up':'down')+'" viewBox="0 0 100 30" preserveAspectRatio="none">'
+    +'<path d="'+area+'"/>'
+    +'<polyline points="'+poly+'"/></svg>';
+}
+function _tkRsLine(sec, bench){
+  if(!sec||!bench||!sec.length||!bench.length) return null;
+  const n=Math.min(sec.length, bench.length);
+  const base=sec[0]/bench[0];
+  const rel=[];
+  for(let i=0;i<n;i++){ rel.push(base>0&&bench[i]>0? (sec[i]/bench[i])/base*100 : 100); }
+  return rel;
+}
 function jsonpEM(url, cbName, timeout){
   return new Promise(function(resolve, reject){
     let done=false;
@@ -2552,7 +2559,12 @@ function fetchTrackKline(secid){
   return jsonpEM(url, cb, 9000).then(function(d){
     const kl=(d&&d.data&&d.data.klines)||[]; if(!kl.length) return null;
     const pts=kl.map(function(k){ const p=String(k).split(','); return +p[1]; }).filter(function(v){ return isFinite(v)&&v>0; });
-    return pts.length>=2 ? computeTrackMetrics(pts) : null;
+    if(pts.length<2) return null;
+    const m=computeTrackMetrics(pts);
+    const w=pts.slice(Math.max(0, pts.length-63)); const line=[];
+    for(let i=0;i<30;i++){ line.push(w[Math.min(w.length-1, Math.floor(i*(w.length-1)/29))]); }
+    m.line=line;
+    return m;
   });
 }
 function renderTrack(){
@@ -2560,7 +2572,7 @@ function renderTrack(){
   if(TRACK_BUSY) return;
   TRACK_BUSY=true;
   const tag=document.getElementById('trackTag');
-  Promise.allSettled(TRACK_STATE.map(function(st){ return fetchTrackKline(st.secid).then(function(m){ if(m){ st.today=m.day; st.m1=m.m1; st.y1=m.y1; st.pct=m.pct; } return m; }); }))
+  Promise.allSettled(TRACK_STATE.map(function(st){ return fetchTrackKline(st.secid).then(function(m){ if(m){ st.today=m.day; st.w1=m.w1; st.m1=m.m1; st.m3=m.m3; st.m6=m.m6; st.y1=m.y1; st.pct=m.pct; st.line=m.line||null; } return m; }); }).concat(fetchTrackKline(TRACK_BENCH_SECID).then(function(m){ if(m){ TRACK_BENCH.m3=m.m3; TRACK_BENCH.line=m.line||null; } return m; }))))
     .then(function(res){
       TRACK_BUSY=false;
       const ok=res.filter(function(r){ return r.status==='fulfilled'&&r.value; }).length;
@@ -2570,20 +2582,26 @@ function renderTrack(){
 }
 function _renderTrackBody(state){
   const grid=document.getElementById('trackGrid'), tb=document.getElementById('trackTbody');
-  if(grid) grid.innerHTML=state.map(function(d){
-    const c=_tkCls(d.today);
-    const peVal=(d.pct==null?'\u2014':Math.round(d.pct)+'%');
-    return '<div class="mkt-card">'
-      +'<div class="mkt-top"><span class="mkt-name">'+d.name+'</span><span class="mkt-badge '+c+'">'+_tkVal(d.today)+'</span></div>'
-      +'<div class="mkt-metrics">'
-        +'<div class="mkt-m"><span class="lbl">\u8fd11\u6708</span><span class="val '+_tkCls(d.m1)+'">'+_tkVal(d.m1)+'</span></div>'
-        +'<div class="mkt-m"><span class="lbl">\u8fd13\u6708</span><span class="val '+_tkCls(d.m3)+'">'+_tkVal(d.m3)+'</span></div>'
-        +'<div class="mkt-m"><span class="lbl">\u8fd16\u6708</span><span class="val '+_tkCls(d.m6)+'">'+_tkVal(d.m6)+'</span></div>'
-        +'<div class="mkt-m"><span class="lbl">\u8fd11\u5e74</span><span class="val '+_tkCls(d.y1)+'">'+_tkVal(d.y1)+'</span></div>'
-      +'</div>'
-      +'<div class="q-wrap"><div class="q-head"><span>1\u5e74\u5206\u4f4d</span><span style="font-weight:600">'+peVal+'</span></div><div class="q-track"><div class="q-fill" style="width:'+(d.pct==null?0:d.pct)+'%"></div></div></div>'
-      +'</div>';
-  }).join('');
+  if(grid){
+    const cards=state.map(function(d){
+      const rs=(d.m3!=null&&TRACK_BENCH.m3!=null)?+(d.m3-TRACK_BENCH.m3).toFixed(1):null;
+      return {d:d, rs:rs, line:(rs!=null&&d.line&&TRACK_BENCH.line)?_tkRsLine(d.line,TRACK_BENCH.line):null};
+    }).sort(function(a,b){ return (b.rs==null?-Infinity:b.rs)-(a.rs==null?-Infinity:a.rs); });
+    grid.innerHTML=cards.map(function(it,i){
+      const d=it.d, rs=it.rs, c=_tkCls(d.today), rsc=rs==null?'zero':rs>0?'pos':'neg';
+      let rsTxt;
+      if(rs!=null) rsTxt=(rs>=0?'\u8dd1\u8d62\u5927\u76d8 +':'\u8dd1\u8f93\u5927\u76d8 ')+Math.abs(rs).toFixed(1)+'%';
+      else if(d.m3!=null) rsTxt='\u8fd13\u6708 '+_tkPct(d.m3);
+      else rsTxt='\u2014';
+      const sp=(it.line&&it.line.length>1)?_tkSpark(it.line, rs!=null&&rs>=0):'';
+      return '<div class="mkt-card">'
+        +'<div class="mkt-top"><span class="mkt-rank">#'+(i+1)+'</span><span class="mkt-name">'+d.name+'</span><span class="mkt-badge '+c+'">'+_tkVal(d.today)+'</span></div>'
+        +'<div class="mkt-rs '+rsc+'">'+rsTxt+'</div>'
+        +'<div class="mkt-sub">\u8fd13\u6708 \u00b7 \u76f8\u5bf9'+TRACK_BENCH.name+'</div>'
+        +sp
+        +'</div>';
+    }).join('');
+  }
   if(tb) tb.innerHTML=state.map(function(d){
     const c=_tkCls(d.today);
     return '<tr><td class="mname">'+d.name+'</td>'
@@ -2634,10 +2652,10 @@ function loadFundRank(type){
   rows.forEach(function(item,i){
     const isUp=item.est.startsWith('+');
     const hide = i>=LIMIT ? ' data-more="1" style="display:none"' : '';
-    html += `<tr class="rank-row"${hide} onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><span class="rname">${item.name}</span><span class="rtype">${item.type}</span><div class="rcode">${item.code}</div></td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td>${item.w1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td></tr>`;
+    html += `<tr class="rank-row"${hide} onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3)">${item.code}</div></td><td>${item.type}</td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td>${item.w1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td></tr>`;
   });
   if(rows.length>LIMIT){
-    html += `<tr class="rank-more-row"><td colspan="4"><button class="rank-more-btn" data-exp="0" onclick="toggleRankMore(this)">展开全部 ${rows.length} 条 ▼</button></td></tr>`;
+    html += `<tr class="rank-more-row"><td colspan="5"><button class="rank-more-btn" data-exp="0" onclick="toggleRankMore(this)">展开全部 ${rows.length} 条 ▼</button></td></tr>`;
   }
   tbody.innerHTML=html;
 }
@@ -6016,11 +6034,11 @@ function idxChipHtml(it){
   const hiTxt=(d&&d.high!=null&&!isNaN(d.high)&&d.low!=null&&!isNaN(d.low)&&d.high>=d.low)?d.high.toFixed(2):'—';
   const loTxt=(d&&d.low!=null&&!isNaN(d.low))?d.low.toFixed(2):'—';
   const amtTxt=(d&&d.amount)?d.amount:'—';
-  if(it.grp==='global' && (!d || isNaN(d.price))) return `<span class="idx-fold" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-fold-hint">暂无数据</span><span class="idx-fold-chev">›</span></span>`;
-  const cls=(d&&d.pct>0)?'pos':(d&&d.pct<0)?'neg':'zero';
-  const arrow=(d&&d.pct>0)?'▲':(d&&d.pct<0)?'▼':'';
-  const pctTxt=(d&&d.pct!=null)?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
-  return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><div class="idx-top"><span class="idx-name">${it.name}</span><span class="idx-pct ${cls}">${pctTxt}</span></div><span class="idx-val ${cls}" data-val="${it.code}">${d?d.price.toFixed(2):'—'}</span><div class="idx-extra"><span>高 <b>${hiTxt}</b></span><span>低 <b>${loTxt}</b></span><span>额 <b>${amtTxt}</b></span></div><span class="idx-nospark" data-spark="${it.code}">${d?'— 无分时':'加载中…'}</span></span>`;
+  if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><div class="idx-top"><span class="idx-name">${it.name}</span><span class="idx-pct">—</span></div><span class="idx-val" data-val="${it.code}">—</span><div class="idx-extra"><span>高 <b>${hiTxt}</b></span><span>低 <b>${loTxt}</b></span><span>额 <b>${amtTxt}</b></span></div><span class="idx-nospark" data-spark="${it.code}">— 无分时</span></span>`;
+  const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
+  const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
+  const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
+  return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><div class="idx-top"><span class="idx-name">${it.name}</span><span class="idx-pct ${cls}">${pctTxt}</span></div><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)}</span><div class="idx-extra"><span>高 <b>${hiTxt}</b></span><span>低 <b>${loTxt}</b></span><span>额 <b>${amtTxt}</b></span></div><span class="idx-nospark" data-spark="${it.code}">— 无分时</span></span>`;
 }
 function renderIdxInto(boxId, timeId){
   const box=document.getElementById(boxId); if(!box) return;
@@ -6038,8 +6056,7 @@ function renderIdxInto(boxId, timeId){
     if(key==='gl'){
       html+='<div class="idx-grp idx-grp-global collapsed"><div class="idx-grp-h idx-grp-toggle" onclick="toggleGlobalIdx(this)">'+label+' <span class="idx-caret">▸</span><span class="idx-grp-count">'+items.length+'</span></div><div class="idx-list idx-grp-body">'+items.map(idxChipHtml).join('')+'</div></div>';
     } else {
-      const lc = items.length===1 ? 'idx-list cols-1' : (items.length===3 ? 'idx-list cols-3' : 'idx-list');
-      html+='<div class="idx-grp"><div class="idx-grp-h">'+label+'</div><div class="'+lc+'">'+items.map(idxChipHtml).join('')+'</div></div>';
+      html+='<div class="idx-grp"><div class="idx-grp-h">'+label+'</div><div class="idx-list">'+items.map(idxChipHtml).join('')+'</div></div>';
     }
   });
   box.innerHTML=html;
@@ -7448,7 +7465,7 @@ function toast(msg){
   let t=document.getElementById('toast');
   if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
   t.textContent=msg; t.classList.add('show');
-  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),1200);
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
 }
 function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function M(n){ if(hidden) return '••••'; const s=fmt(Math.abs(n||0)); return (n||0)<0?'-¥'+s:'¥'+s; }

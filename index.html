@@ -381,7 +381,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .dca-card-actions { margin-left:auto; display:flex; gap:8px; flex-shrink:0; }
 .dca-card-actions .btn { margin:0; padding:6px 10px; font-size:13px; }
 .dca-card-actions .btn.danger-text { color:var(--danger); border-color:var(--danger); }
-.dca-card-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-sec-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-range { white-space:nowrap; }.dca-sec-item { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px; }.dca-sec-item:last-of-type { margin-bottom:0; }.dca-sec-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }.dca-sec-name { font-size:15px; font-weight:600; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.status { font-size:12px; font-weight:600; padding:2px 9px; border-radius:20px; white-space:nowrap; flex:0 0 auto; }.status.ok { background:var(--down-bg); color:var(--down); }.status.paused { background:rgba(0,0,0,.06); color:var(--text-3); }.status.due { background:var(--accent-soft); color:var(--accent-text); }.dca-sec-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:11px; }.dca-booked { font-size:12px; color:var(--text-3); }.dca-booked b { color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; }.dca-sec-acts { display:flex; align-items:center; gap:8px; }.dca-empty { color:var(--text-3); font-size:13px; padding:4px 0; }.dca-del-btn { display:block; width:100%; border:none; background:transparent; color:var(--danger); font-size:15px; font-weight:600; text-align:center; padding:14px 0 2px; font-family:inherit; cursor:pointer; }
+.dca-card-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-sec-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-range { white-space:nowrap; }.dca-sec-item { position:relative; overflow:hidden; border-radius:10px; margin-bottom:10px; touch-action:pan-y; }.dca-sec-item:last-of-type { margin-bottom:0; }.dca-sec-actions-bg { position:absolute; top:0; right:0; bottom:0; display:flex; z-index:0; }.dca-sw-action { display:flex; align-items:center; justify-content:center; width:76px; font-size:14px; font-weight:600; color:#fff; -webkit-user-select:none; user-select:none; }.dca-sw-action.pause { background:var(--text-3); }.dca-sw-action.del { background:var(--danger); }.dca-sec-swipe { position:relative; z-index:1; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; will-change:transform; }.dca-sec-swipe.open { transition:transform .2s ease; }.dca-sec-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }.dca-sec-name { font-size:15px; font-weight:600; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.status { font-size:12px; font-weight:600; padding:2px 9px; border-radius:20px; white-space:nowrap; flex:0 0 auto; }.status.ok { background:var(--down-bg); color:var(--down); }.status.paused { background:rgba(0,0,0,.06); color:var(--text-3); }.status.due { background:var(--accent-soft); color:var(--accent-text); }.dca-sec-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:11px; }.dca-booked { font-size:12px; color:var(--text-3); }.dca-booked b { color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; }.dca-sec-acts { display:flex; align-items:center; gap:8px; }.dca-empty { color:var(--text-3); font-size:13px; padding:4px 0; }.dca-del-btn { display:block; width:100%; border:none; background:transparent; color:var(--danger); font-size:15px; font-weight:600; text-align:center; padding:14px 0 2px; font-family:inherit; cursor:pointer; }
 .dca-section-header { font-size:13px; font-weight:600; color:var(--text-3); margin:18px 0 8px 2px; }
 .dca-group { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
 .dca-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 14px; min-height:48px; border-bottom:1px solid var(--border-2); }
@@ -6295,13 +6295,18 @@ function buildDcaSection(){
       const statusCls = p.paused ? 'status paused' : (due ? 'status due' : 'status ok');
       const statusTxt = p.paused ? '已暂停' : (due ? '待记账 '+due+' 期' : '进行中');
       return '<div class="dca-sec-item">'
-        +'<div class="dca-sec-top"><span class="dca-sec-name">'+escHtml(p.name)+'</span><span class="'+statusCls+'">'+statusTxt+'</span></div>'
-        +'<div class="dca-sec-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · <span class="dca-range">'+(p.start||'—')+' 起'+(p.end?' · '+p.end:' · 长期')+'</span></div>'
-        +'<div class="dca-sec-foot">'
-          +'<span class="dca-booked">已自动记账 <b>'+booked+'</b> 期</span>'
-          +'<div class="dca-sec-acts">'
-            +'<button class="btn sm" onclick="dcaManage(\''+escHtml(p.id)+'\')">管理</button>'
-            +'<button class="btn sm" onclick="dcaToggle(\''+escHtml(p.id)+'\')">'+(p.paused?'恢复':'暂停')+'</button>'
+        +'<div class="dca-sec-actions-bg">'
+          +'<div class="dca-sw-action pause" data-id="'+escHtml(p.id)+'" data-act="toggle">'+(p.paused?'恢复':'暂停')+'</div>'
+          +'<div class="dca-sw-action del" data-id="'+escHtml(p.id)+'" data-act="del">删除</div>'
+        +'</div>'
+        +'<div class="dca-sec-swipe">'
+          +'<div class="dca-sec-top"><span class="dca-sec-name">'+escHtml(p.name)+'</span><span class="'+statusCls+'">'+statusTxt+'</span></div>'
+          +'<div class="dca-sec-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · <span class="dca-range">'+(p.start||'—')+' 起'+(p.end?' · '+p.end:' · 长期')+'</span></div>'
+          +'<div class="dca-sec-foot">'
+            +'<span class="dca-booked">已自动记账 <b>'+booked+'</b> 期</span>'
+            +'<div class="dca-sec-acts">'
+              +'<button class="btn sm" onclick="dcaManage(\''+escHtml(p.id)+'\')">管理</button>'
+            +'</div>'
           +'</div>'
         +'</div>'
       +'</div>';
@@ -6311,8 +6316,43 @@ function buildDcaSection(){
   h+='</div>';
   return h;
 }
-function renderDcaSection(){ const el=document.getElementById('dcaSection'); if(el) el.innerHTML=buildDcaSection(); }
+function renderDcaSection(){ const el=document.getElementById('dcaSection'); if(el) el.innerHTML=buildDcaSection(); bindDcaSwipe(); }
 window.refreshAssetDca=function(){ renderDcaSection(); };
+function bindDcaSwipe(){
+  var items=document.querySelectorAll('#dcaSection .dca-sec-item');
+  Array.prototype.forEach.call(items, function(item){
+    if(item._swBound) return; item._swBound=true;
+    var fg=item.querySelector('.dca-sec-swipe'), bg=item.querySelector('.dca-sec-actions-bg');
+    if(!fg||!bg) return;
+    var max=bg.offsetWidth||152, startX=0, base=0, dragging=false;
+    item.addEventListener('pointerdown', function(e){
+      if(e.target.closest('.btn')||e.target.closest('.dca-sw-action')) return;
+      dragging=true; startX=e.clientX;
+      var m=(fg.style.transform||'').match(/-?[\d.]+/); base=m?parseFloat(m[0]):0;
+      fg.classList.remove('open'); fg.style.transition='none';
+      try{ item.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    item.addEventListener('pointermove', function(e){
+      if(!dragging) return;
+      var t=Math.max(-max, Math.min(0, base+(e.clientX-startX)));
+      fg.style.transform='translateX('+t+'px)';
+    });
+    function end(){
+      if(!dragging) return; dragging=false;
+      fg.classList.add('open');
+      var m=(fg.style.transform||'').match(/-?[\d.]+/); var cur=m?parseFloat(m[0]):0;
+      fg.style.transform='translateX('+(cur< -max/2? -max:0)+'px)';
+    }
+    item.addEventListener('pointerup', end);
+    item.addEventListener('pointercancel', end);
+    Array.prototype.forEach.call(item.querySelectorAll('.dca-sw-action'), function(btn){
+      btn.addEventListener('click', function(){
+        var id=btn.getAttribute('data-id'), act=btn.getAttribute('data-act');
+        if(act==='toggle') dcaToggle(id); else if(act==='del') dcaDelete(id);
+      });
+    });
+  });
+}
 function renderDcaPanel(){
   var sw=document.getElementById('dcaAutoSw'); if(sw) sw.checked=dcaAutoEnabled();
   var seg=document.getElementById('defaultTimeSeg'); if(seg){ var dv=getDefaultTradeTime(); Array.prototype.forEach.call(seg.querySelectorAll('button'), function(b){ b.classList.toggle('on', b.getAttribute('data-v')===dv); }); }

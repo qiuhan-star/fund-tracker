@@ -6407,7 +6407,18 @@ function dcaEdit(id){
   const per=document.getElementById('dcaPeriod'); if(per){ per.value=p.period||'month'; dcaSetPeriod(per.value); }
   if(p.period==='month'){ const d=document.getElementById('dcaDay'); if(d) d.value=p.day||1; }
   else if(p.period==='week'||p.period==='biweek'){ const w=document.getElementById('dcaWeekday'); if(w){ const idx=(((p.weekday||1)-1)%7+7)%7; if(w.options[idx]) w.selectedIndex=idx; } }
+  const db=document.getElementById('dcaDelBtn'); if(db) db.style.display='';
 }
+function dcaManage(id){
+  const p=dcaPlans.find(x=>x.id===id); if(!p) return;
+  const m=document.getElementById('dcaMask'); if(m) m.classList.add('show');
+  const acc=document.getElementById('dcaAcc');
+  if(acc){ try{ const list=effBuiltins().concat(CUSTOM_ACCOUNTS); acc.innerHTML=list.map(a=>'<option>'+escHtml(a)+'</option>').join(''); }catch(e){ acc.innerHTML='<option>'+effAccount('本人账户')+'</option>'; } }
+  try{ const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean).sort(); const dl=document.getElementById('dcaNameList'); if(dl) dl.innerHTML=names.map(n=>'<option value="'+escHtml(n)+'">').join(''); }catch(e){}
+  dcaEdit(id);
+  dcaRenderList();
+}
+function dcaDeleteFromModal(){ const id=_dcaEditId; if(!id) return; dcaDelete(id); closeDcaModal(); }
 function dcaToggle(id){
   const p=dcaPlans.find(x=>x.id===id); if(!p) return;
   p.paused=!p.paused; silentSave(); dcaRenderList(); refreshAssetDca();

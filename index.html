@@ -3255,10 +3255,12 @@ function renderHomeList(){
   box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
-  // 移动端：初始左移 60px（dt-big 12px + min-width 560 后 cat chip 留在屏内 + 数字列多露）
+  // 移动端：初始左移 60px（rAF 延迟到 layout 完成后设置，避免 innerHTML 刚替换时 scrollWidth 未更新导致失效）
   if(window.matchMedia('(max-width:640px)').matches){
-    var _sc=box.querySelector('.table-scroll');
-    if(_sc && _sc.scrollWidth > _sc.clientWidth) _sc.scrollLeft = 60;
+    requestAnimationFrame(function(){
+      var _sc=box.querySelector('.table-scroll');
+      if(_sc && _sc.scrollWidth > _sc.clientWidth) _sc.scrollLeft = 60;
+    });
   }
   ensureStreakLabels(list);
 

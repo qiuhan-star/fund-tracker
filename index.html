@@ -805,6 +805,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable .pos{ color:var(--up); } .home-ctable .neg{ color:var(--down); }
   .home-ctable tbody tr:last-child td{ border-bottom:none; }
   .home-ctable .a-streak{ font-size:var(--tag-fs); padding:2px 7px; border-radius:var(--tag-radius); background:var(--up-bg); color:var(--up); font-weight:600; white-space:nowrap; display:inline-flex; align-items:center; }
+  /* dense 表副行连涨/连跌 chip（红涨绿跌），跟随明暗主题 */
+  .dense-streak{ font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; white-space:nowrap; display:inline-flex; align-items:center; }
+  .dense-streak.streak-up{ background:var(--up-bg); color:var(--up); }
+  .dense-streak.streak-down{ background:var(--down-bg); color:var(--down); }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table {
     display: block;
@@ -1103,7 +1107,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .bar-row { display: grid; grid-template-columns: 110px 1fr 100px; align-items: center; gap: 12px; font-size: 13px; }
 .bar-info { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .bar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--accent); }
-.bar-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-card .bar-name { font-weight: 600; color: var(--text); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: none; flex: 1 1 auto; min-width: 0; }
 .bar-track-wrap { display: flex; align-items: center; gap: 8px; width: 100%; }
 .bar-track { flex: 1; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; position: relative; }
 .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
@@ -3140,6 +3144,7 @@ function renderHomeList(){
   box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
+  ensureStreakLabels(list);
 
   fillWatchQuotes();
 }
@@ -3188,7 +3193,7 @@ function denseRowsHtml(list){
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
         ${code?`<span>#${code}</span>`:''}
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
-        ${code?`<span class="tag" style="cursor:pointer" title="编辑标签" onclick="event.stopPropagation();editTags('${code}')">✎</span>`:''}
+        ${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}
       </div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
@@ -3282,11 +3287,17 @@ function renderHomeMobileTable(list){
 let streakCache={};
 try{ streakCache=JSON.parse(localStorage.getItem('ft_streak')||'{}')||{}; }catch(e){ streakCache={}; }
 function saveStreakCache(){ try{ localStorage.setItem('ft_streak',JSON.stringify(streakCache)); }catch(e){} }
-function calcStreakDays(arr){
-  if(!Array.isArray(arr)||arr.length<2) return 0;
-  let n=0;
-  for(let i=arr.length-1;i>0;i--){ if(arr[i].nav>arr[i-1].nav) n++; else break; }
-  return n;
+function calcStreak(arr){
+  // 连涨/连跌：从最近一天向前数连续同向天数（红涨绿跌）
+  if(!Array.isArray(arr)||arr.length<2) return {days:0,dir:''};
+  let n=0, dir='';
+  for(let i=arr.length-1;i>0;i--){
+    const a=arr[i].nav, b=arr[i-1].nav;
+    if(a>b){ if(!dir||dir==='up'){ dir='up'; n++; } else break; }
+    else if(a<b){ if(!dir||dir==='down'){ dir='down'; n++; } else break; }
+    else break;
+  }
+  return {days:n, dir:dir};
 }
 const _streakBusy={}, _streakQueue=[]; let _streakRunning=0;
 function ensureStreakLabels(list){
@@ -3294,7 +3305,7 @@ function ensureStreakLabels(list){
   list.forEach(f=>{
     const code=syncCode(f.name); if(!code) return;
     const c=streakCache[code];
-    if(c && c.d===today){ applyStreak(code, c.days); return; }
+    if(c && c.d===today){ applyStreak(code, c.days, c.dir||'up'); return; }
     if(_streakBusy[code]) return;
     _streakBusy[code]=1; _streakQueue.push(code);
   });
@@ -3305,15 +3316,24 @@ function pumpStreaks(){
   if(_streakRunning>=1 || !_streakQueue.length) return;
   const code=_streakQueue.shift(); _streakRunning=1;
   fetchNavHistory(code).then(arr=>{
-    const days=calcStreakDays(arr);
-    streakCache[code]={days:days, d:fmtDate(new Date())}; saveStreakCache();
-    applyStreak(code, days);
+    const st=calcStreak(arr);
+    streakCache[code]={days:st.days, dir:st.dir, d:fmtDate(new Date())}; saveStreakCache();
+    applyStreak(code, st.days, st.dir);
   }).catch(()=>{}).finally(()=>{ _streakRunning=0; pumpStreaks(); });
 }
-function applyStreak(code, days){
-  const el=document.querySelector('.a-streak[data-code="'+code+'"]');
-  if(!el) return;
-  if(days>=2){ el.textContent='连涨'+days+'天'; el.style.display=''; }
+function applyStreak(code, days, dir){
+  const els=document.querySelectorAll('.a-streak[data-code="'+code+'"], .dense-streak[data-code="'+code+'"]');
+  if(!els.length) return;
+  if(days>=2 && (dir==='up'||dir==='down')){
+    const txt=(dir==='up')?'连涨'+days+'天':'连跌'+days+'天';
+    const cls='streak-'+(dir==='up'?'up':'down');
+    els.forEach(function(el){
+      el.textContent=txt;
+      if(el.classList.contains('dense-streak')){ el.className='dense-streak '+cls; }
+      else { el.classList.add(cls); }
+      el.style.display='';
+    });
+  }
 }
 
 // ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------

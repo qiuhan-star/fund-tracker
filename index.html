@@ -89,21 +89,37 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 12px; }
 /* ===== 市场风向/赛道卡片（补齐缺失样式，防移动端挤压） ===== */
 .market-grid-dense { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:12px; }
-.mkt-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 13px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 8px rgba(0,0,0,.03); }
-.mkt-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.mkt-name { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-.mkt-tag { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; flex-shrink:0; }
-.mkt-metrics { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:4px; margin:2px 0 6px; }
-.mkt-m { display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0; }
-.mkt-m .lbl { font-size:11px; color:var(--text-3); }
-.mkt-m b { font-size:clamp(11px, 3.2vw, 13px); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-.mkt-pe { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-3); }
-.mkt-pe-track { flex:1; min-width:0; height:6px; background:var(--surface-3); border-radius:3px; overflow:hidden; }
-.mkt-pe-fill { display:block; height:100%; border-radius:3px; }
-.mkt-pe-val { font-weight:700; font-variant-numeric:tabular-nums; min-width:34px; text-align:right; }
-.mkt-rep { font-size:12px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.mkt-rep b { color:var(--text); font-weight:600; }
-.mkt-repc { color:var(--text-3); }
+.mkt-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 13px; display:flex; flex-direction:column; gap:10px; box-shadow:0 2px 8px rgba(0,0,0,.03); }
+.mkt-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.mkt-name { font-size:15px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.mkt-badge { font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; flex-shrink:0; padding:2px 6px; border-radius:5px; }
+.mkt-badge.up { color:var(--up); background:var(--up-bg); }
+.mkt-badge.down { color:var(--down); background:var(--down-bg); }
+.mkt-badge.zero { color:var(--text-3); background:var(--surface-3); }
+.mkt-metrics { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px 12px; }
+.mkt-m { display:flex; flex-direction:column; align-items:flex-start; text-align:left; min-width:0; }
+.mkt-m .lbl { font-size:10.5px; color:var(--text-3); }
+.mkt-m .val { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.mkt-m .val.up { color:var(--up); }
+.mkt-m .val.down { color:var(--down); }
+.mkt-m .val.zero { color:var(--text-3); }
+.q-wrap { margin-top:2px; }
+.q-head { display:flex; align-items:center; justify-content:space-between; font-size:10.5px; color:var(--text-2); margin-bottom:4px; }
+.q-track { height:4px; background:var(--surface-3); border-radius:2px; overflow:hidden; }
+.q-fill { display:block; height:100%; background:var(--accent); border-radius:2px; }
+/* 赛道紧凑表格（全量时间维度：右对齐 + 等宽数字 + 首列吸顶 + 横滑） */
+.tbl-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.mkt-table { width:100%; border-collapse:collapse; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.mkt-table th { padding:10px 8px; color:var(--text-3); font-weight:500; font-size:11px; border-bottom:1px solid var(--border); background:var(--surface-3); }
+.mkt-table td { padding:10px 8px; border-bottom:1px solid var(--border); }
+.mkt-table th:first-child, .mkt-table td:first-child { text-align:left; padding-left:12px; font-weight:600; color:var(--text); position:sticky; left:0; }
+.mkt-table td:first-child { background:var(--surface); z-index:1; }
+.mkt-table th:first-child { background:var(--surface-3); z-index:2; }
+.mkt-table th:last-child, .mkt-table td:last-child { padding-right:12px; }
+.mkt-table td.up { color:var(--up); font-weight:600; }
+.mkt-table td.down { color:var(--down); }
+.mkt-table td.zero { color:var(--text-3); }
+.scroll-hint { font-size:10.5px; color:var(--text-3); margin:6px 2px 0; text-align:right; }
 .cmp .cc { background: var(--surface-3); border: 1px solid var(--border-3); border-radius: 10px; padding: 10px; }.cmp h3 { font-size: 14px; margin: 0 0 6px; color: var(--text-2); font-weight: 600; text-align: center; }.cmp .chart-box { height: 180px; }.cmp .legend { justify-content: center; margin-top: 6px; }.cmp-diff { margin: 12px 0 4px; }.cmp-diff table { width:100%; border-collapse:collapse; font-size: 14px; }.cmp-diff th, .cmp-diff td { padding:6px 8px; text-align:right; border-bottom:1px solid var(--border); }.cmp-diff th.dl, .cmp-diff td.dl { text-align:left; }.cmp-diff thead th { color:var(--text-2); font-weight:600; }.cmp-diff .sw { width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:6px; vertical-align:middle; }.cmp-diff .cmp-up { color:var(--up); font-weight:600; }.cmp-diff .cmp-down { color:var(--down); font-weight:600; }.cmp-diff .cmp-flat { color:var(--text-3); }.cmp-diff-note { font-size: 12px; color:var(--text-3); margin-top:6px; }.risk-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin: 2px 0 14px; justify-content: center; }.risk-legend span { display: flex; align-items: center; gap: 5px; }.risk-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }/* 优先级建议卡 */
   .adk { display: flex; gap: 10px; border: 1px solid var(--border-3); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background:var(--surface); }.adk-badge { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; height: fit-content; white-space: nowrap; }.adk.high { border-left: 3px solid var(--danger); }.adk.high .adk-badge { background: var(--up-bg); color: #d23b3b; }.adk.medium { border-left: 3px solid var(--warn); }.adk.medium .adk-badge { background: var(--warn-bg); color: #b9791a; }.adk.low { border-left: 3px solid var(--accent); }.adk.low .adk-badge { background: var(--accent-soft); color: var(--accent); }.adk-title { font-size: 14px; font-weight: 600; margin: 0 0 4px; }.adk-body { font-size: 14px; color: var(--text-2); line-height: 1.65; margin: 0 0 8px; }.adk ul { margin: 0 0 6px; padding-left: 18px; font-size: 14px; color: var(--text-2); line-height: 1.7; }.adk-alt { font-size: 14px; color: var(--text-2); background: var(--surface-2); border-radius: 8px; padding: 7px 10px; line-height: 1.6; }.adk-alt b { color: var(--text-2); }/* 分阶段计划 */
   .plan { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; margin-top: 6px; }.plan h3 { font-size: 14px; margin: 0 0 10px; font-weight: 600; }.pl { display: flex; gap: 10px; margin-bottom: 10px; }.pl:last-child { margin-bottom: 0; }.pl-m { flex: 0 0 auto; width: 64px; font-size: 14px; font-weight: 600; color: var(--accent); padding-top: 1px; }.pl-c { font-size: 14px; color: var(--text-2); line-height: 1.65; }.hint { font-size: 14px; color: var(--text-3); line-height: 1.7; }.privacy { color: var(--text-2); font-size: 14px; margin: 8px 0 0; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; line-height: 1.6; }.legend { display: flex; flex-wrap: wrap; gap: 9px; font-size: 14px; margin-top: 8px; }.legend span { display: flex; align-items: center; gap: 5px; }.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }/* 饼图可点击图例（下钻筛选） */
@@ -1097,7 +1113,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
 @media (max-width: 380px) {
   .ov-grid { grid-template-columns: 1fr; }
-  .mkt-metrics { grid-template-columns: repeat(3, minmax(0,1fr)); gap:2px; }
+  .mkt-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); gap:6px 10px; }
 }
 /* 按账户汇总：横向滑动卡片 */
 .acc-hscroll{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding:2px 2px 8px;margin:0 -2px;max-width:100%;}
@@ -1561,7 +1577,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           </div>
         </div>
         <div id="trackGrid" class="market-grid-dense"></div>
-        <div id="trackTable" class="hidden"><table class="market-table"><thead><tr><th>赛道</th><th>今日</th><th>近1月</th><th>近1年</th><th>1年分位</th></tr></thead><tbody id="trackTbody"></tbody></table></div>
+        <div id="trackTable" class="hidden"><div class="tbl-wrap"><table class="mkt-table"><thead><tr><th>赛道</th><th>今日</th><th>近1周</th><th>近1月</th><th>近3月</th><th>近6月</th><th>近1年</th><th>1年分位</th></tr></thead><tbody id="trackTbody"></tbody></table></div><div class="scroll-hint">← 可左右滑动查看完整列 →</div></div>
           <div class="sub-tabs">
             <button class="sub-btn active" onclick="switchRankTab('top', this)">🚀 今日领涨</button>
             <button class="sub-btn" onclick="switchRankTab('hot', this)">🔥 高关注度</button>
@@ -2476,7 +2492,7 @@ const TRACK_SECTORS=[
   {name:'中概互联',secid:'1.513050', rep:'易方达中概互联网ETF',      repc:'513050'},
   {name:'科创50',  secid:'1.588000', rep:'科创50ETF',               repc:'588000'}
 ];
-let TRACK_STATE=TRACK_SECTORS.map(function(s){ return {name:s.name, secid:s.secid, rep:s.rep, repc:s.repc, today:null, m1:null, y1:null, pct:null}; });
+let TRACK_STATE=TRACK_SECTORS.map(function(s){ return {name:s.name, secid:s.secid, rep:s.rep, repc:s.repc, today:null, w1:null, m1:null, m3:null, m6:null, y1:null, pct:null}; });
 let TRACK_BUSY=false;
 function _tkCls(n){ return n>0?'pos':n<0?'neg':'zero'; }
 function _tkArrow(n){ return n>0?'\u25b2':n<0?'\u25bc':''; }
@@ -2498,12 +2514,15 @@ function computeTrackMetrics(pts){
   const n=pts.length; if(n<2) return null;
   const last=pts[n-1], prev=pts[n-2];
   const day=prev? (last-prev)/prev*100 : 0;
-  const mi=Math.max(0,n-1-21), m1=(last-pts[mi])/pts[mi]*100;
+  const wi=Math.max(0,n-1-5),   w1=(last-pts[wi])/pts[wi]*100;
+  const mi=Math.max(0,n-1-21),  m1=(last-pts[mi])/pts[mi]*100;
+  const m3i=Math.max(0,n-1-63), m3=(last-pts[m3i])/pts[m3i]*100;
+  const m6i=Math.max(0,n-1-126),m6=(last-pts[m6i])/pts[m6i]*100;
   const yi=Math.max(0,n-1-250), y1=(last-pts[yi])/pts[yi]*100;
   const win=pts.slice(Math.max(0,n-250)); let mn=Infinity,mx=-Infinity;
   for(let i=0;i<win.length;i++){ if(win[i]<mn)mn=win[i]; if(win[i]>mx)mx=win[i]; }
   const pct= mx>mn ? (last-mn)/(mx-mn)*100 : 50;
-  return {day:day, m1:m1, y1:y1, pct:pct};
+  return {day:day, w1:w1, m1:m1, m3:m3, m6:m6, y1:y1, pct:pct};
 }
 function fetchTrackKline(secid){
   const cb='tk_'+Math.random().toString(36).slice(2);
@@ -2533,22 +2552,26 @@ function _renderTrackBody(state){
   const grid=document.getElementById('trackGrid'), tb=document.getElementById('trackTbody');
   if(grid) grid.innerHTML=state.map(function(d){
     const c=_tkCls(d.today);
+    const peVal=(d.pct==null?'\u2014':Math.round(d.pct)+'%');
     return '<div class="mkt-card">'
-      +'<div class="mkt-head"><span class="mkt-name">'+d.name+'</span><span class="mkt-tag '+c+'">'+_tkVal(d.today)+'</span></div>'
+      +'<div class="mkt-top"><span class="mkt-name">'+d.name+'</span><span class="mkt-badge '+c+'">'+_tkVal(d.today)+'</span></div>'
       +'<div class="mkt-metrics">'
-        +'<div class="mkt-m"><span class="lbl">\u8fd11\u6708</span><b class="'+_tkCls(d.m1)+'">'+_tkVal(d.m1)+'</b></div>'
-        +'<div class="mkt-m"><span class="lbl">\u8fd11\u5e74</span><b class="'+_tkCls(d.y1)+'">'+_tkVal(d.y1)+'</b></div>'
-        +'<div class="mkt-m"><span class="lbl">1\u5e74\u5206\u4f4d</span><b>'+(d.pct==null?'\u2014':Math.round(d.pct)+'%')+'</b></div>'
+        +'<div class="mkt-m"><span class="lbl">\u8fd11\u6708</span><span class="val '+_tkCls(d.m1)+'">'+_tkVal(d.m1)+'</span></div>'
+        +'<div class="mkt-m"><span class="lbl">\u8fd13\u6708</span><span class="val '+_tkCls(d.m3)+'">'+_tkVal(d.m3)+'</span></div>'
+        +'<div class="mkt-m"><span class="lbl">\u8fd16\u6708</span><span class="val '+_tkCls(d.m6)+'">'+_tkVal(d.m6)+'</span></div>'
+        +'<div class="mkt-m"><span class="lbl">\u8fd11\u5e74</span><span class="val '+_tkCls(d.y1)+'">'+_tkVal(d.y1)+'</span></div>'
       +'</div>'
-      +'<div class="mkt-pe"><span class="lbl">\u4ef7\u4f4d</span><span class="mkt-pe-track"><span class="mkt-pe-fill" style="width:'+(d.pct==null?0:d.pct)+'%;background:'+_tkPeColor(d.pct==null?50:d.pct)+'"></span></span><span class="mkt-pe-val" style="color:'+_tkPeColor(d.pct==null?50:d.pct)+'">'+(d.pct==null?'\u2014':Math.round(d.pct)+'%')+'</span></div>'
-      +'<div class="mkt-rep">\u4ee3\u8868\u57fa\u91d1 <b>'+d.rep+'</b> <span class="mkt-repc">'+d.repc+'</span></div>'
+      +'<div class="q-wrap"><div class="q-head"><span>1\u5e74\u5206\u4f4d</span><span style="font-weight:600">'+peVal+'</span></div><div class="q-track"><div class="q-fill" style="width:'+(d.pct==null?0:d.pct)+'%"></div></div></div>'
       +'</div>';
   }).join('');
   if(tb) tb.innerHTML=state.map(function(d){
     const c=_tkCls(d.today);
     return '<tr><td class="mname">'+d.name+'</td>'
       +'<td class="'+c+'">'+_tkVal(d.today)+'</td>'
+      +'<td class="'+_tkCls(d.w1)+'">'+_tkVal(d.w1)+'</td>'
       +'<td class="'+_tkCls(d.m1)+'">'+_tkVal(d.m1)+'</td>'
+      +'<td class="'+_tkCls(d.m3)+'">'+_tkVal(d.m3)+'</td>'
+      +'<td class="'+_tkCls(d.m6)+'">'+_tkVal(d.m6)+'</td>'
       +'<td class="'+_tkCls(d.y1)+'">'+_tkVal(d.y1)+'</td>'
       +'<td>'+(d.pct==null?'\u2014':Math.round(d.pct)+'%')+'</td></tr>';
   }).join('');

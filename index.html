@@ -390,8 +390,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .dca-row .field { flex:1; min-width:0; display:flex; align-items:center; justify-content:flex-end; text-align:right; }
 .dca-row .field input, .dca-row .field select { width:100%; border:none; background:transparent; color:var(--text); font-size:16px; font-family:inherit; text-align:right; outline:none; padding:0; }
 .dca-row .field select { -webkit-appearance:none; appearance:none; color:var(--text-2); }
-.dca-row .field.has-chevron { position:relative; padding-right:16px; }
-.dca-row .field.has-chevron::after { content:"A"; position:absolute; right:0; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:16px; line-height:1; pointer-events:none; }
+.dca-row .field.has-chevron { position:relative; padding-right:18px; }
+.dca-row .field.has-chevron::after { content:""; position:absolute; right:2px; top:50%; transform:translateY(-50%); width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--text-3); pointer-events:none; }
 .dca-row .field input.ph { color:var(--text-2); }
 .dca-row .field input.ph::placeholder { color:var(--text-3); }
 .dca-row .field .static-time { color:var(--text-3); font-size:16px; }
@@ -8064,23 +8064,24 @@ function renderSyncCfg(){
         </div>
         <div class="dca-row">
           <span class="label">单期金额</span>
-          <div class="field"><input id="dcaAmount" type="number" min="0" step="0.01" placeholder="0.00" style="text-align:right"></div>
+          <div class="field has-suffix"><input id="dcaAmount" type="number" min="0" step="0.01" placeholder="0.00" style="text-align:right"><span class="suffix">元</span></div>
         </div>
-        <div class="dca-row" style="border-bottom:none">
+        <div class="dca-row" style="border-bottom:none" id="dcaTimeRow">
           <span class="label">扣款时间</span>
           <div class="field has-chevron" id="dcaTimeField"></div>
         </div>
       </div>
 
       <div class="dca-section-header">周期区间</div>
+      <p class="dca-section-hint">按日/按周定投时，从起始日期起首个满足条件的交易日开始计算。</p>
       <div class="dca-group">
         <div class="dca-row">
-          <span class="label">起始月份</span>
-          <div class="field"><input id="dcaStart" type="month" value="" style="text-align:right"></div>
+          <span class="label">起始日期</span>
+          <div class="field"><input id="dcaStart" type="date" value="" style="text-align:right"></div>
         </div>
         <div class="dca-row" style="border-bottom:none">
-          <span class="label">结束月份</span>
-          <div class="field"><input id="dcaEnd" type="text" class="ph" placeholder="可选（默认长期）" style="text-align:right"></div>
+          <span class="label">结束日期（可选）</span>
+          <div class="field"><input id="dcaEnd" type="date" class="ph" placeholder="" style="text-align:right"></div>
         </div>
       </div>
 

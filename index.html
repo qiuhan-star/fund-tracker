@@ -2697,7 +2697,7 @@ function openDrawerPrefill(name){
   const f=document.getElementById('dr-fund'); if(f) f.value=name||'';
   const ty=document.getElementById('dr-type'); if(ty){ const b=ty.querySelector('option[value="buy"]'); if(b) b.selected=true; }
 }
-function loadWatch(){ try{ const w=JSON.parse(localStorage.getItem('ft_watch')||'[]'); return Array.isArray(w)?w:[]; }catch(e){ return []; } }
+function loadWatch(){ try{ const w=JSON.parse(localStorage.getItem('ft_watch')||'[]'); if(Array.isArray(w)){ let dirty=false; w.forEach(function(x){ if(x && !x.grp){ x.grp=guessCat(x.name||''); dirty=true; } }); if(dirty){ try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} } return w; } return []; }catch(e){ return []; } }
 function addWatch(code, name){
   const w=loadWatch();
   if(w.some(function(x){ return x.code===code; })){ toast('已在自选中'); closeRankMenu(); return; }

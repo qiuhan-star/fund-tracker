@@ -270,7 +270,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   #growthCard { display: none; }
   #trendSection { display: none; }
   .ov-trend { display: none; }
-  #sectorHint { font-size: 12px; line-height: 1.5; margin-bottom: 8px; } #sectorTree { display: none !important; }
+  #sectorHint { font-size: 12px; line-height: 1.5; margin-bottom: 8px; }
   }
 @media print { :root {--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}body {background:var(--surface);}.wrap {max-width:none;padding:0;}.more-menu,.main-tabs,.scope-bar,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask {display:none!important;}.card {box-shadow:none;border:1px solid #ddd;break-inside:avoid;}.hint {display:none!important;}td input,td select {border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}.mcard {border:1px solid #eee;}.sub {margin-bottom:6px;}#updated {display:none;}
    }
@@ -4187,7 +4187,7 @@ function qdiiShare(){
 }
 let collapseMicro=false, sectorView=0;
 function renderThemeHeat(){
-  if(sectorView===1) renderSectorTree();
+  if(sectorView===1){ try{ renderSectorTree(); }catch(e){ console.error('renderSectorTree failed', e); } }
   renderSectorTotal();
 }
 function renderSectorTree(){
@@ -4199,9 +4199,11 @@ function renderSectorTree(){
   let rows=Object.entries(map).map(([k,m])=>({cat:k, mv:m.mv, pct:total?m.mv/total*100:0, wret:m.mv?m.retW/m.mv:0, n:m.n})).sort((a,b)=>b.mv-a.mv);
   rows=rows.filter(r=> r.pct>0 && (!collapseMicro || r.pct>=2));
   if(!rows.length){ box.innerHTML='<p class="hint">暂无持仓（或微量已全部折叠）。</p>'; return; }
-  if(typeof echarts==='undefined'){
+  // 守卫：容器未显示(0尺寸)或手机视口时，一律走 CSS 静态降级条，绝不对零尺寸容器调 echarts.init（否则主线程卡死）
+  const _useFallback = (typeof echarts==='undefined') || box.offsetHeight<8 || (window.innerWidth<700);
+  if(_useFallback){
     // 先显示 CSS 静态降级条，同时懒加载 ECharts；加载成功后重渲染成 treemap（失败则不重试，避免死循环）
-    if(!ensureECharts._failed) ensureECharts(function(){ renderSectorTree(); });
+    if(typeof echarts==='undefined' && !ensureECharts._failed) ensureECharts(function(){ renderSectorTree(); });
     // CSS 纯静态降级：横向条按市值占比，颜色按加权收益（红涨绿跌）
     box.innerHTML='<div class="tree-fallback">'+rows.map(r=>{
       const cc=r.wret>0?TH().up:r.wret<0?TH().down:'#999';

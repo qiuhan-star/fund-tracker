@@ -381,7 +381,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .dca-card-actions { margin-left:auto; display:flex; gap:8px; flex-shrink:0; }
 .dca-card-actions .btn { margin:0; padding:6px 10px; font-size:13px; }
 .dca-card-actions .btn.danger-text { color:var(--danger); border-color:var(--danger); }
-.dca-card-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }
+.dca-card-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-sec-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-range { white-space:nowrap; }
 .dca-section-header { font-size:13px; font-weight:600; color:var(--text-3); margin:18px 0 8px 2px; }
 .dca-group { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
 .dca-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 14px; min-height:48px; border-bottom:1px solid var(--border-2); }
@@ -6293,7 +6293,7 @@ function buildDcaSection(){
       const status=p.paused?'<span class="tag tag-cur">已暂停</span>':(due?'<span class="tag tag-attr">待记账 '+due+' 期</span>':'<span class="tag">进行中</span>');
       return '<div class="dca-sec-item">'
         +'<div class="dca-sec-top"><span class="dca-sec-name">'+escHtml(p.name)+'</span>'+status+'</div>'
-        +'<div class="dca-sec-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期</div>'
+        +'<div class="dca-sec-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · <span class="dca-range">起 '+(p.start||'—')+' → '+(p.end||'无限期')+'</span><br>已自动记账 '+booked+' 期</div>'
         +'<div class="dca-sec-acts">'
           +'<button class="btn sm" onclick="openDcaModal(\''+encodeURIComponent(p.name)+'\')">管理</button>'
           +'<button class="btn sm" onclick="dcaToggle(\''+escHtml(p.id)+'\')">'+(p.paused?'恢复':'暂停')+'</button>'
@@ -6387,7 +6387,7 @@ function dcaRenderList(){
       +'<button class="btn sm" onclick="dcaToggle(\''+escHtml(p.id)+'\')">'+(p.paused?'恢复':'暂停')+'</button>'
       +'<button class="btn sm danger-text" onclick="dcaDelete(\''+escHtml(p.id)+'\')">删除</button>'
       +'</div></div>'
-      +'<div class="dca-card-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · 起 '+(p.start||'—')+' → '+(p.end||'无限期')+'<br>已自动记账 '+booked+' 期。</div>'
+      +'<div class="dca-card-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · <span class="dca-range">起 '+(p.start||'—')+' → '+(p.end||'无限期')+'</span><br>已自动记账 '+booked+' 期。</div>'
       +'</div>';
   }).join('');
 }
@@ -6438,7 +6438,7 @@ function dcaSave(){
   }else{
     dcaPlans.push({ id:genId('dca'), name:name.trim(), account:acc, amount:amount, period:period, day:day, weekday:weekday, start:start, end:end||null, paused:false, createdAt:new Date().toISOString() });
   }
-  silentSave(); dcaResetForm(); dcaRenderList();
+  silentSave(); dcaResetForm(); dcaRenderList(); refreshAssetDca(); closeDcaModal();
   toast('已保存，将在下次刷新时自动记账');
   runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); });
 }

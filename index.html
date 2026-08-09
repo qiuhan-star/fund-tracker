@@ -8502,6 +8502,8 @@ function renderSyncCfg(){
   /* 手机端分组视图：仅缩小"组头与首行名称"间距（用户指出的"第一个名称的距离有点太多"）；dense 表格的列间距/字号/列宽保持原样不动 */
   .grp-head { margin: 12px 2px 2px; padding: 5px 10px; }
   .grp-head:first-child { margin-top: 2px; }
+  /* 不分组视图顶部对齐：用 padding-top 避开 margin 折叠，把表格顶推到与分组视图首组头齐平（523.7≈组头顶），两种模式顶部一致 */
+  .home-ctable-wrap { padding-top: 2px; }
 }
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }
 .bond-drawer.open{ display:block; }

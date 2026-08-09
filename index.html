@@ -294,7 +294,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   #themeBtn, button[onclick="openSettings()"] { width: 38px; min-width: 38px; padding: 6px 0; font-size: 18px; line-height: 1; overflow: hidden; white-space: nowrap; text-overflow: clip; text-align: center; }
   .scope-bar { flex-wrap: wrap; gap: 6px; } .scope-bar button { font-size: 14px; padding: 5px 9px; }
   /* 首页三按钮：禁止文字内部换行（「＋记一笔交易」变两行很丑），整体缩紧 */
-  .home-actions { gap: 6px; margin-bottom: 8px; } .home-actions .btn { padding: 7px 10px; font-size: 14px; white-space: nowrap; } .filter-row { margin-bottom: 6px; } .filter-lab { font-size: 12px; min-width: 24px; } .cat-filter { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none; } .cat-filter::-webkit-scrollbar { display: none; } .cat-chip { flex: 0 0 auto; }
+  .home-actions { gap: 6px; margin-bottom: 8px; } .home-actions .btn { padding: 7px 10px; font-size: 14px; white-space: nowrap; } .filter-row { margin-bottom: 3px; } .filter-lab { font-size: 11px; min-width: 20px; } .cat-filter { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none; } .cat-filter::-webkit-scrollbar { display: none; } .cat-chip { flex: 0 0 auto; } .hold-search input { font-size: 16px !important; padding: 6px 10px; border-radius: 8px; }
   /* 自选清单行末「记账」按钮在窄屏上更紧凑，避免被挤到两行 */
   .wt-tbl td:nth-child(8) .btn { padding: 3px 5px; font-size: 12px; }
   /* 总览 4 张指标卡：移动端数值缩小 + 卡片加 overflow:hidden，避免 "+¥25,050.23" 被截断 */
@@ -764,8 +764,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   }
   
   .cat-chip {
-    padding: 5px 12px !important;
-    font-size: 14px !important;
+    padding: 3px 10px !important;
+    font-size: 12px !important;
+    min-height: 26px !important;
+    border-radius: 8px !important;
   }
 
   /* 6. 弹窗与抽屉（Drawer）适配手机全屏/半屏 */
@@ -2922,7 +2924,7 @@ function filterCat(c){
 function renderGroupBy(){
   const opts=[['none','不分组'],['asset','资产大类'],['market','市场区域']];
   const box=document.getElementById('groupByFilter'); if(!box) return;
-  box.innerHTML=opts.map(o=>`<button class="cat-chip${o[0]===holdGroupBy?' on':''}" onclick="filterGroupBy('${o[0]}')">${o[1]}</button>`).join('');
+  box.innerHTML='<div class="seg">'+opts.map(o=>`<button class="${o[0]===holdGroupBy?'on':''}" onclick="filterGroupBy('${o[0]}')">${o[1]}</button>`).join('')+'</div>';
 }
 function filterGroupBy(g){ holdGroupBy=g; renderGroupBy(); if(activeTab===0) renderHomeList(); }
 
@@ -3141,7 +3143,12 @@ function renderHomeList(){
     if(obsHtml) fillWatchQuotes();
     return;
   }
-  box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
+  const isMobile=window.matchMedia('(max-width:640px)').matches;
+  if(isMobile && holdGroupBy==='none'){
+    box.innerHTML=renderHomeMobileTable(list)+obsHtml;
+  } else {
+    box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
+  }
   syncColSetChecks();
   bindTableScrollFade();
   ensureStreakLabels(list);

@@ -3913,7 +3913,7 @@ function bondStatus(f,today){
     return {txt:'✅ 持有期满·可赎回',cls:'st-ok',sub:fmtDate(unlock)+' 起可赎',days:'已持有 '+held+' 天',barPct:100,barCls:'green'};
   }
   if(held<7){ const free=addDays(p,7); const left=daysBetween(today,free); const pct=Math.max(0,Math.min(100,Math.round(held/7*100))); return {txt:'⚠️ 7天内赎回收1.5%',cls:'st-warn',sub:'约 '+fmtDate(free)+' 免赎回费（剩 '+left+' 天）',days:'已持有 '+held+' / 7 天',barPct:pct,barCls:'amber'}; }
-  return {txt:'✅ 可卖·免赎回费',cls:'st-ok',sub:'已持有 '+held+' 天',days:'已持有 '+held+' 天',barPct:100,barCls:'green'};
+  return {txt:'✅ 可卖·免赎回费',cls:'st-ok',sub:'7 天赎回费惩罚期已过，可正常赎回',days:'已持有 '+held+' 天',barPct:100,barCls:'green'};
 }
 function setBondDate(code,v){ if(!bondState.dates) bondState.dates={}; bondState.dates[code]=v; saveBond(); renderBond(); }
 function setBondAmt(code,v){ const n=parseFloat(v); if(isNaN(n)) return; if(!bondState.amts) bondState.amts={}; bondState.amts[code]=n; saveBond(); renderBond(); }

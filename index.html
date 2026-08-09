@@ -4440,9 +4440,49 @@ function markChip(acc,name){
 let liqMarkKey=null;
 function openLiqMark(el){ const k=el.dataset.k; if(!k) return; liqMarkKey=k; document.getElementById('liqMarkClear').style.display=getLiqMarks()[k]?'block':'none'; document.getElementById('liqMarkMask').classList.add('show'); document.getElementById('liqMarkSheet').classList.add('show'); }
 function closeLiqMark(){ const m=document.getElementById('liqMarkMask'),s=document.getElementById('liqMarkSheet'); if(m)m.classList.remove('show'); if(s)s.classList.remove('show'); }
-function setLiqMark(v){ if(liqMarkKey){ if(v) getLiqMarks()[liqMarkKey]=v; else delete getLiqMarks()[liqMarkKey]; saveLiqMarks(); } closeLiqMark(); renderLiquidated(); }
+function setLiqMark(v){
+  if(liqMarkKey){
+    if(v) getLiqMarks()[liqMarkKey]=v; else delete getLiqMarks()[liqMarkKey];
+    saveLiqMarks();
+    // 联动自选：⭐观察 -> 加入自选「清仓观察」分组；清除标记 -> 移除该来源条目
+    const sep=liqMarkKey.indexOf('||');
+    if(sep>0){
+      const acc=liqMarkKey.slice(0,sep), nm=liqMarkKey.slice(sep+2);
+      if(v==='observe'){
+        const w=loadWatch();
+        if(!w.some(function(x){ return x.name===nm; })){
+          w.push({code:syncCode(nm)||'', name:nm, grp:'清仓观察', account:acc||'本人账户'});
+          try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+          toast('已加入自选 · 清仓观察');
+        }
+      } else if(!v){
+        const w=loadWatch();
+        const idx=w.findIndex(function(x){ return x.name===nm && x.grp==='清仓观察'; });
+        if(idx>=0){ w.splice(idx,1); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
+      }
+    }
+  }
+  closeLiqMark(); renderLiquidated();
+  if(activeTab===3) renderWatchTab();
+}
+// 初始同步：已有 ⭐观察 标记补进自选「清仓观察」分组（幂等）
+function syncLiqObserveToWatch(){
+  try{
+    const marks=getLiqMarks(); const w=loadWatch(); let dirty=false;
+    Object.keys(marks).forEach(function(k){
+      if(marks[k]==='observe'){
+        const sep=k.indexOf('||'); if(sep<=0) return;
+        const nm=k.slice(sep+2);
+        if(!w.some(function(x){ return x.name===nm; })){
+          w.push({code:syncCode(nm)||'', name:nm, grp:'清仓观察', account:k.slice(0,sep)||'本人账户'}); dirty=true;
+        }
+      }
+    });
+    if(dirty){ try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
+  }catch(e){}
+}
 
-function renderLiquidated(){
+function renderLiquidated(){ syncLiqObserveToWatch(); 
   const box=document.getElementById('tp2'); if(!box) return;
   let list=buildLiquidatedView();
   // 按当前账户口径过滤（与持仓列表逻辑一致：scopeMatches 判大口径，curAccount 判子账户）

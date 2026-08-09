@@ -4310,6 +4310,19 @@ function renderThemeHeat(){
   if(sectorView===1){ try{ renderSectorTree(); }catch(e){ console.error('renderSectorTree failed', e); } }
   renderSectorTotal();
 }
+// 与「清仓」Tab(buildLiquidatedView)同一定义：有卖出/转换转出 且 (净份额≈0 或 已赎回金额≥90%总投入) 即视为清仓。
+// 用于板块配置/盈亏视图排除「已赎回 90%+ 但还剩零头份额」的基金（这类份额>0，首页持仓列表的 shares===0 过滤挡不掉）。
+function isLiquidated(f){
+  const tr=f.trades||[];
+  if(!tr.some(function(t){ return t.type==='sell' || t.type==='convert_out'; })) return false; // 没卖过 → 不算清仓
+  let totalBuy=0, totalSell=0;
+  tr.forEach(function(t){ const ty=t.type||'buy', amt=+t.amount||0;
+    if(ty==='buy'||ty==='convert') totalBuy+=amt+(+t.fee||0);
+    else if(ty==='sell'||ty==='convert_out') totalSell+=amt; });
+  const EPS=1e-6, shares=f.shares||0;
+  if(shares>EPS && !(totalBuy>0 && totalSell>=0.9*totalBuy)) return false; // 仍持有且未赎回≥90% → 不算清仓
+  return true;
+}
 function renderSectorTree(){
   const box=document.getElementById('sectorTree'); if(!box) return;
   // 与首页「持仓」列表一致：排除已清仓基金（净份额=0 且无市值），它们只进「清仓」Tab，避免残留成本冒出 -¥0.xx 幽灵行
@@ -7331,7 +7344,7 @@ function tpRedraw(enc){
     else { badge.textContent='监控中'; badge.style.background='var(--warn-bg)'; badge.style.color='var(--warn)'; } }
 }
 function renderSector(){
-  const list=fundsView.filter(f=> !(f.shares===0 && !f.isBond && !(f.mv>0)));  // 与持仓列表一致：排除已清仓
+  const list=fundsView.filter(f=> !(isLiquidated(f) || (f.shares===0 && !f.isBond && !(f.mv>0))));  // 对齐「清仓」Tab：已赎回≥90% 或彻底清仓都排除
   const catPct=getCatAllocation();
   const map={}; list.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0,n:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); m.n++; });
   const wretOf=k=> map[k]&&map[k].mv? map[k].retW/map[k].mv : 0;

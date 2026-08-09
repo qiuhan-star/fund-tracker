@@ -3103,13 +3103,7 @@ function renderHomeList(){
     if(obsHtml) fillWatchQuotes();
     return;
   }
-  const isMobile=window.matchMedia('(max-width:640px)').matches;
-  if(isMobile && holdGroupBy==='none'){
-    box.innerHTML=renderHomeMobileTable(list)+obsHtml;
-    ensureStreakLabels(list);
-  } else {
-    box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
-  }
+  box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
 

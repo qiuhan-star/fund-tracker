@@ -3346,7 +3346,7 @@ function renderOverview(){
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
   const estPct=weightedEstChg();
-  const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
+  const estLine=estPct==null?'已收盘':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const updLine=lastSyncLabel();
   const scopeLabel=currentScope==='all'?'全部':(curAccount||'');
@@ -3383,14 +3383,14 @@ function renderOverview(){
         </div>
         <div class="dash-card">
           <div class="dash-head">${IC.bars} 基金数 / 胜率</div>
-          <div class="dash-val">${cnt} 只</div>
+          <div class="dash-val">${hasBattle?(win/cnt*100).toFixed(1)+'%':'—'}</div>
           ${hasBattle?`<div class="dash-bar"><span class="db-pos" style="width:${(win/cnt*100).toFixed(1)}%"></span><span class="db-neg" style="width:${(lose/cnt*100).toFixed(1)}%"></span></div>`:''}
-          <div class="dash-desc ${hasBattle?'':'muted'}">${winLoseSub}</div>
+          <div class="dash-desc ${hasBattle?'':'muted'}">${hasBattle?winLoseSub+' · 共 '+cnt+' 只':'样本过少，暂不统计胜率'}</div>
         </div>
         <div class="dash-card">
           <div class="dash-head">${IC.pie} 赛道集中度</div>
           <div class="dash-val ${top3>CONFIG.top3Warn?'warn':'pos'}">${topLabel} ${top3.toFixed(0)}%</div>
-          <div class="dash-bar"><span class="db-c" style="width:${Math.min(100,top3).toFixed(0)}%"></span></div>
+          <div class="dash-bar"><span class="${top3>CONFIG.top3Warn?'db-warn':'db-ok'}" style="width:${Math.min(100,top3).toFixed(0)}%"></span></div>
           <div class="dash-desc ${top3>CONFIG.top3Warn?'warn':''}">${top3>CONFIG.top3Warn?'⚠ 偏高，注意分散':(cnt<=1?'单只基金无分散':'持仓较分散')}</div>
         </div>
       </section>
@@ -3411,7 +3411,7 @@ function renderTrendSection(){
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
   const estPct=weightedEstChg();
-  const estLine=estPct==null?'—':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
+  const estLine=estPct==null?'已收盘':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
   const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
   const scopeLabel=currentScope==='all'?'全部':(curAccount||'');
   const updLine=lastSyncLabel();
@@ -8510,16 +8510,9 @@ function renderSyncCfg(){
 .grp-name{ font-weight:700; font-size: 14px; color:var(--text); }
 .grp-meta{ margin-left:auto; font-size: 14px; color:var(--text-3); }
 @media (max-width: 640px) {
-  /* 手机端分组视图（dense 模板）：缩组头与首行间距、放开表格最小宽度让列自适应、压缩 td padding 让更多列可见 */
+  /* 手机端分组视图：仅缩小"组头与首行名称"间距（用户指出的"第一个名称的距离有点太多"）；dense 表格的列间距/字号/列宽保持原样不动 */
   .grp-head { margin: 12px 2px 2px; padding: 5px 10px; }
   .grp-head:first-child { margin-top: 2px; }
-  .table-scroll table { min-width: auto; }
-  .table-scroll th, .table-scroll td { padding: 5px 4px; }
-  .table-scroll td:first-child { width: 112px; min-width: 112px; }
-  .table-scroll .dt-name { font-size: 12.5px; }
-  .table-scroll .dt-big { font-size: 12.5px; }
-  .table-scroll .dt-sub { font-size: 11.5px; gap: 4px; }
-  .table-scroll .dt-sub2 { font-size: 11.5px; }
 }
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }
 .bond-drawer.open{ display:block; }

@@ -769,6 +769,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     min-height: 26px !important;
     border-radius: 8px !important;
   }
+  /* 分组行 seg 收紧：仅作用于首页 #groupByFilter，不影响其它 .seg 用法（市场/分析页） */
+  #groupByFilter .seg { padding: 1px; border-radius: 7px; gap: 1px; }
+  #groupByFilter .seg button { padding: 3px 9px; font-size: 11px; border-radius: 5px; }
 
   /* 6. 弹窗与抽屉（Drawer）适配手机全屏/半屏 */
   .drawer {

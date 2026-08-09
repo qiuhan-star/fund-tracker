@@ -8949,11 +8949,52 @@ function addUnifiedWatch(){
   const el=document.getElementById('uwInput'); if(!el) return;
   const v=(el.value||'').trim(); if(!v){ alert('请输入基金代码或名称'); return; }
   if(/^\d{6}$/.test(v)){ fetchFundInfoUnified(v); el.value=''; return; }
-  const w=loadWatch();
-  if(w.some(function(x){ return x.name===v; })){ alert('已在自选'); return; }
-  w.push({code:'', name:v, grp: guessCat(v), account: currentWatchAcc()}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
-  renderWatchTab();
+  // 名称关键词 → 搜索联想供选择（不再直接生成条目）
+  uwSuggest(v);
 }
+var _uwSugTimer=null, _uwSugSeq=0;
+function uwSuggest(v){
+  v=(v||'').trim();
+  const box=document.getElementById('uwSug'); if(!box) return;
+  if(!v){ box.style.display='none'; return; }
+  clearTimeout(_uwSugTimer);
+  _uwSugTimer=setTimeout(function(){ uwSuggestFetch(v); }, 300);
+}
+function uwSuggestFetch(v){
+  const seq=++_uwSugSeq, cb='_uwSugCb'+seq;
+  window[cb]=function(d){
+    window[cb]=null; s.remove();
+    const box=document.getElementById('uwSug'); if(!box) return;
+    const arr=((d&&d.Datas)||[]).filter(function(x){ return x&&x.CODE&&x.NAME; }).slice(0,8);
+    if(!arr.length){
+      box.innerHTML='<div class="uw-sug-item empty">未找到匹配的基金</div><button type="button" class="uw-sug-item" onclick="addRawWatch(\''+escAttr(v).replace(/\'/g,"\\'")+'\',\'\')">＋ 以「'+escHtml(v)+'」为名称添加自选</button>';
+      box.style.display='block'; return;
+    }
+    box.innerHTML=arr.map(function(x){
+      const type=(x.FundBaseInfo&&x.FundBaseInfo.FTYPE)||'基金';
+      return '<button type="button" class="uw-sug-item" onclick="uwSugPick(this)" data-code="'+escAttr(x.CODE)+'" data-name="'+escAttr(x.NAME)+'"><span class="s-name">'+escHtml(x.NAME)+'</span><span class="s-code">'+escHtml(x.CODE)+'</span><span class="s-type">'+escHtml(type)+'</span></button>';
+    }).join('');
+    box.style.display='block';
+  };
+  const s=document.createElement('script');
+  s.onerror=function(){ window[cb]=null; s.remove(); const box=document.getElementById('uwSug'); if(box){ box.innerHTML='<div class="uw-sug-item empty">搜索失败，请检查网络</div>'; box.style.display='block'; } };
+  s.src='https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key='+encodeURIComponent(v)+'&callback='+cb;
+  document.body.appendChild(s);
+}
+function uwSugPick(btn){
+  addRawWatch(btn.getAttribute('data-name'), btn.getAttribute('data-code'));
+}
+function addRawWatch(name, code){
+  const w=loadWatch();
+  if(w.some(function(x){ return (code&&x.code===code)||x.name===name; })){ toast('已在自选中'); uwSugClose(); return; }
+  w.push({code:code||'', name:name, grp:guessCat(name), account:currentWatchAcc()});
+  try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+  const el=document.getElementById('uwInput'); if(el) el.value='';
+  uwSugClose(); renderWatchTab(); toast('已加自选 · '+name);
+}
+function uwSugClose(){ const box=document.getElementById('uwSug'); if(box) box.style.display='none'; }
+// 点击自选 Tab 外部关闭联想下拉
+(function(){ document.addEventListener('click', function(ev){ const box=document.getElementById('uwSug'); if(box && box.style.display!=='none' && !ev.target.closest('.wt-search') && !ev.target.closest('.uw-sug')){ box.style.display='none'; } }); })();
 function fetchFundInfoUnified(code){
   toast('正在识别 '+code+'…');
   const s=document.createElement('script');
@@ -9204,12 +9245,12 @@ function renderWatchTab(){
 
   const STYLE='<style>'
     +'.wt{max-width:600px;margin:0 auto;padding:0 0 90px}'    +'.wt-split{display:block}'    +'.wt-split.single{display:block}'    +'.wt-col{display:flex;flex-direction:column}'    +'.wt .sec-cap .tag-idle{font-size:11px;font-weight:600;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border-2);border-radius:99px;padding:2px 9px}'    +'@media (min-width:900px){'    +'.wt{max-width:1040px;padding:0 24px 90px}'    +'.wt-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}'    +'.wt-search{margin:6px 0 0}'    +'.wt .card{margin:0 0 14px}'    +'.wt .sec-cap{padding-left:0;padding-right:0}'    +'.wt .card.wt-calc-card{margin:0}'    +'}'
-    +'.wt-search{display:flex;align-items:center;gap:8px;padding:11px 18px;background:var(--surface-2);border-radius:12px;margin:6px 14px 0}'
+    +'.wt-search{display:flex;align-items:center;gap:8px;padding:11px 18px;background:var(--surface-2);border-radius:12px;margin:6px 14px 0;position:relative}'
     +'.wt-search .lens{color:var(--text-3);font-size:14px;line-height:1;display:inline-flex;width:16px;flex:0 0 16px;align-items:center;justify-content:center}'
     +'.wt-search input{flex:1;border:0;background:transparent;outline:0;font-size:15px;color:var(--text);min-width:0}'
     +'.wt-search input::placeholder{color:var(--text-3)}'
     +'.wt-search .cam{background:transparent;border:none;color:var(--accent);font-size:18px;padding:4px 6px;margin-left:4px;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}'
-    +'.wt-search .cam:active{background:var(--surface-2)}'
+    +'.wt-search .cam:active{background:var(--surface-2)}'+'.uw-sug{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:60;background:var(--surface);border:1px solid var(--border-2);border-radius:12px;box-shadow:0 8px 28px rgba(20,30,50,.14);max-height:300px;overflow-y:auto;padding:4px}.uw-sug-item{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;border:none;background:transparent;font-size:14px;color:var(--text);text-align:left;cursor:pointer;border-radius:8px;font-family:inherit;-webkit-tap-highlight-color:transparent}.uw-sug-item:active{background:var(--surface-2)}.uw-sug-item.empty{color:var(--text-3);justify-content:center;font-size:13px}.uw-sug-item .s-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.uw-sug-item .s-code{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:0 0 auto}.uw-sug-item .s-type{font-size:11px;color:var(--text-3);background:var(--surface-2);border-radius:5px;padding:1px 6px;flex:0 0 auto}'
     +'.wt .sec-cap{display:flex;align-items:baseline;gap:8px;padding:18px 16px 8px;font-size:20px;font-weight:700;color:var(--text)}'
     +'.wt .sec-cap .count{font-size:14px;font-weight:500;color:var(--text-3)}'
     +'.wt .sec-cap .more{margin-left:auto;font-size:14px;font-weight:600;color:var(--accent)}'

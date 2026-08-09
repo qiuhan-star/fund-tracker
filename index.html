@@ -2011,6 +2011,7 @@ function setScopeAcc(acc){
   try{ localStorage.setItem('ft_scope', scopeAcc==='all'?'all':scopeAcc); }catch(e){}
   updateScopeUI();
   compute(); // 重建 _allHoldings(scope) + fundsView(curAccount)
+  if(activeTab===3) renderWatchTab(); // 自选按账户隔离：切账户后刷新自选 Tab
   closeAccMenu();
 }
 function cntSpan(n){ return (n>0)? ' <span class="acc-cnt">'+n+'</span>' : ''; }
@@ -9037,7 +9038,7 @@ function uwRow(it){
     : '<span class="sa act" data-name="'+escAttr(it.name||'')+'" onclick="openByData(this)">记账</span><span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this)">删除</span>';
   return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'">'
     +'<div class="swipe-inner">'
-      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span><button type="button" class="wrow-x" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this);event.stopPropagation()" aria-label="删除此自选">✕</button></div>'
+      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
       +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="wgrp" data-key="'+escAttr(it.isBond?(it.code||''):it.name)+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="watchGrpMenu(this)">📁 '+escHtml(it.grp||'未分组')+'</span><span class="y1">近1年 '+it.y1+'</span></div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
@@ -9186,7 +9187,7 @@ function renderWatchTab(){
     +'.wrow:not(:first-child)::after{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--border-2)}'
     +'.wrow .swipe-inner{position:relative;flex:1;min-width:0;background:var(--surface);transition:transform .2s;will-change:transform;z-index:1}'
     +'.wrow .r1{display:flex;align-items:center;gap:8px;padding:12px 16px 0}'
-    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}.wrow .wrow-x{flex:0 0 28px;height:28px;border:none;background:transparent;color:var(--text-3);font-size:16px;line-height:1;border-radius:50%;cursor:pointer;padding:0;margin-left:2px;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s}.wrow .wrow-x:active{background:var(--surface-2);color:var(--up)}'
+    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}'
     +'.wrow .name{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
     +'.wrow .code{font-size:12px;color:var(--text-3);margin-left:3px;font-variant-numeric:tabular-nums;flex-shrink:0}'
     +'.wrow .nav{margin-left:auto;font-size:15px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right;flex-shrink:0}'

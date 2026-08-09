@@ -880,6 +880,16 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
   /* 9. 市场风向：指数卡片改为横向滚动（修复 3 卡右侧留白 + 信息密度低） */
   .idx-list { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
+  /* 指数卡按组内数量自适应列数：1 张=整行宽（港股不再孤零零），3 张=3 列（修复 2+1 孤立错位） */
+  .idx-list.cols-1 { grid-template-columns: 1fr !important; }
+  .idx-list.cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+  .cols-3 .idx-chip { padding: 7px 8px !important; min-height: 112px !important; }
+  .cols-3 .idx-name { font-size: 12px !important; }
+  .cols-3 .idx-val { font-size: 16px !important; }
+  .cols-3 .idx-pct { font-size: 11px !important; }
+  .cols-3 .idx-extra { flex-direction: column; gap: 2px !important; margin-top: 4px !important; font-size: 10px !important; }
+  .cols-3 .idx-extra span { white-space: nowrap; }
+  .cols-3 .idx-nospark { margin-top: 3px !important; font-size: 10px !important; }
   .idx-list::-webkit-scrollbar { display: none; }
   .idx-chip { flex: 1 1 auto !important; width: auto !important; padding: 9px 11px !important; min-height: 112px !important; box-sizing: border-box; }
   .idx-name { font-size: 13px !important; }
@@ -5997,11 +6007,11 @@ function idxChipHtml(it){
   const hiTxt=(d&&d.high!=null&&!isNaN(d.high)&&d.low!=null&&!isNaN(d.low)&&d.high>=d.low)?d.high.toFixed(2):'—';
   const loTxt=(d&&d.low!=null&&!isNaN(d.low))?d.low.toFixed(2):'—';
   const amtTxt=(d&&d.amount)?d.amount:'—';
-  if(!d || isNaN(d.price)) return `<span class="idx-fold" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-fold-hint">暂无数据</span><span class="idx-fold-chev">›</span></span>`;
-  const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
-  const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
-  const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
-  return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><div class="idx-top"><span class="idx-name">${it.name}</span><span class="idx-pct ${cls}">${pctTxt}</span></div><span class="idx-val ${cls}" data-val="${it.code}">${d.price.toFixed(2)}</span><div class="idx-extra"><span>高 <b>${hiTxt}</b></span><span>低 <b>${loTxt}</b></span><span>额 <b>${amtTxt}</b></span></div><span class="idx-nospark" data-spark="${it.code}">— 无分时</span></span>`;
+  if(it.grp==='global' && (!d || isNaN(d.price))) return `<span class="idx-fold" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-fold-hint">暂无数据</span><span class="idx-fold-chev">›</span></span>`;
+  const cls=(d&&d.pct>0)?'pos':(d&&d.pct<0)?'neg':'zero';
+  const arrow=(d&&d.pct>0)?'▲':(d&&d.pct<0)?'▼':'';
+  const pctTxt=(d&&d.pct!=null)?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
+  return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><div class="idx-top"><span class="idx-name">${it.name}</span><span class="idx-pct ${cls}">${pctTxt}</span></div><span class="idx-val ${cls}" data-val="${it.code}">${d?d.price.toFixed(2):'—'}</span><div class="idx-extra"><span>高 <b>${hiTxt}</b></span><span>低 <b>${loTxt}</b></span><span>额 <b>${amtTxt}</b></span></div><span class="idx-nospark" data-spark="${it.code}">${d?'— 无分时':'加载中…'}</span></span>`;
 }
 function renderIdxInto(boxId, timeId){
   const box=document.getElementById(boxId); if(!box) return;
@@ -6019,7 +6029,8 @@ function renderIdxInto(boxId, timeId){
     if(key==='gl'){
       html+='<div class="idx-grp idx-grp-global collapsed"><div class="idx-grp-h idx-grp-toggle" onclick="toggleGlobalIdx(this)">'+label+' <span class="idx-caret">▸</span><span class="idx-grp-count">'+items.length+'</span></div><div class="idx-list idx-grp-body">'+items.map(idxChipHtml).join('')+'</div></div>';
     } else {
-      html+='<div class="idx-grp"><div class="idx-grp-h">'+label+'</div><div class="idx-list">'+items.map(idxChipHtml).join('')+'</div></div>';
+      const lc = items.length===1 ? 'idx-list cols-1' : (items.length===3 ? 'idx-list cols-3' : 'idx-list');
+      html+='<div class="idx-grp"><div class="idx-grp-h">'+label+'</div><div class="'+lc+'">'+items.map(idxChipHtml).join('')+'</div></div>';
     }
   });
   box.innerHTML=html;

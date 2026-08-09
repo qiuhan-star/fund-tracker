@@ -3197,7 +3197,8 @@ function applyHoldInitOffset(box){
     if(!_sc) return;
     if(_sc.scrollWidth > _sc.clientWidth){
       try{ _sc.scrollTo(60,0); }catch(e){ _sc.scrollLeft=60; }
-      _sc.addEventListener('scroll', function(){ holdOffOnce=true; }, {once:true, passive:true});
+      // 仅用户真实触控滚动（isTrusted=true）才停止自动偏移；程序 scrollTo 触发的事件 isTrusted=false 不误判
+      _sc.addEventListener('scroll', function(ev){ if(ev.isTrusted) holdOffOnce=true; }, {passive:true});
     }
   });
 }

@@ -819,6 +819,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     min-width: 148px;
     max-width: 148px;
   }
+  /* 名称列永不横向溢出压到相邻列：长名在列内换行（覆盖 .dense-table 的 white-space:nowrap），并 overflow:hidden 兜底 */
+  .dense-table td:first-child { overflow: hidden; }
+  .dense-table td:first-child .dt-name { white-space: normal; overflow-wrap: anywhere; }
 
   /* 8. 图表容器高度调整，防止占用过多屏幕空间 */
   .chart-box, .am-chart {

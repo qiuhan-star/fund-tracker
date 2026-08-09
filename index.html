@@ -8913,9 +8913,10 @@ function calcWatchBuy(){
   const catSum={}; _allHoldings.forEach(function(f){ const c=f.cat||guessCat(f.name); catSum[c]=(catSum[c]||0)+(f.mv||0); });
   const bondSum={}; getBondFunds().filter(function(f){ return scopeMatches(f.acc); }).forEach(function(f){ const t=bondTypeOf(f); bondSum[t]=(bondSum[t]||0)+bondAmt(f); });
   const rows=[];
-  loadWatch().forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const v=total>0?((catSum[c]||0)+sug)/total:null; rows.push({name:x.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
-  loadBondWatch().filter(bondWsInScope).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const v=total>0?((bondSum[t]||0)+sug)/total:null; rows.push({name:f.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
-  if(!rows.length){ box.innerHTML='<div class="line"><span class="nm" style="color:var(--text-3)">暂无自选可测算</span></div>'; return; }
+  // 只测算点亮 🛒 待买的自选（观察中的不进决策）
+  loadWatch().filter(function(x){ return x.buy; }).forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const v=total>0?((catSum[c]||0)+sug)/total:null; rows.push({name:x.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
+  loadBondWatch().filter(function(f){ return bondWsInScope(f)&&f.buy; }).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const v=total>0?((bondSum[t]||0)+sug)/total:null; rows.push({name:f.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
+  if(!rows.length){ box.innerHTML='<div class="line"><span class="nm" style="color:var(--text-3)">暂无待买基金 —— 点自选条目右侧 🛒 加入测算</span></div>'; return; }
   box.innerHTML=rows.map(function(r){
     const afterHtml=r.after!=null?'（占比 '+(r.after*100).toFixed(1)+'%）':'';
     const flag=r.after!=null&&r.after>0.3?' <span class="tag warn" style="background:#fdeceb;color:#d8453a;border:1px solid #f6c9c4;font-size:11px;padding:1px 6px;border-radius:99px;margin-left:6px">占比过高</span>':'';
@@ -8946,6 +8947,18 @@ function rmByData(btn){
   if(idx>=0){ w.splice(idx,1); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
   renderWatchTab();
 }
+// 🛒 待买开关：点亮/熄灭，只有待买的基金进入「买入决策 & 仓位测算」
+function toggleWatchBuy(btn){
+  var key=btn.getAttribute('data-key')||'', bond=btn.getAttribute('data-bond')==='1';
+  if(bond){
+    var arr=loadBondWatch(); var it=arr.find(function(x){ return x.code===key; });
+    if(it){ it.buy=!it.buy; saveBondWatch(); }
+  } else {
+    var w=loadWatch(); var it=w.find(function(x){ return x.name===key; });
+    if(it){ it.buy=!it.buy; try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
+  }
+  renderWatchTab();
+}
 function uwRow(it){
   var ico=it.isBond?'📊':'📈';
   var nav=it.isBond?'—':'<span class="watch-quote" data-code="'+escAttr(it.quoteCode||'')+'">…</span>';
@@ -8958,7 +8971,8 @@ function uwRow(it){
     : '<span class="sa act" data-name="'+escAttr(it.name||'')+'" onclick="openByData(this)">记账</span><span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this)">删除</span>';
   return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'">'
     +'<div class="swipe-inner">'
-      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
+      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span>'
+      +'<button type="button" class="buy-flag'+(it.buy?' on':'')+'" data-key="'+escAttr(it.isBond?(it.code||''):(it.name||''))+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="toggleWatchBuy(this);event.stopPropagation()" title="准备买入？点亮后进入买入决策测算" aria-label="待买开关">🛒</button>'
       +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="y1">近1年 '+it.y1+'</span></div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
@@ -9070,10 +9084,10 @@ function renderWatchTab(){
   const items=[];
   fWatch.forEach(function(x){
     const held=_allHoldings.find(function(f){ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
-    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name});
+    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name, buy: !!x.buy});
   });
   bWatch.forEach(function(f){
-    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code});
+    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code, buy: !!f.buy});
   });
 
   // 是否买：债券部分复用 bondAnalysis；基金侧按分类查同类重复
@@ -9107,7 +9121,7 @@ function renderWatchTab(){
     +'.wrow:not(:first-child)::after{content:"";position:absolute;left:16px;right:0;top:0;height:.5px;background:var(--border-2)}'
     +'.wrow .swipe-inner{position:relative;flex:1;min-width:0;background:var(--surface);transition:transform .2s;will-change:transform;z-index:1}'
     +'.wrow .r1{display:flex;align-items:center;gap:8px;padding:12px 16px 0}'
-    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}'
+    +'.wrow .ico{flex:0 0 24px;height:24px;border-radius:6px;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-size:13px}.wrow .buy-flag{flex:0 0 30px;height:30px;border:none;background:transparent;font-size:16px;line-height:1;border-radius:50%;cursor:pointer;padding:0;margin-left:4px;opacity:.35;filter:grayscale(1);transition:opacity .15s,filter .15s,background .15s;-webkit-tap-highlight-color:transparent}.wrow .buy-flag.on{opacity:1;filter:none;background:var(--surface-2)}'
     +'.wrow .name{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
     +'.wrow .code{font-size:12px;color:var(--text-3);margin-left:3px;font-variant-numeric:tabular-nums;flex-shrink:0}'
     +'.wrow .nav{margin-left:auto;font-size:15px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right;flex-shrink:0}'
@@ -9168,6 +9182,7 @@ function renderWatchTab(){
   if(!items.length){ listHtml='<div class="wt-empty-ceremony"><div class="ico">📭</div><div class="ttl">暂无自选基金</div><div class="desc">在上方输入 6 位基金代码或名称，回车即可加入；<br>或点 📷 上传持仓截图，自动提取代码并加入自选。</div><button class="btn" onclick="var i=document.getElementById(\'uwInput\');if(i)i.focus()">＋ 立即添加第一只自选</button><div class="hint">自选与资产页债基池已合并到这里</div></div>'; }
 
   const isEmptyWatch = (!items.length && !bWatch.length);
+  const buyTotal = items.filter(function(x){return x.buy;}).length + bWatch.filter(function(f){return f.buy;}).length;
   bc.innerHTML=STYLE
     +'<div class="wt">'
     +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><button type="button" class="cam" onclick="uwPickImage()" title="截图识别基金代码">📷</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
@@ -9178,7 +9193,7 @@ function renderWatchTab(){
       +'</div>'
       + (isEmptyWatch ? '' :
         '<div class="wt-col">'
-          +'<div class="sec-cap"><span>买入决策 &amp; 仓位测算</span>'+(items.length?'<span class="tag-ok">已测算</span>':'<span class="tag-idle">待测算</span>')+'<span class="info-trigger" onclick="openWatchInfo()">ⓘ</span></div>'
+          +'<div class="sec-cap"><span>买入决策 &amp; 仓位测算</span>'+(buyTotal?'<span class="tag-ok">已测算 '+buyTotal+' 只</span>':'<span class="tag-idle">点 🛒 加入</span>')+'<span class="info-trigger" onclick="openWatchInfo()">ⓘ</span></div>'
           +'<div class="card wt-calc-card">'
             +'<div class="calc-grid"><div class="calc-cell"><div class="lbl">预备买入资金（¥）</div><input id="uwCap" class="ipt" type="number" value="5000"></div>'
               +'<div class="calc-cell"><div class="lbl">单只上限（自动 %）</div><div class="pct-wrap"><input id="uwPct" class="ipt" type="number" value="15"><span class="pct-suf">%</span></div></div></div>'

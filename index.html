@@ -334,14 +334,14 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .dash-pill b{ color:var(--text); }
 .dash-pill .dash-dot{ width:6px; height:6px; border-radius:50%; background:var(--text-3); display:inline-block; }
 .dash-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:stretch; }
-.dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:13px; padding:10px 9px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:92px; height:100%; box-sizing:border-box; text-align:right; align-items:flex-end; }
+.dash-card{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:13px; padding:10px 9px; box-shadow:0 2px 12px rgba(0,0,0,.05); display:flex; flex-direction:column; justify-content:space-between; min-height:92px; height:100%; box-sizing:border-box; }
 
 /* 组合风险诊断 + 基金策略便签 + 同类对比（2026-08-09 新增） */
 .risk-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-.risk-cell{ background:var(--surface-2,#f1f5f9); border-radius:10px; padding:9px 10px; text-align:right; }
-.risk-cell .rl{ font-size:11px; color:var(--text-3,#94a3b8); text-align:left; }
+.risk-cell{ background:var(--surface-2,#f1f5f9); border-radius:10px; padding:9px 10px; }
+.risk-cell .rl{ font-size:11px; color:var(--text-3,#94a3b8); }
 .risk-cell .rv{ font-size:17px; font-weight:700; margin-top:2px; }
-.risk-cell .rs{ font-size:10px; color:var(--text-3,#94a3b8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; }
+.risk-cell .rs{ font-size:10px; color:var(--text-3,#94a3b8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .risk-bar{ display:flex; height:18px; border-radius:9px; overflow:hidden; margin:6px 0 4px; background:var(--surface-2,#f1f5f9); }
 .risk-bar span{ height:100%; font-size:10px; color:#fff; display:flex; align-items:center; justify-content:center; min-width:0; }
 .risk-legend{ display:flex; flex-wrap:wrap; gap:6px 12px; font-size:11px; color:var(--text-2,#3c4654); }
@@ -362,16 +362,16 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .peer-bad{ color:#dc2626; } .peer-good{ color:#047857; }
 .peer-spark{ margin-top:6px; display:block; }
 
-.dash-head{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-2); align-self:flex-start; text-align:left; }
+.dash-head{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-2); }
 .dash-head svg{ width:14px; height:14px; }
-.dash-val{ font-size:clamp(12px,3.4vw,18px); font-weight:700; margin:6px 0 3px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); white-space:nowrap; line-height:1.2; width:100%; text-align:right; }
+.dash-val{ font-size:clamp(12px,3.4vw,18px); font-weight:700; margin:6px 0 3px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); white-space:nowrap; line-height:1.2; }
 .dash-val.pos{ color:var(--up); }
 .dash-val.neg{ color:var(--down); }
 .dash-val.warn{ color:var(--warn); }
-.dash-desc{ font-size:10.5px; color:var(--text-3); line-height:1.4; min-height:14px; width:100%; text-align:right; }
+.dash-desc{ font-size:10.5px; color:var(--text-3); line-height:1.4; min-height:14px; }
 .dash-desc.muted{ color:var(--text-3); }
 .dash-desc.warn{ color:var(--warn); }
-.dash-bar{ height:5px; border-radius:999px; background:var(--surface-2); overflow:hidden; margin:8px 0 4px; border:1px solid var(--border, rgba(0,0,0,.06)); display:flex; width:100%; }
+.dash-bar{ height:5px; border-radius:999px; background:var(--surface-2); overflow:hidden; margin:8px 0 4px; border:1px solid var(--border, rgba(0,0,0,.06)); display:flex; }
 .dash-bar .db-pos{ background:var(--up); height:100%; }
 .dash-bar .db-neg{ background:var(--down); height:100%; }
 .dash-bar .db-ok{ background:var(--down); height:100%; }
@@ -3272,7 +3272,7 @@ function denseRowsHtml(list){
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
         ${code?`<span class="dcode">#${code}</span>`:''}
-        <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点 ✎ 手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat} ✎</span>${attrTags}
+        <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点此手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat}</span>${attrTags}
       </div><div class="dt-streak">${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;

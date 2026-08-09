@@ -311,11 +311,11 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .draft-pill { display:none; align-items:center; gap:8px; background:#fff7e6; color:#b76e00; font-size: 14px; border-radius:9px; padding:8px 11px; margin:0 0 10px; }
 .draft-pill.show { display:flex; }
 .draft-pill button { margin-left:auto; background:none; border:none; color:#b76e00; font-size: 14px; text-decoration:underline; cursor:pointer; }.cb-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }.cb-l { width: 58px; color: var(--text-3); flex: 0 0 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.cb-track { flex: 1 1 auto; height: 12px; background: var(--border-2); border-radius: 6px; overflow: hidden; }.cb-fill { height: 100%; background: var(--accent); border-radius: 6px; }.cb-fill.cur { background: var(--up); }.cb-v { width: 84px; text-align: right; flex: 0 0 auto; font-variant-numeric: tabular-nums; }.table-scroll { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.table-scroll::before, .table-scroll::after { content:''; position:absolute; top:0; bottom:0; width:22px; pointer-events:none; z-index:1; opacity:0; transition:opacity .12s ease; }
+.table-scroll::before, .table-scroll::after { content:''; position:absolute; top:0; bottom:0; width:12px; pointer-events:none; z-index:1; opacity:0; transition:opacity .12s ease; }
 .table-scroll::before { left:0; background:linear-gradient(to right, var(--surface), transparent); }
 .table-scroll::after { right:0; background:linear-gradient(to left, var(--surface), transparent); }
 .table-scroll.sc-edge-l::before { opacity:1; }
-.table-scroll.sc-edge-r::after { opacity:1; }
+.table-scroll.sc-edge-r::after { opacity:.6; }
 .table-scroll table { min-width: 640px; }
 @media (max-width: 680px) { .cards4 {grid-template-columns:repeat(2,1fr);}.grid2 {grid-template-columns:1fr;}  }
 @media (max-width: 768px) { .wrap { padding: calc(12px + env(safe-area-inset-top)) 10px calc(24px + env(safe-area-inset-bottom)); }h1 { font-size: 18px; }.topbar .sub { font-size: 12px; }.cards4 { grid-template-columns: repeat(2,1fr); gap: 8px; }.mcard { padding: 10px; }.mcard .val { font-size: 18px; }.grid2 { grid-template-columns: 1fr; gap: 12px; }.chart-box { height: 200px !important; }.card { padding: 12px 14px; margin-bottom: 12px; }input, select { font-size: 18px !important; }.main-tabs button { font-size: 14px; padding: 8px 0; }.hl-name { font-size: 14px; }.cat-chip { font-size: 12px; padding: 3px 10px; }
@@ -3252,10 +3252,10 @@ function renderHomeList(){
   box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
-  // 移动端：名称列吸左固定，初始左移 48px 露出更多数据列（右侧数字不被右缘裁切）
+  // 移动端：初始左移 60px 露出更多数据列（hold 列数字尾部脱离右侧渐变区）
   if(window.matchMedia('(max-width:640px)').matches){
     var _sc=box.querySelector('.table-scroll');
-    if(_sc && _sc.scrollWidth > _sc.clientWidth) _sc.scrollLeft = 48;
+    if(_sc && _sc.scrollWidth > _sc.clientWidth) _sc.scrollLeft = 60;
   }
   ensureStreakLabels(list);
 

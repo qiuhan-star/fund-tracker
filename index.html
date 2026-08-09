@@ -1562,27 +1562,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         </div>
         <div id="trackGrid" class="market-grid-dense"></div>
         <div id="trackTable" class="hidden"><table class="market-table"><thead><tr><th>赛道</th><th>今日</th><th>近1月</th><th>近1年</th><th>1年分位</th></tr></thead><tbody id="trackTbody"></tbody></table></div>
-      <div class="card xirr-card">
-        <h2>定投模拟 / 真实年化（XIRR）</h2>
-        <div class="xirr-seg">
-          <button class="on" onclick="switchXirrTab('dca',this)">定投模拟</button>
-          <button onclick="switchXirrTab('xirr',this)">真实年化（XIRR）</button>
-        </div>
-        <div class="xirr-panel on" id="xirrPanelDca">
-          <div class="dca-grid">
-            <div class="fc" onclick="document.getElementById('dcaMon').focus()"><div class="fc-label">每月定投</div><div class="fc-input"><input id="dcaMon" type="number" value="1000" oninput="calcDCA()"><span class="u">元</span></div></div>
-            <div class="fc" onclick="document.getElementById('dcaRate').focus()"><div class="fc-label">预期年化</div><div class="fc-input"><input id="dcaRate" type="number" value="10" oninput="calcDCA()"><span class="u">%</span></div></div>
-            <div class="fc" onclick="document.getElementById('dcaYrs').focus()"><div class="fc-label">定投年数</div><div class="fc-input"><input id="dcaYrs" type="number" value="5" oninput="calcDCA()"><span class="u">年</span></div></div>
-          </div>
-          <div id="dcaOut" class="calc-out"></div>
-        </div>
-        <div class="xirr-panel" id="xirrPanelXirr">
-          <div class="sec-title">真实年化（XIRR）</div>
-          <div id="xirrRows"></div>
-          <button class="xr-add" onclick="xirrAddRow()">＋ 添加一笔现金流</button>
-          <div id="xirrOut" class="calc-out"></div>
-        </div>
-      </div>
           <div class="sub-tabs">
             <button class="sub-btn active" onclick="switchRankTab('top', this)">🚀 今日领涨</button>
             <button class="sub-btn" onclick="switchRankTab('hot', this)">🔥 高关注度</button>

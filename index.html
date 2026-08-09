@@ -4452,7 +4452,7 @@ function renderLiquidated(){
   const curNavOf=function(f){ const c=navCache[f.name]; return (c&&c.nav!=null)?+c.nav:null; };
   const sum='<div class="liq-sum">'
     +'<div class="it"><div class="lb">清仓基金</div><div class="vl">'+cnt+'</div></div>'
-    +'<div class="it"><div class="lb">累计盈亏</div><div class="vl '+cls(sumR)+'">'+sign(sumR)+M(sumR)+'</div></div>'
+    +'<div class="it pnl"><div class="lb">累计盈亏</div><div class="vl '+cls(sumR)+'">'+sign(sumR)+M(sumR)+'</div></div>'
     +'<div class="it"><div class="lb">平均收益率</div><div class="vl '+cls(avgRet)+'">'+sign(avgRet)+avgRet.toFixed(1)+'%</div></div>'
     +'<div class="it"><div class="lb">胜率</div><div class="vl">'+(cnt?wins+'/'+cnt:'—')+'</div></div>'
     +'</div>';

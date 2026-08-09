@@ -1011,7 +1011,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .acc-pct-fill{height:100%;background:var(--accent);border-radius:3px;}
 .acc-pct-txt{font-size:11px;color:var(--text-2);margin-top:4px;font-variant-numeric:tabular-nums;}
 
-/* ==================== 重设计的【盈亏总览 (Hero & Tiles)】 ==================== */
+/* ==================== 总资产 Hero（首页复用；板块页不再使用 tiles 卡） ==================== */
 .ov-wrap { margin-top: 4px; }
 .ov-hero {
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px;
@@ -1020,30 +1020,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 }
 .ov-hero-left { display: flex; flex-direction: column; gap: 4px; }
 .ov-hero-label { font-size: 13px; font-weight: 500; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
-.eye-inline { border: none; background: transparent; color: var(--text-3); cursor: pointer; padding: 2px 4px; border-radius: 6px; font-size: 15px; line-height: 1; }
-.eye-inline:hover { background: var(--surface-3); }
 .ov-hero-value { font-size: 38px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text); margin-top: 2px; }
 .ov-hero-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
 .ov-hero-right { display: flex; flex-direction: column; gap: 6px; text-align: right; font-size: 13px; }
 .ov-hero-right-item { color: var(--text-3); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .ov-hero-right-item b { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
-
-.ov-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
-.ov-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-  padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.ov-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-.ov-head { display: flex; align-items: center; justify-content: space-between; color: var(--text-3); font-size: 13px; font-weight: 500; }
-.ov-head-title { display: flex; align-items: center; gap: 6px; }
-.ov-head svg { width: 15px; height: 15px; color: var(--accent); }
-.ov-val { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; font-variant-numeric: tabular-nums; line-height: 1.2; }
-.ov-bar-container { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-.ov-bar { height: 6px; border-radius: 4px; background: var(--surface-3); overflow: hidden; display: flex; width: 100%; }
-.ov-bar-inner { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
-.ov-sub { font-size: 12px; color: var(--text-3); display: flex; justify-content: space-between; align-items: center; }
-
 /* ==================== 重设计的【占比排行 (Asset Distribution)】 ==================== */
 .cb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
 .cb-card .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -1068,7 +1049,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .zero { color: var(--text-3) !important; }
 
 @media (max-width: 680px) {
-  .ov-grid { grid-template-columns: repeat(2, 1fr); }
   .ov-hero-value { font-size: 32px; }
   .bar-row { grid-template-columns: 90px 1fr 85px; gap: 8px; }
   .bar-pct { display: none; }
@@ -1385,13 +1365,13 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       </div>
       <div class="card">
         <div class="sec-head">
-          <h2>板块配置 / 盈亏总览 <span class="tag">按持仓</span></h2>
+          <h2>板块配置 / 盈亏贡献 <span class="tag">按持仓</span></h2>
           <div class="seg">
             <button id="sv0" class="on" onclick="setSectorView(0)">📊 占比排位</button>
-            <button id="sv1" onclick="setSectorView(1)">🧩 盈亏总览</button>
+            <button id="sv1" onclick="setSectorView(1)">🧩 盈亏贡献</button>
           </div>
         </div>
-        <p class="hint" id="sectorHint">两种看法：<b>占比排位</b>按市值占比看谁占大头（右列红涨绿跌＝该类加权收益）；<b>盈亏总览</b>给出总资产、今日估算、累计与月度盈亏、权益暴露一键卡片。</p>
+        <p class="hint" id="sectorHint">两种看法：<b>占比排位</b>按市值占比看谁占大头（右列红涨绿跌＝该类加权收益）；<b>盈亏贡献</b>看每个板块实际赚/亏多少——红色＝贡献收益、绿色＝拖后腿，一眼看出谁在帮你赚钱。</p>
         <div id="sectorBars"></div>
         <div id="sectorWarn"></div>
         <div id="sectorTree" style="display:none;width:100%"></div>
@@ -4269,38 +4249,29 @@ function renderThemeHeat(){
 function renderSectorTree(){
   const box=document.getElementById('sectorTree'); if(!box) return;
   if(!fundsView.length){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
-  const total=fundsView.reduce((a,f)=>a+(f.mv||0),0);
-  const cost=fundsView.reduce((a,f)=>a+(f.cost||0),0);
-  const profit=fundsView.reduce((a,f)=>a+(f.profit||0),0);
-  const retRate=cost>0?profit/cost*100:0;
-  let dayGain=0, hasDay=false;
-  fundsView.forEach(f=>{ const g=dayGainOf(f); if(g!=null){ dayGain+=g; hasDay=true; } });
-  const dayPct=total?dayGain/total*100:0;
-  let monthPnl=null, monthPct=null;
-  try{
-    const arr=(dailySnapshots&&dailySnapshots[currentScope])||[];
-    if(arr.length){
-      const now=new Date(), y=now.getFullYear(), m=now.getMonth();
-      const inMonth=arr.filter(function(s){ const d=new Date(s.date); return d.getFullYear()===y && d.getMonth()===m; });
-      const start=inMonth.length?inMonth[0]:arr[0];
-      const last=arr[arr.length-1];
-      if(start && last && start.totalProfit!=null && last.totalProfit!=null && start.totalAssets){
-        monthPnl=+(last.totalProfit-start.totalProfit).toFixed(2);
-        monthPct=+((last.totalAssets-start.totalAssets)/start.totalAssets*100).toFixed(2);
-      }
-    }
-  }catch(e){}
-  const bondMv=fundsView.reduce((a,f)=>a+((guessAsset(f.name)==='债券')?f.mv:0),0);
-  const equityPct=total? (total-bondMv)/total*100 : 0;
-  const riskLv=equityPct>=60?'进取型':equityPct>=35?'均衡型':'稳健型';
-  const cls=function(v){ return v>0?'pos':v<0?'neg':'zero'; };
-  const fp=function(v){ return (v>=0?'+':'')+v.toFixed(2)+'%'; };
-  const hero='<div class="ov-hero"><div class="ov-hero-left"><div class="ov-hero-label"><span>总资产 (元)</span><button class="eye-inline" onclick="toggleHidden()" title="隐藏金额">👁</button></div><div class="ov-hero-value">'+M(total)+'</div><div class="ov-hero-sub">包含 '+fundsView.length+' 支基金 · 实时估算</div></div><div class="ov-hero-right"><div class="ov-hero-right-item">今日估算 <b class="'+cls(dayGain)+'">'+(hasDay?M(dayGain):'—')+(hasDay?' ('+fp(dayPct)+')':'')+'</b></div><div class="ov-hero-right-item">累计收益 <b class="'+cls(profit)+'">'+M(profit)+' ('+fp(retRate)+')</b></div></div></div>';
-  const t1='<div class="ov-card"><div class="ov-head"><span class="ov-head-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>今日估算盈亏</span></div><div class="ov-val '+cls(dayGain)+'">'+(hasDay?M(dayGain):'—')+'</div><div class="ov-sub"><span>预估涨幅</span><span class="'+cls(dayGain)+'">'+(hasDay?fp(dayPct):'—')+'</span></div></div>';
-  const t2='<div class="ov-card"><div class="ov-head"><span class="ov-head-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>持仓总盈亏</span></div><div class="ov-val '+cls(profit)+'">'+M(profit)+'</div><div class="ov-bar-container"><div class="ov-bar"><div class="ov-bar-inner '+cls(profit)+'" style="width:'+Math.max(3,Math.min(100,Math.abs(retRate))).toFixed(1)+'%;background:'+(profit>=0?'var(--up)':'var(--down)')+'"></div></div><div class="ov-sub"><span>收益率</span><span class="'+cls(profit)+'">'+fp(retRate)+'</span></div></div></div>';
-  const t3='<div class="ov-card"><div class="ov-head"><span class="ov-head-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>本月累计盈亏</span></div><div class="ov-val '+(monthPnl==null?'zero':cls(monthPnl))+'">'+(monthPnl==null?'—':M(monthPnl))+'</div><div class="ov-sub"><span>本月收益率</span><span class="'+(monthPnl==null?'zero':cls(monthPnl))+'">'+(monthPnl==null?'—':fp(monthPct))+'</span></div></div>';
-  const t4='<div class="ov-card"><div class="ov-head"><span class="ov-head-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>权益类占比</span></div><div class="ov-val">'+equityPct.toFixed(1)+'%</div><div class="ov-bar-container"><div class="ov-bar"><div class="ov-bar-inner" style="width:'+equityPct.toFixed(1)+'%;background:var(--accent)"></div></div><div class="ov-sub"><span>风偏等级</span><span style="color:var(--accent);font-weight:600">'+riskLv+'</span></div></div></div>';
-  box.innerHTML='<div class="ov-wrap">'+hero+'<div class="ov-grid">'+t1+t2+t3+t4+'</div></div>';
+  // 按板块（cat）汇总盈亏，降序排列：红色＝贡献收益、绿色＝拖后腿
+  const cats={};
+  fundsView.forEach(f=>{
+    const m=cats[f.cat]||(cats[f.cat]={profit:0,cost:0,mv:0,n:0});
+    m.profit+=(f.profit||0); m.cost+=(f.cost||0); m.mv+=(f.mv||0); m.n++;
+  });
+  const arr=Object.keys(cats).map(k=>({k,profit:cats[k].profit,cost:cats[k].cost,mv:cats[k].mv,n:cats[k].n}));
+  arr.sort((a,b)=>b.profit-a.profit);
+  const maxAbs=Math.max(1, ...arr.map(c=>Math.abs(c.profit)));
+  const totalProfit=arr.reduce((a,c)=>a+c.profit,0);
+  const rows=arr.map(c=>{
+    const cls=c.profit>0?'pos':c.profit<0?'neg':'zero';
+    const color=c.profit>=0?'var(--up)':'var(--down)';
+    const pct=Math.min(100, Math.abs(c.profit)/maxAbs*100);
+    const ret=c.cost>0?c.profit/c.cost*100:0;
+    const dotColor=CAT_COLORS[c.k]||'#9aa0a6';
+    return '<div class="bar-row">'
+      +'<div class="bar-info"><span class="bar-dot" style="background:'+dotColor+'"></span><span class="bar-name">'+esc(c.k)+'</span></div>'
+      +'<div class="bar-track-wrap"><div class="bar-track"><div class="bar-fill" style="width:'+pct.toFixed(1)+'%;background:'+color+'"></div></div></div>'
+      +'<div class="bar-ret-col"><span class="bar-amount '+cls+'">'+(c.profit>=0?'+':'')+M(c.profit)+'</span><span class="bar-pnl '+cls+'">'+(ret>=0?'+':'')+ret.toFixed(1)+'%</span></div>'
+      +'</div>';
+  }).join('');
+  box.innerHTML='<div class="cb-card"><div class="sec-head"><h2>各板块盈亏贡献</h2><span class="sub2">组合累计盈亏 '+(totalProfit>=0?'+':'')+M(totalProfit)+'</span></div><div class="bar-list">'+rows+'</div></div>';
 }
 function setSectorView(i){
   sectorView=i;

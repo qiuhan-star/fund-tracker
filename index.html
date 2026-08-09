@@ -8898,7 +8898,8 @@ function fetchFundInfoUnified(code){
 
 // 买多少：仓位测算（输出到 #wtBuyRes 卡片行；占比不可算时不显示，绝不暴露 NaN）
 function calcWatchBuy(){
-  const cap=+(document.getElementById('uwCap').value)||0;
+  const capEl=document.getElementById('uwCap'); if(!capEl) return;
+  const cap=+(capEl.value)||0;
   const pct=+(document.getElementById('uwPct').value)||0;
   const totalRaw=+(document.getElementById('uwTotal').value)||0;
   // 总市值为 0（无持仓）时，用预备买入资金作分母，首笔建仓占比 = sug / cap = pct%；cap 也为 0 时无法计算
@@ -9206,7 +9207,7 @@ function renderWatchTab(){
     +'<div class="overlay" id="wtInfo" onclick="if(event.target===this)closeWatchInfo()"><div class="sheet"><h3>规则说明</h3><p><b>合并说明：</b>基金自选（首页底部区块）+ 债基自选（原资产页债基池）已合并到此；资产页的债基自选池已撤掉。</p><p><b>识别：</b>「📷 截图」可上传持仓截图，自动提取 6 位基金代码并加入自选（首次需联网下载识别模型）。</p><p><b>模型（买多少）：</b>债基（防御仓）单只上限建议 ≤10%，基金可到 15%；「买入后该类占比」&gt;30% 标红。实际买入仍由你在 App 记账决定。</p><button class="close" onclick="closeWatchInfo()">知道了</button></div></div>'
     +'</div>';
 
-  calcWatchBuy();
+  if(!isEmptyWatch) calcWatchBuy();
   fillWatchQuotes();
   wtAttachSwipe();
 }

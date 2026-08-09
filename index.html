@@ -9285,7 +9285,7 @@ function renderWatchTab(){
   const isEmptyWatch = (!items.length && !bWatch.length);
   bc.innerHTML=STYLE
     +'<div class="wt">'
-    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><button type="button" class="cam" onclick="addUnifiedWatch()" title="搜索/添加（等同回车）">＋</button><button type="button" class="cam" onclick="uwPickImage()" title="截图识别基金代码">📷</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div>'
+    +'<div class="wt-search"><span class="lens">🔍</span><input id="uwInput" placeholder="输入 6 位代码或名称，自动识别" oninput="uwSuggest(this.value)" onkeydown="if(event.key===\'Enter\')addUnifiedWatch()"><button type="button" class="cam" onclick="addUnifiedWatch()" title="搜索/添加（等同回车）">＋</button><button type="button" class="cam" onclick="uwPickImage()" title="截图识别基金代码">📷</button><input type="file" id="uwImg" accept="image/*" style="display:none" onchange="uwOcr(this)"></div><div class="uw-sug" id="uwSug" style="display:none"></div>'
     +'<div class="wt-split'+(isEmptyWatch?' single':'')+'">'
       +'<div class="wt-col">'
         +'<div class="sec-cap"><span>自选清单</span><span class="count">('+items.length+')</span><span class="more" onclick="uwToggleGroup()">'+(uwGroupView?'▤ 平铺':'按分组 ▾')+'</span></div>'

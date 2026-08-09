@@ -219,10 +219,9 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .flt-badge { position: absolute; top: -5px; right: -5px; min-width: 15px; height: 15px; border-radius: 8px; background: var(--up); color: #fff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: border-box; }
   #idxList, #idxListD { display: flex; flex-direction: column; gap: 12px; }.idx-grp { min-width: 0; }.idx-grp-h { font-size: 12px; font-weight: 600; color: var(--text-2); margin: 0 0 6px 2px; padding-left: 6px; border-left: 3px solid var(--accent); line-height: 1.2; }/* 全球组：默认收起，点击标题才展开并拉取外围指数 */
   .idx-grp-global.collapsed .idx-grp-body { display: none; }.idx-grp-toggle { cursor: pointer; display: flex; align-items: center; gap: 5px; }@media (hover: hover) { .idx-grp-toggle:hover {  color: var(--accent);  } }
-.idx-caret { display: inline-block; transition: transform .15s ease; font-size: 12px; }.idx-grp-global:not(.collapsed) .idx-caret { transform: rotate(90deg); }.idx-grp-count { font-size: 12px; font-weight: 500; color: var(--text-3); background: var(--surface-2); border-radius: 9px; padding: 0 7px; margin-left: 1px; }.idx-chip { display: flex; flex-direction: column; gap: 2px; background: var(--surface-3); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; min-height: 112px; }@media (hover: hover) { .idx-chip:hover {  background: var(--surface-2); border-color: var(--border-strong);  } }.idx-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }.idx-extra { display: flex; gap: 8px; margin-top: 5px; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; flex-wrap: wrap; }.idx-extra b { color: var(--text-2); font-weight: 600; }
+.idx-caret { display: inline-block; transition: transform .15s ease; font-size: 12px; }.idx-grp-global:not(.collapsed) .idx-caret { transform: rotate(90deg); }.idx-grp-count { font-size: 12px; font-weight: 500; color: var(--text-3); background: var(--surface-2); border-radius: 9px; padding: 0 7px; margin-left: 1px; }.idx-chip { display: flex; flex-direction: column; gap: 2px; background: var(--surface-3); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: background .15s, border-color .15s; }@media (hover: hover) { .idx-chip:hover {  background: var(--surface-2); border-color: var(--border-strong);  } }.idx-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }.idx-extra { display: flex; gap: 8px; margin-top: 5px; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; flex-wrap: wrap; }.idx-extra b { color: var(--text-2); font-weight: 600; }
 /* 拉不到数据的指数：淡灰占位卡（不隐藏；不用 opacity 以免文字对比度塌掉，违反 WCAG） */
-  .idx-chip-empty { border-style: dashed; background: var(--surface-2); }.idx-name { font-size: 14px; color: var(--text-2); }
-  .idx-fold { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; background: var(--surface-3); border: 1px dashed var(--border-2); border-radius: 8px; padding: 7px 11px; cursor: pointer; transition: background .15s; }.idx-fold .idx-name { font-size: 13px; color: var(--text-2); }.idx-fold-hint { margin-left: auto; font-size: 11px; color: var(--text-3); }.idx-fold-chev { font-size: 13px; color: var(--text-3); }/* 点位 + 涨跌幅：默认同一行（4 位数正好放下，跟在后面）；5 位数放不下时涨跌幅优雅换到下一行，不会把数字从中断开 */
+  .idx-chip-empty { border-style: dashed; background: var(--surface-2); }.idx-name { font-size: 14px; color: var(--text-2); }/* 点位 + 涨跌幅：默认同一行（4 位数正好放下，跟在后面）；5 位数放不下时涨跌幅优雅换到下一行，不会把数字从中断开 */
   /* 点位 + 涨跌幅：强制同一行（nowrap），5 位数也不会掉到下一行；字体与卡片宽度已调到最长组合也能单行容纳 */
   .idx-pricerow { display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; }.idx-val { font-size: 19px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }.idx-pct { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }.idx-mktstatus { font-size: 12px; color: var(--text-3); margin-top: 1px; display: inline-flex; align-items: center; gap: 3px; }/* 市场状态圆点：严格中性色，红绿只留给涨跌 */
   .idx-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; box-sizing: border-box; }.idx-dot-open { background: #3a8fd6; box-shadow: 0 0 0 2px rgba(58,143,214,.16); }/* 交易中：蓝 */
@@ -865,7 +864,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 9. 市场风向：指数卡片改为横向滚动（修复 3 卡右侧留白 + 信息密度低） */
   .idx-list { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
   .idx-list::-webkit-scrollbar { display: none; }
-  .idx-chip { flex: 1 1 auto !important; width: auto !important; padding: 9px 11px !important; min-height: 112px !important; box-sizing: border-box; }
+  .idx-chip { flex: 1 1 auto !important; width: auto !important; padding: 9px 11px !important; min-height: 0 !important; box-sizing: border-box; }
   .idx-name { font-size: 13px !important; }
   .idx-val { font-size: 19px !important; }
   .idx-pct { font-size: 12px !important; }
@@ -1510,24 +1509,23 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div id="advice"></div>
       </div>
       <div class="card xirr-card">
-        <h2>定投模拟 / 年化收益（XIRR）<span class="tag">测算工具</span></h2>
-        <p class="hint">左侧假设年化收益，算定投未来值；右侧填入真实现金流（日期 + 金额 + 方向），算你的真实年化（XIRR）。</p>
-        <div class="grid2">
-          <div>
-            <div class="sec-title">定投模拟</div>
-            <div class="dca-grid">
-              <div class="fc" onclick="document.getElementById('dcaMon').focus()"><div class="fc-label">每月定投（元）</div><div class="fc-input"><input id="dcaMon" type="number" value="1000" oninput="calcDCA()"><span class="u">元</span></div></div>
-              <div class="fc" onclick="document.getElementById('dcaRate').focus()"><div class="fc-label">预期年化</div><div class="fc-input"><input id="dcaRate" type="number" value="10" oninput="calcDCA()"><span class="u">%</span></div></div>
-              <div class="fc" style="grid-column:span 2" onclick="document.getElementById('dcaYrs').focus()"><div class="fc-label">定投年数</div><div class="fc-input"><input id="dcaYrs" type="number" value="5" oninput="calcDCA()"><span class="u">年</span></div></div>
-            </div>
-            <div id="dcaOut" class="calc-out"></div>
+        <h2>定投模拟 / 真实年化（XIRR）</h2>
+        <div class="xirr-seg">
+          <button class="on" onclick="switchXirrTab('dca',this)">定投模拟</button>
+          <button onclick="switchXirrTab('xirr',this)">真实年化（XIRR）</button>
+        </div>
+        <div class="xirr-panel on" id="xirrPanelDca">
+          <div class="dca-grid">
+            <div class="fc" onclick="document.getElementById('dcaMon').focus()"><div class="fc-label">每月定投</div><div class="fc-input"><input id="dcaMon" type="number" value="1000" oninput="calcDCA()"><span class="u">元</span></div></div>
+            <div class="fc" onclick="document.getElementById('dcaRate').focus()"><div class="fc-label">预期年化</div><div class="fc-input"><input id="dcaRate" type="number" value="10" oninput="calcDCA()"><span class="u">%</span></div></div>
+            <div class="fc" onclick="document.getElementById('dcaYrs').focus()"><div class="fc-label">定投年数</div><div class="fc-input"><input id="dcaYrs" type="number" value="5" oninput="calcDCA()"><span class="u">年</span></div></div>
           </div>
-          <div>
-            <div class="sec-title">真实年化（XIRR）</div>
-            <div id="xirrRows"></div>
-            <button class="xr-add" onclick="xirrAddRow()">＋ 添加一笔现金流</button>
-            <div id="xirrOut" class="calc-out"></div>
-          </div>
+          <div id="dcaOut" class="calc-out"></div>
+        </div>
+        <div class="xirr-panel" id="xirrPanelXirr">
+          <div id="xirrRows"></div>
+          <button class="xr-add" onclick="xirrAddRow()">＋ 添加一笔现金流</button>
+          <div id="xirrOut" class="calc-out"></div>
         </div>
       </div>
     </div>
@@ -2339,9 +2337,45 @@ function saveLocal(){ silentSave(); const d=new Date(); const ts=d.getFullYear()
 
 // ---------- Tab 切换 ----------
 let activeTab=0;
+// ---------- 定投模拟 / XIRR 年化收益测算 ----------
+let xirrFlows=[{date:'2024-01-01',amt:1000,dir:'out'},{date:'2025-01-01',amt:1000,dir:'out'},{date:'2026-01-01',amt:2650,dir:'in'}];
+function calcDCA(){
+  const mon=+document.getElementById('dcaMon').value||0, yrs=+document.getElementById('dcaYrs').value||0, rate=(+document.getElementById('dcaRate').value||0)/100, n=yrs*12;
+  const out=document.getElementById('dcaOut'); if(!out) return;
+  if(mon<=0||n<=0){ out.innerHTML='<span class="hint">填入每月定投金额与年数</span>'; return; }
+  const fv = rate===0 ? mon*n : mon*((Math.pow(1+rate/12,n)-1)/(rate/12));
+  const invested=mon*n, profit=fv-invested, roi=invested>0?profit/invested*100:0;
+  out.innerHTML='<div class="dca-banner"><div class="bl">预期期末资产（元）</div><div class="bv">'+M(fv)+'</div>'
+    +'<div class="dca-sub-grid">'
+    +'<div class="dca-sub-item"><label>本金投入</label><span>'+M(invested)+'</span></div>'
+    +'<div class="dca-sub-item"><label>预期收益</label><span>'+(profit>=0?'+':'')+M(profit)+' ('+(roi>=0?'+':'')+roi.toFixed(1)+'%)</span></div>'
+    +'<div class="dca-sub-item" style="text-align:right"><label>本金倍数</label><span>'+(invested>0?(fv/invested).toFixed(2):'0')+'×</span></div>'
+    +'</div></div>';
+}
+function xirr(flows){
+  const fs=flows.map(f=>({t:new Date(f.date), amt:(f.dir==='in'?1:-1)*Math.abs(parseFloat(f.amt)||0)}))
+    .filter(f=>!isNaN(f.t.getTime()) && f.amt!==0).sort((a,b)=>a.t-b.t);
+  if(fs.length<2) return null;
+  const d0=fs[0].t, npv=r=>fs.reduce((s,f)=>s+f.amt/Math.pow(1+r,(f.t-d0)/86400000/365),0);
+  let lo=-0.9999, hi=10, fLo=npv(lo), fHi=npv(hi); if(fLo*fHi>0) return null;
+  for(let k=0;k<200;k++){ const mid=(lo+hi)/2, fv=npv(mid); if(Math.abs(fv)<1e-7) return mid; if(fLo*fv<0) hi=mid; else lo=mid; }
+  return (lo+hi)/2;
+}
+function renderXirr(){ const box=document.getElementById('xirrRows'); if(!box) return;
+  box.innerHTML='<div class="xr-list">'+xirrFlows.map((f,i)=>'<div class="xr-item"><input class="xr-date" type="date" value="'+f.date+'" onchange="xirrFlows['+i+'].date=this.value;calcXIRR()"><input class="xr-amt" type="number" value="'+f.amt+'" oninput="xirrFlows['+i+'].amt=+this.value;calcXIRR()"><button class="xr-pill '+(f.dir==='out'?'out':'in')+'" onclick="xirrFlows['+i+'].dir=(xirrFlows['+i+'].dir===\'out\'?\'in\':\'out\');renderXirr();calcXIRR()">'+(f.dir==='out'?'投入':'赎回')+'</button><button class="xr-del" onclick="xirrDelRow('+i+')">✕</button></div>').join('')+'</div>';
+}
+function xirrAddRow(){ const last=xirrFlows[xirrFlows.length-1]; const d=(last&&last.date)?last.date:new Date().toISOString().slice(0,10); xirrFlows.push({date:d,amt:1000,dir:'out'}); renderXirr(); calcXIRR(); }
+function xirrDelRow(i){ if(xirrFlows.length<=2){ toast('至少保留两笔现金流'); return; } xirrFlows.splice(i,1); renderXirr(); calcXIRR(); }
 function calcXIRR(){ const box=document.getElementById('xirrOut'); if(!box) return; const r=xirr(xirrFlows);
   if(r===null){ box.innerHTML='<span class="hint">需至少两笔、且「投入/赎回」方向不同的现金流</span>'; return; }
   const pct=r*100; box.innerHTML='<div class="xr-result"><div class="rl">年化内部收益率（XIRR）</div><div class="rv '+(r>=0?'':'neg')+'">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</div><div class="rn">根据你输入的 '+xirrFlows.length+' 笔现金流时间与金额计算</div></div>';
+}
+function switchXirrTab(tab, btn){
+  const seg=btn.parentElement, panDca=document.getElementById('xirrPanelDca'), panXirr=document.getElementById('xirrPanelXirr');
+  [...seg.children].forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(tab==='dca'){ panDca.classList.add('on'); panXirr.classList.remove('on'); calcDCA(); }
+  else { panDca.classList.remove('on'); panXirr.classList.add('on'); renderXirr(); calcXIRR(); }
 }
 
 function switchTab(i){
@@ -2351,7 +2385,7 @@ function switchTab(i){
   const ms=document.getElementById('marketStatus');
   if(ms) ms.style.display = (i===5)?'flex':'none';
   if(i===0){ renderHomeList(); renderBond(); renderDcaSection(); }
-  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderXirr(); calcDCA(); calcXIRR(); renderRisk(); }
+  if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderRisk(); const pan=document.getElementById('xirrPanelXirr'); if(pan&&pan.classList.contains('on')){ renderXirr(); calcXIRR(); }else calcDCA(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderWatchTab(); }
   if(i===5){ loadMarketData(); renderWatch(); refreshWatchQuotes(); }
@@ -2390,34 +2424,6 @@ const MARKET_RANK = {
     { code: '501016', name: '国泰中证申万证券', type: '指数型', est: '+1.55%', w1: '+2.6%' }
   ]
 };
-let xirrFlows=[{date:'2024-01-01',amt:1000,dir:'out'},{date:'2025-01-01',amt:1000,dir:'out'},{date:'2026-01-01',amt:2650,dir:'in'}];
-function calcDCA(){
-  const mon=+document.getElementById('dcaMon').value||0, yrs=+document.getElementById('dcaYrs').value||0, rate=(+document.getElementById('dcaRate').value||0)/100, n=yrs*12;
-  const out=document.getElementById('dcaOut'); if(!out) return;
-  if(mon<=0||n<=0){ out.innerHTML='<span class="hint">填入每月定投金额与年数</span>'; return; }
-  const fv = rate===0 ? mon*n : mon*((Math.pow(1+rate/12,n)-1)/(rate/12));
-  const invested=mon*n, profit=fv-invested, roi=invested>0?profit/invested*100:0;
-  out.innerHTML='<div class="dca-banner"><div class="bl">预期期末资产（元）</div><div class="bv">'+M(fv)+'</div>'
-    +'<div class="dca-sub-grid">'
-    +'<div class="dca-sub-item"><label>本金投入</label><span>'+M(invested)+'</span></div>'
-    +'<div class="dca-sub-item"><label>预期收益</label><span>'+(profit>=0?'+':'')+M(profit)+' ('+(roi>=0?'+':'')+roi.toFixed(1)+'%)</span></div>'
-    +'<div class="dca-sub-item" style="text-align:right"><label>本金倍数</label><span>'+(invested>0?(fv/invested).toFixed(2):'0')+'×</span></div>'
-    +'</div></div>';
-}
-function xirr(flows){
-  const fs=flows.map(f=>({t:new Date(f.date), amt:(f.dir==='in'?1:-1)*Math.abs(parseFloat(f.amt)||0)}))
-    .filter(f=>!isNaN(f.t.getTime()) && f.amt!==0).sort((a,b)=>a.t-b.t);
-  if(fs.length<2) return null;
-  const d0=fs[0].t, npv=r=>fs.reduce((s,f)=>s+f.amt/Math.pow(1+r,(f.t-d0)/86400000/365),0);
-  let lo=-0.9999, hi=10, fLo=npv(lo), fHi=npv(hi); if(fLo*fHi>0) return null;
-  for(let k=0;k<200;k++){ const mid=(lo+hi)/2, fv=npv(mid); if(Math.abs(fv)<1e-7) return mid; if(fLo*fv<0) hi=mid; else lo=mid; }
-  return (lo+hi)/2;
-}
-function renderXirr(){ const box=document.getElementById('xirrRows'); if(!box) return;
-  box.innerHTML='<div class="xr-list">'+xirrFlows.map((f,i)=>'<div class="xr-item"><input class="xr-date" type="date" value="'+f.date+'" onchange="xirrFlows['+i+'].date=this.value;calcXIRR()"><input class="xr-amt" type="number" value="'+f.amt+'" oninput="xirrFlows['+i+'].amt=+this.value;calcXIRR()"><button class="xr-pill '+(f.dir==='out'?'out':'in')+'" onclick="xirrFlows['+i+'].dir=(xirrFlows['+i+'].dir===\'out\'?\'in\':\'out\');renderXirr();calcXIRR()">'+(f.dir==='out'?'投入':'赎回')+'</button><button class="xr-del" onclick="xirrDelRow('+i+')">✕</button></div>').join('')+'</div>';
-}
-function xirrAddRow(){ const last=xirrFlows[xirrFlows.length-1]; const d=(last&&last.date)?last.date:new Date().toISOString().slice(0,10); xirrFlows.push({date:d,amt:1000,dir:'out'}); renderXirr(); calcXIRR(); }
-function xirrDelRow(i){ if(xirrFlows.length<=2){ toast('至少保留两笔现金流'); return; } xirrFlows.splice(i,1); renderXirr(); calcXIRR(); }
 function fetchCapitalFlow(){
   return new Promise(resolve=>{
     const timer=setTimeout(()=>resolve(null),5000);
@@ -2439,11 +2445,11 @@ function fetchCapitalFlow(){
       window[cb]=null; s.remove();
     };
     s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
+    // 东方财富行业板块主力资金流（m:90+t:2），JSONP 绕过 CORS
     s.src='https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=50&po=1&np=1&fltt=2&invt=2&fs=m:90+t:2&fields=f12,f14,f3,f62,f184&cb='+cb+'&_='+Date.now();
     document.body.appendChild(s);
   });
 }
-
 function setFlowTag(live){
   const t=document.getElementById('flowTag');
   if(t){ t.textContent=live?'实时':'示例'; t.className='tag '+(live?'tag-live':'tag-sample'); }
@@ -5988,7 +5994,7 @@ function idxChipHtml(it){
   const hiTxt=(d&&d.high!=null&&!isNaN(d.high)&&d.low!=null&&!isNaN(d.low)&&d.high>=d.low)?d.high.toFixed(2):'—';
   const loTxt=(d&&d.low!=null&&!isNaN(d.low))?d.low.toFixed(2):'—';
   const amtTxt=(d&&d.amount)?d.amount:'—';
-  if(!d || isNaN(d.price)) return `<span class="idx-fold" onclick="openIdxModal('${it.code}')"><span class="idx-name">${it.name}</span><span class="idx-fold-hint">暂无数据</span><span class="idx-fold-chev">›</span></span>`;
+  if(!d || isNaN(d.price)) return `<span class="idx-chip" onclick="openIdxModal('${it.code}')"><div class="idx-top"><span class="idx-name">${it.name}</span><span class="idx-pct">—</span></div><span class="idx-val" data-val="${it.code}">—</span><div class="idx-extra"><span>高 <b>${hiTxt}</b></span><span>低 <b>${loTxt}</b></span><span>额 <b>${amtTxt}</b></span></div><span class="idx-nospark" data-spark="${it.code}">— 无分时</span></span>`;
   const cls=d.pct>0?'pos':d.pct<0?'neg':'zero';
   const arrow=d.pct>0?'▲':d.pct<0?'▼':'';
   const pctTxt=d.pct!=null?arrow+Math.abs(d.pct).toFixed(2)+'%':'';
@@ -7419,7 +7425,7 @@ function toast(msg){
   let t=document.getElementById('toast');
   if(!t){ t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
   t.textContent=msg; t.classList.add('show');
-  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),1200);
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
 }
 function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function M(n){ if(hidden) return '••••'; const s=fmt(Math.abs(n||0)); return (n||0)<0?'-¥'+s:'¥'+s; }

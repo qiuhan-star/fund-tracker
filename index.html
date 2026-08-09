@@ -2701,7 +2701,7 @@ function loadWatch(){ try{ const w=JSON.parse(localStorage.getItem('ft_watch')||
 function addWatch(code, name){
   const w=loadWatch();
   if(w.some(function(x){ return x.code===code; })){ toast('已在自选中'); closeRankMenu(); return; }
-  w.push({code:code, name:name});
+  w.push({code:code, name:name, grp: guessCat(name)});
   try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
   renderWatch(); toast('已加自选 · '+esc(name)); closeRankMenu();
 }
@@ -3206,8 +3206,8 @@ function renderHomeList(){
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q)); }
   // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }
-  // 自选（未持仓）区块 —— 始终在列表底部展示
-  const obsHtml=buildObsHtml();
+  // 自选（未持仓）区块 —— 已按用户要求移除（自选只在自选 Tab 展示，避免与持仓重复）
+  const obsHtml='';
   list.sort((a,b)=>{
     let av,bv,cmp;
     if(holdSort==='ret'){ av=sortKeyVal(a,'ret'); bv=sortKeyVal(b,'ret'); }
@@ -8846,14 +8846,14 @@ function addUnifiedWatch(){
   if(/^\d{6}$/.test(v)){ fetchFundInfoUnified(v); el.value=''; return; }
   const w=loadWatch();
   if(w.some(function(x){ return x.name===v; })){ alert('已在自选'); return; }
-  w.push({code:'', name:v}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+  w.push({code:'', name:v, grp: guessCat(v)}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
   renderWatchTab();
 }
 function fetchFundInfoUnified(code){
   const s=document.createElement('script');
   const timer=setTimeout(function(){
     const w=loadWatch();
-    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全'}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
+    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:''}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
     renderWatchTab(); toast('自动拉取失败，已加入基金自选，请手动补全名称');
   }, 10000);
   s.onload=function(){
@@ -8874,12 +8874,12 @@ function fetchFundInfoUnified(code){
       } else {
         const w=loadWatch();
         if(w.some(function(x){ return x.code===code; })){ toast('已在自选'); return; }
-        w.push({code:code, name:nm||('（'+code+'）待补全')}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+        w.push({code:code, name:nm||('（'+code+'）待补全'), grp: guessCat(nm||'')}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
         renderWatchTab(); toast(nm?('已加基金自选 '+nm):'已建卡，请补全名称');
       }
     }catch(e){
       const w=loadWatch();
-      if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全'}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
+      if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:''}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
       renderWatchTab(); toast('自动拉取异常，已加入基金自选');
     }
     s.remove();
@@ -8887,7 +8887,7 @@ function fetchFundInfoUnified(code){
   s.onerror=function(){
     clearTimeout(timer);
     const w=loadWatch();
-    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全'}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
+    if(!w.some(function(x){ return x.code===code; })){ w.push({code:code, name:'（'+code+'）待补全', grp:''}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(_){} }
     renderWatchTab(); toast('自动拉取失败，已加入基金自选');
   };
   s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
@@ -8915,7 +8915,7 @@ function calcWatchBuy(){
   }).join('');
 }
 
-var uwGroupView=false;
+var uwGroupView=true;
 function escAttr(s){ return escHtml(s).replace(/"/g,'&quot;'); }
 function uwToggleGroup(){ uwGroupView=!uwGroupView; renderWatchTab(); }
 function setWatchGroup(key, val, isBond){
@@ -8930,6 +8930,25 @@ function setWatchGroup(key, val, isBond){
   renderWatchTab();
 }
 function grpChange(el){ setWatchGroup(el.dataset.key, el.value, el.dataset.bond==='1'); }
+function watchGrpMenu(el){
+  const key=el.getAttribute('data-key')||''; const bond=el.getAttribute('data-bond')==='1';
+  const arr=bond?loadBondWatch():loadWatch();
+  const groups={}; arr.forEach(function(x){ const g=x.grp||'未分组'; groups[g]=(groups[g]||0)+1; });
+  const names=Object.keys(groups).sort(function(a,b){ if(a==='未分组') return 1; if(b==='未分组') return -1; return a.localeCompare(b,'zh'); });
+  const cur=(el.textContent||'').replace(/^📁\s*/,'').trim();
+  let html=names.map(function(g){ return '<button class="rm-btn" style="'+(g===cur?'font-weight:700;color:var(--accent)':'')+'" onclick="setWatchGroup(\''+escAttr(key).replace(/\'/g,"\\'")+'\',\''+escAttr(g).replace(/\'/g,"\\'")+'\','+(bond?'1':'0')+');closeRankMenu()">'+escHtml(g)+' <span style="opacity:.55">('+groups[g]+')</span></button>'; }).join('');
+  html+='<button class="rm-btn" onclick="watchNewGroup(\''+escAttr(key).replace(/\'/g,"\\'")+'\','+(bond?'1':'0')+')">＋ 新建分组</button>';
+  const m=document.createElement('div'); m.className='rank-menu'; m.style.position='fixed';
+  m.innerHTML='<div class="rm-title">移动分组</div>'+html;
+  document.body.appendChild(m);
+  const r=el.getBoundingClientRect();
+  m.style.top=Math.max(6, Math.min(r.bottom+4, window.innerHeight-260))+'px';
+  m.style.left=Math.max(4, Math.min(r.left, window.innerWidth-180))+'px';
+  setTimeout(function(){ function h(ev){ if(!m.contains(ev.target)){ m.remove(); document.removeEventListener('click',h); } } document.addEventListener('click',h); },0);
+}
+function watchNewGroup(key, bond){
+  const v=prompt('新分组名（输入后回车）：'); if(v&&v.trim()){ setWatchGroup(key, v.trim(), bond); }
+}
 function delByData(btn){ delBondWatch(btn.getAttribute('data-code')); }
 function openByData(btn){ openDrawerPrefill(btn.getAttribute('data-name')); }
 function rmByData(btn){
@@ -8951,7 +8970,7 @@ function uwRow(it){
   return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'">'
     +'<div class="swipe-inner">'
       +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
-      +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="y1">近1年 '+it.y1+'</span></div>'
+      +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="wgrp" data-key="'+escAttr(it.isBond?(it.code||''):it.name)+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="watchGrpMenu(this)">📁 '+escHtml(it.grp||'未分组')+'</span><span class="y1">近1年 '+it.y1+'</span></div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
   +'</div>';

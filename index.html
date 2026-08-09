@@ -8070,7 +8070,7 @@ function renderSyncCfg(){
         <div class="ss-action" onclick="openTagManage()"><span class="ss-dot"></span>管理标签</div>
       </div>
     </div>
-    <div class="ss-hint">长按右侧 ☰ 并拖动可调整排序</div>
+    <div class="ss-hint">长按左侧 ☰ 并拖动可调整排序</div>
   </div>
 </div>
 
@@ -8235,11 +8235,14 @@ function renderSyncCfg(){
   window.closeSortSheet=function(){ var s=document.getElementById('sortSheet'); if(s) s.classList.remove('show'); };
   window.manageAccountsFromSort=function(){
     closeSortSheet();
+    openSettings();
+    settingsTab('account');
     if(typeof renderAccountNames==='function') renderAccountNames();
     var t=document.getElementById('accNameList'); if(t) t.scrollIntoView({behavior:'smooth', block:'center'});
   };
   function escJs(s){ return "'"+String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"')+"'"; }
   window.openCatManage=function(){
+    closeSortSheet();
     renderCatManageList();
     var m=document.getElementById('catManageMask'); if(m) m.classList.add('show');
   };
@@ -8274,6 +8277,7 @@ function renderSyncCfg(){
     if(typeof renderCatSortList==='function') renderCatSortList(); renderCatManageList();
   };
   window.openTagManage=function(){
+    closeSortSheet();
     renderTagManageList();
     var m=document.getElementById('tagManageMask'); if(m) m.classList.add('show');
   };

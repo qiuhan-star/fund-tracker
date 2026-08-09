@@ -253,7 +253,20 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 /* 草稿自动保存提示 */
 .draft-pill { display:none; align-items:center; gap:8px; background:#fff7e6; color:#b76e00; font-size: 14px; border-radius:9px; padding:8px 11px; margin:0 0 10px; }
 .draft-pill.show { display:flex; }
-.draft-pill button { margin-left:auto; background:none; border:none; color:#b76e00; font-size: 14px; text-decoration:underline; cursor:pointer; }.cb-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }.cb-l { width: 58px; color: var(--text-3); flex: 0 0 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.cb-track { flex: 1 1 auto; height: 12px; background: var(--border-2); border-radius: 6px; overflow: hidden; }.cb-fill { height: 100%; background: var(--accent); border-radius: 6px; }.cb-fill.cur { background: var(--up); }.cb-v { width: 84px; text-align: right; flex: 0 0 auto; font-variant-numeric: tabular-nums; }.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }.table-scroll table { min-width: 640px; }@media (max-width: 680px) { .cards4 {grid-template-columns:repeat(2,1fr);}.grid2 {grid-template-columns:1fr;}  }
+.draft-pill button { margin-left:auto; background:none; border:none; color:#b76e00; font-size: 14px; text-decoration:underline; cursor:pointer; }.cb-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }.cb-l { width: 58px; color: var(--text-3); flex: 0 0 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.cb-track { flex: 1 1 auto; height: 12px; background: var(--border-2); border-radius: 6px; overflow: hidden; }.cb-fill { height: 100%; background: var(--accent); border-radius: 6px; }.cb-fill.cur { background: var(--up); }.cb-v { width: 84px; text-align: right; flex: 0 0 auto; font-variant-numeric: tabular-nums; }.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-scroll table { min-width: 640px; }
+@media (max-width: 640px) {
+  /* 手机端分组视图（dense 模板）：缩组头与首行间距、放开最小宽度让列自适应、压缩 td padding 让更多列可见 */
+  .grp-head { margin: 14px 2px 2px; padding: 5px 10px; }
+  .grp-head:first-child { margin-top: 4px; }
+  .table-scroll table { min-width: auto; }
+  .table-scroll th, .table-scroll td { padding: 5px 4px; }
+  .table-scroll td:first-child { width: 116px; min-width: 116px; }
+  .table-scroll .dt-name { font-size: 12.5px; }
+  .table-scroll .dt-big { font-size: 12.5px; }
+  .table-scroll .dt-sub { font-size: 11.5px; gap: 4px; }
+  .table-scroll .dt-sub2 { font-size: 11.5px; }
+}@media (max-width: 680px) { .cards4 {grid-template-columns:repeat(2,1fr);}.grid2 {grid-template-columns:1fr;}  }
 @media (max-width: 768px) { .wrap { padding: calc(12px + env(safe-area-inset-top)) 10px calc(24px + env(safe-area-inset-bottom)); }h1 { font-size: 18px; }.topbar .sub { font-size: 12px; }.cards4 { grid-template-columns: repeat(2,1fr); gap: 8px; }.mcard { padding: 10px; }.mcard .val { font-size: 18px; }.grid2 { grid-template-columns: 1fr; gap: 12px; }.chart-box { height: 200px !important; }.card { padding: 12px 14px; margin-bottom: 12px; }input, select { font-size: 18px !important; }.main-tabs button { font-size: 14px; padding: 8px 0; }.hl-name { font-size: 14px; }.cat-chip { font-size: 12px; padding: 3px 10px; }
   /* iOS 自动放大修复：更高优先级 + !important 覆盖 .drawer-body .fld input(14px) / .bk-input input(14px) / td input(13px) 等更具体规则 */
   td input, .drawer-body .fld input, .bk-input input, .nf-field input, .nf-field select, .dca-row .field input, .dca-row .field select, .tr-add-grid input, .tr-add-grid select, .hold-search input, .al-input, .tp-search, .at-search, .float-menu .fm-input, .sm-frow input, #impPasteArea { font-size: 18px !important; }
@@ -275,14 +288,14 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 @media print { :root {--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}body {background:var(--surface);}.wrap {max-width:none;padding:0;}.more-menu,.main-tabs,.scope-bar,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask {display:none!important;}.card {box-shadow:none;border:1px solid #ddd;break-inside:avoid;}.hint {display:none!important;}td input,td select {border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}.mcard {border:1px solid #eee;}.sub {margin-bottom:6px;}#updated {display:none;}
    }
 /* ===== 资产总额仪表盘重构：1+2+2 全宽高密度（mobile-first，桌面自适应） ===== */
-.dash-wrap{ width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; }
-.dash-hero{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:18px; padding:16px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
-.dash-hero-head{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--text-2); }
-.dash-eye{ background:none; border:none; cursor:pointer; font-size:15px; line-height:1; padding:2px 4px; color:var(--text-3); }
-.dash-hero-amt{ font-size:32px; font-weight:700; margin:8px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); }
-.dash-hero-sub{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; color:var(--text-2); margin-top:4px; flex-wrap:wrap; }
-.dash-pills{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
-.dash-pill{ display:inline-flex; align-items:center; gap:5px; background:var(--surface-2); border:1px solid var(--border, rgba(0,0,0,.06)); border-radius:999px; padding:5px 10px; font-size:12px; color:var(--text-2); font-variant-numeric:tabular-nums; }
+.dash-wrap{ width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; }
+.dash-hero{ background:var(--surface); border:1px solid var(--border, rgba(0,0,0,.08)); border-radius:16px; padding:13px 14px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+.dash-hero-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12.5px; color:var(--text-2); }
+.dash-eye{ background:none; border:none; cursor:pointer; font-size:14px; line-height:1; padding:1px 2px; color:var(--text-3); }
+.dash-hero-amt{ font-size:27px; font-weight:700; margin:5px 0 3px; font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--text); }
+.dash-hero-sub{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px; color:var(--text-2); margin-top:3px; flex-wrap:wrap; }
+.dash-pills{ display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; }
+.dash-pill{ display:inline-flex; align-items:center; gap:4px; background:var(--surface-2); border:1px solid var(--border, rgba(0,0,0,.06)); border-radius:999px; padding:4px 9px; font-size:11.5px; color:var(--text-2); font-variant-numeric:tabular-nums; }
 .dash-pill b{ color:var(--text); }
 .dash-pill .dash-dot{ width:6px; height:6px; border-radius:50%; background:var(--text-3); display:inline-block; }
 .dash-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:stretch; }

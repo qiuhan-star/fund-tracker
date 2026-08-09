@@ -3090,6 +3090,7 @@ function filterAccount(a){
   renderAccFilter(); renderOverview(); renderHomeList(); renderCatFilter();
   if(activeTab===1) renderAccountSummary();
   if(activeTab===0) renderBond();
+  if(activeTab===3) renderWatchTab(); // 切账户后刷新自选 Tab（自选按账户隔离）
 }
 function renderAccountSummary(){
   const box=document.getElementById('accSummary'); if(!box) return;

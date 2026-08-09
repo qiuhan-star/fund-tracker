@@ -3556,7 +3556,7 @@ function renderAdvice(){
     <div class="pf-row"><span class="pf-lab">风险偏好</span>${seg('risk',[{v:'保守',l:'保守'},{v:'稳健',l:'稳健'},{v:'激进',l:'激进'}])}</div>
     <div class="pf-row"><span class="pf-lab">投资期限</span>${seg('horizon',[{v:'短期(<1年)',l:'短期'},{v:'中期(1-3年)',l:'中期'},{v:'长期(>3年)',l:'长期'}])}</div>
     <div class="pf-row"><span class="pf-lab">流动性需求</span>${seg('liquidity',[{v:'高',l:'高'},{v:'中',l:'中'},{v:'低',l:'低'}])}</div>
-    <p class="pf-note">以上设定用于生成个性化目标配置与建议，仅保存在你本地浏览器。</p>
+    <p class="pf-note">总市值 ¥${Math.round(total).toLocaleString('zh-CN')} · ${userProfile.risk}档 · 设定与建议仅保存在本地浏览器。</p>
   </div>`;
 
   const curLabels=catPct.map(c=>c[0]), curData=catPct.map(c=>+c[1].toFixed(1));
@@ -4273,10 +4273,12 @@ function renderThemeHeat(){
 }
 function renderSectorTree(){
   const box=document.getElementById('sectorTree'); if(!box) return;
-  if(!fundsView.length){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
+  // 与首页「持仓」列表一致：排除已清仓基金（净份额=0 且无市值），它们只进「清仓」Tab，避免残留成本冒出 -¥0.xx 幽灵行
+  const list=fundsView.filter(f=> !(f.shares===0 && !f.isBond && !(f.mv>0)));
+  if(!list.length){ box.innerHTML='<p class="hint">暂无持仓，先记一笔或载入示例。</p>'; return; }
   // 按板块（cat）汇总盈亏，降序排列：红色＝贡献收益、绿色＝拖后腿
   const cats={};
-  fundsView.forEach(f=>{
+  list.forEach(f=>{
     const m=cats[f.cat]||(cats[f.cat]={profit:0,cost:0,mv:0,n:0});
     m.profit+=(f.profit||0); m.cost+=(f.cost||0); m.mv+=(f.mv||0); m.n++;
   });
@@ -7290,11 +7292,12 @@ function tpRedraw(enc){
     else { badge.textContent='监控中'; badge.style.background='var(--warn-bg)'; badge.style.color='var(--warn)'; } }
 }
 function renderSector(){
+  const list=fundsView.filter(f=> !(f.shares===0 && !f.isBond && !(f.mv>0)));  // 与持仓列表一致：排除已清仓
   const catPct=getCatAllocation();
-  const map={}; fundsView.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0,n:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); m.n++; });
+  const map={}; list.forEach(f=>{ const m=map[f.cat]||(map[f.cat]={mv:0,retW:0,n:0}); m.mv+=f.mv; m.retW+=f.mv*(f.ret||0); m.n++; });
   const wretOf=k=> map[k]&&map[k].mv? map[k].retW/map[k].mv : 0;
   const box=document.getElementById('sectorBars'); if(!box) return;
-  const total=fundsView.reduce((a,f)=>a+(f.mv||0),0)||1;
+  const total=list.reduce((a,f)=>a+(f.mv||0),0)||1;
   const rows=catPct.filter(([k,p])=> p>0 && (!collapseMicro || p>=2));
   const maxPct=rows.length?rows[0][1]:0;
   box.innerHTML='<div class="cb-card"><div class="sec-head"><h2>持仓/板块占比排行</h2><span class="sub2">按持仓市值占比降序</span></div><div class="bar-list">'+rows.map(([k,p])=>{

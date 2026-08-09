@@ -7146,7 +7146,7 @@ function renderMktLight(){
 // 净值性质标注：盘中=估值，收盘/官方=官方，手动填=手动
 function navKind(nc){ const mkt=isMarketOpen(new Date()); if(nc&&nc.date==='手动') return '手动'; if(nc&&nc.gsz!=null&&isTodayTs(nc.gszTs)) return '估值'; if(mkt&&nc&&nc.gsz!=null) return '估值'; return '官方'; }
 function navBadge(nc){ const k=navKind(nc); const cls=k==='估值'?'nk-est':k==='手动'?'nk-man':'nk-off'; return `<i class="nk ${cls}">${k}</i>`; }
-function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁'); var pw=document.getElementById('privSw'); if(pw) pw.classList.toggle('on',hidden); var pd=document.getElementById('smPrivDsc'); if(pd) pd.textContent=hidden?'开启 · 金额已隐藏':'关闭 · 金额正常显示'; render(); }
+function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁'); document.querySelectorAll('.sm-priv-sw').forEach(function(pw){ pw.classList.toggle('on',hidden); }); var pd=document.getElementById('smPrivDsc'); if(pd) pd.textContent=hidden?'开启 · 金额已隐藏':'关闭 · 金额正常显示'; render(); }
 function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alerts));}catch(e){} }
 function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; const v=prompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur); if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ alert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }
 function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
@@ -7748,7 +7748,7 @@ function renderSyncCfg(){
           <div class="nset-card">
             <div class="panel-row" style="cursor:pointer" onclick="syncOnline();closeSettings()">
               <span class="ico c-indigo"><svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 18z"/></svg></span>
-              <div class="left"><div class="title">从线上同步数据</div><div class="desc">从 GitHub 私有仓库拉取最新备份</div></div>
+              <div class="left"><div class="title">恢复线上示例数据</div><div class="desc">从公开示例模板 (fund-data.json) 合并到本地，与私有云同步无关</div></div>
               <div class="right"><span class="item-arrow">›</span></div>
             </div>
             <div class="panel-row" style="cursor:pointer" onclick="exportJSON();closeSettings()">
@@ -7897,6 +7897,14 @@ function renderSyncCfg(){
             </div>
           </div>
 
+          <div class="nset-label">隐私</div>
+          <div class="nset-card">
+            <div class="panel-row" style="cursor:pointer" onclick="toggleHidden()">
+              <div class="left"><div class="title">资产隐蔽模式</div><div class="desc">开启后隐藏全部金额，防他人窥屏</div></div>
+              <div class="right"><span class="sm-priv-sw"><i></i></span></div>
+            </div>
+          </div>
+
           <p class="panel-note">应用锁说明：启用并设置密码后，每次打开应用或切到后台再返回时需输入密码。关闭应用锁需验证当前密码，防止他人直接关闭。面容 ID / 指纹解锁暂未接入。锁密码仅保存在本机，不会进入云同步或 JSON 备份。</p>
         </section>
 
@@ -8010,7 +8018,7 @@ function renderSyncCfg(){
     var av=document.getElementById('smAvatar'); if(av) av.innerHTML=avatarHTML(u);
     var nk=document.getElementById('smNick'); if(nk) nk.textContent=u.nick||'QQa';
     var tg=document.getElementById('smTag'); if(tg) tg.textContent=(u.tag&&u.tag.trim())?u.tag:(syncEnabled()?'个人资料与账号 · 云同步已开启':'个人资料与账号');
-    var sw=document.getElementById('privSw'); if(sw) sw.classList.toggle('on',!!hidden);
+    document.querySelectorAll('.sm-priv-sw').forEach(function(sw){ sw.classList.toggle('on',!!hidden); });
     var d=document.getElementById('smPrivDsc'); if(d) d.textContent=hidden?'开启 · 金额已隐藏':'关闭 · 金额正常显示';
     var st=document.getElementById('smStatTxt');
     if(st){ var bytes=0; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('ft_')===0){ var v=localStorage.getItem(k); if(v) bytes+=v.length; } }
@@ -8306,11 +8314,10 @@ function renderSyncCfg(){
     {id:'dca',color:'#ff9500',icon:'cycle',title:'记账与定投偏好'},
     {id:'data',color:'#30b0c7',icon:'💾',title:'数据管理'},
     {id:'security',color:'#34c759',icon:'🔒',title:'安全与隐私'},
-    {id:'account',color:'#5856d6',icon:'👤',title:'个人资料与账号'},
+    {id:'account',color:'#5856d6',icon:'👤',title:'账户'},
     {id:'analysis',color:'#30b0c7',icon:'chart',title:'分析偏好'},
     {id:'about',color:'#8e8e93',icon:'__info__',title:'关于'}
   ];
-  var SM_MOBILE_GROUPS=[['appearance','shortcuts'],['data','security'],['about']];
     var SMG_ICONS={
     cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 01-.5-7.97A5 5 0 0116 9.2 4 4 0 0117.5 18H7z"/></svg>',
     eyeoff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7c-1.4.9-2.8 1.6-4.2 2.1"/><path d="M9.5 9.6a3 3 0 004.3 4.2"/><path d="M3 3l18 18"/></svg>',
@@ -8332,10 +8339,12 @@ function renderSyncCfg(){
     function group(t,rows){ return '<div class="sm-group"><div class="sm-gtitle">'+t+'</div><div class="smg-card">'+rows.join('')+'</div></div>'; }
     function row(icon,c,t,d,trail,onclick,danger){ return '<div class="smg-row'+(danger?' danger':'')+'"'+(onclick?' onclick="'+onclick+'"':'')+'><span class="smg-ic" style="background:'+B[c]+';color:'+F[c]+'">'+SMG_ICONS[icon]+'</span><div class="smg-txt"><div class="smg-t">'+t+'</div>'+(d?'<div class="smg-d">'+d+'</div>':'')+'</div><div class="smg-trail">'+trail+'</div></div>'; }
     var html='';
-    html+=group('同步与隐私',[
+    html+=group('快捷操作',[
+      row('star','gold','全部交易记录','','<span class="smg-chev">›</span>','openAllTrades();closeSettings()')
+    ]);
+    html+=group('同步',[
       row('cloud','blue','本地云同步','<span id="smStatTxt">本地数据 · —</span>','<button type="button" class="smg-btn" onclick="event.stopPropagation();cloudPush(true)">同步</button>','cloudPush(true)'),
-      row('cloud','blue','云同步设置','配置 GitHub 仓库与令牌','<span class="smg-chev">›</span>','openSettingsDetail(\'account\')'),
-      row('eyeoff','purple','资产隐蔽模式','<span id="smPrivDsc">关闭 · 金额正常显示</span>','<span class="sm-priv-sw" id="privSw"><i></i></span>','toggleHidden()')
+      row('cloud','blue','账户与云同步','管理账户名称与 GitHub 云同步','<span class="smg-chev">›</span>','openSettingsDetail(\'account\')'),
     ]);
     html+=group('偏好设置',[
       row('palette','orange','外观与偏好','','<span class="smg-chev">›</span>','openSettingsDetail(\'appearance\')'),
@@ -8343,13 +8352,14 @@ function renderSyncCfg(){
       row('cycle','orange','记账与定投偏好', dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭','<span class="smg-chev">›</span>','openSettingsDetail(\'dca\')')
     ]);
     html+=group('安全与隐私',[
-      row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security\')')
+      row('lock','red','密码与锁','开启后需输入密码解锁','<span class="smg-chev">›</span>','openSettingsDetail(\'security')'),
+      row('eyeoff','purple','资产隐蔽模式','<span id="smPrivDsc">关闭 · 金额正常显示</span>','<span class="sm-priv-sw"><i></i></span>','toggleHidden()'),'<span class="smg-chev">›</span>','openSettingsDetail(\'security\')')
     ]);
     html+=group('数据管理',[
       row('download','blue','导入交易 (CSV)','','<span class="smg-chev">›</span>','openImportModal();closeSettings()'),
       row('cycle','purple','恢复全量备份 (JSON)','','<span class="smg-chev">›</span>','importJSON();closeSettings()'),
       row('upload','green','导出备份','','<span class="smg-chev">›</span>','exportJSON();closeSettings()'),
-      row('trash','red','清除与重置','','<span class="smg-chev">›</span>','openSettingsDetail(\'data\')',true)
+      row('trash','red','数据管理','含导入/导出/清除与重置',','<span class="smg-chev">›</span>','openSettingsDetail(\'data\')',true)
     ]);
     html+=group('关于与帮助',[
       row('chat','green','意见与反馈','','<span class="smg-chev">›</span>','openFeedback()'),

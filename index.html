@@ -1586,11 +1586,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <p class="hint" style="font-size: 12px;margin-top:8px">示例榜单，待接入天天基金 JSONP 接口后显示真实排行。</p>
       </div>
 
-      <div class="card" id="selfCard">
-        <div class="sec-head"><h2 style="margin:0;font-size: 14px">⭐ 本人账户自选</h2><span class="hint" style="font-size: 12px">点榜单基金 → ＋ → 一键加自选</span></div>
-        <ul id="watch-list" class="watch-list"></ul>
-        <p id="watch-empty" class="hint" style="font-size: 12px;margin-top:6px">还没有自选。在上方榜单点任意基金，选「👁 加自选」即可加入。</p>
-      </div>
     </div>
 
   </div>
@@ -3217,8 +3212,8 @@ function renderHomeList(){
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q) || (f.cat||'').toLowerCase().includes(q)); }
   // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }
-  // 自选（未持仓）区块 —— 始终在列表底部展示
-  const obsHtml=buildObsHtml();
+  // 自选（未持仓）区块 —— 已移除（自选只在自选 Tab 展示，避免与持仓重复）
+  const obsHtml='';
   list.sort((a,b)=>{
     let av,bv,cmp;
     if(holdSort==='ret'){ av=sortKeyVal(a,'ret'); bv=sortKeyVal(b,'ret'); }

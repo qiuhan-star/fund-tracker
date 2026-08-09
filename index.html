@@ -3017,8 +3017,9 @@ function renderHomeList(){
     return;
   }
   const isMobile=window.matchMedia('(max-width:640px)').matches;
-  if(isMobile && holdGroupBy==='none'){
-    box.innerHTML=renderHomeMobileTable(list)+obsHtml;
+  if(isMobile){
+    // 移动端统一走横滑表格皮肤：不分组直接渲染，分组用组头行分隔（与不分组字体/列宽一致）
+    box.innerHTML=(holdGroupBy==='none'?renderHomeMobileTable(list):renderGroupedMobile(list))+obsHtml;
     ensureStreakLabels(list);
   } else {
     box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
@@ -3100,40 +3101,46 @@ function weightedEstChg(){
   return _pw>0?(_wsum/_pw):null;
 }
 
-function renderHomeMobileTable(list){
-  // 手机端首屏固定显示「估算涨跌 / 官方涨跌 / 当日收益」，其余列仍渲染但位于右侧，靠横向滑动查看；名称列加宽截断
+// 移动端横滑表格：列集合 / 表头 / 单元格 / 行 四个构建器，供「不分组」与「分组(资产大类/市场区域)」共用同一套皮肤，保证字体/列宽/样式完全一致
+function homeMobileCols(){
   const cols=[{key:'name',label:'基金名称'}];
   const primary=['est','day','ret'];
   primary.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   colOrder.forEach(k=>{ if(colVis[k] && !primary.includes(k)) cols.push({key:k,label:COL_DEFS[k]}); });
+  return cols;
+}
+function homeMobileHead(cols){
   const arrow=k=> holdSort===k ? (holdSortDir==='asc'?'▲':'▼') : '';
   const nameTh='<th class="'+(holdSort==='name'?'sort-on':'')+'" onclick="setSort(\'name\')" style="text-align:left">基金名称 <span class="arrow">'+arrow('name')+'</span></th>';
   const numTh=(k,label)=>'<th class="'+(holdSort===k?'sort-on':'')+'" style="width:71px" onclick="setSort(\''+k+'\')">'+label+'<span class="arrow">'+arrow(k)+'</span></th>';
-  const head='<tr>'+nameTh+cols.slice(1).map(c=>numTh(c.key,c.label)).join('')+'<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>'+'</tr>';
-  const navDate=fd=>{ const nc=navCache[fd.name]||{}; return (nc.date!=null)?String(nc.date).slice(5):''; };
-  const cellOf=(fd,key)=>{
-    const nc=navCache[fd.name]||{};
-    if(key==='day'){ const d=(nc.navChg!=null)?nc.navChg:null; return d!=null?'<td class="cnum '+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
-    if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
-    if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
-    if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+(fd.ret>=0?'+':'')+fd.ret.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
-    if(key==='nav'){ return nc.nav!=null?'<td class="cnum">'+navFmt(nc.nav)+'<div class="csub" style="margin-top:2px">'+navDate(fd)+'</div></td>':'<td class="cnum zero">—</td>'; }
-    if(key==='est'){ const g=(nc.gszzl!=null)?nc.gszzl:null; return g!=null?'<td class="cnum '+(g>=0?'pos':'neg')+'">'+(g>=0?'+':'')+g.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
-    if(key==='mv'){ return fd.mv!=null?'<td class="cnum">'+M(fd.mv)+'</td>':'<td class="cnum zero">—</td>'; }
-    return '<td></td>';
-  };
-  const rows=list.map(f=>{
-    const nc=navCache[f.name]||{};
-    const code=syncCode(f.name);
-    const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
-    // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
-    const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
-    const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl ].filter(Boolean).join('');
-    let tds='<td><div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
-    cols.slice(1).forEach(c=>{ tds+=cellOf(f,c.key); });
-    return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
-  }).join('');
-  return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';
+  return '<tr>'+nameTh+cols.slice(1).map(c=>numTh(c.key,c.label)).join('')+'<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>'+'</tr>';
+}
+function homeMobileCellOf(fd,key){
+  const nc=navCache[fd.name]||{};
+  if(key==='day'){ const d=(nc.navChg!=null)?nc.navChg:null; return d!=null?'<td class="cnum '+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+  if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
+  if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
+  if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+(fd.ret>=0?'+':'')+fd.ret.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+  if(key==='nav'){ const d=(nc.date!=null)?String(nc.date).slice(5):''; return nc.nav!=null?'<td class="cnum">'+navFmt(nc.nav)+'<div class="csub" style="margin-top:2px">'+d+'</div></td>':'<td class="cnum zero">—</td>'; }
+  if(key==='est'){ const g=(nc.gszzl!=null)?nc.gszzl:null; return g!=null?'<td class="cnum '+(g>=0?'pos':'neg')+'">'+(g>=0?'+':'')+g.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+  if(key==='mv'){ return fd.mv!=null?'<td class="cnum">'+M(fd.mv)+'</td>':'<td class="cnum zero">—</td>'; }
+  return '<td></td>';
+}
+function homeMobileRow(f, cols){
+  const code=syncCode(f.name);
+  const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
+  // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
+  const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
+  const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl ].filter(Boolean).join('');
+  let tds='<td><div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
+  cols.slice(1).forEach(c=>{ tds+=homeMobileCellOf(f,c.key); });
+  return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
+}
+function renderHomeMobileTable(list){
+  // 手机端首屏固定显示「估算涨跌 / 官方涨跌 / 当日收益」，其余列仍渲染但位于右侧，靠横向滑动查看；名称列加宽截断
+  const cols=homeMobileCols();
+  const rows=list.map(f=>homeMobileRow(f,cols)).join('');
+  return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+homeMobileHead(cols)+'</thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 // ---------- 连涨天数标签（基于天天基金历史净值序列，当天缓存）----------
 let streakCache={};
@@ -3195,6 +3202,22 @@ function renderGrouped(list){
     const head=`<div class="grp-head"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div>`;
     return head + renderHomeDense(sub, idx===0);
   }).join('');
+}
+// 移动端分组视图：与「不分组」共用同一套横滑表格皮肤，组头以跨列分隔行呈现，保证字体/列宽一致
+function renderGroupedMobile(list){
+  const dim=(holdGroupBy==='asset')?'asset':'market';
+  const groups={};
+  list.forEach(f=>{ const k=(f[dim]||'其他'); (groups[k]=groups[k]||[]).push(f); });
+  const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));
+  const cols=homeMobileCols();
+  const colspan=cols.length+1; // 含「≡ 列」
+  const rows=order.map(k=>{
+    const sub=groups[k];
+    const mvSum=sub.reduce((a,f)=>a+(f.mv||0),0);
+    const headRow='<tr class="grp-mob"><td colspan="'+colspan+'" class="grp-head-cell"><span class="grp-name">'+grpLabel(dim,k)+'</span><span class="grp-meta">'+sub.length+' 只 · <b>'+M(mvSum)+'</b></span></td></tr>';
+    return headRow + sub.map(f=>homeMobileRow(f,cols)).join('');
+  }).join('');
+  return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+homeMobileHead(cols)+'</thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 function goDetail(enc, acc){
@@ -8470,6 +8493,11 @@ function renderSyncCfg(){
 .grp-head:first-child{ margin-top:4px; }
 .grp-name{ font-weight:700; font-size: 14px; color:var(--text); }
 .grp-meta{ margin-left:auto; font-size: 14px; color:var(--text-3); }
+/* 移动端横滑表格里的分组头行（资产大类/市场区域，与不分组共用一套皮肤） */
+.home-ctable .grp-mob td{ background:var(--surface-3); border-bottom:1px solid var(--border-3); }
+.home-ctable .grp-mob .grp-head-cell{ padding:10px 14px 8px; }
+.home-ctable .grp-mob .grp-name{ font-size:14px; }
+.home-ctable .grp-mob .grp-meta{ font-size:12px; }
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }
 .bond-drawer.open{ display:block; }
 .bd-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45); }

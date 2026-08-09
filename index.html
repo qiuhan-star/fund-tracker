@@ -2988,13 +2988,13 @@ function toggleFilterPop(ev){
 function closeFilterPop(){
   const p=document.getElementById('filterPop'); if(p) p.style.display='none';
 }
-// 点击弹层外部（不在 .sr-row 内）自动收起
+// 点击弹层外部（不在 .sr-row 内）自动收起；用捕获阶段，避免 chip 重渲染摘除 target 导致 closest 失效误关
 (function(){
   document.addEventListener('click', function(ev){
     const t=ev.target;
     const sr=(t && t.closest)?t.closest('.sr-row'):null;
     if(!sr) closeFilterPop();
-  });
+  }, true);
 })();
 function updateFilterBadge(){
   const b=document.getElementById('filterBadge'); if(!b) return;
@@ -3002,7 +3002,7 @@ function updateFilterBadge(){
   if(tagFilter && tagFilter.size) n+=tagFilter.size;
   if(holdGroupBy && holdGroupBy!=='none') n+=1;
   b.style.display=n?'':'none';
-  b.textContent=n;
+  b.textContent=n||'';
 }
 
 // ---------- 账户筛选 + 按账户汇总 ----------

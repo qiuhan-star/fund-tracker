@@ -314,9 +314,10 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .table-scroll::before, .table-scroll::after { content:''; position:absolute; top:0; bottom:0; width:12px; pointer-events:none; z-index:1; opacity:0; transition:opacity .12s ease; }
 .table-scroll::before { left:0; background:linear-gradient(to right, var(--surface), transparent); }
 .table-scroll::after { right:0; background:linear-gradient(to left, var(--surface), transparent); }
-.table-scroll.sc-edge-l::before { opacity:1; }
+.table-scroll.sc-edge-l::before { opacity:.6; }
 .table-scroll.sc-edge-r::after { opacity:.6; }
 .table-scroll table { min-width: 640px; }
+.table-scroll .dense-table { min-width: 560px; }
 @media (max-width: 680px) { .cards4 {grid-template-columns:repeat(2,1fr);}.grid2 {grid-template-columns:1fr;}  }
 @media (max-width: 768px) { .wrap { padding: calc(12px + env(safe-area-inset-top)) 10px calc(24px + env(safe-area-inset-bottom)); }h1 { font-size: 18px; }.topbar .sub { font-size: 12px; }.cards4 { grid-template-columns: repeat(2,1fr); gap: 8px; }.mcard { padding: 10px; }.mcard .val { font-size: 18px; }.grid2 { grid-template-columns: 1fr; gap: 12px; }.chart-box { height: 200px !important; }.card { padding: 12px 14px; margin-bottom: 12px; }input, select { font-size: 18px !important; }.main-tabs button { font-size: 14px; padding: 8px 0; }.hl-name { font-size: 14px; }.cat-chip { font-size: 12px; padding: 3px 10px; }
   /* iOS 自动放大修复：更高优先级 + !important 覆盖 .drawer-body .fld input(14px) / .bk-input input(14px) / td input(13px) 等更具体规则 */

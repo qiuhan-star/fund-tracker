@@ -812,7 +812,13 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
   }
-
+  /* 分组视图 dense 表：固定名称列宽度，让「股票/债券/混合」各组的数据列跨组对齐（否则 table-layout:auto 按每组最长名字撑开，列会参差） */
+  .dense-table th:first-child,
+  .dense-table td:first-child {
+    width: 148px;
+    min-width: 148px;
+    max-width: 148px;
+  }
 
   /* 8. 图表容器高度调整，防止占用过多屏幕空间 */
   .chart-box, .am-chart {
@@ -3572,7 +3578,8 @@ function renderAdvice(){
     const c=uCur[i], s=uSug[i], d=+(s-c).toFixed(1);
     const flat=Math.abs(d)<0.05, up=d>0;
     const dc=flat?'cmp-flat':(up?'cmp-up':'cmp-down'), arrow=flat?'—':(up?'▲':'▼');
-    return `<tr><td class="dl"><i class="sw" style="background:${CAT_COLORS[l]||'#9aa0a6'}"></i>${l}</td><td>${c.toFixed(1)}%</td><td>${s.toFixed(1)}%</td><td class="${dc}">${arrow} ${up?'+':''}${d.toFixed(1)}%</td></tr>`;
+    const amt=flat?'':`<small>${up?'+':'−'}¥${Math.round(Math.abs(d)*total/100).toLocaleString('zh-CN')}</small>`;
+    return `<tr><td class="dl"><i class="sw" style="background:${CAT_COLORS[l]||'#9aa0a6'}"></i>${l}</td><td>${c.toFixed(1)}%</td><td>${s.toFixed(1)}%</td><td class="${dc}">${arrow} ${up?'+':''}${d.toFixed(1)}% ${amt}</td></tr>`;
   }).join('');
   html+=`<div class="cmp-bar-wrap" id="cmpBarWrap" style="height:auto;margin:6px 0"></div>`;
   html+=`<div class="cmp-diff"><table><thead><tr><th class="dl">板块</th><th>当前</th><th>建议</th><th>变动</th></tr></thead><tbody>${diffRows}</tbody></table><div class="cmp-diff-note">▲ 需增持 / 调高权重　▼ 需减仓 / 压降（红=加、绿=减、灰=持平）</div></div>`;
@@ -3583,73 +3590,89 @@ function renderAdvice(){
   const overCap=catPct.filter(([k,p])=>RISK_CATS.includes(k)&&p>M2.single);
   const tiny=fundsView.filter(f=>f.mv>0&&f.mv<CONFIG.tinyThreshold);
   const byCat={}; fundsView.forEach(f=>{(byCat[f.cat]=byCat[f.cat]||[]).push(f);});
+  const byCatS={}; Object.keys(byCat).forEach(k=>{ byCatS[k]=byCat[k].slice().sort((a,b)=>(b.mv||0)-(a.mv||0)); });
   const dups=Object.entries(byCat).filter(([k,a])=>a.length>=2&&RISK_CATS.includes(k));
-
-  const cards=[];
-  if(top3Pct>70||overCap.length){
-    const top3str=top3.map(c=>`${c[0]} ${c[1].toFixed(1)}%`).join(' / ');
-    cards.push({prio:'high',badge:'高优先级',title:'行业集中度过高（资产配置失衡）',
-      body:`当前前三大赛道「${top3str}」合计 ${top3Pct.toFixed(1)}%，且三者均属高风险成长 / 周期因子，相关性高、易同涨同跌，组合分散度不足，对单一风险因子的暴露过度集中。`,
-      actions:[
-        `将单一赛道占比压降至 ≤ ${M2.single}%（${userProfile.risk}档建议上限）`,
-        `优先削减周期性最强、回撤最快的「周期资源」类（有色 / 煤炭 / 化工），而非长期逻辑更顺的芯片 / 跨境(QDII)`,
-        `以"每月减仓约 5%"的节奏分批执行，规避一次性择时`
-      ],
-      alt:`若暂不方便卖出，可<b>暂停相关定投</b>，把后续新增资金全部导向宽基核心与防御资产，用"时间换空间"逐步稀释集中度，避免择时失误。`});
-  }
-  if(defCur<M2.def-2){
-    cards.push({prio:'medium',badge:'中优先级',title:'缺乏防御性资产配置',
-      body:`当前防御类（混合 / 债）占比 ${defCur.toFixed(1)}%，组合没有回撤缓冲；一旦成长 / 周期风格回调，缺乏对冲手段。`,
-      actions:[
-        `按${userProfile.risk}档建议提升至约 ${M2.def}%（约 ${M(total*M2.def/100)} 元），优先配置纯债或"固收 +"混合基金`,
-        `防御仓作为组合稳定器，可显著降低整体波动、改善回撤体验`
-      ],
-      alt:`若风险偏好偏激进、不愿降低收益弹性，至少保留 <b>5–8% 货币基金 / 短债</b>作为流动性垫与应急仓。 <button class="btn sm" style="margin-top:6px" onclick="switchTab(0)">→ 去「资产」页做债券配置规划</button>`});
+  // —— 金额化：差额% × 总市值 → 具体金额；减持拆到板块内基金（按市值从大到小优先卖）——
+  function fmtAmt(v){ return '¥'+Math.round(v).toLocaleString('zh-CN'); }
+  function splitSell(catName, needAmt){
+    const list=(byCatS[catName]||[]); if(!list.length) return '';
+    let need=needAmt; const parts=[];
+    for(let i=0;i<list.length&&need>0;i++){ const f=list[i], mv=f.mv||0; if(mv<=0) continue;
+      const take=Math.min(need,mv); need-=take;
+      let sh=''; if(f.shares&&mv){ const nav=mv/f.shares; if(nav>0) sh='（'+Math.round(take/nav).toLocaleString('zh-CN')+' 份）'; }
+      parts.push('<b>'+esc(f.name)+'</b> ≈ '+fmtAmt(take)+sh);
+    }
+    return parts.join('、');
   }
   const qdiiCur=qdiiShare();
-  if(qdiiCur>M2.qdii+2){
-    cards.push({prio: qdiiCur>M2.qdii*1.5?'high':'medium', badge: qdiiCur>M2.qdii*1.5?'高优先级':'中优先级', title:'跨境(QDII)仓位偏高',
-      body:`当前跨境(QDII)基金市值占比约 ${qdiiCur.toFixed(1)}%，高于${userProfile.risk}档建议上限 ${M2.qdii}%；跨境资产受人民币汇率、境外市场时差与税务影响，过度集中会放大单一外部冲击（如美元走弱、海外流动性收紧）。`,
-      actions:[
-        `将跨境总仓位压降至 ≤ ${M2.qdii}%（${userProfile.risk}档建议上限）`,
-        `优先用境内同类赛道（如 A股 芯片 / 医药 / 科技）替代部分重复敞口，降低汇率与跨时区风险`,
-        `保留宽基跨境（如纳斯达克100、恒生科技）作为长期卫星配置，严控单市场集中度`
-      ],
-      alt:`若看好全球科技长逻辑，可保留核心跨境仓，但用「本币对冲」或分散到多个市场（美股 + 港股 + 日本）降低单一货币风险。`});
+  let adjHtml='';
+  const downCards=[];
+  overCap.forEach(([k,p])=>downCards.push({k,cur:p,sug:M2.single}));
+  if(qdiiCur>M2.qdii+2) downCards.push({k:'跨境 QDII',cur:qdiiCur,sug:M2.qdii,qdii:true});
+  if(downCards.length){
+    const totalDown=downCards.reduce((a,c)=>a+Math.round((c.cur-c.sug)*total/100),0);
+    adjHtml+=`<div class="adl-zone"><i style="background:var(--down)"></i>需减持 · ${downCards.length} 项<em>合计 ≈${fmtAmt(totalDown)}</em></div>`;
+    adjHtml+=downCards.map(c=>{
+      const A=Math.round((c.cur-c.sug)*total/100);
+      const funds=c.qdii?'按标签识别的 QDII 基金':((byCatS[c.k]||[]).map(f=>esc(f.name)+' '+fmtAmt(f.mv||0)).join(' / ')||'—');
+      const parts=c.qdii?'':splitSell(c.k,A);
+      return `<div class="adl">
+        <div class="adl-top"><div class="adl-nm"><i class="sw" style="background:${CAT_COLORS[c.k]||'#3aa0a0'}"></i>${c.k}<span class="adl-to">${c.cur.toFixed(1)}% → ${c.sug.toFixed(1)}%</span></div><div class="adl-amt neg">− ${fmtAmt(A)}<span class="adl-unit">约</span></div></div>
+        <ul class="adl-acts">
+          <li>板块内基金：${funds}</li>
+          <li>${c.qdii?('减 <b>'+fmtAmt(A)+'</b>（选占比高那只），或「暂停新增定投」等净值修复、免赎回费'):('卖 <b>'+parts+'</b>')}</li>
+          ${c.qdii?'':`<li>分 2 批（各约 ${fmtAmt(Math.round(A/2/100)*100)}）；或暂停该板块定投等效替代</li>`}
+        </ul>
+      </div>`;
+    }).join('');
   }
-  if(dups.length||tiny.length){
-    const dupStr=dups.map(([k,a])=>`${k} ${a.length} 只`).join('、');
-    const tinyStr=tiny.map(f=>f.name.slice(0,6)).join('、');
-    cards.push({prio:'medium',badge:'中优先级',title:'同赛道重复 + 小额尾部持仓',
-      body:`检测到同赛道重复（${dupStr||'—'}），另有 <b>${tiny.length}</b> 只基金金额低于 ${CONFIG.tinyThreshold} 元（${tinyStr||'—'}），管理费与跟踪误差会稀释收益。`,
-      actions:[
-        `同赛道保留 1 只代表性 / 费率更低者，其余择机合并`,
-        `小额尾部可随止盈或调仓一并处理，减少操作摩擦`
-      ],
-      alt:`不必急于清仓——若某只长期看好且费率低，可保留并小额定投，达标后再评估；清仓的<b>赎回费与税务影响</b>需权衡，建议用"转换"而非"赎回 + 重新申购"以节省费用与时间。`});
+  if(defCur<M2.def-2){
+    const A=Math.round((M2.def-defCur)*total/100);
+    adjHtml+=`<div class="adl-zone"><i style="background:var(--up)"></i>需增持 · 1 项<em>≈${fmtAmt(A)}</em></div>
+      <div class="adl">
+        <div class="adl-top"><div class="adl-nm"><i class="sw" style="background:#6E8CA0"></i>防御（债/混合）<span class="adl-to">${defCur.toFixed(1)}% → ${M2.def.toFixed(1)}%</span></div><div class="adl-amt pos">+ ${fmtAmt(A)}<span class="adl-unit">约</span></div></div>
+        <ul class="adl-acts">
+          <li>买纯债 / 固收+：分 3 期（每期约 <b>${fmtAmt(Math.round(A/3/100)*100)}</b>）</li>
+          <li>或定投 ${fmtAmt(Math.round(A/3/100)*100)}/月 × 3 期，作回撤缓冲</li>
+        </ul>
+        <div class="adl-alt"><b>替代：</b>若不愿降收益弹性，至少留 5–8% 货基 / 短债作流动性垫。<button class="btn sm" style="margin-top:6px" onclick="switchTab(0)">→ 去「资产」页做债券配置规划</button></div>
+      </div>`;
   }
   const sl=CONFIG.stopLoss, tp1=CONFIG.takeProfit1, tp2=CONFIG.takeProfit2;
   const sigStop=fundsView.filter(f=>f.ret<=sl);
   const sigTp2=fundsView.filter(f=>f.ret>=tp2);
   const sigTp1=fundsView.filter(f=>f.ret>=tp1&&f.ret<tp2);
-  const acts=[];
-  sigStop.forEach(f=>acts.push(`${f.name} 回撤已达 ${f.ret.toFixed(1)}%（破止损线 ${sl}%）——若非长期核心逻辑，建议<b>停止加仓</b>并设置明确净值警戒位；仍看好行业长期者，可保留观察，但控制其仓位不超过组合的 ${M2.single}%。`));
-  sigTp2.forEach(f=>acts.push(`${f.name} 收益率 ${f.ret.toFixed(1)}% 已达强止盈线 ${tp2}%，建议<b>分批卖出 1/3</b>落袋为安，保留底仓参与后续。`));
-  sigTp1.forEach(f=>acts.push(`${f.name} 收益率 ${f.ret.toFixed(1)}% 进入止盈区（${tp1}%），可设反弹至 8–10% 分批减仓。`));
-  if(!acts.length) acts.push(`当前无标的触及信号，继续按阈值执行；阈值已按 ${userProfile.risk} 档设定，到达即执行既定动作。`);
-  cards.push({prio:'low',badge:'低优先级',title:`止盈止损纪律（${userProfile.risk}档阈值：止盈 ${tp1}/${tp2}%，止损 ${sl}%）`,
-    body:`纪律的意义是让决策"提前写好"，避免情绪化操作。具体阈值：止盈区 ${tp1}%、强止盈 ${tp2}%、止损 ${sl}%（可在 CONFIG 中调整）。`,
-    actions:acts,
-    alt:`以上为参考阈值，可按个人成本与税负微调；核心原则是<b>止盈不贪、止损不拖</b>，到达点位即执行既定动作。`});
-  if(!cards.length) cards.push({prio:'low',badge:'低优先级',title:'配置较为均衡',body:'当前各赛道占比相对合理，继续保持观察并定期复盘即可。',actions:[],alt:''});
-
-  html+=cards.map(c=>`<div class="adk ${c.prio}"><span class="adk-badge">${c.badge}</span><div style="flex:1"><p class="adk-title">${c.title}</p><p class="adk-body">${c.body}</p>${c.actions.length?`<ul>${c.actions.map(a=>`<li>${a}</li>`).join('')}</ul>`:''}${c.alt?`<div class="adk-alt"><b>替代 / 过渡方案：</b>${c.alt}</div>`:''}</div></div>`).join('');
+  const other=[];
+  if(dups.length||tiny.length){
+    const dupStr=dups.map(([k,a])=>`${k} ${a.length} 只`).join('、');
+    const tinyStr=tiny.map(f=>f.name.slice(0,6)).join('、');
+    other.push({title:'同赛道重复 + 小额尾部持仓',sub:(dupStr?('重复：'+dupStr):'')+(tiny.length?('；'+tiny.length+' 只低于 ¥'+CONFIG.tinyThreshold):''),acts:['同赛道保留 1 只费率低者，其余择机合并','小额随止盈一并处理，减少操作摩擦']});
+  }
+  const sigActs=[];
+  sigStop.forEach(f=>sigActs.push(`${esc(f.name)} 回撤 ${f.ret.toFixed(1)}%（破止损 −15%）→ 停止加仓，设净值警戒位`));
+  sigTp2.forEach(f=>sigActs.push(`${esc(f.name)} 收益 ${f.ret.toFixed(1)}%（达强止盈 20%）→ 分批卖 1/3 落袋`));
+  sigTp1.forEach(f=>sigActs.push(`${esc(f.name)} 收益 ${f.ret.toFixed(1)}%（进入止盈区 15%）→ 反弹 8–10% 分批减`));
+  if(sigActs.length) other.push({title:`止盈止损信号（${userProfile.risk}档：止盈 ${tp1}/${tp2}%，止损 ${sl}%）`,sub:'',acts:sigActs});
+  if(other.length){
+    adjHtml+='<div class="adl-zone"><i style="background:var(--text-3)"></i>其他提示（非配置调整）</div>';
+    adjHtml+=other.map(o=>`<div class="adl adl-other">
+      <div class="adl-nm" style="font-size:12.5px"><i class="sw" style="background:#d4a017"></i>${o.title}</div>
+      ${o.sub?`<div class="adl-to">${o.sub}</div>`:''}
+      <ul class="adl-acts">${o.acts.map(a=>`<li>${a}</li>`).join('')}</ul>
+    </div>`).join('');
+  }
+  if(!adjHtml) adjHtml='<div class="adl-empty">当前各赛道占比相对合理，继续保持观察并定期复盘即可。</div>';
+  html+=`<div class="adl-wrap">${adjHtml}</div>`;
 
   const hn=userProfile.horizon.indexOf('短期')===0?'流动性优先，减少频繁交易、控制赎回成本':(userProfile.horizon.indexOf('长期')===0?'可承受波动，聚焦长期赛道但严守单赛道上限':'以定投方式平稳过渡，每季度复盘一次');
+  const defStep=defCur<M2.def-2?Math.max(5000,Math.round((M2.def-defCur)*total/100/3/100)*100):0;
+  const d0=downCards[0]||null;
+  const d0step=d0&&!d0.qdii?Math.round((d0.cur-d0.sug)*total/100/2/100)*100:0;
+  const qdiiStep=qdiiCur>M2.qdii+2?Math.round((qdiiCur-M2.qdii)*total/100/2/100)*100:0;
   html+=`<div class="plan"><h3>分阶段调整计划（${userProfile.risk}档 · ${userProfile.horizon}）</h3>
-    <div class="pl"><div class="pl-m">第 1 个月</div><div class="pl-c">暂停芯片 / 周期资源新增定投；建立防御仓（起步约 ${Math.max(5,Math.round(M2.def/3))}%），记录当前持仓成本与净值警戒位。</div></div>
-    <div class="pl"><div class="pl-m">第 2 个月</div><div class="pl-c">将周期资源压降至 ≤ ${M2.single}%，腾出资金补宽基核心（如沪深300 / 中证A500 等指数）。</div></div>
-    <div class="pl"><div class="pl-m">第 3 个月</div><div class="pl-c">跨境(QDII)仓位 降至 ≤ ${M2.qdii}%，防御提至 ${M2.def}%，完成一次再平衡；之后${hn}。</div></div>
+    <div class="pl"><div class="pl-m">第 1 个月</div><div class="pl-c">暂停芯片 / 周期资源新增定投；${defStep?('买防御 '+fmtAmt(defStep)+'；'):''}${d0&&!d0.qdii?('卖'+d0.k+' '+fmtAmt(d0step)+'。'):'记录当前持仓成本与净值警戒位。'}</div></div>
+    <div class="pl"><div class="pl-m">第 2 个月</div><div class="pl-c">${defStep?('防御再买 '+fmtAmt(defStep)+'；'):''}${d0&&!d0.qdii?('卖'+d0.k+' '+fmtAmt(d0step)+'；'):'腾出资金补宽基核心；'}${qdiiStep?('QDII 视净值卖 '+fmtAmt(qdiiStep)+'。'):'完成再平衡。'}</div></div>
+    <div class="pl"><div class="pl-m">第 3 个月</div><div class="pl-c">${defStep?('防御补齐至 '+fmtAmt((M2.def-defCur)*total/100)+'；'):''}${qdiiStep?('QDII 减至 '+M2.qdii+'%；'):'完成一次再平衡；'}之后${hn}。</div></div>
   </div>`;
 
   box.innerHTML=html;

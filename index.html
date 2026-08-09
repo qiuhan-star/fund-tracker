@@ -3155,11 +3155,28 @@ function bindTableScrollFade(){
     upd();
   });
 }
-function renderHomeDense(list, showHead){
+function denseCols(){
   const cols=[{key:'name',label:'基金 / 标签'}];
   colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
+  return cols;
+}
+function denseHeadHtml(){
+  const cols=denseCols();
+  let headHtml = cols.map(c=>{
+    const active = holdSort===c.key;
+    const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
+    const cls = 'sortable'+(active?' sort-on':'')+(c.key==='name'?'':' col-drag');
+    const drag = c.key==='name' ? '' : ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"`;
+    const tip = c.key==='name' ? '' : ` title="点击排序 · 拖动列头换列"`;
+    return `<th class="${cls}" onclick="toggleSortHeader('${c.key}')"${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
+  }).join('');
+  headHtml += `<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>`;
+  return headHtml;
+}
+function denseRowsHtml(list){
+  const cols=denseCols();
   const todayStr=fmtDate(new Date()); // 今晚已更新净值的判定基准：收盘日期==今天
-  const rows=list.map(f=>{
+  return list.map(f=>{
     const nc=navCache[f.name]||{};
     // 估算涨跌：盘中估值为实时预估(带新鲜度徽标)，休市/收盘回退到已确认「收」涨跌幅并标注该收盘日期(非"预估")
     const estCell=estCellHtml(f);
@@ -3203,21 +3220,13 @@ function renderHomeDense(list, showHead){
     });
     return `<tr onclick="goDetail('${encodeURIComponent(f.name)}','${esc(f.account)}')">${tds}</tr>`;
   }).join('');
-  let headHtml = cols.map(c=>{
-    const active = holdSort===c.key;
-    const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const cls = 'sortable'+(active?' sort-on':'')+(c.key==='name'?'':' col-drag');
-    const drag = c.key==='name' ? '' : ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"`;
-    const tip = c.key==='name' ? '' : ` title="点击排序 · 拖动列头换列"`;
-    return `<th class="${cls}" onclick="toggleSortHeader('${c.key}')"${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
-  }).join('');
-  headHtml += `<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>`;
+}
+function renderHomeDense(list, showHead){
   return `<table class="dense-table">
-    ${(showHead===false)?'':'<thead><tr>'+headHtml+'</tr></thead>'}
-    <tbody>${rows}</tbody>
+    ${(showHead===false)?'':'<thead><tr>'+denseHeadHtml()+'</tr></thead>'}
+    <tbody>${denseRowsHtml(list)}</tbody>
   </table>`;
 }
-
 // 当日收益（今天一天盈亏）：优先盘中估算涨跌 gszzl，无估算(QDII等)退回官方当日涨跌 navChg。
 // 列表子项与账户总卡片共用此函数，保证「账户总当日收益 = 各子项之和」。
 function dayGainOf(f){ const nc=navCache[f.name]||{}; const chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); if(chg==null||f.mv==null) return null; return f.mv - f.mv/(1+chg/100); }
@@ -3323,14 +3332,16 @@ function renderGrouped(list){
   const groups={};
   list.forEach(f=>{ const k=(f[dim]||(dim==='account'?effAccount('本人账户'):'其他')); (groups[k]=groups[k]||[]).push(f); });
   const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));
-  return order.map((k,idx)=>{
+  // 与「不分组」同格式：单张 dense 表 + 表内组分隔行（原 多张表 + .grp-head 独立块 已废弃）
+  const colspan=denseCols().length+1; // 数据列 + 最右「≡ 列」按钮列
+  const body=order.map(k=>{
     const sub=groups[k];
     const mvSum=sub.reduce((a,f)=>a+(f.mv||0),0);
-    const head=`<div class="grp-head"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div>`;
-    return head + renderHomeDense(sub, idx===0);
+    const sep=`<tr class="grp-sep"><td colspan="${colspan}"><div class="grp-sep-in"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div></td></tr>`;
+    return sep + denseRowsHtml(sub);
   }).join('');
+  return `<table class="dense-table"><thead><tr>${denseHeadHtml()}</tr></thead><tbody>${body}</tbody></table>`;
 }
-
 function goDetail(enc, acc){
   const f=findFund(decodeURIComponent(enc), acc);
   if(f && f.isBond){ openBondDrawer(f.code); return; } // 债基无交易/净值详情，点开抽屉看深度信息
@@ -8630,6 +8641,12 @@ function renderSyncCfg(){
 .grp-head:first-child{ margin-top:4px; }
 .grp-name{ font-weight:700; font-size: 14px; color:var(--text); }
 .grp-meta{ margin-left:auto; font-size: 14px; color:var(--text-3); }
+/* 分组视图 = 单张 dense 表 + 表内组分隔行（与「不分组」同格式）。需覆盖手机端 .dense-table td:first-child 的 148px/overflow 规则（本规则 specificity 更高） */
+.dense-table .grp-sep td{ width:auto; min-width:0; max-width:none; overflow:visible; background:var(--surface-3); padding:7px 10px; border-top:1px solid var(--border-3); border-bottom:1px solid var(--border-3); }
+.dense-table .grp-sep .grp-sep-in{ display:flex; align-items:center; gap:8px; }
+.dense-table .grp-sep .grp-name{ font-weight:700; font-size:14px; color:var(--text); }
+.dense-table .grp-sep .grp-meta{ margin-left:auto; font-size:13px; color:var(--text-3); }
+
 @media (max-width: 640px) {
   /* 手机端分组视图：仅缩小"组头与首行名称"间距（用户指出的"第一个名称的距离有点太多"）；dense 表格的列间距/字号/列宽保持原样不动 */
   .grp-head { margin: 12px 2px 2px; padding: 5px 10px; }

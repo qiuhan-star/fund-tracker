@@ -922,8 +922,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .bcard .bc-acc.own{color:var(--warn,#e0a800)}
   .bcard .bc-acc.own::before{background:var(--warn,#e0a800)}
   .bcard .bc-body{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:6px 0 12px;margin-bottom:10px;border-bottom:1px solid var(--border)}
-  .bcard .bc-tags{display:flex;gap:4px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;min-width:0;align-items:center}
-  .bcard .tag{display:inline-flex;align-items:center;font-size:11px;padding:2.5px 7px;border-radius:5px;font-weight:500;background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);white-space:nowrap}
+  .bcard .bc-tags{display:flex;gap:3px;flex-wrap:nowrap;overflow:hidden;min-width:0;align-items:center}
+  .bcard .tag{display:inline-flex;align-items:center;font-size:10.5px;padding:2px 6px;border-radius:5px;font-weight:500;background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);white-space:nowrap}
   .bcard .tag-dur{color:var(--accent-text);background:var(--accent-soft);border-color:transparent;font-weight:600}
   .bcard .tag-credit{color:var(--text-3);background:transparent;border-color:transparent}
   .bcard .tag-mix{color:#d97706;background:rgba(245,158,11,.10);border-color:transparent}
@@ -1470,7 +1470,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
     <!-- Tab 1: 分析 -->
     <div class="tab-panel" id="tp1">
-      <div class="card"><div class="cards4" id="overview"></div></div>
+      <div class="card"><div id="overview"></div></div>
       <div class="card" id="riskCard">
         <div class="sec-head"><h2 style="margin:0;font-size: 14px">🩺 组合风险诊断 <span class="tag">一键体检</span></h2><span class="hint" style="font-size: 12px">基于当前账户口径</span></div>
         <div id="riskBody"></div>
@@ -3951,7 +3951,7 @@ function bondDetailCards(bonds, today){
     var stCls=st.cls.replace('st-','');
     var daysTxt=st.days?('<span class="st-days">'+st.days+'</span>'):'';
     var ico = stCls==='ok'?'✓':(stCls==='lock'?'🔒':'!');
-    var title=st.txt.replace(/^[✅⚠️🔒]\s*/,'').replace('·',' · ');
+    var title=st.txt.replace('✅ ','').replace('⚠️ ','').replace('🔒 ','').trim().replace('·',' · ');
     var amt=Math.round(bondAmt(f)||0).toLocaleString('zh-CN');
     var pd=bondDate(f);
     var pdTxt=pd?pd.replace(/-/g,'.')+' 买入':'未填买入日';

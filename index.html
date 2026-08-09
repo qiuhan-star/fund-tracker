@@ -2572,7 +2572,7 @@ function renderTrack(){
   if(TRACK_BUSY) return;
   TRACK_BUSY=true;
   const tag=document.getElementById('trackTag');
-  Promise.allSettled(TRACK_STATE.map(function(st){ return fetchTrackKline(st.secid).then(function(m){ if(m){ st.today=m.day; st.w1=m.w1; st.m1=m.m1; st.m3=m.m3; st.m6=m.m6; st.y1=m.y1; st.pct=m.pct; st.line=m.line||null; } return m; }); }).concat(fetchTrackKline(TRACK_BENCH_SECID).then(function(m){ if(m){ TRACK_BENCH.m3=m.m3; TRACK_BENCH.line=m.line||null; } return m; }))))
+  Promise.allSettled(TRACK_STATE.map(function(st){ return fetchTrackKline(st.secid).then(function(m){ if(m){ st.today=m.day; st.w1=m.w1; st.m1=m.m1; st.m3=m.m3; st.m6=m.m6; st.y1=m.y1; st.pct=m.pct; st.line=m.line||null; } return m; }); }).concat(fetchTrackKline(TRACK_BENCH_SECID).then(function(m){ if(m){ TRACK_BENCH.m3=m.m3; TRACK_BENCH.line=m.line||null; } return m; })))
     .then(function(res){
       TRACK_BUSY=false;
       const ok=res.filter(function(r){ return r.status==='fulfilled'&&r.value; }).length;

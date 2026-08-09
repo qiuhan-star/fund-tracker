@@ -402,7 +402,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .flow-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }.inflow-bg { background: rgba(192,57,43,.05); }.outflow-bg { background: rgba(39,174,96,.05); }.cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }@media (max-width: 600px) { .cap-grid { grid-template-columns: 1fr; }  }
 .cap-col { padding: 12px; border-radius: 10px; border: 1px solid var(--border); }.nb-bg { background: rgba(31,157,85,.06); }.sb-bg { background: rgba(58,90,217,.06); }.cap-title { margin: 0 0 6px; font-size: 14px; font-weight: 600; }.cap-val { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }.cap-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }.holdings-tbl td.code, .holdings-tbl th { font-variant-numeric: tabular-nums; }.flow-title { font-size: .9rem; margin: 0 0 8px; font-weight: 600; }.flow-list { list-style: none; padding: 0; margin: 0; }.flow-list li { display: flex; justify-content: space-between; padding: 6px 0; font-size: .85rem; border-bottom: 1px dashed var(--border-2); }.flow-list li:last-child { border-bottom: none; }.sub-tabs { display: flex; gap: 8px; }.sub-btn { background: var(--surface); border: 1px solid var(--border-strong); padding: 4px 10px; border-radius: 14px; font-size: .8rem; cursor: pointer; color: var(--text-2); font-family: inherit; }.sub-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }.market-table { width: 100%; border-collapse: collapse; margin-top: 8px; }.market-table th, .market-table td { padding: 10px 8px; text-align: left; font-size: .85rem; border-bottom: 1px solid var(--border-2); }.market-table th { color: var(--text-3); font-weight: 500; font-size: 12px; }.rank-row { cursor:pointer; }
   /* 榜单：名称+类型合并吸左固定（横滑不丢基金名）；类型 chip 紧跟名称；代码独立一行 */
-  .market-table th:first-child, .market-table td:first-child { position: sticky; left: 0; z-index: 2; background: var(--bg); min-width: 216px; max-width: 216px; white-space: normal !important; }
+  .market-table th:first-child, .market-table td:first-child { position: sticky; left: 0; z-index: 2; background: var(--bg); }
   .market-table th:first-child { z-index: 3; }
   .rank-row .rname { font-weight: bold; }
   .rank-row .rtype { display: inline-flex; align-items: center; margin-left: 6px; padding: 1px 7px; border-radius: 6px; background: var(--surface-3); color: var(--text-2); font-size: 11px; font-weight: 500; vertical-align: 1px; }
@@ -1002,6 +1002,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 15. 基金榜单表：横向滚动 */
   .market-table { min-width: 560px !important; }
   .market-table th, .market-table td { white-space: nowrap !important; }
+  /* 榜单吸左列：固定 216px + 允许名称换行/省略（覆盖 nowrap） */
+  .market-table th:first-child, .market-table td:first-child { width: 216px !important; min-width: 216px !important; max-width: 216px !important; white-space: normal !important; }
+  .rank-row .rname { display: inline-block; max-width: 122px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
 
   /* 16. 移动端横向溢出总兜底 + 双列布局塌成单列 */
   html, body { overflow-x: hidden; }

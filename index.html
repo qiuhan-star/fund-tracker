@@ -3649,9 +3649,9 @@ function renderAdvice(){
     other.push({title:'同赛道重复 + 小额尾部持仓',sub:(dupStr?('重复：'+dupStr):'')+(tiny.length?('；'+tiny.length+' 只低于 ¥'+CONFIG.tinyThreshold):''),acts:['同赛道保留 1 只费率低者，其余择机合并','小额随止盈一并处理，减少操作摩擦']});
   }
   const sigActs=[];
-  sigStop.forEach(f=>sigActs.push(`${esc(f.name)} 回撤 ${f.ret.toFixed(1)}%（破止损 −15%）→ 停止加仓，设净值警戒位`));
-  sigTp2.forEach(f=>sigActs.push(`${esc(f.name)} 收益 ${f.ret.toFixed(1)}%（达强止盈 20%）→ 分批卖 1/3 落袋`));
-  sigTp1.forEach(f=>sigActs.push(`${esc(f.name)} 收益 ${f.ret.toFixed(1)}%（进入止盈区 15%）→ 反弹 8–10% 分批减`));
+  sigStop.forEach(f=>sigActs.push(`${esc(f.name)} 回撤 ${f.ret.toFixed(1)}%（破止损 ${sl}%）→ 停止加仓，设净值警戒位`));
+  sigTp2.forEach(f=>sigActs.push(`${esc(f.name)} 收益 ${f.ret.toFixed(1)}%（达强止盈 ${tp2}%）→ 分批卖 1/3 落袋`));
+  sigTp1.forEach(f=>sigActs.push(`${esc(f.name)} 收益 ${f.ret.toFixed(1)}%（进入止盈区 ${tp1}%）→ 反弹 8–10% 分批减`));
   if(sigActs.length) other.push({title:`止盈止损信号（${userProfile.risk}档：止盈 ${tp1}/${tp2}%，止损 ${sl}%）`,sub:'',acts:sigActs});
   if(other.length){
     adjHtml+='<div class="adl-zone"><i style="background:var(--text-3)"></i>其他提示（非配置调整）</div>';
@@ -3682,12 +3682,25 @@ function renderAdvice(){
     const rows=uLabels.map((l,i)=>{
       const c=+uCur[i], s=+uSug[i], d=+(s-c).toFixed(1);
       const cls=d>0?'pos':d<0?'neg':'zero';
+      const flat=Math.abs(d)<0.05;
+      const amtHtml=flat?'':`<small>≈ ¥${Math.round(Math.abs(d)*total/100).toLocaleString('zh-CN')}</small>`;
+      let actHtml='';
+      if(!flat){
+        const A=Math.round(Math.abs(d)*total/100);
+        if(d>0){
+          actHtml=`<div class="cbr-act">买：${(l==='债基'||l==='混合')?'纯债 / 固收+':l+'类基金'} ≈ <b>${fmtAmt(A)}</b>，分 3 期或定投 ${fmtAmt(Math.round(A/3/100)*100)}/月。</div>`;
+        }else{
+          const parts=splitSell(l,A);
+          actHtml=`<div class="cbr-act">卖：${parts||'板块内基金'}；分 2 批各约 ${fmtAmt(Math.round(A/2/100)*100)}，或暂停定投等效替代。</div>`;
+        }
+      }
       return `<div class="cmp-bar-row">
-        <div class="cmp-top"><span class="cmp-name" title="${esc(l)}">${esc(l)}</span><span class="cbr-diff ${cls}">${d>0?'+':''}${d}%</span></div>
+        <div class="cmp-top"><span class="cmp-name" title="${esc(l)}">${esc(l)}</span><span class="cbr-diff ${cls}">${d>0?'+':''}${d}% ${amtHtml}</span></div>
         <div class="cbr-bars">
           <div class="cbr-line"><span class="cbr-lab">当前</span><div class="cbr-track"><i class="cbr-fill cur" style="width:${Math.max(0,c/maxV*100).toFixed(1)}%"></i></div><b>${c.toFixed(1)}%</b></div>
           <div class="cbr-line"><span class="cbr-lab">建议</span><div class="cbr-track"><i class="cbr-fill sug" style="width:${Math.max(0,s/maxV*100).toFixed(1)}%"></i></div><b>${s.toFixed(1)}%</b></div>
         </div>
+        ${actHtml}
       </div>`;
     }).join('');
     wrap.innerHTML=`<div class="cmp-leg2"><span><i class="sw cur"></i>当前配置</span><span><i class="sw sug"></i>建议配置</span><span class="cbr-diff-note">右列=变动</span></div>${rows}`;

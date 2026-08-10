@@ -2496,11 +2496,6 @@ const INDEX_GRID=[
     {name:'道琼斯', secid:'100.DJI'},
     {name:'纳斯达克', secid:'100.NDX'},
     {name:'标普500', secid:'100.SPX'}
-  ]},
-  {group:'其他全球', items:[
-    {name:'日经225', secid:'100.NK225'},
-    {name:'韩国KOSPI', secid:'100.KS200'},
-    {name:'富时100', secid:'100.FTSE'}
   ]}
 ];
 let INDEX_STATE=INDEX_GRID.map(g=>({group:g.group, items:g.items.map(it=>({name:it.name, secid:it.secid, day:null, last:null, high:null, low:null, line:null}))}));
@@ -2548,11 +2543,11 @@ function jsonpEM(url, cbName, timeout){
     document.body.appendChild(s);
   });
 }
-function emSecidToSina(secid){
+function emSecidToSym(secid){
   if(!secid) return secid;
   if(/^1\.\d+$/.test(secid)) return 'sh'+secid.split('.')[1];
   if(/^0\.\d+$/.test(secid)) return 'sz'+secid.split('.')[1];
-  const M={'100.HSI':'r_hkHSI','100.DJI':'gb_dji','100.NDX':'gb_ixic','100.SPX':'gb_sp500','100.NK225':'r_jpNI225','100.KS200':'r_krks200','100.FTSE':'r_ukFTSE'};
+  const M={'100.HSI':'hkHSI','100.DJI':'usDJI','100.NDX':'usIXIC','100.SPX':'usINX'};
   return M[secid]||secid;
 }
 function fetchSinaKline(symbol, datalen){
@@ -2577,7 +2572,7 @@ function computeTrackMetrics(pts){
   return {day:day, w1:w1, m1:m1, m3:m3, m6:m6, y1:y1, pct:pct};
 }
 function fetchTrackKline(secid){
-  return fetchSinaKline(emSecidToSina(secid)).then(function(d){
+  return fetchSinaKline(emSecidToSym(secid)).then(function(d){
     if(!d || !d.closes || d.closes.length<2) return null;
     const pts=d.closes.filter(function(v){ return isFinite(v)&&v>0; });
     if(pts.length<2) return null;
@@ -2604,7 +2599,7 @@ function fetchTrackKlineRetry(secid, retries){
   return attempt(retries);
 }
 function fetchIdxKline(secid){
-  return fetchSinaKline(emSecidToSina(secid)).then(function(d){
+  return fetchSinaKline(emSecidToSym(secid)).then(function(d){
     if(!d) return null;
     const pts=(d.closes||[]).filter(function(v){ return isFinite(v)&&v>0; });
     let line=[];

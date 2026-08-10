@@ -1155,21 +1155,17 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 /* ==================== 总资产 Hero（首页复用；板块页不再使用 tiles 卡） ==================== */
 .ov-wrap { margin-top: 4px; }
 .ov-hero {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-  padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
-  gap: 12px; position: relative;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 7px 14px; display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; position: relative;
 }
-.ov-hero-left { display: flex; flex-direction: column; gap: 4px; }
-.ov-hero-label { font-size: 13px; font-weight: 500; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
+.ov-hero-l, .ov-hero-r { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.ov-hero .k { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.ov-hero .v { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.3px; color: var(--text); white-space: nowrap; }
 .tog-mini{width:26px;height:22px;border:1px solid var(--border);border-radius:14px;background:transparent;color:var(--text-3);font-size:13px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;line-height:1}
 .tog-mini:active{background:var(--surface-2)}
 .mvline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;padding-top:4px;border-top:1px dashed var(--border-3)}
 .mvline .val{font-size:13px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
-.ov-hero-value { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--text); margin-top: 2px; }
-.ov-hero-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
-.ov-hero-right { display: flex; flex-direction: column; gap: 6px; text-align: right; font-size: 13px; }
-.ov-hero-right-item { color: var(--text-3); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-.ov-hero-right b, .ov-hero-right-item b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
 /* ==================== 重设计的【占比排行 (Asset Distribution)】 ==================== */
 .cb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
 .cb-card .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -1196,7 +1192,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .zero { color: var(--text-3) !important; }
 
 @media (max-width: 680px) {
-  .ov-hero { padding: 8px 12px; }
+  .ov-hero { padding: 6px 12px; }
   .bar-row { grid-template-columns: 104px 1fr 85px; gap: 8px; }
   .bar-pct { display: none; }
 }
@@ -2808,9 +2804,9 @@ let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['est','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
 const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
-const COL_KEYS=['nav','est','day','ret','hold','holdpct'];
-const DEFAULT_COL_ORDER=['est','day','ret','hold','holdpct','nav']; // 默认列顺序：估算涨跌→官方涨跌→当日收益→持有收益→持有收益率→单位净值（2026-08-10 方案1：市值放名称下、mv 列移除、持有收益恢复为列）
-const COL_ORDER_VER='5';
+const COL_KEYS=['nav','est','day','ret','hold'];
+const DEFAULT_COL_ORDER=['est','day','ret','hold','nav']; // 默认列顺序：估算涨跌→官方涨跌→当日收益→持有收益→单位净值（2026-08-10：总金额移出列表放名称下切换行；持有收益率并入持有收益列副行，单独列去掉）
+const COL_ORDER_VER='6';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
@@ -3690,17 +3686,16 @@ function renderTrendSection(){
   const pctMode=heroDayMode==='pct';
   const dayVal=pctMode ? (estPct==null?'已收盘':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'%') : tg;
   const dayCls=pctMode ? (estPct==null?'ov-zero':(estPct>=0?'ov-pos':'ov-neg')) : tgcls;
-  const updLine=lastSyncLabel();
   box.innerHTML=`
     <div class="ov-wrap">
       <section class="ov-hero">
-        <div class="ov-hero-left">
-          <span class="ov-hero-label">账户资产<button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></span>
-          <span class="ov-hero-value">${mask(M(total))}</span>
+        <div class="ov-hero-l">
+          <span class="k">账户资产</span><b class="v">${mask(M(total))}</b>
+          <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button>
         </div>
-        <div class="ov-hero-right">
-          <div>当日收益 <b class="${dayCls}">${mask(dayVal)}</b> <button type="button" class="tog-mini" onclick="toggleHeroDayMode()" title="切换金额/收益率">⇄</button></div>
-          <div class="ov-hero-sub">更新 ${updLine}</div>
+        <div class="ov-hero-r">
+          <span class="k">当日收益</span><b class="v ${dayCls}">${mask(dayVal)}</b>
+          <button type="button" class="tog-mini" onclick="toggleHeroDayMode()" title="切换金额/收益率">⇄</button>
         </div>
       </section>
     </div>`;

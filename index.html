@@ -197,9 +197,8 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .hl.alert-tp { background: var(--warn-bg); box-shadow: inset 3px 0 0 var(--warn); }@media (hover: hover) { .hl.alert-tp:hover {  background: var(--warn-bg);  } }
 .hl.alert-sl { background: var(--up-bg); box-shadow: inset 3px 0 0 var(--danger); }@media (hover: hover) { .hl.alert-sl:hover {  background: var(--up-bg);  } }
 /* 持仓紧凑表格 */
-  .seg-group { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }.dense-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }  .dense-table th { padding: 9px 5px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 12px; }.dense-table th:first-child, .dense-table td:first-child { background: var(--surface); width: 148px; min-width: 148px; max-width: 148px; box-shadow: 2px 0 6px -4px rgba(0,0,0,.08); position: sticky; left: 0; }
-  .dense-table th:first-child { text-align: left; padding-left:16px; z-index: 3; }
-  .dense-table td:first-child { z-index: 2; }.dense-table th.sort-on { color: var(--accent); }.dense-table th.sortable { cursor: pointer; user-select: none; transition: color .12s, background .12s; }@media (hover: hover) { .dense-table th.sortable:hover {  color: var(--accent-text); background: var(--surface-2);  } }
+  .seg-group { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }.dense-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }  .dense-table th { padding: 9px 5px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 12px; }.dense-table th:first-child, .dense-table td:first-child { background: var(--surface); width: 148px; min-width: 148px; max-width: 148px; box-shadow: 2px 0 6px -4px rgba(0,0,0,.08); position: relative; z-index: 2; }
+  .dense-table th:first-child { text-align: left; padding-left:16px; z-index: 3; }.dense-table th.sort-on { color: var(--accent); }.dense-table th.sortable { cursor: pointer; user-select: none; transition: color .12s, background .12s; }@media (hover: hover) { .dense-table th.sortable:hover {  color: var(--accent-text); background: var(--surface-2);  } }
 .dense-table th .sort-ico { display: inline-block; margin-left: 3px; font-size: 12px; line-height: 1; color: var(--text-3); opacity: .5; font-weight: 700; }.dense-table th.sort-on .sort-ico.on { color: var(--accent); opacity: 1; }/* 拖动换列：轻点=排序，按住拖动=换列 */
   .dense-table th.col-drag { cursor: grab; }.dense-table th.col-drag:active { cursor: grabbing; }.dense-table th.col-dragging { opacity: .35; }.dense-table th.col-dragover { box-shadow: inset 3px 0 0 var(--accent); background: var(--surface-2); }  .dense-table td { padding: 9px 5px; border-bottom: 1px solid var(--border-3); text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }.dense-table td:first-child { text-align: left; }.dense-table tbody tr { cursor: pointer; }@media (hover: hover) { .dense-table tbody tr:hover {  background: var(--surface-2);  } }
 .dt-name { font-weight: 600; font-size: 13px; line-height: 1.2; }.dt-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }.dt-big { font-weight: 700; font-size: 13px; }.dt-sub2 { font-size: 12.5px; color: var(--text-3); margin-top: 3px; }.upd-time { color:#9aa3b2; font-variant-numeric:tabular-nums; }/* 持仓手风琴展开 */
@@ -3211,26 +3210,13 @@ function sortKeyVal(f,k){
   return 0;
 }
 
-// 持仓 dense 表第一列吸左双保险（按引擎分流，避免 iOS 抖动 + 卡顿）：
-// 1) WebKit/iOS Safari：CSS position:sticky 原生生效，JS 完全不介入（transform 会叠加抖动 + rAF 循环卡顿）
-// 2) Chrome/Blink：td sticky 不生效 → 探针检测后 rAF 轮询 + translateX 抵消
+// 持仓 dense 表第一列吸左：CSS td sticky 在 WebKit/Chrome 均不可靠，统一用 rAF 轮询 + translateX 抵消
+// （不依赖 scroll 事件，iOS touch 滚动期间每帧同步；transform 为 CSS 通用属性双引擎均生效）
 function bindDenseStickyFirstCol(root){
-  var ua=navigator.userAgent||'';
-  var isWebKit=/WebKit/i.test(ua) && !/CriOS|Chrome|Edg\//i.test(ua);
   root.querySelectorAll('.table-scroll').forEach(function(scroll){
     if(scroll.__stickyBound) return; scroll.__stickyBound=true;
-    if(isWebKit) return; // iOS Safari：纯 CSS sticky，不跑 JS（丝滑）
-    var probe=scroll.querySelector('.dense-table td:first-child');
-    if(!probe) return;
-    // sticky 生效检测：滚 30px 看第一列位置是否变化（变化=sticky 没生效）
-    var before=probe.getBoundingClientRect().left;
-    scroll.scrollLeft=30;
-    void scroll.offsetHeight; // 强制 reflow
-    var after=probe.getBoundingClientRect().left;
-    scroll.scrollLeft=0;
-    if(Math.abs(after-before)<1.5) return; // CSS sticky 生效，无需 JS
-    // Chrome：rAF 轮询 translateX
     var rows=scroll.querySelectorAll('.dense-table tr');
+    if(!rows.length) return;
     var lastX=-1;
     var apply=function(){
       var x=scroll.scrollLeft;

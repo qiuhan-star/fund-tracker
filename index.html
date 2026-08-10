@@ -970,11 +970,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .market-table { table-layout: fixed; min-width: 0 !important; }
   .market-table th, .market-table td { white-space: nowrap !important; padding: 8px 4px; font-size: .8rem; }
   .market-table th:first-child, .market-table td:first-child { white-space: normal !important; }
-  .market-table th:nth-child(1), .market-table td:nth-child(1) { width: 40%; }
-  .market-table th:nth-child(2), .market-table td:nth-child(2) { width: 14%; }
-  .market-table th:nth-child(3), .market-table td:nth-child(3) { width: 17%; }
-  .market-table th:nth-child(4), .market-table td:nth-child(4) { width: 17%; }
-  .market-table th:nth-child(5), .market-table td:nth-child(5) { width: 12%; }
+  .market-table th:nth-child(1), .market-table td:nth-child(1) { width: 46%; }
+  .market-table th:nth-child(2), .market-table td:nth-child(2) { width: 19%; }
+  .market-table th:nth-child(3), .market-table td:nth-child(3) { width: 19%; }
+  .market-table th:nth-child(4), .market-table td:nth-child(4) { width: 16%; }
 
   /* 16. 移动端横向溢出总兜底 + 双列布局塌成单列 */
   html, body { overflow-x: hidden; }
@@ -1602,7 +1601,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
             <button class="sub-btn active" onclick="switchRankTab('top', this)">🚀 今日领涨</button>
             <button class="sub-btn" onclick="switchRankTab('hot', this)">🔥 高关注度</button>
           </div>
-        <div class="table-scroll"><table class="market-table"><thead><tr><th>基金代码 / 名称</th><th>类型</th><th>日估算涨跌</th><th>近1周</th><th>操作</th></tr></thead><tbody id="rank-table-body"></tbody></table></div>
+        <div class="table-scroll"><table class="market-table"><thead><tr><th>基金</th><th>日估算涨跌</th><th>近1周</th><th>操作</th></tr></thead><tbody id="rank-table-body"></tbody></table></div>
         <p class="hint" style="font-size: 12px;margin-top:8px">示例榜单，待接入天天基金 JSONP 接口后显示真实排行。</p>
       </div>
 
@@ -2765,10 +2764,10 @@ function loadFundRank(type){
   rows.forEach(function(item,i){
     const isUp=item.est.startsWith('+');
     const hide = i>=LIMIT ? ' data-more="1" style="display:none"' : '';
-    html += `<tr class="rank-row"${hide} onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3)">${item.code}</div></td><td>${item.type}</td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td>${item.w1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td></tr>`;
+    html += `<tr class="rank-row"${hide} onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3);display:flex;align-items:center;gap:6px;margin-top:2px"><span>${item.code}</span><span style="font-size:.7rem;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border-3);border-radius:4px;padding:0 5px;white-space:nowrap">${item.type}</span></div></td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td>${item.w1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td></tr>`;
   });
   if(rows.length>LIMIT){
-    html += `<tr class="rank-more-row"><td colspan="5"><button class="rank-more-btn" data-exp="0" onclick="toggleRankMore(this)">展开全部 ${rows.length} 条 ▼</button></td></tr>`;
+    html += `<tr class="rank-more-row"><td colspan="4"><button class="rank-more-btn" data-exp="0" onclick="toggleRankMore(this)">展开全部 ${rows.length} 条 ▼</button></td></tr>`;
   }
   tbody.innerHTML=html;
 }
@@ -8600,9 +8599,9 @@ function renderSyncCfg(){
 .acc-prompt .ap-btn{ flex:1; padding:11px 0; border:none; border-radius:10px; font-size:16px; font-family:inherit; font-weight:600; background:var(--bg); color:var(--text); cursor:pointer; }
 .acc-prompt .ap-btn.primary{ background:var(--accent); color:#fff; }
 .acc-prompt .ap-btn.danger{ background:#ff3b30; color:#fff; }
-.acc-row{ padding:9px 10px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:8px; touch-action:none; }
-.ai-main{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.acc-note{ width:100%; box-sizing:border-box; margin-top:8px; font-size:13px; padding:7px 10px; border:1px solid var(--border-3); border-radius:8px; background:var(--bg); color:var(--text); }
+#accNameList .acc-row{ padding:9px 10px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:8px; touch-action:none; }
+#accNameList .ai-main{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+#accNameList .acc-note{ width:100%; box-sizing:border-box; margin-top:8px; font-size:13px; padding:7px 10px; border:1px solid var(--border-3); border-radius:8px; background:var(--bg); color:var(--text); }
 </style>
 
 <div id="accPromptMask" class="sm-mask">

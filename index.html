@@ -5292,6 +5292,20 @@ function genericDetail(f){
   return h;
 }
 // 基金前十大持仓（股票/债券）——借鉴 x2rr/funds 的持仓明细，数据源 pingzhongdata/{code}.js
+function qtPrefix(code){ code=String(code||''); if(/^[69]/.test(code)) return 'sh'; if(/^[03]/.test(code)) return 'sz'; if(/^[84]/.test(code)) return 'bj'; return 'sh'; }
+function parseQtMini(raw){ if(!raw) return null; const p=raw.split('~'); const price=parseFloat(p[3]); const chg=parseFloat(p[4]); const pct=parseFloat(p[5]); return {price,chg,pct}; }
+function loadHoldingsQuotes(codes){
+  const list=(codes||[]).filter(c=>/^\d{6}$/.test(String(c))).map(c=>'s_'+qtPrefix(c)+c);
+  if(!list.length) return;
+  const sc=document.createElement('script');
+  sc.onload=function(){
+    list.forEach(function(q,i){ const code=codes[i]; const cell=document.querySelector('[data-hq="'+code+'"]'); if(!cell) return; const raw=window['v_'+q]; const d=parseQtMini(raw); if(d && !isNaN(d.pct)){ const cls=d.pct>0?'pos':(d.pct<0?'neg':'zero'); const arrow=d.pct>0?'\u25b2':(d.pct<0?'\u25bc':''); cell.innerHTML='<span class="'+cls+'">'+arrow+Math.abs(d.pct).toFixed(2)+'%</span>'; } else { cell.innerHTML='<span class="hint">—</span>'; } });
+    sc.remove();
+  };
+  sc.onerror=function(){ list.forEach(function(q,i){ const cell=document.querySelector('[data-hq="'+codes[i]+'"]'); if(cell) cell.innerHTML='<span class="hint">—</span>'; }); sc.remove(); };
+  sc.src='https://qt.gtimg.cn/q='+list.join(',');
+  document.body.appendChild(sc);
+}
 function loadFundHoldings(f){
   const body=document.getElementById('holdingsBody'); if(!body) return;
   const code=f.code||(getAnalysis(f.name)&&getAnalysis(f.name).code)||null;
@@ -5303,9 +5317,10 @@ function loadFundHoldings(f){
       const raw=(window.Data_holderNew||[]);
       const stocks=raw.map(x=>({name:x.name, code:x.code, p:parseFloat(x.proportion)||0, v:parseFloat((x.value||'').replace(/,/g,''))||0})).filter(x=>x.name);
       const mgr=(window.Data_fundManager&&window.Data_fundManager[0]&&window.Data_fundManager[0].name)||(window.Data_currentFundManager&&window.Data_currentFundManager[0]&&window.Data_currentFundManager[0].name)||'';
-      let rows=stocks.slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name||'—')}</td><td class=\"code\">${x.code||'—'}</td><td class=\"num\">${x.p.toFixed(2)}%</td></tr>`).join('');
-      if(!rows) rows='<tr><td colspan=\"4\" class=\"hint\">未获取到持仓（可能为纯债/货币，或接口未返回）</td></tr>';
-      body.innerHTML=`<table class=\"am-t holdings-tbl\"><thead><tr><th>#</th><th>名称</th><th>代码</th><th>占比</th></tr></thead><tbody>${rows}</tbody></table>`+(mgr?`<p class=\"hint\" style=\"margin:6px 0 0\">基金经理：${esc(mgr)}</p>`:'');
+      let rows=stocks.slice(0,10).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name||'—')}</td><td class=\"code\">${x.code||'—'}</td><td class=\"num\">${x.p.toFixed(2)}%</td><td class=\"num\" data-hq=\"${x.code||''}\">—</td></tr>`).join('');
+      if(!rows) rows='<tr><td colspan=\"5\" class=\"hint\">未获取到持仓（可能为纯债/货币，或接口未返回）</td></tr>';
+      body.innerHTML=`<table class=\"am-t holdings-tbl\"><thead><tr><th>#</th><th>名称</th><th>代码</th><th>占比</th><th>当日涨跌</th></tr></thead><tbody>${rows}</tbody></table>`+(mgr?`<p class=\"hint\" style=\"margin:6px 0 0\">基金经理：${esc(mgr)}</p>`:'');
+      loadHoldingsQuotes(stocks.slice(0,10).map(x=>x.code));
     }catch(e){ body.innerHTML='持仓解析失败'; }
     s.remove();
   };

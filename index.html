@@ -1009,6 +1009,22 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .ov-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(15px, 3.8vw, 16px); }
   /* 移动端：总资产大卡片通铺 + 元数据三列占满，消除右侧留白（图一） */
   .ov-hero { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+  /* 账户资产 + 当日收益（全部账户口径时，hero 下方） */
+  .acc-assets { margin-top: 12px; }
+  .acc-assets-h { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; }
+  .acc-assets-h .hint { font-size: 12px; font-weight: 400; color: var(--text-3); }
+  .acc-assets-list { border: 1px solid var(--border-3); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .acc-assets-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid var(--border-3); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .acc-assets-row:last-child { border-bottom: none; }
+  .acc-assets-row:active { background: var(--surface-2); }
+  .acc-assets-row .al { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .acc-assets-row .nm { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acc-assets-row .own { font-size: 11px; color: var(--text-3); background: var(--surface-2); border-radius: 5px; padding: 1px 6px; flex-shrink: 0; }
+  .acc-assets-row .ar { text-align: right; flex-shrink: 0; }
+  .acc-assets-row .amt { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .acc-assets-row .g { font-size: 12px; margin-top: 2px; font-variant-numeric: tabular-nums; color: var(--text-3); }
+  .acc-assets-row .g.pos { color: var(--up); }
+  .acc-assets-row .g.neg { color: var(--down); }
   .ov-hero-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   .ov-hero-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; width: 100%; }
   .ov-hero-meta > div { display: flex; flex-direction: column; gap: 2px; }
@@ -3635,6 +3651,27 @@ function renderTrendSection(){
         </div>
       </section>
     </div>`;
+  // 账户资产 + 当日总收益：仅在「全部账户」口径下展示（已筛选具体账户时 hero 即该账户，不再重复）
+  if(curAccount==='全部'){
+    const accRows=ACCOUNTS.map(function(a){
+      const eff=effAccount(a); const list=_allHoldings.filter(function(f){ return effAccount(f.account)===eff; });
+      const mv=list.reduce(function(s,f){ return s+(f.mv||0); },0);
+      let g=0, anyG=false;
+      list.forEach(function(f){ const d=dayGainOf(f); if(d!=null){ g+=d; anyG=true; } });
+      const gShow=anyG?g:null;
+      const pct=(gShow!=null&&(mv-gShow)>0)?(gShow/(mv-gShow)*100):null;
+      return { name:eff, owner:accOwner(eff), mv:mv, g:gShow, pct:pct };
+    }).filter(function(r){ return r.mv>0.01||r.g!=null; }).sort(function(a,b){ return b.mv-a.mv; });
+    if(accRows.length){
+      box.innerHTML+='<div class="acc-assets"><div class="acc-assets-h">账户资产 <span class="hint">点行切换账户</span></div><div class="acc-assets-list">'
+        +accRows.map(function(r){
+          const gTxt=r.g==null?'—':((r.g>=0?'+':'−')+M(Math.abs(r.g)));
+          const gCls=r.g==null?'':(r.g>=0?'pos':'neg');
+          const pctTxt=r.pct==null?'':(' <span class="'+(r.pct>=0?'pos':'neg')+'">'+((r.pct>=0?'+':'−')+Math.abs(r.pct).toFixed(2)+'%')+'</span>');
+          return '<div class="acc-assets-row" onclick="filterAccount(\''+escJs(r.name).replace(/\\'/g,"\\'")+'\')"><div class="al"><span class="nm">'+escHtml(r.name)+'</span><span class="own">'+escHtml(r.owner)+'</span></div><div class="ar"><div class="amt">'+mask(M(r.mv))+'</div><div class="g '+gCls+'">今日 '+mask(gTxt)+pctTxt+'</div></div></div>';
+        }).join('')+'</div></div>';
+    }
+  }
 }
 
 let pieChart=null, barChart=null;

@@ -823,9 +823,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 移动端持仓表格：列可配置（跟随「≡ 列」开关）+ 列多时横向滚动；基金名列固定左侧 */
   .home-ctable-wrap{ background:var(--surface); margin:0; }
   .home-ctable-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .home-ctable{ border-collapse:collapse; font-size:13px; min-width:100%; table-layout:fixed; }
+  .home-ctable{ border-collapse:separate; border-spacing:0; font-size:13px; min-width:100%; table-layout:fixed; }
   .home-ctable th{ padding:10px 10px 8px; color:var(--text-3); font-weight:600; text-align:right; border-bottom:1px solid var(--border); font-size:11px; letter-spacing:.3px; white-space:nowrap; cursor:pointer; user-select:none; overflow:hidden; }
-  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:2; background:var(--surface); width:148px; min-width:148px; max-width:148px; }
+  .home-ctable th:first-child{ text-align:left; position:sticky; left:0; z-index:3; background:var(--surface); width:148px; min-width:148px; max-width:148px; box-shadow:2px 0 6px -4px rgba(0,0,0,.08); }
+  .home-ctable td:first-child{ position:sticky; left:0; z-index:2; background:var(--surface); width:148px; min-width:148px; max-width:148px; box-shadow:2px 0 6px -4px rgba(0,0,0,.08); }
   .home-ctable thead th.th-col{ cursor:default; width:34px; }
   .home-ctable th .sub{ font-weight:400; display:block; font-size:10px; margin-top:1px; }
   .home-ctable th .arrow{ font-size:9px; margin-left:2px; color:var(--text-3); }

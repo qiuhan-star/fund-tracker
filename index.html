@@ -2616,6 +2616,7 @@ function renderIdxGrid(){
   const box=document.getElementById('idxGrid'); if(!box) return;
   let html='';
   INDEX_GRID.forEach(function(g){
+    let cards='';
     g.items.forEach(function(it){
       const st=INDEX_STATE.find(function(s){ return s.group===g.group; }).items.find(function(x){ return x.secid===it.secid; });
       const day=st.day;
@@ -2634,8 +2635,7 @@ function renderIdxGrid(){
       }
       const high=st.high==null?'\u2014':(+st.high).toLocaleString('en-US',{maximumFractionDigits:2});
       const low=st.low==null?'\u2014':(+st.low).toLocaleString('en-US',{maximumFractionDigits:2});
-      html+='<div class="idx-card">'
-        +'<div class="idx-tag">'+esc(g.group)+'</div>'
+      cards+='<div class="idx-card">'
         +'<div class="idx-nm">'+esc(it.name)+'</div>'
         +'<div class="idx-pct '+cls+'">'+sym+' '+pctTxt+' <span class="live">实时</span></div>'
         +'<div class="idx-price '+cls+'">'+price+'</div>'
@@ -2643,9 +2643,10 @@ function renderIdxGrid(){
         +'<div class="idx-row"><span>高 '+high+'</span><span>低 '+low+'</span></div>'
         +'</div>';
     });
+    html+='<div class="idx-grp2"><div class="idx-grp-h">'+esc(g.group)+'</div><div class="idx-list2">'+cards+'</div></div>';
   });
-  // 单一大 grid 连续铺（不按组分行，避免"港股只有1张卡占1/3列孤岛"视觉重叠）
-  box.innerHTML='<div class="idx-grid">'+html+'</div>';
+  // 按市场分组，每组一行（A股/港股/美股/全球），组内指数等宽横铺
+  box.innerHTML='<div class="idx-grid2">'+html+'</div>';
 }
 function loadIdxAndRender(){
   if(IDX_BUSY) return;
@@ -8950,6 +8951,11 @@ function renderSyncCfg(){
 /* ===== 大盘指数卡片（市场风向 Tab 独立模块；防"叠在一起"=grid-auto-rows 等高+overflow hidden） ===== */
 .idx-tag{font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .idx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 14px 12px;min-width:0}
+.idx-grid2{display:flex;flex-direction:column;gap:14px;padding:4px 14px 12px;min-width:0}
+.idx-grp2{min-width:0}
+.idx-grp-h{font-size:12px;font-weight:600;color:var(--text-2);margin:0 0 6px 2px;padding-left:6px;border-left:3px solid var(--accent);line-height:1.2}
+.idx-list2{display:flex;gap:8px}
+.idx-list2 .idx-card{flex:1 1 0;min-width:0}
 .idx-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:7px 9px;display:flex;flex-direction:column;gap:2px;overflow:hidden;min-width:0;font-variant-numeric:tabular-nums;height:112px;justify-content:space-between}
 .idx-card .idx-nm{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .idx-card .idx-pct{font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center}

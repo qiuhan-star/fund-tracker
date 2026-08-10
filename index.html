@@ -1430,7 +1430,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     <!-- 市场风向 Tab 专用：数据源 / 刷新状态栏（公共市场数据，与"谁的账户"无关） -->
     <div class="scope-bar" id="marketStatus" style="display:none">
       <span class="scope-lab">数据源</span>
-      <span class="scope-hint">大盘指数：腾讯财经实时 · 板块资金 / 热门基金：示例数据（待接真实接口）</span>
+      <span class="scope-hint">大盘指数/港股通：腾讯实时 · 板块涨跌：新浪实时 · 热门基金：示例</span>
       <span id="marketRefresh" class="scope-hint" style="margin-left:auto">最近刷新：—</span>
     </div>
 
@@ -1557,6 +1557,40 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <div class="card">
         <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="idx-head-right"><span class="hint" style="font-size:11px;color:var(--text-3)">实时·东方财富</span> <button class="btn sm" id="idxSparkToggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button> <button class="btn sm" onclick="loadIdxAndRender()">🔄 刷新</button></span></div>
         <div id="idxGrid"></div>
+      </div>
+      <!-- 板块涨跌榜（新浪实时） -->
+      <div class="card">
+        <div class="sec-head">
+          <div class="sec-head-l">
+            <h2 style="margin:0;font-size:14px">板块涨跌榜 <span class="tag tag-sample" id="flowTag">示例</span></h2>
+            <span class="mkt-legend">🔴 涨 🟢 跌</span>
+          </div>
+        </div>
+        <p class="hint" id="flowHint" style="font-size:12px;margin:4px 14px 0">实时接口拉取失败，暂用示例数据</p>
+        <div class="cap-grid" style="padding:0 14px 14px">
+          <div class="flow-col inflow-bg">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:6px;font-weight:600">领涨板块</div>
+            <ul id="inflow-list" style="list-style:none;margin:0;padding:0"></ul>
+          </div>
+          <div class="flow-col outflow-bg">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:6px;font-weight:600">领跌板块</div>
+            <ul id="outflow-list" style="list-style:none;margin:0;padding:0"></ul>
+          </div>
+        </div>
+      </div>
+      <!-- 港股通 · 恒生（腾讯实时） -->
+      <div class="card">
+        <div class="sec-head">
+          <div class="sec-head-l">
+            <h2 style="margin:0;font-size:14px">港股通 · 恒生 <span class="tag tag-live" id="capTag">实时</span></h2>
+            <span class="mkt-legend">🔴 涨 🟢 跌</span>
+          </div>
+        </div>
+        <p class="hint" style="font-size:12px;margin:4px 14px 0">腾讯实时港股（南下资金主要标的）· 北向净买额无免费云源</p>
+        <div style="padding:10px 14px 14px">
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:4px">恒生指数</div>
+          <div class="cap-val" id="hsiVal" style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">—</div>
+        </div>
       </div>
       <!-- 赛道 / 主题 -->
       <div class="card">
@@ -2407,62 +2441,35 @@ const MARKET_RANK = {
     { code: '501016', name: '国泰中证申万证券', type: '指数型', est: '+1.55%', w1: '+2.6%' }
   ]
 };
-function fetchCapitalFlow(){
-  return new Promise(resolve=>{
-    const timer=setTimeout(()=>resolve(null),5000);
-    const cb='cf_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    window[cb]=d=>{
-      clearTimeout(timer);
-      try{
-        const diff=(d&&d.data&&d.data.diff)||[];
-        if(!diff.length){ resolve(null); }
-        else {
-          const arr=diff.map(x=>({name:x.f14, net:+(x.f62||0)})).filter(x=>x.name);
-          const fmt=v=>{ const yi=v/1e8; return (yi>=0?'+':'')+yi.toFixed(1)+'亿'; };
-          const inflow=arr.filter(x=>x.net>0).sort((a,b)=>b.net-a.net).slice(0,5).map(x=>({name:x.name, amount:fmt(x.net)}));
-          const outflow=arr.filter(x=>x.net<0).sort((a,b)=>a.net-b.net).slice(0,5).map(x=>({name:x.name, amount:fmt(x.net)}));
-          resolve({inflow:inflow, outflow:outflow, ok:true});
-        }
-      }catch(e){ resolve(null); }
-      window[cb]=null; s.remove();
-    };
-    s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
-    // 东方财富行业板块主力资金流（m:90+t:2），JSONP 绕过 CORS
-    s.src='https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=50&po=1&np=1&fltt=2&invt=2&fs=m:90+t:2&fields=f12,f14,f3,f62,f184&cb='+cb+'&_='+Date.now();
-    document.body.appendChild(s);
+function fetchSectorFlow(){
+  // 真实板块涨跌（新浪行业ETF当日涨幅），替代东方财富主力资金流（东财在 Vercel 服务器被封）
+  const items=(typeof TRACK_SECTORS!=='undefined'?TRACK_SECTORS:[]).map(function(it){ return {name:it.name, sym:emSecidToSym(it.secid)}; });
+  if(!items.length) return Promise.resolve(null);
+  return Promise.all(items.map(function(it){
+    return fetchSinaKline(it.sym).then(function(d){ return {name:it.name, day:(d&&isFinite(d.day))?d.day:null}; }).catch(function(){ return {name:it.name, day:null}; });
+  })).then(function(arr){
+    const valid=arr.filter(function(x){ return x.day!=null; });
+    if(!valid.length) return null;
+    const fmt=function(v){ return (v>=0?'+':'')+v.toFixed(2)+'%'; };
+    const inflow=valid.filter(function(x){return x.day>0;}).sort(function(a,b){return b.day-a.day;}).slice(0,5).map(function(x){return {name:x.name, amount:fmt(x.day)};});
+    const outflow=valid.filter(function(x){return x.day<0;}).sort(function(a,b){return a.day-b.day;}).slice(0,5).map(function(x){return {name:x.name, amount:fmt(x.day)};});
+    return {inflow:inflow, outflow:outflow, ok:true};
   });
 }
 function setFlowTag(live){
   const t=document.getElementById('flowTag');
-  if(t){ t.textContent=live?'实时':'示例'; t.className='tag '+(live?'tag-live':'tag-sample'); }
+  if(t){ t.textContent=live?'实时·新浪':'示例'; t.className='tag '+(live?'tag-live':'tag-sample'); }
   const h=document.getElementById('flowHint');
-  if(h){ h.textContent=live?'东方财富实时行业板块主力资金流（A股盘中/收盘）':'实时接口拉取失败，暂用示例数据'; }
-}
-// 北向/南向资金（沪深港通净买额）——东方财富 kamt 接口，JSONP 绕过 CORS
-function loadNorthSouth(){
-  return new Promise(resolve=>{
-    const timer=setTimeout(()=>resolve(null),6000);
-    const cb='ns_'+Math.random().toString(36).slice(2);
-    const s=document.createElement('script');
-    window[cb]=d=>{
-      clearTimeout(timer);
-      try{
-        const data=d&&d.data; if(!data){ resolve(null); return; }
-        const wan=v=>(v==null?'0':String(v)).replace(/,/g,'');
-        const g=data.gt||{};
-        const nb=+(wan(g.f52)) || ( (data.hk2sh?+(wan(data.hk2sh.f52)):0) + (data.hk2sz?+(wan(data.hk2sz.f52)):0) );
-        const sb=(data.sh2hk?+(wan(data.sh2hk.f52)):0) + (data.sz2hk?+(wan(data.sz2hk.f52)):0);
-        resolve({nb:nb, sb:sb, ok:true});
-      }catch(e){ resolve(null); }
-      window[cb]=null; s.remove();
-    };
-    s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
-    s.src='https://push2.eastmoney.com/api/qt/kamt/get?fields1=f1,f3&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65&cb='+cb+'&_='+Date.now();
-    document.body.appendChild(s);
-  });
+  if(h){ h.textContent=live?'新浪实时板块涨跌（按行业ETF当日涨幅）':'实时接口拉取失败，暂用示例数据'; }
 }
 
+// 港股通参考：恒生指数实时（腾讯源，经 /api/sina 代理）。北向净买额无免费云源（东财在 Vercel 被封、腾讯无聚合接口），故不展示。
+function fetchHsgtFlow(){
+  return fetchSinaKline('hkHSI').then(function(d){
+    if(!d || d.last==null) return null;
+    return {last:d.last, day:d.day, ok:true};
+  }).catch(function(){ return null; });
+}
 // 赛道 / 主题：真实行业ETF行情（东方财富 K线 JSONP）
 const TRACK_SECTORS=[
   {name:'半导体',  secid:'1.512480', rep:'国联安中证半导体ETF联接A', repc:'007300'},
@@ -2733,8 +2740,8 @@ function setTrackView(v){
 function loadMarketData(){
   try{ fetchIndices(); }catch(e){ console.warn('指数行情加载异常', e); }
   renderFlows(MARKET_FLOW); setFlowTag(false);
-  fetchCapitalFlow().then(r=>{ if(r&&r.ok&&(r.inflow.length||r.outflow.length)){ renderFlows(r); setFlowTag(true); } });
-  loadNorthSouth().then(r=>{ if(r&&r.ok){ const fmt=v=>{ const yi=v/10000; return (yi>=0?'+':'')+yi.toFixed(2)+'亿'; }; const nb=document.getElementById('nbVal'), sb=document.getElementById('sbVal'); if(nb){ nb.textContent=fmt(r.nb); nb.className='cap-val '+(r.nb>=0?'text-up':'text-down'); } if(sb){ sb.textContent=fmt(r.sb); sb.className='cap-val '+(r.sb>=0?'text-up':'text-down'); } const tg=document.getElementById('capTag'); if(tg){ tg.textContent='实时'; tg.className='tag tag-live'; } } });
+  fetchSectorFlow().then(r=>{ if(r&&r.ok&&(r.inflow.length||r.outflow.length)){ renderFlows(r); setFlowTag(true); } });
+  fetchHsgtFlow().then(r=>{ if(r&&r.ok){ const v=document.getElementById('hsiVal'); if(v){ v.textContent=(isFinite(r.last)?(+r.last).toLocaleString('en-US',{maximumFractionDigits:2}):'—')+'  '+(r.day>=0?'+':'')+(isFinite(r.day)?r.day.toFixed(2):'0.00')+'%'; v.className='cap-val '+(r.day>=0?'text-up':'text-down'); } const tg=document.getElementById('capTag'); if(tg){ tg.textContent='实时·腾讯'; tg.className='tag tag-live'; } } });
   loadFundRank('top');
   renderWatch();
   renderTrack();
@@ -2743,8 +2750,8 @@ function loadMarketData(){
 }
 function renderFlows(data){
   const inList=document.getElementById('inflow-list'), outList=document.getElementById('outflow-list');
-  if(inList) inList.innerHTML=data.inflow.map(i=>`<li><span>${i.name}</span><span class="text-up font-bold">${i.amount}</span></li>`).join('');
-  if(outList) outList.innerHTML=data.outflow.map(i=>`<li><span>${i.name}</span><span class="text-down font-bold">${i.amount}</span></li>`).join('');
+  if(inList) inList.innerHTML=data.inflow.map(i=>`<li style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${i.name}</span><span class="text-up font-bold">${i.amount}</span></li>`).join('');
+  if(outList) outList.innerHTML=data.outflow.map(i=>`<li style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${i.name}</span><span class="text-down font-bold">${i.amount}</span></li>`).join('');
 }
 function switchRankTab(type, btnEl){
   if(btnEl){ const p=btnEl.parentElement; if(p) p.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active')); btnEl.classList.add('active'); }

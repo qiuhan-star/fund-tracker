@@ -862,7 +862,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   }
 
   /* 9. 市场风向：指数卡片改为横向滚动（修复 3 卡右侧留白 + 信息密度低） */
-  .idx-list { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
+  .idx-grp .idx-list { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
   .idx-list::-webkit-scrollbar { display: none; }
   .idx-chip { flex: 1 1 auto !important; width: auto !important; padding: 9px 11px !important; min-height: 0 !important; box-sizing: border-box; }
   .idx-name { font-size: 13px !important; }
@@ -1553,7 +1553,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
     <!-- Tab 5: 市场风向（独立空间：大盘看盘 + 板块资金 + 关注榜） -->
     <div class="tab-panel" id="tp5">
-      <div class="card idx-card">
+      <div class="card">
         <div class="sec-head">
           <h2 style="margin:0;font-size: 14px">大盘实时 <span class="tag">腾讯财经</span></h2>
           <span class="idx-head-right">
@@ -8943,14 +8943,14 @@ function renderSyncCfg(){
   .home-ctable-wrap { padding-top: 2px; }
 /* ===== 大盘指数卡片（市场风向 Tab 独立模块；防"叠在一起"=grid-auto-rows 等高+overflow hidden） ===== */
 .idx-tag{font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.idx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 14px 12px}
-.idx-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:7px 9px;display:flex;flex-direction:column;gap:1px;overflow:hidden;min-width:0;font-variant-numeric:tabular-nums;height:112px}
-.idx-card .idx-nm{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 14px 12px;min-width:0}
+.idx-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:7px 9px;display:flex;flex-direction:column;gap:2px;overflow:hidden;min-width:0;font-variant-numeric:tabular-nums;height:112px;justify-content:space-between}
+.idx-card .idx-nm{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .idx-card .idx-pct{font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
 .idx-card .idx-pct .live{font-size:9px;font-weight:400;opacity:.7}
-.idx-card .idx-price{font-size:17px;font-weight:800;line-height:1.1;letter-spacing:-.3px}
-.idx-card .idx-spk{height:16px;flex-shrink:0;display:flex;align-items:center}.idx-card .idx-spk svg{max-height:100%}.idx-card .idx-nm,.idx-card .idx-price{min-width:0}.idx-card .idx-pct,.idx-card .idx-row{min-height:0}
-.idx-card .idx-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:auto;padding-top:2px;border-top:1px dashed var(--border-3)}
+.idx-card .idx-price{font-size:17px;font-weight:800;line-height:1;letter-spacing:-.3px}
+.idx-card .idx-spk{flex:1 1 auto;min-height:12px;max-height:24px;display:flex;align-items:center}.idx-card .idx-spk svg{max-height:100%;width:100%}.idx-card .idx-nm,.idx-card .idx-price{min-width:0}.idx-card .idx-pct,.idx-card .idx-row{min-height:0}
+.idx-card .idx-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:0;padding-top:3px;border-top:1px dashed var(--border-3)}
 .idx-card .idx-row span{white-space:nowrap}
 @media(max-width:680px){.idx-grid{grid-template-columns:repeat(2,1fr)}.idx-card{height:124px;min-height:124px}}
 }

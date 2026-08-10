@@ -197,8 +197,8 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .hl.alert-tp { background: var(--warn-bg); box-shadow: inset 3px 0 0 var(--warn); }@media (hover: hover) { .hl.alert-tp:hover {  background: var(--warn-bg);  } }
 .hl.alert-sl { background: var(--up-bg); box-shadow: inset 3px 0 0 var(--danger); }@media (hover: hover) { .hl.alert-sl:hover {  background: var(--up-bg);  } }
 /* 持仓紧凑表格 */
-  .seg-group { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }.dense-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }  .dense-table th { padding: 9px 5px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 12px; }.dense-table th:first-child { text-align: left; padding-left:16px; position: sticky; left: 0; z-index: 3; background: var(--surface); width: 148px; min-width: 148px; max-width: 148px; box-shadow: 2px 0 6px -4px rgba(0,0,0,.08); }
-  .dense-table td:first-child { position: sticky; left: 0; z-index: 2; background: var(--surface); width: 148px; min-width: 148px; max-width: 148px; box-shadow: 2px 0 6px -4px rgba(0,0,0,.08); }.dense-table th.sort-on { color: var(--accent); }.dense-table th.sortable { cursor: pointer; user-select: none; transition: color .12s, background .12s; }@media (hover: hover) { .dense-table th.sortable:hover {  color: var(--accent-text); background: var(--surface-2);  } }
+  .seg-group { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }.dense-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }  .dense-table th { padding: 9px 5px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 12px; }.dense-table th:first-child, .dense-table td:first-child { background: var(--surface); width: 148px; min-width: 148px; max-width: 148px; box-shadow: 2px 0 6px -4px rgba(0,0,0,.08); }
+  .dense-table th:first-child { text-align: left; padding-left:16px; }.dense-table th.sort-on { color: var(--accent); }.dense-table th.sortable { cursor: pointer; user-select: none; transition: color .12s, background .12s; }@media (hover: hover) { .dense-table th.sortable:hover {  color: var(--accent-text); background: var(--surface-2);  } }
 .dense-table th .sort-ico { display: inline-block; margin-left: 3px; font-size: 12px; line-height: 1; color: var(--text-3); opacity: .5; font-weight: 700; }.dense-table th.sort-on .sort-ico.on { color: var(--accent); opacity: 1; }/* 拖动换列：轻点=排序，按住拖动=换列 */
   .dense-table th.col-drag { cursor: grab; }.dense-table th.col-drag:active { cursor: grabbing; }.dense-table th.col-dragging { opacity: .35; }.dense-table th.col-dragover { box-shadow: inset 3px 0 0 var(--accent); background: var(--surface-2); }  .dense-table td { padding: 9px 5px; border-bottom: 1px solid var(--border-3); text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }.dense-table td:first-child { text-align: left; }.dense-table tbody tr { cursor: pointer; }@media (hover: hover) { .dense-table tbody tr:hover {  background: var(--surface-2);  } }
 .dt-name { font-weight: 600; font-size: 13px; line-height: 1.2; }.dt-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }.dt-big { font-weight: 700; font-size: 13px; }.dt-sub2 { font-size: 12.5px; color: var(--text-3); margin-top: 3px; }.upd-time { color:#9aa3b2; font-variant-numeric:tabular-nums; }/* 持仓手风琴展开 */
@@ -3210,6 +3210,21 @@ function sortKeyVal(f,k){
   return 0;
 }
 
+// 持仓 dense 表第一列伪吸左：CSS position:sticky 在 Chrome td 不生效，改为 JS scroll 监听 + translateX 抵消（绝对稳定）
+function bindDenseStickyFirstCol(root){
+  root.querySelectorAll('.table-scroll').forEach(function(scroll){
+    if(scroll.__stickyBound) return; scroll.__stickyBound=true;
+    const apply=function(){
+      const x=scroll.scrollLeft;
+      scroll.querySelectorAll('.dense-table tr').forEach(function(tr){
+        const cells=tr.children;
+        if(cells[0]) cells[0].style.transform='translateX('+x+'px)';
+      });
+    };
+    scroll.addEventListener('scroll', apply, {passive:true});
+    apply();
+  });
+}
 function renderHomeList(){
   syncColSetChecks();
   renderCatFilter();
@@ -3277,6 +3292,7 @@ function renderHomeList(){
   box.innerHTML='<div class="table-scroll">'+ (holdGroupBy==='none'?renderHomeDense(list):renderGrouped(list)) +'</div>'+obsHtml;
   syncColSetChecks();
   bindTableScrollFade();
+  bindDenseStickyFirstCol(box);
   ensureStreakLabels(list);
 
   fillWatchQuotes();

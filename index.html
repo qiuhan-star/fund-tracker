@@ -2045,9 +2045,21 @@ function closeAccMenu(){
   const m=document.getElementById('accMenu'), t=document.getElementById('accTitle');
   if(m) m.classList.remove('show'); if(t) t.classList.remove('open');
 }
+var ACC_NOTES={};
+try{ ACC_NOTES=JSON.parse(localStorage.getItem('ft_acc_note')||'{}'); }catch(e){}
+function getAccNote(a){ return ACC_NOTES[effAccount(a)]||''; }
+function setAccNote(a,v){ a=effAccount(a); v=(v||'').trim(); if(v) ACC_NOTES[a]=v; else delete ACC_NOTES[a]; try{ localStorage.setItem('ft_acc_note', JSON.stringify(ACC_NOTES)); }catch(e){} }
+window.openTextPrompt=function(title, def, cb){ var m=document.getElementById('accPromptMask'); if(!m) return; var t=document.getElementById('accPromptTitle'), i=document.getElementById('accPromptInput'), msg=document.getElementById('accPromptMsg'); if(t)t.textContent=title||''; if(i){ i.value=def||''; if(msg)msg.textContent=''; setTimeout(function(){ try{ i.focus(); }catch(e){} },60);} window._accPromptCb=cb; m.classList.add('show'); };
+window.closeAccPrompt=function(){ var m=document.getElementById('accPromptMask'); if(m) m.classList.remove('show'); window._accPromptCb=null; };
+window.confirmAccPrompt=function(){ var m=document.getElementById('accPromptMask'); var i=document.getElementById('accPromptInput'); if(!m||!i) return; var v=(i.value||'').trim(); var cb=window._accPromptCb; closeAccPrompt(); if(cb) cb(v); };
+window.openConfirm=function(title,msg,cb){ var m=document.getElementById('accConfirmMask'); if(!m) return; var t=document.getElementById('accConfirmTitle'), x=document.getElementById('accConfirmMsg'); if(t)t.textContent=title||''; if(x)x.textContent=msg||''; window._accConfirmCb=cb; m.classList.add('show'); };
+window.closeAccConfirm=function(){ var m=document.getElementById('accConfirmMask'); if(m) m.classList.remove('show'); window._accConfirmCb=null; };
+window.confirmAccConfirm=function(){ var cb=window._accConfirmCb; closeAccConfirm(); if(cb) cb(); };
+
 function addAccount(){
-  const name=(window.prompt('添加账户名称：')||'').trim();
-  if(!name) return;
+  openTextPrompt('添加账户名称', '', function(name){ if(!name) return; _addAccountRaw(name); });
+}
+function _addAccountRaw(name){
   if(name==='all'){ toast('「all」为保留字，不能用作账户名'); return; }
   if(accIsBuiltin(name)){ toast('「'+name+'」是内置账户（可在设置里重命名）'); return; }
   if(effBuiltins().concat(CUSTOM_ACCOUNTS).indexOf(name)>=0){ setScopeAcc(name); return; }
@@ -2055,6 +2067,8 @@ function addAccount(){
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
   loadCustomAccounts(); setScopeAcc(name);
   toast('已添加账户「'+name+'」');
+  try{ if(typeof renderAccountNames==='function') renderAccountNames(); }catch(e){}
+  try{ if(typeof renderAccSortList==='function') renderAccSortList(); }catch(e){}
 }
 function removeAccount(name){
   if(accIsBuiltin(name)){ toast('内置账户不可删除（可在设置里重命名）'); return; }
@@ -2062,12 +2076,13 @@ function removeAccount(name){
   const msg = inCustom
     ? '删除账户「'+name+'」？\n仅移除该账户标签，已存在的交易记录仍保留（显示为原账户名）。'
     : '删除账户「'+name+'」？\n将移除该账户下的示例数据（真实持仓不受影响）。';
-  if(!window.confirm(msg)) return;
+  openConfirm('删除账户', msg, function(){ _removeAccountRaw(name); });
+}
+function _removeAccountRaw(name){
+  const inCustom = CUSTOM_ACCOUNTS.indexOf(name)>=0;
   CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.filter(a=>a!==name);
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
-  // 不在自定义列表的纯数据账户（如「示例账户」）：移除其名下示例数据，账户才能真正消失
   if(!inCustom){
-    // 账户可能已改名：用显示名(name)与原始名双向匹配，否则改名后底层数据删不掉、账户又会冒出来
     const accMatch=a=>(a===name||effAccount(a)===name);
     snaps=(snaps||[]).filter(s=>!(s&&accMatch(s.account)));
     trades=(trades||[]).filter(t=>!(t&&accMatch(accOf(t))));
@@ -2076,29 +2091,30 @@ function removeAccount(name){
   loadCustomAccounts();
   if(scopeAcc===name) setScopeAcc(firstPersonalAccount()); else { renderScopeBar(); compute(); }
   try{ refreshSampleBanner(); }catch(e){}
-  // 同步刷新「设置面板」里的账户列表/排序视图（topbar compute 不会触发到这里）
   try{ if(typeof renderAccountNames==='function') renderAccountNames(); }catch(e){}
   try{ if(typeof renderAccSortList==='function') renderAccSortList(); }catch(e){}
   toast('已删除账户「'+name+'」');
 }
 function renameAccount(oldName){
-  const cur=oldName; // oldName 已是改名后的显示名
-  const nv=(window.prompt('重命名账户「'+cur+'」为新名称：', cur)||'').trim();
-  if(!nv || nv===cur){ return; }
+  openTextPrompt('重命名账户「'+oldName+'」', oldName, function(nv){ if(!nv || nv===oldName) return; _renameAccountRaw(oldName, nv); });
+}
+function _renameAccountRaw(oldName, nv){
   if(nv==='all'){ toast('「all」为保留字，不能用作账户名'); return; }
   const allEff=effBuiltins().concat(CUSTOM_ACCOUNTS).concat(_allRaw.map(f=>f.account)).map(effAccount);
   if(allEff.indexOf(nv)>=0){ toast('已存在名为「'+nv+'」的账户'); return; }
-  const origin=renameOrigin(cur)||cur;
+  const origin=renameOrigin(oldName)||oldName;
   ACC_RENAME_MAP[origin]=nv;
   try{ localStorage.setItem('ft_acc_rename', JSON.stringify(ACC_RENAME_MAP)); }catch(e){}
-  if(ACCOUNT_META[cur]){ ACCOUNT_META[nv]=ACCOUNT_META[cur]; delete ACCOUNT_META[cur]; }
-  CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.map(a=> effAccount(a)===cur? nv : a);
+  if(ACCOUNT_META[oldName]){ ACCOUNT_META[nv]=ACCOUNT_META[oldName]; delete ACCOUNT_META[oldName]; }
+  CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.map(a=> effAccount(a)===oldName? nv : a);
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
-  if(scopeAcc===cur) scopeAcc=nv;
-  if(curAccount===cur) curAccount=nv;
+  if(scopeAcc===oldName) scopeAcc=nv;
+  if(curAccount===oldName) curAccount=nv;
   try{ localStorage.setItem('ft_scope', scopeAcc==='all'?'all':scopeAcc); }catch(e){}
   loadCustomAccounts(); renderScopeBar(); compute();
   toast('账户已重命名为「'+nv+'」');
+  try{ if(typeof renderAccountNames==='function') renderAccountNames(); }catch(e){}
+  try{ if(typeof renderAccSortList==='function') renderAccSortList(); }catch(e){}
 }
 function updateScopeUI(){ renderScopeBar(); }
 let curAccount='全部', pendingAcc=null;
@@ -7844,7 +7860,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_acc_note','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }
@@ -8051,6 +8067,7 @@ function renderSyncCfg(){
           <div class="nset-label">账户实体</div>
           <div class="nset-card"><div id="accNameList" class="sort-list"></div></div>
           <div class="nset-card add-acc-card" onclick="addAccount()" role="button" tabindex="0"><div class="panel-row">＋ 添加账户</div></div>
+          <div class="nset-card sort-acc-card" onclick="openSortSheet()" role="button" tabindex="0"><div class="panel-row">⇅ 排序账户</div></div>
         </section>
 
         <!-- 2. 偏好设置 -->
@@ -8574,6 +8591,42 @@ function renderSyncCfg(){
   </div>
 </div>
 
+<style>
+.acc-prompt{ background:var(--surface); color:var(--text); width:100%; max-width:340px; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.28); padding:18px 16px 14px; }
+.acc-prompt .ap-title{ font-size:16px; font-weight:600; margin-bottom:12px; text-align:center; }
+.acc-prompt .ap-input{ width:100%; box-sizing:border-box; font-size:16px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text); }
+.acc-prompt .ap-msg{ font-size:13px; color:#e53935; min-height:16px; margin:8px 2px 0; text-align:center; white-space:pre-line; }
+.acc-prompt .ap-btns{ display:flex; gap:10px; margin-top:16px; }
+.acc-prompt .ap-btn{ flex:1; padding:11px 0; border:none; border-radius:10px; font-size:16px; font-family:inherit; font-weight:600; background:var(--bg); color:var(--text); cursor:pointer; }
+.acc-prompt .ap-btn.primary{ background:var(--accent); color:#fff; }
+.acc-prompt .ap-btn.danger{ background:#ff3b30; color:#fff; }
+.acc-row{ padding:9px 10px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:8px; touch-action:none; }
+.ai-main{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.acc-note{ width:100%; box-sizing:border-box; margin-top:8px; font-size:13px; padding:7px 10px; border:1px solid var(--border-3); border-radius:8px; background:var(--bg); color:var(--text); }
+</style>
+
+<div id="accPromptMask" class="sm-mask">
+  <div class="acc-prompt">
+    <div class="ap-title" id="accPromptTitle">添加账户</div>
+    <input id="accPromptInput" class="ap-input" type="text" placeholder="请输入账户名称" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="ap-msg" id="accPromptMsg"></div>
+    <div class="ap-btns">
+      <button class="ap-btn" onclick="closeAccPrompt()">取消</button>
+      <button class="ap-btn primary" onclick="confirmAccPrompt()">好</button>
+    </div>
+  </div>
+</div>
+<div id="accConfirmMask" class="sm-mask">
+  <div class="acc-prompt">
+    <div class="ap-title" id="accConfirmTitle"></div>
+    <div class="ap-msg" id="accConfirmMsg"></div>
+    <div class="ap-btns">
+      <button class="ap-btn" onclick="closeAccConfirm()">取消</button>
+      <button class="ap-btn danger" onclick="confirmAccConfirm()">删除</button>
+    </div>
+  </div>
+</div>
+
 <!-- 分类管理弹窗 -->
 <div class="sm-mask" id="catManageMask" onclick="if(event.target===this)closeCatManage()">
   <div class="sm-card" style="max-width:560px;width:94%;margin:auto">
@@ -8847,7 +8900,7 @@ function renderSyncCfg(){
       var bi=accIsBuiltin(a);
       var btns='<button class="sort-up" data-acc="'+escAttr(a)+'" onclick="renameAccount(this.getAttribute(\'data-acc\'))" title="重命名" aria-label="重命名">✎</button>';
       if(!bi) btns+='<button class="sort-down" data-acc="'+escAttr(a)+'" onclick="removeAccount(this.getAttribute(\'data-acc\'))" title="删除" aria-label="删除">×</button>';
-      return '<div class="sort-item" data-key="'+escAttr(a)+'"><span class="sort-label">'+escHtml(a)+'</span><span class="sort-ctrl">'+btns+'</span></div>';
+      return '<div class="acc-row" data-key="'+escAttr(a)+'"><div class="ai-main"><span class="sort-label">'+escHtml(a)+'</span><span class="sort-ctrl">'+btns+'</span></div><input class="acc-note" type="text" placeholder="备注（可选）" value="'+escAttr(getAccNote(a))+'" onchange="setAccNote('+escJs(a)+', this.value)" /></div>';
     }).join('');
   };
   window.renderAccSortList=function(){

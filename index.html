@@ -720,26 +720,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     font-size: 14px; /* 提升全局基础字号 */
   }
 
-  /* 2. 顶部 Asset Overview (ov-hero) 重构：解决数字换行与拥挤问题 */
-  .ov-hero {
-    padding: 16px !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-  }
-  
-  .ov-hero-value {
-    font-size: 28px !important; /* 调整总资产大字号，防止溢出 */
-  }
-  
-  .ov-hero-right {
-    text-align: left !important; /* 手机端左对齐更符合阅读习惯 */
-    width: 100%;
-    border-top: 1px dashed var(--border-3);
-    padding-top: 8px;
-    flex-direction: row;
-    justify-content: space-between;
-  }
 
   /* 3. 网格卡片重排：单列/双列优化 */
   .ov-grid {
@@ -1009,8 +989,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 资产总览卡片：防止数值被截断（图一） */
   .ov-card { min-width: 0; overflow: visible; }
   .ov-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(15px, 3.8vw, 16px); }
-  /* 移动端：总资产大卡片通铺 + 元数据三列占满，消除右侧留白（图一） */
-  .ov-hero { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
   /* 账户资产 + 当日收益（全部账户口径时，hero 下方） */
   .acc-assets { margin-top: 12px; }
   .acc-assets-h { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; }

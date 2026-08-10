@@ -8120,7 +8120,7 @@ function renderSyncCfg(){
         <section class="panel-section" id="panel-data">
           <h4 class="panel-title">数据与备份</h4>
 
-          <div class="nset-label">云端同步（GitHub 私有仓库）</div>
+          <div class="nset-label" id="panel-data-cloud">云端同步（GitHub 私有仓库）</div>
           <div class="nset-card">
             <div class="panel-row"><div class="left"><div class="title">开启云同步</div><div class="desc">改动自动备份到你的 GitHub 私有仓库，打开网页自动拉取，多设备一致</div></div><div class="right"><label class="sm-switch"><input type="checkbox" id="smSyncOn" onchange="onSyncToggle()"><span class="sm-slider"></span></label></div></div>
             <div id="syncCfg" style="display:none">
@@ -8154,20 +8154,20 @@ function renderSyncCfg(){
             </div>
           </div>
 
-          <div class="nset-label">本地备份</div>
+          <div class="nset-label" id="panel-data-local">本地备份</div>
           <div class="nset-card">
             <div class="panel-row" style="cursor:pointer" onclick="exportJSON();closeSettings()"><span class="ico c-blue"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg></span><div class="left"><div class="title">导出全量备份 (JSON)</div><div class="desc">完整导出持仓、交易、设置、自选等</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="importJSON();closeSettings()"><span class="ico c-indigo"><svg viewBox="0 0 24 24"><path d="M12 21V9"/><path d="M7 13l5-5 5 5"/><path d="M5 4h14"/></svg></span><div class="left"><div class="title">导入全量备份 (JSON)</div><div class="desc">从本地 JSON 恢复全部数据（覆盖）</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
 
-          <div class="nset-label">CSV 数据</div>
+          <div class="nset-label" id="panel-data-csv">CSV 数据</div>
           <div class="nset-card">
             <div class="panel-row" style="cursor:pointer" onclick="openImportModal();closeSettings()"><span class="ico c-orange"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg></span><div class="left"><div class="title">导入交易记录</div><div class="desc">按模板追加买入 / 卖出 / 转换记录</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="exportHoldingsCSV();closeSettings()"><span class="ico c-orange"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg></span><div class="left"><div class="title">导出持仓数据 (CSV)</div><div class="desc">导出当前持仓明细</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="downloadCSVTemplate();closeSettings()"><span class="ico c-orange"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg></span><div class="left"><div class="title">获取 CSV 记账模板</div><div class="desc">下载标准 CSV 表头格式</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
 
-          <div class="nset-label">缓存与危险区</div>
+          <div class="nset-label" id="panel-data-cache">缓存与危险区</div>
           <div class="nset-card">
             <div class="panel-row"><div class="left"><div class="title">自动刷新净值</div><div class="desc">打开页面时自动拉取最新净值</div></div><div class="right"><label class="sm-switch"><input type="checkbox" id="smAutoRefresh"><span class="sm-slider"></span></label></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="openCacheSheet()"><div class="left"><div class="title">本地缓存</div><div class="desc">净值快照与备份占用，点击清除</div></div><div class="right"><span class="sm-pill" id="smCacheSize">—</span></div></div>
@@ -8182,16 +8182,16 @@ function renderSyncCfg(){
         <!-- 4. 实用工具 -->
         <section class="panel-section" id="panel-tools">
           <h4 class="panel-title">实用工具</h4>
-          <div class="nset-label">数据查询</div>
+          <div class="nset-label" id="panel-tools-query">数据查询</div>
           <div class="nset-card">
             <div class="panel-row" style="cursor:pointer" onclick="openAllTrades();closeSettings()"><span class="ico c-indigo"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 11h8M8 15h5"/></svg></span><div class="left"><div class="title">全部交易记录</div><div class="desc">查看、筛选、编辑所有历史买入 / 卖出 / 转换</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
-          <div class="nset-label">导出与生成</div>
+          <div class="nset-label" id="panel-tools-export">导出与生成</div>
           <div class="nset-card">
             <div class="panel-row" style="cursor:pointer" onclick="saveLocal();closeSettings()"><span class="ico c-orange"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20"/></svg></span><div class="left"><div class="title">生成网页版资产快照</div><div class="desc">单文件离线网页，双击即看</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="window.print();closeSettings()"><span class="ico c-red"><svg viewBox="0 0 24 24"><path d="M6 4h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M14 4v6h6"/><path d="M10 16l2-3 2 3"/><path d="M12 12v7"/></svg></span><div class="left"><div class="title">生成 PDF 资产报告</div><div class="desc">导出资产分布与交易明细的 PDF 报告</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
-          <div class="nset-label">演示与研究数据</div>
+          <div class="nset-label" id="panel-tools-demo">演示与研究数据</div>
           <div class="nset-card">
             <div class="panel-row" style="cursor:pointer" onclick="syncOnline();closeSettings()"><span class="ico c-indigo"><svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 18z"/></svg></span><div class="left"><div class="title">恢复线上示例数据</div><div class="desc">从公开示例模板 (fund-data.json) 合并到本地，与私有云同步无关</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="importMyExtras();closeSettings()"><span class="ico c-indigo"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h8"/><rect x="16" y="14" width="4" height="4" rx="1"/></svg></span><div class="left"><div class="title">恢复演示 / 真实分析数据</div><div class="desc">替换演示债基为实际研究数据</div></div><div class="right"><span class="item-arrow">›</span></div></div>
@@ -8726,15 +8726,15 @@ function renderSyncCfg(){
       row('记账偏好', (typeof dcaAutoEnabled==='function'?(dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭'):''),'',"openSettingsDetail('prefs')")
     ]);
     html+=card('#1f93a8',SVG.cloud,'数据与备份',[
-      row('云端同步','','',"openSettingsDetail('data')"),
-      row('本地备份','','',"openSettingsDetail('data')"),
-      row('CSV 数据','','',"openSettingsDetail('data')"),
-      row('缓存与危险区','','',"openSettingsDetail('data')",true)
+      row('云端同步','','',"openSettingsDetail('data','cloud')"),
+      row('本地备份','','',"openSettingsDetail('data','local')"),
+      row('CSV 数据','','',"openSettingsDetail('data','csv')"),
+      row('缓存与危险区','','',"openSettingsDetail('data','cache')",true)
     ]);
     html+=card('#FF9500',SVG.tools,'实用工具',[
-      row('数据查询','','',"openSettingsDetail('tools')"),
-      row('导出与生成','','',"openSettingsDetail('tools')"),
-      row('演示与研究数据','','',"openSettingsDetail('tools')")
+      row('数据查询','','',"openSettingsDetail('tools','query')"),
+      row('导出与生成','','',"openSettingsDetail('tools','export')"),
+      row('演示与研究数据','','',"openSettingsDetail('tools','demo')")
     ]);
     html+=card('#1f9e43',SVG.lock,'安全与隐私',[ row('应用锁与资产隐蔽','','',"openSettingsDetail('security')") ]);
     html+=card('#8e8e93',SVG.info,'关于应用',[
@@ -8743,12 +8743,14 @@ function renderSyncCfg(){
     ]);
     host.innerHTML=html;
   };
-  window.openSettingsDetail=function(id){
+  window.openSettingsDetail=function(id, anchor){
     var panel=document.querySelector('.settings-panel'); if(!panel) return;
     panel.classList.add('mobile-detail');
-    var t=document.getElementById('smMobileTitle'); if(t){ var c=null; for(var i=0;i<SM_MOBILE_CATS.length;i++){ if(SM_MOBILE_CATS[i].id===id) c=SM_MOBILE_CATS[i]; } t.textContent=c?c.title:'设置'; }
+    var subTitles={cloud:'云端同步', local:'本地备份', csv:'CSV 数据', cache:'缓存与危险区', query:'数据查询', export:'导出与生成', demo:'演示与研究数据'};
+    var t=document.getElementById('smMobileTitle'); if(t){ var c=null; for(var i=0;i<SM_MOBILE_CATS.length;i++){ if(SM_MOBILE_CATS[i].id===id) c=SM_MOBILE_CATS[i]; } t.textContent=(anchor&&subTitles[anchor])?subTitles[anchor]:(c?c.title:'设置'); }
     settingsTab(id);
     panel.scrollTop=0;
+    if(anchor){ setTimeout(function(){ var el=document.getElementById('panel-'+id+'-'+anchor); if(el){ panel.scrollTop = Math.max(0, el.offsetTop - 64); } }, 10); }
   };
   window.closeSettingsDetail=function(){
     var panel=document.querySelector('.settings-panel'); if(!panel) return;

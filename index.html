@@ -2548,11 +2548,18 @@ function jsonpEM(url, cbName, timeout){
     document.body.appendChild(s);
   });
 }
-function fetchEMKline(secid, fields2){
-  const url=API_BASE+'/emkline?secid='+encodeURIComponent(secid)+'&fields2='+encodeURIComponent(fields2)+'&klt=101';
+function emSecidToSina(secid){
+  if(!secid) return secid;
+  if(/^1\.\d+$/.test(secid)) return 'sh'+secid.split('.')[1];
+  if(/^0\.\d+$/.test(secid)) return 'sz'+secid.split('.')[1];
+  const M={'100.HSI':'r_hkHSI','100.DJI':'gb_dji','100.NDX':'gb_ixic','100.SPX':'gb_sp500','100.NK225':'r_jpNI225','100.KS200':'r_krks200','100.FTSE':'r_ukFTSE'};
+  return M[secid]||secid;
+}
+function fetchSinaKline(symbol, datalen){
+  const url=API_BASE+'/sina?symbol='+encodeURIComponent(symbol)+'&datalen='+(datalen||250);
   return fetchJSON(url, 12000).then(function(d){
-    if(!d || !d.data || !d.data.klines) return null;
-    return d.data.klines;
+    if(!d || !d.closes) return null;
+    return d;
   }).catch(function(){ return null; });
 }
 function computeTrackMetrics(pts){
@@ -2570,9 +2577,9 @@ function computeTrackMetrics(pts){
   return {day:day, w1:w1, m1:m1, m3:m3, m6:m6, y1:y1, pct:pct};
 }
 function fetchTrackKline(secid){
-  return fetchEMKline(secid, 'f51,f53').then(function(kl){
-    if(!kl || !kl.length) return null;
-    const pts=kl.map(function(k){ const p=String(k).split(','); return +p[1]; }).filter(function(v){ return isFinite(v)&&v>0; });
+  return fetchSinaKline(emSecidToSina(secid)).then(function(d){
+    if(!d || !d.closes || d.closes.length<2) return null;
+    const pts=d.closes.filter(function(v){ return isFinite(v)&&v>0; });
     if(pts.length<2) return null;
     const m=computeTrackMetrics(pts);
     const w=pts.slice(Math.max(0, pts.length-63)); const line=[];
@@ -2597,17 +2604,15 @@ function fetchTrackKlineRetry(secid, retries){
   return attempt(retries);
 }
 function fetchIdxKline(secid){
-  return fetchEMKline(secid, 'f51,f52,f53,f54,f55,f56').then(function(kl){
-    if(!kl || !kl.length) return null;
-    const pts=kl.map(function(k){ return +String(k).split(',')[1]; }).filter(function(v){ return isFinite(v)&&v>0; });
-    if(pts.length<2) return null;
-    const last=pts[pts.length-1], prev=pts[pts.length-2];
-    const day=prev>0?(last-prev)/prev*100:null;
-    const w=pts.slice(Math.max(0, pts.length-63));
-    const line=[]; for(let i=0;i<30;i++){ line.push(w[Math.min(w.length-1, Math.floor(i*(w.length-1)/29))]); }
-    let high=null, low=null;
-    kl.forEach(function(k){ const p=String(k).split(','); const h=+p[3], l=+p[4]; if(isFinite(h)&&h>0&&(high==null||h>high)) high=h; if(isFinite(l)&&l>0&&(low==null||l<low)) low=l; });
-    return {day:day, last:last, high:high, low:low, line:line};
+  return fetchSinaKline(emSecidToSina(secid)).then(function(d){
+    if(!d) return null;
+    const pts=(d.closes||[]).filter(function(v){ return isFinite(v)&&v>0; });
+    let line=[];
+    if(pts.length>=2){
+      const w=pts.slice(Math.max(0, pts.length-63));
+      for(let i=0;i<30;i++){ line.push(w[Math.min(w.length-1, Math.floor(i*(w.length-1)/29))]); }
+    }
+    return {day:d.day, last:d.last, high:d.high, low:d.low, line:line};
   });
 }
 function renderIdxGrid(){
@@ -2670,7 +2675,7 @@ function renderTrack(){
     .then(function(res){
       TRACK_BUSY=false;
       const ok=res.filter(function(r){ return r.status==='fulfilled'&&r.value; }).length;
-      if(tag){ tag.textContent= ok>0 ? '实时\u00b7东方财富' : '\u83b7\u53d6\u5931\u8d25'; tag.className='tag '+(ok>0?'tag-live':'tag-err'); }
+      if(tag){ tag.textContent= ok>0 ? '实时\u00b7新浪' : '\u83b7\u53d6\u5931\u8d25'; tag.className='tag '+(ok>0?'tag-live':'tag-err'); }
       _renderTrackBody(TRACK_STATE);
       if(TRACK_BENCH.m3==null){
         setTimeout(function(){
@@ -6405,9 +6410,9 @@ function openIdxModal(secid){
     html+='<div class="idx-modal-chart">'+svg+'</div>';
     let legend='';
     if(ma5||ma20){ legend=' · <span style="color:#f39c12;font-weight:600">━ MA5</span>'+(ma20?' <span style="color:#8e44ad;font-weight:600">━ MA20</span>':''); }
-    html+='<div class="idx-sparkcap" style="margin-top:8px">近'+n+'日 · 日线（东方财富）'+legend+'</div>';
+    html+='<div class="idx-sparkcap" style="margin-top:8px">近'+n+'日 · 日线（新浪）'+legend+'</div>';
   } else {
-    html+='<div class="hint" style="padding:22px 4px">该指数暂无可用走势数据（东方财富未返回日线），暂不可放大。当前价：'+cur+'。</div>';
+    html+='<div class="hint" style="padding:22px 4px">该指数暂无可用走势数据（新浪未返回日线），暂不可放大。当前价：'+cur+'。</div>';
   }
   if(body) body.innerHTML=html;
   const m=document.getElementById('idxModal'); if(m) m.classList.add('show');

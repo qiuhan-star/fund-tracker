@@ -2548,6 +2548,13 @@ function jsonpEM(url, cbName, timeout){
     document.body.appendChild(s);
   });
 }
+function fetchEMKline(secid, fields2){
+  const url=API_BASE+'/emkline?secid='+encodeURIComponent(secid)+'&fields2='+encodeURIComponent(fields2)+'&klt=101';
+  return fetchJSON(url, 12000).then(function(d){
+    if(!d || !d.data || !d.data.klines) return null;
+    return d.data.klines;
+  }).catch(function(){ return null; });
+}
 function computeTrackMetrics(pts){
   const n=pts.length; if(n<2) return null;
   const last=pts[n-1], prev=pts[n-2];
@@ -2563,12 +2570,8 @@ function computeTrackMetrics(pts){
   return {day:day, w1:w1, m1:m1, m3:m3, m6:m6, y1:y1, pct:pct};
 }
 function fetchTrackKline(secid){
-  const cb='tk_'+Math.random().toString(36).slice(2);
-  const d=new Date(); const beg=new Date(d.getTime()-480*864e5);
-  const fmt=function(x){ return x.getFullYear()+String(x.getMonth()+1).padStart(2,'0')+String(x.getDate()).padStart(2,'0'); };
-  const url='https://push2his.eastmoney.com/api/qt/stock/kline/get?secid='+secid+'&fields1=f1,f2,f3&fields2=f51,f53&klt=101&fqt=1&beg='+fmt(beg)+'&end=20500101';
-  return jsonpEM(url, cb, 9000).then(function(d){
-    const kl=(d&&d.data&&d.data.klines)||[]; if(!kl.length) return null;
+  return fetchEMKline(secid, 'f51,f53').then(function(kl){
+    if(!kl || !kl.length) return null;
     const pts=kl.map(function(k){ const p=String(k).split(','); return +p[1]; }).filter(function(v){ return isFinite(v)&&v>0; });
     if(pts.length<2) return null;
     const m=computeTrackMetrics(pts);
@@ -2594,13 +2597,8 @@ function fetchTrackKlineRetry(secid, retries){
   return attempt(retries);
 }
 function fetchIdxKline(secid){
-  const cb='id'+Math.random().toString(36).slice(2);
-  const d=new Date(); const beg=new Date(d.getTime()-480*864e5);
-  const fmt=function(x){ return x.getFullYear()+String(x.getMonth()+1).padStart(2,'0')+String(x.getDate()).padStart(2,'0'); };
-  // f51=收, f52=开, f53=高, f54=低, f55=量, f56=额
-  const url='https://push2his.eastmoney.com/api/qt/stock/kline/get?secid='+secid+'&fields1=f1,f2,f3&fields2=f51,f52,f53,f54,f55,f56&klt=101&fqt=1&beg='+fmt(beg)+'&end=20500101';
-  return jsonpEM(url, cb, 9000).then(function(d){
-    const kl=(d&&d.data&&d.data.klines)||[]; if(!kl.length) return null;
+  return fetchEMKline(secid, 'f51,f52,f53,f54,f55,f56').then(function(kl){
+    if(!kl || !kl.length) return null;
     const pts=kl.map(function(k){ return +String(k).split(',')[1]; }).filter(function(v){ return isFinite(v)&&v>0; });
     if(pts.length<2) return null;
     const last=pts[pts.length-1], prev=pts[pts.length-2];

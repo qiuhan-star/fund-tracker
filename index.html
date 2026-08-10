@@ -3153,10 +3153,10 @@ function estCellHtml(f){
   if(mkt && nc.gszzl!=null){
     const gt=nc.gztime?nc.gztime.slice(11):'';
     const ageHtml=age?`<span class="est-dot">·</span><span class="est-age">${age}</span>`:'';
-    return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 est-fresh"><span class="est-tag">估 ${gt}</span>${ageHtml}</div>`;
+    return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 est-fresh"><span class="est-tag">${gt}</span>${ageHtml}</div>`;
   }
   if(nc.navChg!=null){
-    return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-stale"><span class="est-tag">收</span><span class="est-dot">·</span>${mkt?'无盘中估值':(nc.navChgDate?nc.navChgDate.slice(5):'已确认')}</div>`;
+    return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-stale">${mkt?'无盘中估值':(nc.navChgDate?nc.navChgDate.slice(5):'已确认')}</div>`;
   }
   return `<div class="dt-big zero">—</div><div class="dt-sub2 est-nodata">${mkt?'无估算':'无预估'}</div>`;
 }
@@ -3320,7 +3320,7 @@ function denseRowsHtml(list){
         const fresh=dpDate&&dpDate===todayStr; // 今晚刚更新的净值才标亮，区别于仍用昨日净值的滞后基金
         if(dp!=null && f.mv!=null){
           const amt=f.mv-f.mv/(1+dp/100);
-          tds+=`<td class="${dp>=0?'pos':'neg'}${fresh?' day-fresh':''}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">${fresh?'<span class="day-dot"></span>':''}收 ${dpDate?dpDate.slice(5):''}</div></td>`;
+          tds+=`<td class="${dp>=0?'pos':'neg'}${fresh?' day-fresh':''}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">${fresh?'<span class="day-dot"></span>':''}${dpDate?dpDate.slice(5):''}</div></td>`;
         } else {
           tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
         }
@@ -3333,7 +3333,7 @@ function denseRowsHtml(list){
         const _chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null);
         if(_chg!=null && f.mv!=null){
           const _amt=f.mv-f.mv/(1+_chg/100);
-          tds+=`<td class="${_amt>=0?'pos':'neg'}"><div class="dt-big">${_amt>=0?'+':''}${M(_amt)}</div><div class="dt-sub2">当日 ${_chg>=0?'+':''}${_chg.toFixed(2)}%</div></td>`;
+          tds+=`<td class="${_amt>=0?'pos':'neg'}"><div class="dt-big">${_amt>=0?'+':''}${M(_amt)}</div><div class="dt-sub2">${_chg>=0?'+':''}${_chg.toFixed(2)}%</div></td>`;
         } else {
           tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
         }

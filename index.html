@@ -1555,7 +1555,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     <div class="tab-panel" id="tp5">
       <!-- 大盘指数：东方财富实时，独立卡片，不嵌套在赛道/主题内 -->
       <div class="card">
-        <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="idx-head-right"><span class="hint" style="font-size:11px;color:var(--text-3)">实时·东方财富</span> <button class="btn sm" onclick="loadIdxAndRender()">🔄 刷新</button></span></div>
+        <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="idx-head-right"><span class="hint" style="font-size:11px;color:var(--text-3)">实时·东方财富</span> <button class="btn sm" id="idxSparkToggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button> <button class="btn sm" onclick="loadIdxAndRender()">🔄 刷新</button></span></div>
         <div id="idxGrid"></div>
       </div>
       <!-- 赛道 / 主题 -->
@@ -2639,14 +2639,15 @@ function renderIdxGrid(){
         +'<div class="idx-nm">'+esc(it.name)+'</div>'
         +'<div class="idx-pct '+cls+'">'+sym+' '+pctTxt+' <span class="live">实时</span></div>'
         +'<div class="idx-price '+cls+'">'+price+'</div>'
-        +'<div class="idx-spk">'+svg+'</div>'
+        +'<div class="idx-spk" onclick="openIdxModal(\''+it.secid+'\')">'+svg+'</div>'
         +'<div class="idx-row"><span>高 '+high+'</span><span>低 '+low+'</span></div>'
         +'</div>';
     });
     html+='<div class="idx-grp2"><div class="idx-grp-h">'+esc(g.group)+'</div><div class="idx-list2">'+cards+'</div></div>';
   });
   // 按市场分组，每组一行（A股/港股/美股/全球），组内指数等宽横铺
-  box.innerHTML='<div class="idx-grid2">'+html+'</div>';
+  box.innerHTML='<div class="idx-grid2'+(idxSparkOn?'':' idx-collapsed')+'">'+html+'</div>';
+  applyIdxCollapse();
 }
 function loadIdxAndRender(){
   if(IDX_BUSY) return;
@@ -6368,61 +6369,47 @@ function drawSpark(code, obj){
 let idxSparkOn = true;
 try{ idxSparkOn = localStorage.getItem('ft_idx_spark')!=='0'; }catch(e){}
 function applyIdxCollapse(){
-  ['idxList','idxListD'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.toggle('idx-collapsed', !idxSparkOn); });
-  ['idxSparkToggle','idxSparkToggleD'].forEach(id=>{ const b=document.getElementById(id); if(b) b.textContent = idxSparkOn?'隐藏趋势 ▲':'显示趋势 ▼'; });
+  const grid=document.querySelector('#idxGrid .idx-grid2'); if(grid) grid.classList.toggle('idx-collapsed', !idxSparkOn);
+  const b=document.getElementById('idxSparkToggle'); if(b) b.textContent = idxSparkOn?'隐藏趋势 ▲':'显示趋势 ▼';
 }
 function toggleIdxSpark(){
   idxSparkOn=!idxSparkOn;
   try{ localStorage.setItem('ft_idx_spark', idxSparkOn?'1':'0'); }catch(e){}
   applyIdxCollapse();
 }
-function openIdxModal(code){
-  const it=INDEX_LIST.find(x=>x.code===code); if(!it) return;
-  const raw=window['v_'+code]; const d=raw?parseQt(raw):null;
-  const obj=_idxSparkCache[code];
+function openIdxModal(secid){
+  let st=null;
+  for(const g of INDEX_STATE){ const f=g.items.find(x=>x.secid===secid); if(f){ st=f; break; } }
+  if(!st) return;
   const title=document.getElementById('idxModalTitle');
   const body=document.getElementById('idxModalBody');
-  if(title) title.textContent=it.name+' · 走势放大';
-  const cur = (d&&!isNaN(d.price))? d.price.toFixed(2):'—';
-  const pctTxt = (d&&d.pct!=null)? ((d.pct>0?'+':'')+d.pct.toFixed(2)+'%'):'';
-  const pcls = (d&&d.pct>0)?'pos':(d&&d.pct<0)?'neg':'zero';
-  let html='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span style="font-size: 24px;font-weight:700;color:var(--text)">'+cur+'</span><span class="'+pcls+'" style="font-size: 14px">'+pctTxt+'</span>'+(d&&d.ts?('<span class="idx-sparkcap">更新 '+d.ts+'</span>'):'')+'</div>';
-  if(obj && obj.series && obj.series.length){
-    const vals=obj.series.map(x=>x.v);
+  if(title) title.textContent=st.name+' · 走势放大';
+  const cur = st.last==null?'—':(+st.last).toLocaleString('en-US',{maximumFractionDigits:2});
+  const pctTxt = (st.day==null)?'':((st.day>0?'+':'')+st.day.toFixed(2)+'%');
+  const pcls = (st.day==null)?'zero':(st.day>0?'pos':'neg');
+  let html='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span style="font-size:24px;font-weight:700;color:var(--text)">'+cur+'</span><span class="'+pcls+'" style="font-size:14px">'+pctTxt+'</span></div>';
+  const vals=st.line||[];
+  if(vals.length>=2){
     const min=Math.min.apply(null,vals), max=Math.max.apply(null,vals), span=(max-min)||1;
-    const W=640,H=240,pad=12,n=obj.series.length;
-    const pts=obj.series.map((x,i)=>{ const xc=pad+(W-2*pad)*(n>1?i/(n-1):0); const yc=(H-pad)-(H-2*pad)*((x.v-min)/span); return xc.toFixed(1)+','+yc.toFixed(1); }).join(' ');
-    function maPts(win){
-      if(n<win) return '';
-      const mp=[];
-      for(let i=win-1;i<n;i++){ let s=0; for(let j=i-win+1;j<=i;j++) s+=vals[j]; const v=s/win;
-        const xc=pad+(W-2*pad)*(n>1?i/(n-1):0); const yc=(H-pad)-(H-2*pad)*((v-min)/span); mp.push(xc.toFixed(1)+','+yc.toFixed(1)); }
-      return mp.join(' ');
-    }
+    const W=640,H=240,pad=12,n=vals.length;
+    const pts=vals.map(function(v,i){ const xc=pad+(W-2*pad)*(n>1?i/(n-1):0); const yc=(H-pad)-(H-2*pad)*((v-min)/span); return xc.toFixed(1)+','+yc.toFixed(1); }).join(' ');
+    function maPts(win){ if(n<win) return ''; const mp=[]; for(let i=win-1;i<n;i++){ let s=0; for(let j=i-win+1;j<=i;j++) s+=vals[j]; const v=s/win; const xc=pad+(W-2*pad)*(n>1?i/(n-1):0); const yc=(H-pad)-(H-2*pad)*((v-min)/span); mp.push(xc.toFixed(1)+','+yc.toFixed(1)); } return mp.join(' '); }
     const ma5=maPts(5), ma20=maPts(20);
-    let maSvg='';
-    if(ma5) maSvg+='<polyline points="'+ma5+'" fill="none" stroke="#f39c12" stroke-width="1.3" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>';
-    if(ma20) maSvg+='<polyline points="'+ma20+'" fill="none" stroke="#8e44ad" stroke-width="1.3" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>';
     const up=vals[n-1]>=vals[0]; const color=up?TH().up:TH().down;
-    const isDaily=obj.kind!=='a';
-    const src=isDaily?'近30日日线（东方财富，非盘中）':'A股分时（5分钟，新浪）';
-    const grid='<line x1="'+pad+'" y1="'+pad+'" x2="'+(W-pad)+'" y2="'+pad+'" stroke="#eef0f3" stroke-width="1"/><line x1="'+pad+'" y1="'+(H/2)+'" x2="'+(W-pad)+'" y2="'+(H/2)+'" stroke="#f4f5f7" stroke-width="1"/><line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="#eef0f3" stroke-width="1"/>';
+    const grid='<line x1="'+pad+'" y1="'+pad+'" x2="'+(W-pad)+'" y2="'+pad+'" stroke="'+TH().grid+'" stroke-width="1"/><line x1="'+pad+'" y1="'+(H/2)+'" x2="'+(W-pad)+'" y2="'+(H/2)+'" stroke="'+TH().grid+'" stroke-width="1"/><line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="'+TH().grid+'" stroke-width="1"/>';
     const area='<polygon points="'+pad+','+(H-pad)+' '+pts+' '+(W-pad)+','+(H-pad)+'" fill="'+color+'" fill-opacity="0.08"/>';
-    const reDt=/(\d{4})[-/](\d{2})[-/](\d{2})/;
-    const dm=obj.series[0].t&&obj.series[0].t.match(reDt), dM=obj.series[n-1].t&&obj.series[n-1].t.match(reDt);
-    let range='';
-    if(dm&&dM){ const sd=dm[1]+'-'+dm[2]+'-'+dm[3], ed=dM[1]+'-'+dM[2]+'-'+dM[3];
-      range = sd===ed ? '当日分时' : ('近'+Math.round((new Date(dM[1],dM[2]-1,dM[3])-new Date(dm[1],dm[2]-1,dm[3]))/864e5+1)+'日 ('+sd+'→'+ed+')'); }
-    const svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="240" preserveAspectRatio="none">'+grid+area+'<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+maSvg+
-      '<text x="'+pad+'" y="'+(pad+11)+'" font-size="11" fill="#9aa0a8">高 '+max.toFixed(2)+'</text>'+
-      '<text x="'+pad+'" y="'+(H-pad-5)+'" font-size="11" fill="#9aa0a8">低 '+min.toFixed(2)+'</text>'+
-      '</svg>';
+    const svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="240" preserveAspectRatio="none">'+grid+area+'<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+      +(ma5?'<polyline points="'+ma5+'" fill="none" stroke="#f39c12" stroke-width="1.3" stroke-dasharray="4 3"/>':'')
+      +(ma20?'<polyline points="'+ma20+'" fill="none" stroke="#8e44ad" stroke-width="1.3" stroke-dasharray="4 3"/>':'')
+      +'<text x="'+pad+'" y="'+(pad+11)+'" font-size="11" fill="'+TH().text3+'">高 '+max.toFixed(2)+'</text>'
+      +'<text x="'+pad+'" y="'+(H-pad-5)+'" font-size="11" fill="'+TH().text3+'">低 '+min.toFixed(2)+'</text>'
+      +'</svg>';
     html+='<div class="idx-modal-chart">'+svg+'</div>';
     let legend='';
     if(ma5||ma20){ legend=' · <span style="color:#f39c12;font-weight:600">━ MA5</span>'+(ma20?' <span style="color:#8e44ad;font-weight:600">━ MA20</span>':''); }
-    html+='<div class="idx-sparkcap" style="margin-top:8px">'+src+(isDaily?'（日线，非盘中实时）':'（盘中实时）')+(range?(' · '+range):'')+legend+'</div>';
+    html+='<div class="idx-sparkcap" style="margin-top:8px">近'+n+'日 · 日线（东方财富）'+legend+'</div>';
   } else {
-    html+='<div class="hint" style="padding:22px 4px">该指数暂无可用走势数据（数据源未提供分时），暂不可放大。当前价：'+cur+'。</div>';
+    html+='<div class="hint" style="padding:22px 4px">该指数暂无可用走势数据（东方财富未返回日线），暂不可放大。当前价：'+cur+'。</div>';
   }
   if(body) body.innerHTML=html;
   const m=document.getElementById('idxModal'); if(m) m.classList.add('show');
@@ -8965,6 +8952,8 @@ function renderSyncCfg(){
 .idx-card .idx-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:0;padding-top:3px;border-top:1px dashed var(--border-3)}
 .idx-card .idx-row span{white-space:nowrap}
 @media(max-width:680px){.idx-grid{grid-template-columns:repeat(2,1fr)}.idx-card{height:124px;min-height:124px}}
+.idx-grid2.idx-collapsed .idx-spk{display:none}
+.idx-card .idx-spk{cursor:pointer}
 }
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }
 .bond-drawer.open{ display:block; }

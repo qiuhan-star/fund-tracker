@@ -838,7 +838,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
   .home-ctable .cname{ font-size:var(--cname-fs); font-weight:var(--cname-fw); color:var(--text); line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; }
-  .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }.home-ctable .csub .dmv{ font-size:12px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+  .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }.home-ctable .csub .dmv{ font-size:12px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }.home-ctable .mvline .val{ font-size:12px; }
   .home-ctable .csub span{ white-space:nowrap; }
   .home-ctable .tag-code{ color:var(--text-3); font-size:10px; font-variant-numeric:tabular-nums; }
   .home-ctable .csub .tag{ font-size:var(--tag-fs); padding:2px 7px; border-radius:var(--tag-radius); font-weight:600; }
@@ -852,7 +852,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-streak.streak-up{ background:var(--up-bg); color:var(--up); }
   .dense-streak.streak-down{ background:var(--down-bg); color:var(--down); }
   /* dense 名称列副行两行结构：行1 = 代码+分类+标签（紧凑 10-11px），行2 = 连涨/连跌 独立一行左对齐 */
-  .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; }.dense-table .dt-sub .dmv { font-size: 12px; }
+  .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; }.dense-table .dt-sub .dmv { font-size: 12px; }.dense-table .mvline .val { font-size: 12px; }
   .dense-table .dt-sub .tag { font-size: 10px; padding: 1px 6px; border-radius: 6px; }
   .dense-table .dcode { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; }
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
@@ -1155,12 +1155,16 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 /* ==================== 总资产 Hero（首页复用；板块页不再使用 tiles 卡） ==================== */
 .ov-wrap { margin-top: 4px; }
 .ov-hero {
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px;
-  padding: 20px 22px; display: flex; justify-content: space-between; align-items: flex-end;
-  flex-wrap: wrap; gap: 16px; position: relative; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; position: relative;
 }
 .ov-hero-left { display: flex; flex-direction: column; gap: 4px; }
 .ov-hero-label { font-size: 13px; font-weight: 500; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
+.tog-mini{width:26px;height:22px;border:1px solid var(--border);border-radius:14px;background:transparent;color:var(--text-3);font-size:13px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;line-height:1}
+.tog-mini:active{background:var(--surface-2)}
+.mvline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;padding-top:4px;border-top:1px dashed var(--border-3)}
+.mvline .val{font-size:13px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
 .ov-hero-value { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--text); margin-top: 2px; }
 .ov-hero-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
 .ov-hero-right { display: flex; flex-direction: column; gap: 6px; text-align: right; font-size: 13px; }
@@ -1192,6 +1196,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .zero { color: var(--text-3) !important; }
 
 @media (max-width: 680px) {
+  .ov-hero { padding: 8px 12px; }
   .bar-row { grid-template-columns: 104px 1fr 85px; gap: 8px; }
   .bar-pct { display: none; }
 }
@@ -3342,6 +3347,16 @@ function denseHeadHtml(){
   headHtml += `<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>`;
   return headHtml;
 }
+// 名称下切换行：金额 ↔ 份额（按 账户+名称 记忆，持久化 ft_name_mv_mode）
+let nameMvMode={};
+try{ nameMvMode=JSON.parse(localStorage.getItem('ft_name_mv_mode')||'{}')||{}; }catch(e){ nameMvMode={}; }
+function saveNameMvMode(){ try{ localStorage.setItem('ft_name_mv_mode',JSON.stringify(nameMvMode)); }catch(e){} }
+function toggleNameMv(n,a){ const key=a+'||'+n; nameMvMode[key]=(nameMvMode[key]==='shares'?'amt':'shares'); saveNameMvMode(); renderHomeList(); }
+function mvOrShares(f){
+  const key=(f.account||'')+'||'+f.name;
+  if(nameMvMode[key]==='shares') return hidden?'•••• 份':((f.shares!=null&&f.shares>0)?fmt(f.shares)+' 份':'—');
+  return (f.mv!=null)?M(f.mv):'—';
+}
 function denseRowsHtml(list){
   const cols=denseCols();
   const todayStr=fmtDate(new Date()); // 今晚已更新净值的判定基准：收盘日期==今天
@@ -3355,10 +3370,9 @@ function denseRowsHtml(list){
     let tds='';
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
-        ${(f.mv!=null)?`<span class="dmv">${M(f.mv)}</span>`:''}
         ${code?`<span class="dcode">#${code}</span>`:''}
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点此手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}
-      </div></td>`;
+      </div><div class="mvline"><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
       else if(c.key==='day'){
@@ -3436,9 +3450,9 @@ function homeMobileRow(f, cols){
   const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
   // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
   const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
-  const mvEl = (f.mv!=null) ? '<span class="dmv">'+M(f.mv)+'</span>' : '';
-  const subParts=[ mvEl, (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl ].filter(Boolean).join('');
-  let tds='<td><div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
+  const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl ].filter(Boolean).join('');
+  const mvLine='<div class="mvline"><span class="val">'+mvOrShares(f)+'</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv(\''+esc(f.name)+'\',\''+esc(f.account)+'\')" title="切换金额/份额">⇄</button></div>';
+  let tds='<td><div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div>'+mvLine+'</td>';
   cols.slice(1).forEach(c=>{ tds+=homeMobileCellOf(f,c.key); });
   return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
 }
@@ -3660,6 +3674,10 @@ function renderOverview(){
     </div>`;
   renderTrendSection();
 }
+// 顶部当日收益 ⇄ 切换：收益金额 ↔ 收益率%（heroDayMode 持久化 ft_hero_day_mode）
+let heroDayMode='amt';
+try{ heroDayMode=localStorage.getItem('ft_hero_day_mode')||'amt'; }catch(e){}
+function toggleHeroDayMode(){ heroDayMode=(heroDayMode==='amt'?'pct':'amt'); try{ localStorage.setItem('ft_hero_day_mode',heroDayMode); }catch(e){} renderTrendSection(); }
 // 资产首页（Tab 0）顶部：只显示「总资产」精简条，不再重复资产趋势（趋势仅在分析页）；不含不可靠的累计投入本金
 function renderTrendSection(){
   const box=document.getElementById('trendSection'); if(!box) return;
@@ -3667,11 +3685,12 @@ function renderTrendSection(){
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
   const estPct=weightedEstChg();
-  const estLine=estPct==null?'已收盘':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'% 估值';
-  const estCls=estPct==null?'':(estPct>=0?'ov-pos':'ov-neg');
-  const scopeLabel=currentScope==='all'?'全部':(curAccount||'');
-  const updLine=lastSyncLabel();
   const mask=v=>hidden?'****':v;
+  // 当日收益 ⇄ 切换：收益金额 ↔ 收益率%（heroDayMode 持久化 ft_hero_day_mode）
+  const pctMode=heroDayMode==='pct';
+  const dayVal=pctMode ? (estPct==null?'已收盘':(estPct>=0?'+':'−')+Math.abs(estPct).toFixed(2)+'%') : tg;
+  const dayCls=pctMode ? (estPct==null?'ov-zero':(estPct>=0?'ov-pos':'ov-neg')) : tgcls;
+  const updLine=lastSyncLabel();
   box.innerHTML=`
     <div class="ov-wrap">
       <section class="ov-hero">
@@ -3680,7 +3699,7 @@ function renderTrendSection(){
           <span class="ov-hero-value">${mask(M(total))}</span>
         </div>
         <div class="ov-hero-right">
-          <div>当日收益 <b class="${tgcls}">${mask(tg)}</b> <span class="${estCls}">${estLine}</span></div>
+          <div>当日收益 <b class="${dayCls}">${mask(dayVal)}</b> <button type="button" class="tog-mini" onclick="toggleHeroDayMode()" title="切换金额/收益率">⇄</button></div>
           <div class="ov-hero-sub">更新 ${updLine}</div>
         </div>
       </section>

@@ -3152,8 +3152,7 @@ function estCellHtml(f){
   const nc=navCache[f.name]||{}; const mkt=isMarketOpen(new Date()); const age=freshAgeShort();
   if(mkt && nc.gszzl!=null){
     const gt=nc.gztime?nc.gztime.slice(11):'';
-    const ageHtml=age?`<span class="est-dot">·</span><span class="est-age">${age}</span>`:'';
-    return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 est-fresh"><span class="est-tag">${gt}</span>${ageHtml}</div>`;
+    return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 est-fresh"><span class="est-tag">${gt}</span></div>`;
   }
   if(nc.navChg!=null){
     return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-stale">${mkt?'无盘中估值':(nc.navChgDate?nc.navChgDate.slice(5):'已确认')}</div>`;

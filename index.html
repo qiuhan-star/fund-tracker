@@ -3211,20 +3211,24 @@ function sortKeyVal(f,k){
   return 0;
 }
 
-// 持仓 dense 表第一列吸左双保险：
-// 1) CSS position:sticky（iOS Safari/WebKit 对 td sticky 生效，滚动时原生固定）
-// 2) Chrome/Blink td sticky 不生效 → 检测后启用 rAF 轮询 + translateX 抵消（不依赖 scroll 事件）
+// 持仓 dense 表第一列吸左双保险（按引擎分流，避免 iOS 抖动 + 卡顿）：
+// 1) WebKit/iOS Safari：CSS position:sticky 原生生效，JS 完全不介入（transform 会叠加抖动 + rAF 循环卡顿）
+// 2) Chrome/Blink：td sticky 不生效 → 探针检测后 rAF 轮询 + translateX 抵消
 function bindDenseStickyFirstCol(root){
+  var ua=navigator.userAgent||'';
+  var isWebKit=/WebKit/i.test(ua) && !/CriOS|Chrome|Edg\//i.test(ua);
   root.querySelectorAll('.table-scroll').forEach(function(scroll){
     if(scroll.__stickyBound) return; scroll.__stickyBound=true;
+    if(isWebKit) return; // iOS Safari：纯 CSS sticky，不跑 JS（丝滑）
     var probe=scroll.querySelector('.dense-table td:first-child');
     if(!probe) return;
-    // sticky 生效检测：滚 2px 看第一列位置是否变化（变化=sticky 没生效）
+    // sticky 生效检测：滚 30px 看第一列位置是否变化（变化=sticky 没生效）
     var before=probe.getBoundingClientRect().left;
-    scroll.scrollLeft=2;
+    scroll.scrollLeft=30;
+    void scroll.offsetHeight; // 强制 reflow
     var after=probe.getBoundingClientRect().left;
     scroll.scrollLeft=0;
-    if(Math.abs(after-before)<1.5) return; // CSS sticky 生效（WebKit），无需 JS
+    if(Math.abs(after-before)<1.5) return; // CSS sticky 生效，无需 JS
     // Chrome：rAF 轮询 translateX
     var rows=scroll.querySelectorAll('.dense-table tr');
     var lastX=-1;

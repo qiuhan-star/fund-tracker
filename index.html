@@ -1007,10 +1007,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .market-table th:nth-child(1), .market-table td:nth-child(1) { width: 120px; }
   .market-table th:nth-child(2), .market-table td:nth-child(2) { width: 60px; }
   .market-table th:nth-child(3), .market-table td:nth-child(3) { width: 60px; }
-  .market-table th:nth-child(4), .market-table td:nth-child(4) { width: 50px; }
+  .market-table th:nth-child(4), .market-table td:nth-child(4) { width: 58px; }
   .market-table th:nth-child(5), .market-table td:nth-child(5) { width: 58px; }
   .market-table th:nth-child(6), .market-table td:nth-child(6) { width: 58px; }
-  .market-table th:nth-child(7), .market-table td:nth-child(7) { width: 58px; }
+  .market-table th:nth-child(7), .market-table td:nth-child(7) { width: 50px; }
 
   /* 16. 移动端横向溢出总兜底 + 双列布局塌成单列 */
   html, body { overflow-x: hidden; }
@@ -1640,7 +1640,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
             <button class="sub-btn active" onclick="switchRankTab('top', this)">🚀 今日领涨</button>
             <button class="sub-btn" onclick="switchRankTab('hot', this)">🔥 高关注度</button>
           </div>
-        <div class="table-scroll"><table class="market-table"><thead><tr><th>基金</th><th>日估算涨跌</th><th>近1周</th><th>操作</th><th>近1月</th><th>近3月</th><th>近1年</th></tr></thead><tbody id="rank-table-body"></tbody></table></div><div class="scroll-hint">← 左右滑动看 近1月 / 近3月 / 近1年 →</div>
+        <div class="table-scroll"><table class="market-table"><thead><tr><th>基金</th><th>日估算涨跌</th><th>近1周</th><th>近1月</th><th>近3月</th><th>近1年</th><th>操作</th></tr></thead><tbody id="rank-table-body"></tbody></table></div><div class="scroll-hint">← 左右滑动看 近1月 / 近3月 / 近1年 / 操作 →</div>
         <p class="hint" style="font-size: 12px;margin-top:8px">示例榜单，待接入天天基金 JSONP 接口后显示真实排行。</p>
       </div>
 
@@ -2828,7 +2828,7 @@ function loadFundRank(type){
   rows.forEach(function(item,i){
     const isUp=item.est.startsWith('+');
     const hide = i>=LIMIT ? ' data-more="1" style="display:none"' : '';
-    html += `<tr class="rank-row"${hide} onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3);display:flex;align-items:center;gap:6px;margin-top:2px"><span>${item.code}</span><span style="font-size:.7rem;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border-3);border-radius:4px;padding:0 5px;white-space:nowrap">${item.type}</span></div></td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td class="${item.w1.indexOf('+')===0?'text-up':(item.w1.indexOf('-')===0?'text-down':'')}">${item.w1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td><td class="${item.m1.indexOf('+')===0?'text-up':(item.m1.indexOf('-')===0?'text-down':'')}">${item.m1}</td><td class="${item.m3.indexOf('+')===0?'text-up':(item.m3.indexOf('-')===0?'text-down':'')}">${item.m3}</td><td class="${item.y1.indexOf('+')===0?'text-up':(item.y1.indexOf('-')===0?'text-down':'')}">${item.y1}</td></tr>`;
+    html += `<tr class="rank-row"${hide} onclick="rankAddMenu('${item.code}','${esc(item.name)}', event)"><td><div style="font-weight:bold">${item.name}</div><div style="font-size:.75rem;color:var(--text-3);display:flex;align-items:center;gap:6px;margin-top:2px"><span>${item.code}</span><span style="font-size:.7rem;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border-3);border-radius:4px;padding:0 5px;white-space:nowrap">${item.type}</span></div></td><td class="${isUp?'text-up':'text-down'} font-bold">${item.est}</td><td class="${item.w1.indexOf('+')===0?'text-up':(item.w1.indexOf('-')===0?'text-down':'')}">${item.w1}</td><td class="${item.m1.indexOf('+')===0?'text-up':(item.m1.indexOf('-')===0?'text-down':'')}">${item.m1}</td><td class="${item.m3.indexOf('+')===0?'text-up':(item.m3.indexOf('-')===0?'text-down':'')}">${item.m3}</td><td class="${item.y1.indexOf('+')===0?'text-up':(item.y1.indexOf('-')===0?'text-down':'')}">${item.y1}</td><td class="rank-act"><span class="rank-plus" title="加入自选 / 记账">＋</span></td></tr>`;
   });
   if(rows.length>LIMIT){
     html += `<tr class="rank-more-row"><td colspan="7"><button class="rank-more-btn" data-exp="0" onclick="toggleRankMore(this)">展开全部 ${rows.length} 条 ▼</button></td></tr>`;

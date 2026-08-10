@@ -54,8 +54,8 @@ module.exports = async function handler(req, res) {
       const f = m[1].split('~');
       const price = parseFloat(f[3]);
       const prevClose = parseFloat(f[4]);
-      const high = parseFloat(f[46]);
-      const low = parseFloat(f[47]);
+      const high = parseFloat(f[33]);
+      const low = parseFloat(f[34]);
       const day = (isFinite(price) && isFinite(prevClose) && prevClose > 0) ? (price - prevClose) / prevClose * 100 : null;
       data = {
         symbol,

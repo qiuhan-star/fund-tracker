@@ -202,7 +202,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .dense-table td:first-child { z-index: 2; }.dense-table th.sort-on { color: var(--accent); }.dense-table th.sortable { cursor: pointer; user-select: none; transition: color .12s, background .12s; }@media (hover: hover) { .dense-table th.sortable:hover {  color: var(--accent-text); background: var(--surface-2);  } }
 .dense-table th .sort-ico { display: inline-block; margin-left: 3px; font-size: 12px; line-height: 1; color: var(--text-3); opacity: .5; font-weight: 700; }.dense-table th.sort-on .sort-ico.on { color: var(--accent); opacity: 1; }/* 拖动换列：轻点=排序，按住拖动=换列 */
   .dense-table th.col-drag { cursor: grab; }.dense-table th.col-drag:active { cursor: grabbing; }.dense-table th.col-dragging { opacity: .35; }.dense-table th.col-dragover { box-shadow: inset 3px 0 0 var(--accent); background: var(--surface-2); }  .dense-table td { padding: 9px 5px; border-bottom: 1px solid var(--border-3); text-align: right; vertical-align: middle; font-variant-numeric: tabular-nums; }.dense-table td:first-child { text-align: left; }.dense-table tbody tr { cursor: pointer; }@media (hover: hover) { .dense-table tbody tr:hover {  background: var(--surface-2);  } }
-.dt-name { font-weight: 600; font-size: 13px; line-height: 1.2; }.dt-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }.dt-sub .dprofit { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 12px; }.dt-big { font-weight: 700; font-size: 13px; }.dt-sub2 { font-size: 12.5px; color: var(--text-3); margin-top: 3px; }.upd-time { color:#9aa3b2; font-variant-numeric:tabular-nums; }/* 持仓手风琴展开 */
+.dt-name { font-weight: 600; font-size: 13px; line-height: 1.2; }.dt-sub { font-size: 12.5px; color: var(--text-3); margin-top: 4px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }.dt-sub .dprofit { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 12px; }.dt-sub .dmv { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text); }.dt-big { font-weight: 700; font-size: 13px; }.dt-sub2 { font-size: 12.5px; color: var(--text-3); margin-top: 3px; }.upd-time { color:#9aa3b2; font-variant-numeric:tabular-nums; }/* 持仓手风琴展开 */
   .hl-body { display: none; padding: 4px 14px 16px; border-top: 1px dashed var(--border-3); }.hl.open .hl-body { display: block; }.hl.open .hl-arrow { transform: rotate(90deg); color: var(--accent-text); }.hl-summary { font-size: 14px; color: var(--text-2); line-height: 1.65; margin: 10px 0; padding: 10px 12px; background: var(--surface-3); border-radius: 10px; }.hl-rtitle { font-size: 14px; font-weight: 600; color: var(--text-3); margin: 8px 0 6px; }.hl-rtrade { display:flex; align-items:center; gap:8px; font-size: 14px; color:var(--text-2); padding:5px 0; border-bottom:1px dashed var(--border-3); font-variant-numeric: tabular-nums; }.hl-rtrade:last-child { border-bottom:none; }.hl-rtrade .num { margin-left:auto; font-weight:600; color:var(--text); }.hl-acts { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }/* 交易锁定行 */
   tr.tr-locked td { color: var(--text-2); font-variant-numeric: tabular-nums; }.pending-nav { color: var(--warn); font-weight:600; }.lk { border:none; background:transparent; color:var(--text-3); padding:3px 5px; cursor:pointer; font-size:13px; font-family:inherit; display:inline-flex; align-items:center; gap:4px; line-height:1; border-radius:6px; }.lk:hover{color:var(--text-2); background:var(--surface-2)}.lk.lock{color:var(--accent)}.lk.lock:hover{color:var(--accent); background:var(--accent-soft)}.lk.danger{color:var(--danger)}.lk.danger:hover{color:var(--danger); background:var(--up-bg)}/* 内联新增交易表单 */
   .tr-add { background: var(--surface-3); border:1px solid var(--border); border-radius:10px; padding:10px; margin-top:4px; }.tr-add-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; align-items:end; }.tr-add-grid input { padding:7px 8px; border:1px solid var(--border-strong); border-radius:8px; font-size: 16px; font-family:inherit; width:100%; box-sizing:border-box; }.tr-add-grid select { appearance:none; -webkit-appearance:none; -moz-appearance:none; width:100%; box-sizing:border-box; padding:7px 30px 7px 9px; border:1px solid var(--border-strong); border-radius:8px; font-size:14px; font-family:inherit; color:var(--text); background-color:var(--surface); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%238a8f99' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 9px center; background-size:12px 12px; cursor:pointer; }/* 交易流水编辑态：select 去原生外观，与无边框的 input 同款、仅加下拉箭头（iOS 统一） */
@@ -838,7 +838,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .home-ctable tbody tr{ cursor:pointer; }
   .home-ctable tbody tr:active{ background:rgba(255,255,255,.04); }
   .home-ctable .cname{ font-size:var(--cname-fs); font-weight:var(--cname-fw); color:var(--text); line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; }
-  .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }
+  .home-ctable .csub{ font-size:11px; color:var(--text-3); margin-top:5px; display:flex; gap:5px; align-items:center; flex-wrap:nowrap; line-height:1.3; }.home-ctable .csub .dmv{ font-size:12px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
   .home-ctable .csub span{ white-space:nowrap; }
   .home-ctable .tag-code{ color:var(--text-3); font-size:10px; font-variant-numeric:tabular-nums; }
   .home-ctable .csub .tag{ font-size:var(--tag-fs); padding:2px 7px; border-radius:var(--tag-radius); font-weight:600; }
@@ -852,7 +852,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-streak.streak-up{ background:var(--up-bg); color:var(--up); }
   .dense-streak.streak-down{ background:var(--down-bg); color:var(--down); }
   /* dense 名称列副行两行结构：行1 = 代码+分类+标签（紧凑 10-11px），行2 = 连涨/连跌 独立一行左对齐 */
-  .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; }
+  .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; }.dense-table .dt-sub .dmv { font-size: 12px; }
   .dense-table .dt-sub .tag { font-size: 10px; padding: 1px 6px; border-radius: 6px; }
   .dense-table .dcode { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; }
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
@@ -1161,11 +1161,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 }
 .ov-hero-left { display: flex; flex-direction: column; gap: 4px; }
 .ov-hero-label { font-size: 13px; font-weight: 500; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
-.ov-hero-value { font-size: 38px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text); margin-top: 2px; }
+.ov-hero-value { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--text); margin-top: 2px; }
 .ov-hero-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
 .ov-hero-right { display: flex; flex-direction: column; gap: 6px; text-align: right; font-size: 13px; }
 .ov-hero-right-item { color: var(--text-3); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-.ov-hero-right-item b { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ov-hero-right b, .ov-hero-right-item b { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
 /* ==================== 重设计的【占比排行 (Asset Distribution)】 ==================== */
 .cb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
 .cb-card .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -1192,7 +1192,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .zero { color: var(--text-3) !important; }
 
 @media (max-width: 680px) {
-  .ov-hero-value { font-size: 32px; }
   .bar-row { grid-template-columns: 104px 1fr 85px; gap: 8px; }
   .bar-pct { display: none; }
 }
@@ -2803,10 +2802,10 @@ let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true,holdpct:true};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['est','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
-const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',ret:'当日收益',holdpct:'持有收益率'};
-const COL_KEYS=['nav','est','day','mv','ret','hold','holdpct'];
-const DEFAULT_COL_ORDER=['est','day','ret','holdpct','nav']; // 默认列顺序：估算涨跌→官方涨跌→当日收益→持有收益率→单位净值（2026-08-10 借鉴他 app：csub 已有持有收益总金额/市值，hold/mv 列去掉）
-const COL_ORDER_VER='4';
+const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
+const COL_KEYS=['nav','est','day','ret','hold','holdpct'];
+const DEFAULT_COL_ORDER=['est','day','ret','hold','holdpct','nav']; // 默认列顺序：估算涨跌→官方涨跌→当日收益→持有收益→持有收益率→单位净值（2026-08-10 方案1：市值放名称下、mv 列移除、持有收益恢复为列）
+const COL_ORDER_VER='5';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
@@ -3353,12 +3352,12 @@ function denseRowsHtml(list){
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
     const code=syncCode(f.name);
-    const profitTxt = (f.profit!=null && f.profit!==0) ? `<span class="dprofit ${f.profit>=0?'pos':'neg'}">${f.profit>=0?'+':'−'}${M(Math.abs(f.profit))}</span>` : '';
     let tds='';
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
+        ${(f.mv!=null)?`<span class="dmv">${M(f.mv)}</span>`:''}
         ${code?`<span class="dcode">#${code}</span>`:''}
-        <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点此手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat}</span>${attrTags}${profitTxt}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}
+        <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点此手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}
       </div></td>`;
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
@@ -3437,8 +3436,8 @@ function homeMobileRow(f, cols){
   const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
   // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
   const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
-  const profitTxtMobile = (f.profit!=null && f.profit!==0) ? '<span class="dprofit '+(f.profit>=0?'pos':'neg')+'">'+(f.profit>=0?'+':'−')+M(Math.abs(f.profit))+'</span>' : '';
-  const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl, profitTxtMobile ].filter(Boolean).join('');
+  const mvEl = (f.mv!=null) ? '<span class="dmv">'+M(f.mv)+'</span>' : '';
+  const subParts=[ mvEl, (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl ].filter(Boolean).join('');
   let tds='<td><div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
   cols.slice(1).forEach(c=>{ tds+=homeMobileCellOf(f,c.key); });
   return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';

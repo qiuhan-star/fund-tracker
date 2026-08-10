@@ -3353,7 +3353,7 @@ function denseRowsHtml(list){
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
     const code=syncCode(f.name);
-    const profitTxt = (f.profit!=null && f.profit!==0) ? `<span class="dprofit ${f.profit>=0?'pos':'neg'}">${f.profit>=0?'+':'−'}¥${M(Math.abs(f.profit))}</span>` : '';
+    const profitTxt = (f.profit!=null && f.profit!==0) ? `<span class="dprofit ${f.profit>=0?'pos':'neg'}">${f.profit>=0?'+':'−'}${M(Math.abs(f.profit))}</span>` : '';
     let tds='';
     cols.forEach(c=>{
       if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
@@ -3437,7 +3437,7 @@ function homeMobileRow(f, cols){
   const attrTags=(f.tags||[]).map(t=>'<span class="tag tag-attr">'+t+'</span>').join('');
   // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
   const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
-  const profitTxtMobile = (f.profit!=null && f.profit!==0) ? '<span class="dprofit '+(f.profit>=0?'pos':'neg')+'">'+(f.profit>=0?'+':'−')+'¥'+M(Math.abs(f.profit))+'</span>' : '';
+  const profitTxtMobile = (f.profit!=null && f.profit!==0) ? '<span class="dprofit '+(f.profit>=0?'pos':'neg')+'">'+(f.profit>=0?'+':'−')+M(Math.abs(f.profit))+'</span>' : '';
   const subParts=[ (code?'<span class="tag-code">#'+code+'</span>':''), (f.cat?'<span class="tag tag-'+f.cat+'">'+f.cat+'</span>':''), attrTags, streakEl, profitTxtMobile ].filter(Boolean).join('');
   let tds='<td><div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+noteDot(f.name)+'</div><div class="csub">'+subParts+'</div></td>';
   cols.slice(1).forEach(c=>{ tds+=homeMobileCellOf(f,c.key); });

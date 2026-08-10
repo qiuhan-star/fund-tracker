@@ -1555,18 +1555,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     <div class="tab-panel" id="tp5">
       <div class="card">
         <div class="sec-head">
-          <h2 style="margin:0;font-size: 14px">大盘实时 <span class="tag">腾讯财经</span></h2>
-          <span class="idx-head-right">
-            <button id="idxSparkToggle" class="idx-toggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button>
-            <button class="btn sm" onclick="loadMarketData()">🔄 刷新</button>
-            <span id="idxTime" class="idx-status"></span>
-          </span>
-        </div>
-        <div class="idx-list" id="idxList"><span class="hint">加载中…</span></div>
-      </div>
-
-      <div class="card">
-        <div class="sec-head">
           <div class="sec-head-l">
             <h2 style="margin:0;font-size: 14px">赛道 / 主题 <span class="tag tag-sample" id="trackTag">示例</span></h2>
             <span class="mkt-legend" title="本页遵循国内习惯：红色=上涨，绿色=下跌">🔴 涨 🟢 跌</span>
@@ -1576,7 +1564,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
             <button id="tkTable" onclick="setTrackView('table')">紧凑表格</button>
           </div>
         </div>
-        <div class="sec-head" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="hint" style="font-size:11px;color:var(--text-3)">实时·东方财富</span></div>
+        <div class="sec-head" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="idx-head-right"><span class="hint" style="font-size:11px;color:var(--text-3)">实时·东方财富</span> <button class="btn sm" onclick="loadIdxAndRender()">🔄 刷新</button></span></div>
         <div id="idxGrid"></div>
         <div id="trackGrid" class="market-grid-dense"></div>
         <div id="trackTable" class="hidden"><div class="tbl-wrap"><table class="mkt-table"><thead><tr><th>赛道</th><th>今日</th><th>近1周</th><th>近1月</th><th>近3月</th><th>近6月</th><th>近1年</th><th>1年分位</th></tr></thead><tbody id="trackTbody"></tbody></table></div><div class="scroll-hint">← 可左右滑动查看完整列 →</div></div>

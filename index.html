@@ -334,7 +334,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   /* 总览 4 张指标卡：移动端数值缩小 + 卡片加 overflow:hidden，避免 "+¥25,050.23" 被截断 */
   .ov-grid { gap: 8px !important; } .ov-card { padding: 11px 12px !important; }
   #growthCard { display: none; }
-  #trendSection { display: none; }
+  /* #trendSection 移动端不再隐藏——资产 Tab hero（账户资产+当日收益）移动端也展示（2026-08-10 用户要求） */
   .ov-trend { display: none; }
   #sectorHint { font-size: 12px; line-height: 1.5; margin-bottom: 8px; }
   }

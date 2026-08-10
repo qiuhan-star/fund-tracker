@@ -897,8 +897,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
   /* 13. 交易流水列表：强制横向滚动，不折行 */
   .table-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-  .table-scroll table { min-width: 640px !important; }
-  .table-scroll th, .table-scroll td { white-space: nowrap !important; }
+  .table-scroll table:not(.market-table) { min-width: 640px !important; }
+  .table-scroll table:not(.market-table) th, .table-scroll table:not(.market-table) td { white-space: nowrap !important; }
 
   /* 14. 债基明细/对比/自选表：强制横向滚动 */
   .tbl-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding-bottom: 4px !important; }
@@ -966,9 +966,15 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   [data-theme="dark"] .bcard .st.lock .st-ico{background:#60a5fa}
   [data-theme="dark"] .bcard .st.lock .st-txt{color:#93c5fd}
 
-  /* 15. 基金榜单表：横向滚动 */
-  .market-table { min-width: 560px !important; }
-  .market-table th, .market-table td { white-space: nowrap !important; }
+  /* 15. 基金榜单表：移动端紧凑，不横向滚动（参考基金持仓表格式） */
+  .market-table { table-layout: fixed; min-width: 0 !important; }
+  .market-table th, .market-table td { white-space: nowrap !important; padding: 8px 4px; font-size: .8rem; }
+  .market-table th:first-child, .market-table td:first-child { white-space: normal !important; }
+  .market-table th:nth-child(1), .market-table td:nth-child(1) { width: 40%; }
+  .market-table th:nth-child(2), .market-table td:nth-child(2) { width: 14%; }
+  .market-table th:nth-child(3), .market-table td:nth-child(3) { width: 17%; }
+  .market-table th:nth-child(4), .market-table td:nth-child(4) { width: 17%; }
+  .market-table th:nth-child(5), .market-table td:nth-child(5) { width: 12%; }
 
   /* 16. 移动端横向溢出总兜底 + 双列布局塌成单列 */
   html, body { overflow-x: hidden; }

@@ -3675,11 +3675,11 @@ function renderTrendSection(){
     <div class="ov-wrap">
       <section class="ov-hero">
         <div class="ov-hero-left">
-          <span class="ov-hero-label">总资产市值 · 账户 ${scopeLabel} <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></span>
+          <span class="ov-hero-label">账户资产 · ${scopeLabel} <button class="eye-inline" onclick="toggleHidden()" title="隐藏/显示金额">${hidden?'🙈':'👁'}</button></span>
           <span class="ov-hero-value">${mask(M(total))}</span>
         </div>
         <div class="ov-hero-right">
-          <div>今日预估 <b class="${tgcls}">${mask(tg)}</b> <span class="${estCls}">${estLine}</span></div>
+          <div>当日收益 <b class="${tgcls}">${mask(tg)}</b> <span class="${estCls}">${estLine}</span></div>
           <div class="ov-hero-sub">更新 ${updLine}</div>
         </div>
       </section>

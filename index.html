@@ -966,14 +966,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   [data-theme="dark"] .bcard .st.lock .st-ico{background:#60a5fa}
   [data-theme="dark"] .bcard .st.lock .st-txt{color:#93c5fd}
 
-  /* 15. 基金榜单表：移动端紧凑，不横向滚动（参考基金持仓表格式） */
-  .market-table { table-layout: fixed; min-width: 0 !important; }
+  /* 15. 基金榜单表：移动端紧凑；核心4列(基金/日估/近1周/操作)直接显示，近1月/近3月/近1年横滑查看 */
+  .market-table { table-layout: fixed; width: auto; min-width: 0 !important; }
   .market-table th, .market-table td { white-space: nowrap !important; padding: 8px 4px; font-size: .8rem; }
   .market-table th:first-child, .market-table td:first-child { white-space: normal !important; }
-  .market-table th:nth-child(1), .market-table td:nth-child(1) { width: 46%; }
-  .market-table th:nth-child(2), .market-table td:nth-child(2) { width: 19%; }
-  .market-table th:nth-child(3), .market-table td:nth-child(3) { width: 19%; }
-  .market-table th:nth-child(4), .market-table td:nth-child(4) { width: 16%; }
+  .market-table th:nth-child(1), .market-table td:nth-child(1) { width: 120px; }
+  .market-table th:nth-child(2), .market-table td:nth-child(2) { width: 60px; }
+  .market-table th:nth-child(3), .market-table td:nth-child(3) { width: 60px; }
+  .market-table th:nth-child(4), .market-table td:nth-child(4) { width: 50px; }
   .market-table th:nth-child(5), .market-table td:nth-child(5) { width: 58px; }
   .market-table th:nth-child(6), .market-table td:nth-child(6) { width: 58px; }
   .market-table th:nth-child(7), .market-table td:nth-child(7) { width: 58px; }
@@ -1317,10 +1317,12 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     });
   };
   window.lockForgot=function(){
-    if(!confirm('关闭应用锁并保留全部数据？')) return;
-    try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){}
-    var sc=document.getElementById('lockScreen'); if(sc) sc.classList.remove('show');
-    if(typeof toast==='function') toast('应用锁已关闭');
+    ftConfirm('关闭应用锁并保留全部数据？', function(ok){
+      if(!ok) return;
+      try{ localStorage.removeItem('ft_lock_pw'); localStorage.setItem('ft_lock_on','0'); }catch(e){}
+      var sc=document.getElementById('lockScreen'); if(sc) sc.classList.remove('show');
+      if(typeof toast==='function') toast('应用锁已关闭');
+    });
   };
   window.onLockToggle=function(){
     var el=document.getElementById('lockOn'); if(!el) return; var on=el.checked;
@@ -2057,6 +2059,31 @@ window.confirmAccPrompt=function(){ var m=document.getElementById('accPromptMask
 window.openConfirm=function(title,msg,cb){ var m=document.getElementById('accConfirmMask'); if(!m) return; var t=document.getElementById('accConfirmTitle'), x=document.getElementById('accConfirmMsg'); if(t)t.textContent=title||''; if(x)x.textContent=msg||''; window._accConfirmCb=cb; m.classList.add('show'); };
 window.closeAccConfirm=function(){ var m=document.getElementById('accConfirmMask'); if(m) m.classList.remove('show'); window._accConfirmCb=null; };
 window.confirmAccConfirm=function(){ var cb=window._accConfirmCb; closeAccConfirm(); if(cb) cb(); };
+// ===== 通用安全弹窗（替代原生 prompt/confirm/alert；iOS PWA 下原生弹窗被禁，统一走应用内弹窗）=====
+var _ftPromptCb=null, _ftDialogCb=null, _ftDialogIsAlert=false;
+window.ftPrompt=function(title, def, cb){
+  var m=document.getElementById('ftPromptMask'); if(!m){ var r=window.prompt(title, def||''); if(cb) cb(r); return; }
+  var t=document.getElementById('ftPromptTitle'), i=document.getElementById('ftPromptInput');
+  if(t) t.textContent=title||''; if(i){ i.value=(def!=null?def:''); setTimeout(function(){ try{ i.focus(); i.select(); }catch(e){} },40); }
+  _ftPromptCb=cb; m.classList.add('show');
+};
+window._ftPromptCancel=function(){ var m=document.getElementById('ftPromptMask'); if(m) m.classList.remove('show'); var cb=_ftPromptCb; _ftPromptCb=null; if(cb) cb(null); };
+window._ftPromptOk=function(){ var m=document.getElementById('ftPromptMask'); var i=document.getElementById('ftPromptInput'); if(!i) return; var v=i.value==null?'':i.value.trim(); var cb=_ftPromptCb; _ftPromptCb=null; if(m) m.classList.remove('show'); if(cb) cb(v); };
+window.ftConfirm=function(msg, cb){
+  var m=document.getElementById('ftDialogMask'); if(!m){ var r=window.confirm(msg); if(cb) cb(r); return; }
+  var t=document.getElementById('ftDialogTitle'), x=document.getElementById('ftDialogMsg'), cancel=document.getElementById('ftDialogCancel');
+  if(t) t.textContent=''; if(x) x.textContent=msg||''; _ftDialogIsAlert=false; if(cancel) cancel.style.display='';
+  _ftDialogCb=cb; m.classList.add('show');
+};
+window.ftAlert=function(msg, cb){
+  var m=document.getElementById('ftDialogMask'); if(!m){ window.alert(msg); if(cb) cb(); return; }
+  var t=document.getElementById('ftDialogTitle'), x=document.getElementById('ftDialogMsg'), cancel=document.getElementById('ftDialogCancel');
+  if(t) t.textContent=''; if(x) x.textContent=msg||''; _ftDialogIsAlert=true; if(cancel) cancel.style.display='none';
+  _ftDialogCb=cb; m.classList.add('show');
+};
+window._ftDialogCancel=function(){ var m=document.getElementById('ftDialogMask'); if(m) m.classList.remove('show'); var cb=_ftDialogCb; _ftDialogCb=null; if(cb) cb(_ftDialogIsAlert?undefined:false); };
+window._ftDialogOk=function(){ var m=document.getElementById('ftDialogMask'); if(m) m.classList.remove('show'); var cb=_ftDialogCb; _ftDialogCb=null; if(cb) cb(_ftDialogIsAlert?undefined:true); };
+
 
 function addAccount(){
   openTextPrompt('添加账户名称', '', function(name){ if(!name) return; _addAccountRaw(name); });
@@ -2437,18 +2464,18 @@ const MARKET_FLOW = {
 };
 const MARKET_RANK = {
   top: [
-    { code: '001630', name: '天弘中证计算机ETF联接C', type: '指数型', est: '+3.12%', w1: '+6.4%' }, m1: '+9.2%', m3: '+18.5%', y1: '+42.3%',
-    { code: '011609', name: '国泰中证动漫游戏ETF联接C', type: '指数型', est: '+4.02%', w1: '+9.1%' }, m1: '+14.1%', m3: '+22.7%', y1: '+55.6%',
-    { code: '013814', name: '富国中证芯片ETF联接C', type: '指数型', est: '+3.80%', w1: '+8.4%' }, m1: '+11.3%', m3: '+19.8%', y1: '+38.1%',
-    { code: '005827', name: '易方达蓝筹精选混合', type: '混合型', est: '+2.45%', w1: '+4.1%' }, m1: '+5.4%', m3: '+8.2%', y1: '+12.7%',
-    { code: '012348', name: '富国中证科技50ETF联接C', type: '指数型', est: '+3.45%', w1: '+7.2%' }, m1: '+10.6%', m3: '+17.4%', y1: '+33.9%',
-    { code: '008086', name: '华夏中证500ETF联接C', type: '指数型', est: '+1.88%', w1: '+2.9%' }, m1: '+4.1%', m3: '+6.8%', y1: '+9.5%',
-    { code: '270042', name: '广发纳斯达克100指数', type: '指数型', est: '+2.20%', w1: '+5.5%' }, m1: '+3.2%', m3: '+7.5%', y1: '+21.4%',
-    { code: '519674', name: '银河创新成长混合', type: '混合型', est: '+3.45%', w1: '+7.0%' }, m1: '+9.8%', m3: '+16.2%', y1: '+29.8%',
-    { code: '003096', name: '中欧医疗健康混合C', type: '混合型', est: '+1.65%', w1: '+2.3%' }, m1: '-2.1%', m3: '-5.4%', y1: '-8.7%',
-    { code: '164824', name: '工银瑞信印度市场', type: '指数型', est: '+1.30%', w1: '+4.2%' }, m1: '+2.4%', m3: '+6.1%', y1: '+15.2%',
-    { code: '001632', name: '天弘中证食品饮料C', type: '指数型', est: '+1.95%', w1: '+3.0%' }, m1: '-1.3%', m3: '+2.2%', y1: '+5.8%',
-    { code: '501016', name: '国泰中证申万证券', type: '指数型', est: '+1.55%', w1: '+2.6%' }, m1: '+3.7%', m3: '+4.9%', y1: '+7.3%'
+    { code: '001630', name: '天弘中证计算机ETF联接C', type: '指数型', est: '+3.12%', w1: '+6.4%', m1: '+9.2%', m3: '+18.5%', y1: '+42.3%' },
+    { code: '011609', name: '国泰中证动漫游戏ETF联接C', type: '指数型', est: '+4.02%', w1: '+9.1%', m1: '+14.1%', m3: '+22.7%', y1: '+55.6%' },
+    { code: '013814', name: '富国中证芯片ETF联接C', type: '指数型', est: '+3.80%', w1: '+8.4%', m1: '+11.3%', m3: '+19.8%', y1: '+38.1%' },
+    { code: '005827', name: '易方达蓝筹精选混合', type: '混合型', est: '+2.45%', w1: '+4.1%', m1: '+5.4%', m3: '+8.2%', y1: '+12.7%' },
+    { code: '012348', name: '富国中证科技50ETF联接C', type: '指数型', est: '+3.45%', w1: '+7.2%', m1: '+10.6%', m3: '+17.4%', y1: '+33.9%' },
+    { code: '008086', name: '华夏中证500ETF联接C', type: '指数型', est: '+1.88%', w1: '+2.9%', m1: '+4.1%', m3: '+6.8%', y1: '+9.5%' },
+    { code: '270042', name: '广发纳斯达克100指数', type: '指数型', est: '+2.20%', w1: '+5.5%', m1: '+3.2%', m3: '+7.5%', y1: '+21.4%' },
+    { code: '519674', name: '银河创新成长混合', type: '混合型', est: '+3.45%', w1: '+7.0%', m1: '+9.8%', m3: '+16.2%', y1: '+29.8%' },
+    { code: '003096', name: '中欧医疗健康混合C', type: '混合型', est: '+1.65%', w1: '+2.3%', m1: '-2.1%', m3: '-5.4%', y1: '-8.7%' },
+    { code: '164824', name: '工银瑞信印度市场', type: '指数型', est: '+1.30%', w1: '+4.2%', m1: '+2.4%', m3: '+6.1%', y1: '+15.2%' },
+    { code: '001632', name: '天弘中证食品饮料C', type: '指数型', est: '+1.95%', w1: '+3.0%', m1: '-1.3%', m3: '+2.2%', y1: '+5.8%' },
+    { code: '501016', name: '国泰中证申万证券', type: '指数型', est: '+1.55%', w1: '+2.6%', m1: '+3.7%', m3: '+4.9%', y1: '+7.3%' }
   ]
 };
 function fetchSectorFlow(){
@@ -3068,13 +3095,14 @@ function renderCatFilter(){
 function editTags(code){
   if(!code) return;
   const cur=(userTags[code]||[]).join(',');
-  const v=prompt('编辑标签（多个标签用逗号分隔，如：半导体,定投）', cur);
-  if(v===null) return;
-  const arr=v.split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean);
-  if(arr.length) userTags[code]=arr; else delete userTags[code];
-  try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
-  if(typeof compute==='function') compute();
-  if(currentView==='home'&&activeTab===0) renderHomeList();
+  ftPrompt('编辑标签（多个标签用逗号分隔，如：半导体,定投）', cur, function(v){
+    if(v===null) return;
+    const arr=v.split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean);
+    if(arr.length) userTags[code]=arr; else delete userTags[code];
+    try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
+    if(typeof compute==='function') compute();
+    if(currentView==='home'&&activeTab===0) renderHomeList();
+  });
 }
 // ---------- 分类手动覆盖（系统自动判定，可点 ✎ 改）----------
 const CAT_LIST=['芯片','周期资源','医药','制造','海外','科技','债基','混合','其他'];
@@ -4105,8 +4133,8 @@ function sellPreview(name, acc, amount, nav, fee, shares){
   const isLiq=sellSh>=remSh-1e-6 && remSh>0;
   return {remSh:remSh, sellSh:sellSh, costBasis:costBasis, proceeds:proceeds, gain:gain, retPct:retPct, isLiq:isLiq, fee:fee};
 }
-function sellPreviewConfirm(name, acc, amount, nav, fee, shares, date){
-  if(!(_allHoldings.length)) return true; // 无持仓记录则跳过预览，直接保存
+function sellPreviewConfirm(name, acc, amount, nav, fee, shares, date, cb){
+  if(!(_allHoldings.length)){ cb(true); return; } // 无持仓记录则跳过预览，直接保存
   const pv=sellPreview(name, acc, amount, nav, fee, shares);
   const est=estRedemptionFee(name, acc, date, amount);
   let msg='💱 卖出预览 · '+name+'（'+acc+'）\n';
@@ -4117,7 +4145,7 @@ function sellPreviewConfirm(name, acc, amount, nav, fee, shares, date){
   msg+='预估盈亏：'+(pv.gain>=0?'+':'')+M(pv.gain)+'（'+(pv.retPct>=0?'+':'')+pv.retPct.toFixed(2)+'%）\n';
   if(pv.isLiq) msg+='\n⚠️ 这将清空该账户下此基金的持仓（清仓）。\n';
   msg+='\n确认保存这笔卖出？';
-  return confirm(msg);
+  ftConfirm(msg, cb);
 }
 function bondAmt(f){ return (bondState.amts&&bondState.amts[f.code]!=null)?bondState.amts[f.code]:f.amt; }
 function bondDate(f){  if(bondState.dates&&bondState.dates[f.code]) return bondState.dates[f.code];  const fb=firstBuyDate(f.name, f.acc);  if(fb) return fb;  return (f.date||BOND_DEF_DATES[f.code])||'';}
@@ -4173,8 +4201,8 @@ function bondTypeOf(f){ return f.mix?'混合':'纯债'; }
 function bondWsInScope(w){ return (currentScope==='all') ? true : (w.acc && w.acc!=='—' && scopeMatches(w.acc)); }
 function addBondWatch(){
   const el=document.getElementById('bwInput'); if(!el) return;
-  const v=(el.value||'').trim(); if(!v){ alert('请输入基金代码或名称'); return; }
-  if(bondWatch.some(x=>x.code===v)){ alert('已在自选池'); return; }
+  const v=(el.value||'').trim(); if(!v){ ftAlert('请输入基金代码或名称'); return; }
+  if(bondWatch.some(x=>x.code===v)){ ftAlert('已在自选池'); return; }
   if(/^\d{6}$/.test(v)){ fetchBondInfo(v); el.value=''; return; }
   const f={code:v, name:v, acc:'—', type:'待分类', dur:'—', credit:'—', y1:null, since:null, risk:'—', lock:0, mix:false, company:'待定', isWatch:true};
   bondWatch.push(f); saveBondWatch(); el.value=''; renderBond();
@@ -4853,12 +4881,12 @@ function reviewCommit(){
   reviewSave(); reviewRender(reviewCurFund); reviewSheetClose();
 }
 function reviewCancel(){ reviewEditing=null; reviewDraft=null; reviewSheetClose(); }
-function reviewDel(id){ if(!confirm('确定删除这条复盘笔记？')) return; reviewNotes=reviewNotes.filter(x=>x.id!==id); reviewSave(); reviewRender(reviewCurFund); }
+function reviewDel(id){ ftConfirm('确定删除这条复盘笔记？', function(ok){ if(!ok) return; reviewNotes=reviewNotes.filter(x=>x.id!==id); reviewSave(); reviewRender(reviewCurFund); }); }
 function reviewFill(id){ const e=document.getElementById('rvOf'+id); if(!e) return; e.innerHTML='<div class="rv-of"><label><input type="radio" name="rvh'+id+'" value="1"> 兑现了</label><label><input type="radio" name="rvh'+id+'" value="0"> 没兑现</label><textarea id="rvOn'+id+'" placeholder="复盘结论：当时判断对在哪/错在哪，下次怎么改"></textarea><button class="btn tiny" onclick="reviewSaveOutcome('+id+')">保存回看</button></div>'; }
 function reviewSaveOutcome(id){ const n=reviewNotes.find(x=>x.id===id); if(!n) return; const hit=document.querySelector('input[name="rvh'+id+'"]:checked'); const note=(document.getElementById('rvOn'+id).value||'').trim(); n.outcome={hit:!!(hit&&hit.value==='1'),note}; reviewSave(); reviewRender(reviewCurFund); }
 function reviewDownload(name,text,type){ const b=new Blob([text],{type:type||'text/plain;charset=utf-8'}); ftDownload(b,name,'已导出 '+name,'已打开文件，点底部「分享」→「存储到文件」保存'); }
 function reviewExportMD(){
-  if(!reviewNotes.length){ alert('还没有笔记可导出'); return; }
+  if(!reviewNotes.length){ ftAlert('还没有笔记可导出'); return; }
   let md='# 个人复盘 & 调仓笔记\n\n> 导出时间 '+new Date().toLocaleString('zh-CN')+'\n\n';
   reviewNotes.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(n=>{
     md+='## '+n.date+' · '+(n.fund||'全局笔记')+'\n';
@@ -4872,7 +4900,7 @@ function reviewExportMD(){
   reviewDownload('复盘笔记_'+reviewToday()+'.md', md, 'text/markdown;charset=utf-8');
 }
 function reviewExportJSON(){ const p={app:'fund-tracker',type:'review-notes',version:1,exportedAt:new Date().toISOString(),notes:reviewNotes}; reviewDownload('复盘笔记_'+reviewToday()+'.json', JSON.stringify(p,null,2),'application/json'); }
-function reviewImport(input){ const f=input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const d=JSON.parse(r.result); const arr=Array.isArray(d)?d:(d&&d.notes)||[]; if(!Array.isArray(arr)||!arr.length) throw 0; if(confirm('导入将覆盖当前 '+reviewNotes.length+' 条笔记，确定继续？')){ reviewNotes=arr; reviewSave(); reviewRender(reviewCurFund); } }catch(e){ alert('文件格式不对，无法导入（需本 app 导出的 JSON）'); } }; r.readAsText(f); input.value=''; }
+function reviewImport(input){ const f=input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const d=JSON.parse(r.result); const arr=Array.isArray(d)?d:(d&&d.notes)||[]; if(!Array.isArray(arr)||!arr.length) throw 0; ftConfirm('导入将覆盖当前 '+reviewNotes.length+' 条笔记，确定继续？', function(ok){ if(!ok) return; reviewNotes=arr; reviewSave(); reviewRender(reviewCurFund); }); }catch(e){ ftAlert('文件格式不对，无法导入（需本 app 导出的 JSON）'); } }; r.readAsText(f); input.value=''; }
 
 
 // ---------- 渲染调度 ----------
@@ -5552,16 +5580,19 @@ function addTradeForForm(enc){
   const nav=(navRaw===''||navRaw==null)?null:+navRaw;
   if(!date){ toast('请填写交易日期'); return; }
   if(!amount){ toast('请填写金额'); return; }
-  if(type==='sell' && !sellPreviewConfirm(name, acc, amount, nav, fee, shares, date)) return;
+  if(type==='sell'){ sellPreviewConfirm(name, acc, amount, nav, fee, shares, date, function(ok){ if(!ok) return; nfCommit(); }); return; }
+  nfCommit();
+  function nfCommit(){
   trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
   silentSave(); compute();
   toast('已保存并锁定 · '+typeLabel(type)+' '+M(amount));
   g('nf-amount').value=''; g('nf-nav').value=''; g('nf-fee').value=''; g('nf-shares').value='';
   if(isMobile() && typeof renderDetailLive==='function') renderDetailLive(encodeURIComponent(name));
+  }
 }
 function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); } }
 function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); } }
-function delTrade(i){ if(trades[i]&&confirm('确定删除这笔交易？')){ trades.splice(i,1); silentSave(); compute(); } }
+function delTrade(i){ if(!trades[i]) return; ftConfirm('确定删除这笔交易？', function(ok){ if(!ok) return; trades.splice(i,1); silentSave(); compute(); }); }
 function addTradeMenu(){
   const list=(_allHoldings.length?_allHoldings:fundsView).slice().sort((a,b)=>b.mv-a.mv);
   if(!list.length){ toast('还没有基金，先点「＋ 加一只基金」添加'); return; }
@@ -5592,13 +5623,16 @@ function tradeQuickSave(){
   const navRaw=g('tq-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
   const fee=+g('tq-fee').value||0;
   const shRaw=g('tq-shares').value, shares=(shRaw===''||shRaw==null)?null:+shRaw;
-  if(type==='sell' && !sellPreviewConfirm(name, acc, amount, nav, fee, shares, date)) return;
+  if(type==='sell'){ sellPreviewConfirm(name, acc, amount, nav, fee, shares, date, function(ok){ if(!ok) return; tqCommit(); }); return; }
+  tqCommit();
+  function tqCommit(){
   trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
   silentSave(); compute(); recordSnapshot();
   closeTradePicker();
   draftClear('ft_draft_tq', DRAFT_TQ_IDS); const _tq=document.getElementById('tqDraftPill'); if(_tq) _tq.classList.remove('show');
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
   toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
+  }
 }
 
 // 移动端交易录入辅助
@@ -5651,7 +5685,9 @@ function drawerSave(){
   const navRaw=g('dr-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
   const fee=+g('dr-fee').value||0;
   const shRaw=g('dr-shares').value, shares=(shRaw===''||shRaw==null)?null:+shRaw;
-  if(type==='sell' && !sellPreviewConfirm(name, acc, amount, nav, fee, shares, date)) return;
+  if(type==='sell'){ sellPreviewConfirm(name, acc, amount, nav, fee, shares, date, function(ok){ if(!ok) return; drCommit(); }); return; }
+  drCommit();
+  function drCommit(){
   trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,locked:true});
   silentSave(); compute(); recordSnapshot();
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
@@ -5659,6 +5695,7 @@ function drawerSave(){
   g('dr-amount').value=''; g('dr-nav').value=''; g('dr-fee').value=''; g('dr-shares').value=''; g('dr-fund').value='';
   draftClear('ft_draft_drawer', DRAFT_DR_IDS); const _dp=document.getElementById('drDraftPill'); if(_dp) _dp.classList.remove('show');
   closeDrawer();
+  }
 }
 
 // ---------- 草稿自动保存（移动端防丢失） ----------
@@ -5754,12 +5791,13 @@ function atFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#allTra
 function atGo(nm,acc){ closeAllTrades(); goDetail(nm,acc); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
-  if(!confirm('确定删除「'+nm+'」？删除后本地已自动备份，可从「设置 → 从备份恢复」。')) return;
-  if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
-  backupData();
-  snaps=snaps.filter(s=>s.name!==nm); trades=trades.filter(t=>t.name!==nm); delete navCache[nm];
-  renderTrade(); compute(); silentSave();
-  toast('已删除「'+nm+'」，本地备份已保留，可从设置恢复');
+  ftConfirm('确定删除「'+nm+'」？删除后本地已自动备份，可从「设置 → 从备份恢复」。', function(ok){ if(!ok) return;
+    if(currentView==='detail'&&detailName===nm){ location.hash='#/'; showHome(); }
+    backupData();
+    snaps=snaps.filter(s=>s.name!==nm); trades=trades.filter(t=>t.name!==nm); delete navCache[nm];
+    renderTrade(); compute(); silentSave();
+    toast('已删除「'+nm+'」，本地备份已保留，可从设置恢复');
+  });
 }
 
 // ---------- 净值刷新 ----------
@@ -6929,8 +6967,9 @@ function dcaToggle(id){
 }
 function dcaDelete(id){
   const p=dcaPlans.find(x=>x.id===id); if(!p) return;
-  if(!confirm('删除定投计划「'+p.name+'」？\n已自动记账的买入记录保留（不会被删除）。')) return;
-  dcaPlans=dcaPlans.filter(x=>x.id!==id); silentSave(); refreshAssetDca(); dcaResetForm();
+  ftConfirm('删除定投计划「'+p.name+'」？\n已自动记账的买入记录保留（不会被删除）。', function(ok){ if(!ok) return;
+    dcaPlans=dcaPlans.filter(x=>x.id!==id); silentSave(); refreshAssetDca(); dcaResetForm();
+  });
 }
 function dcaSave(){
   const name=(document.getElementById('dcaName')||{}).value||'';
@@ -7118,7 +7157,7 @@ function importJSON(){
       refreshSampleBanner();
       toast('已导入 JSON（已升级到 v'+SCHEMA_VERSION+'）'+(n?('，并恢复 '+n+' 项设置/自选/债券'):''));
       setTimeout(()=>{ location.reload(); }, 800);
-    }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
+    }catch(e){ ftAlert('解析失败：'+(e&&e.message?e.message:e)); } };
     r.readAsText(f); };
   inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
   document.body.appendChild(inp); inp.click();
@@ -7134,7 +7173,7 @@ function importMyExtras(){
       setDemoOff(); removeSampleData(true);
       toast('已恢复 '+n+' 项（债基清单 / 深度分析），即将刷新');
       setTimeout(()=>{ location.reload(); }, 800);
-    }catch(e){ alert('解析失败：'+(e&&e.message?e.message:e)); } };
+    }catch(e){ ftAlert('解析失败：'+(e&&e.message?e.message:e)); } };
     r.readAsText(f); };
   inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
   document.body.appendChild(inp); inp.click();
@@ -7169,25 +7208,26 @@ function refreshSampleBanner(){
 }
 
 function syncOnline(){
-  if(!confirm('将从线上拉取最新数据并合并到本地（同步前会自动备份当前数据到下载）。\n\n· 线上的基金/交易会更新进来\n· 你本地手动新增的基金和交易会保留\n· 实时净值缓存不动\n\n确认同步？')) return;
-  try{ saveLocal(); }catch(e){}
-  fetch('fund-data.json?t='+Date.now())
-    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(d=>{
-      const onSnaps=d.snaps||[], onTrades=d.trades||[];
-      const onNames=new Set(onSnaps.map(x=>x.name));
-      const localExtra=snaps.filter(x=>!onNames.has(x.name));
-      snaps=onSnaps.concat(localExtra);
-      const seen=new Set(), merged=[];
-      onTrades.concat(trades).forEach(t=>{
-        const k=(t.name||'')+'|'+(t.date||'')+'|'+(t.amount||'')+'|'+(t.nav||'');
-        if(!seen.has(k)){ seen.add(k); merged.push(t); }
-      });
-      trades=merged;
-      renderTrade(); compute(); saveLocal();
-      toast('已同步线上数据（本地独有内容已保留，旧数据已备份到下载）');
-    })
-    .catch(e=>{ alert('同步失败：'+e.message+'。请改用「更多 → 导入 JSON」手动选文件。'); });
+  ftConfirm('将从线上拉取最新数据并合并到本地（同步前会自动备份当前数据到下载）。\n\n· 线上的基金/交易会更新进来\n· 你本地手动新增的基金和交易会保留\n· 实时净值缓存不动\n\n确认同步？', function(ok){ if(!ok) return;
+    try{ saveLocal(); }catch(e){}
+    fetch('fund-data.json?t='+Date.now())
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(d=>{
+        const onSnaps=d.snaps||[], onTrades=d.trades||[];
+        const onNames=new Set(onSnaps.map(x=>x.name));
+        const localExtra=snaps.filter(x=>!onNames.has(x.name));
+        snaps=onSnaps.concat(localExtra);
+        const seen=new Set(), merged=[];
+        onTrades.concat(trades).forEach(t=>{
+          const k=(t.name||'')+'|'+(t.date||'')+'|'+(t.amount||'')+'|'+(t.nav||'');
+          if(!seen.has(k)){ seen.add(k); merged.push(t); }
+        });
+        trades=merged;
+        renderTrade(); compute(); saveLocal();
+        toast('已同步线上数据（本地独有内容已保留，旧数据已备份到下载）');
+      })
+      .catch(e=>{ ftAlert('同步失败：'+e.message+'。请改用「更多 → 导入 JSON」手动选文件。'); });
+  });
 }
 // CSV 导入：解析银行/券商导出的交易记录（UTF-8，逗号或制表符）。表头关键字映射。
 function importCSV(){
@@ -7196,7 +7236,7 @@ function importCSV(){
     r.onload=()=>{ try{ const _def=document.getElementById('impFileAccount'); const _force=document.getElementById('impFileForceAcc'); const res=parseCSV(r.result, _def?_def.value:'', _force?_force.checked:false); const added=res.count; if(added===0&&res.dup===0){ toast('未识别到交易行'); return; }
         if(added===0&&res.dup>0){ toast('全部 '+res.dup+' 笔均已存在，无需重复导入'); return; }
         showImpPreview(res.rows, 'csv', res.dup); }
-      catch(e){ alert('CSV 解析失败：'+e.message); } };
+      catch(e){ ftAlert('CSV 解析失败：'+e.message); } };
     r.readAsText(f,'utf-8'); };
   inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
   document.body.appendChild(inp); inp.click();
@@ -7666,7 +7706,7 @@ function navKind(nc){ const mkt=isMarketOpen(new Date()); if(nc&&nc.date==='手�
 function navBadge(nc){ const k=navKind(nc); const cls=k==='估值'?'nk-est':k==='手动'?'nk-man':'nk-off'; return `<i class="nk ${cls}">${k}</i>`; }
 function toggleHidden(){ hidden=!hidden; document.body.classList.toggle('masked',hidden); try{localStorage.setItem('ft_hidden',hidden?'1':'0');}catch(e){} document.querySelectorAll('.eye-inline').forEach(eb=>eb.textContent=hidden?'🙈':'👁'); document.querySelectorAll('.sm-priv-sw').forEach(function(pw){ pw.classList.toggle('on',hidden); }); var pd=document.getElementById('smPrivDsc'); if(pd) pd.textContent=hidden?'开启 · 金额已隐藏':'关闭 · 金额正常显示'; render(); }
 function saveAlerts(){ try{localStorage.setItem('ft_alerts',JSON.stringify(alerts));}catch(e){} }
-function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; const v=prompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur); if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ alert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }
+function setManualNav(enc){ const name=decodeURIComponent(enc); if(hidden) return; const cur=(navCache[name]&&navCache[name].nav)||''; ftPrompt('手动填写「'+name+'」的最新净值\n（留空则清除手动净值，恢复自动/缓存）', cur, function(v){ if(v===null) return; const s=v.trim(); if(s===''){ if(navCache[name]){ const ex=navCache[name]||{}; if(ex.official!=null){ navCache[name]={...ex,nav:ex.official,date:'自动'}; } else { delete navCache[name]; } compute(); silentSave(); toast('已清除手动净值'); } return; } const n=parseFloat(s); if(isNaN(n)||n<=0){ ftAlert('净值无效，请输入正数'); return; } navCache[name]={...(navCache[name]||{}),nav:n,date:'手动'}; compute(); silentSave(); toast('已更新「'+name+'」净值'); }); }
 function setAlert(enc,field,val){ const name=decodeURIComponent(enc); alerts[name]=alerts[name]||{}; if(val===''||val==null){ delete alerts[name][field]; if(!Object.keys(alerts[name]).length) delete alerts[name]; } else alerts[name][field]=+val; saveAlerts(); if(currentView==='home'&&activeTab===0) renderHomeList(); }
 function simulateAddPosition(enc){
   const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return;
@@ -7875,8 +7915,8 @@ function touchSync(){ if(_syncSuppress) return; if(!syncEnabled()) return; local
 function scheduleCloudPush(){ if(!syncEnabled()) return; if(_syncTimer) clearTimeout(_syncTimer); _syncTimer=setTimeout(function(){ cloudPush(false); },2500); }
 function setSyncStatus(txt){ var el=document.getElementById('syncStatus'); if(el) el.textContent=txt; }
 async function cloudPush(manual){
-  if(!syncEnabled()){ if(manual) alert('请先在设置开启云同步并填写配置'); return; }
-  var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) alert('请先填写 GitHub 令牌与仓库路径'); return; }
+  if(!syncEnabled()){ if(manual) ftAlert('请先在设置开启云同步并填写配置'); return; }
+  var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) ftAlert('请先填写 GitHub 令牌与仓库路径'); return; }
   if(_syncBusy) return; _syncBusy=true; if(manual) setSyncStatus('上传中…');
   try{
     var payload={_ts:new Date().toISOString(),keys:{}};
@@ -7890,12 +7930,12 @@ async function cloudPush(manual){
     _syncSuppress=true; localStorage.setItem('ft_sync_dirty','0'); localStorage.setItem('ft_sync_lastpush',payload._ts); _syncSuppress=false;
     setSyncStatus('已上传 · 云端为最新 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
     if(manual) toast('已上传到 GitHub');
-  }catch(e){ setSyncStatus('上传失败：'+(e&&e.message||e)); if(manual) alert('上传失败：'+(e&&e.message||e)); }
+  }catch(e){ setSyncStatus('上传失败：'+(e&&e.message||e)); if(manual) ftAlert('上传失败：'+(e&&e.message||e)); }
   finally{ _syncBusy=false; }
 }
 async function cloudPull(manual){
-  if(!syncEnabled()){ if(manual) alert('请先在设置开启云同步并填写配置'); return; }
-  var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) alert('请先填写 GitHub 令牌与仓库路径'); return; }
+  if(!syncEnabled()){ if(manual) ftAlert('请先在设置开启云同步并填写配置'); return; }
+  var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) ftAlert('请先填写 GitHub 令牌与仓库路径'); return; }
   if(_syncBusy) return; _syncBusy=true; if(manual) setSyncStatus('下载中…');
   try{
     var conflict=localStorage.getItem('ft_sync_conflict')||'local';
@@ -7910,7 +7950,7 @@ async function cloudPull(manual){
     localStorage.setItem('ft_sync_dirty','0'); localStorage.setItem('ft_sync_lastpull',payload._ts); _syncSuppress=false;
     setSyncStatus('已下载 · 本地已更新 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
     if(manual){ toast('已下载并更新本地，即将刷新'); setTimeout(function(){ location.reload(); },600); }
-  }catch(e){ setSyncStatus('下载失败：'+(e&&e.message||e)); if(manual) alert('下载失败：'+(e&&e.message||e)); }
+  }catch(e){ setSyncStatus('下载失败：'+(e&&e.message||e)); if(manual) ftAlert('下载失败：'+(e&&e.message||e)); }
   finally{ _syncBusy=false; }
 }
 async function cloudPullBeforeBoot(){
@@ -8628,6 +8668,27 @@ function renderSyncCfg(){
     </div>
   </div>
 </div>
+<div id="ftPromptMask" class="sm-mask">
+  <div class="acc-prompt">
+    <div class="ap-title" id="ftPromptTitle"></div>
+    <input id="ftPromptInput" class="ap-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="ap-btns">
+      <button class="ap-btn" onclick="_ftPromptCancel()">取消</button>
+      <button class="ap-btn primary" onclick="_ftPromptOk()">好</button>
+    </div>
+  </div>
+</div>
+<div id="ftDialogMask" class="sm-mask">
+  <div class="acc-prompt">
+    <div class="ap-title" id="ftDialogTitle"></div>
+    <div class="ap-msg" id="ftDialogMsg"></div>
+    <div class="ap-btns">
+      <button class="ap-btn" id="ftDialogCancel" onclick="_ftDialogCancel()">取消</button>
+      <button class="ap-btn primary" onclick="_ftDialogOk()">好</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- 分类管理弹窗 -->
 <div class="sm-mask" id="catManageMask" onclick="if(event.target===this)closeCatManage()">
@@ -8831,23 +8892,27 @@ function renderSyncCfg(){
     }).join('');
   }
   window.catManageRename=function(old){
-    var n=(window.prompt('重命名分类：', old)||'').trim(); if(!n || n===old) return;
-    for(var k in catOverride){ if(catOverride[k]===old) catOverride[k]=n; }
-    try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
-    var o=loadCatOrder()||[]; var i=o.indexOf(old); if(i>=0){ o[i]=n; saveCatOrder(o); }
-    renderCatFilter(); if(typeof renderCatSortList==='function') renderCatSortList(); renderCatManageList();
+    ftPrompt('重命名分类：', old, function(n){
+      if(!n || n===old) return;
+      for(var k in catOverride){ if(catOverride[k]===old) catOverride[k]=n; }
+      try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
+      var o=loadCatOrder()||[]; var i=o.indexOf(old); if(i>=0){ o[i]=n; saveCatOrder(o); }
+      renderCatFilter(); if(typeof renderCatSortList==='function') renderCatSortList(); renderCatManageList();
+    });
   };
   window.catManageDelete=function(old){
-    if(!window.confirm('删除分类「'+old+'」？\n属于它的基金会恢复为自动识别的分类。')) return;
-    for(var k in catOverride){ if(catOverride[k]===old) delete catOverride[k]; }
-    try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
-    var o=loadCatOrder()||[]; var i=o.indexOf(old); if(i>=0){ o.splice(i,1); saveCatOrder(o); }
-    renderCatFilter(); if(typeof renderCatSortList==='function') renderCatSortList(); renderCatManageList();
+    ftConfirm('删除分类「'+old+'」？\n属于它的基金会恢复为自动识别的分类。', function(ok){ if(!ok) return;
+      for(var k in catOverride){ if(catOverride[k]===old) delete catOverride[k]; }
+      try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
+      var o=loadCatOrder()||[]; var i=o.indexOf(old); if(i>=0){ o.splice(i,1); saveCatOrder(o); }
+      renderCatFilter(); if(typeof renderCatSortList==='function') renderCatSortList(); renderCatManageList();
+    });
   };
   window.catManageAdd=function(){
-    var n=(window.prompt('新增分类名称：','')||'').trim(); if(!n) return;
-    var o=loadCatOrder()||[]; if(o.indexOf(n)<0){ o.push(n); saveCatOrder(o); }
-    if(typeof renderCatSortList==='function') renderCatSortList(); renderCatManageList();
+    ftPrompt('新增分类名称：','', function(n){ if(!n) return;
+      var o=loadCatOrder()||[]; if(o.indexOf(n)<0){ o.push(n); saveCatOrder(o); }
+      if(typeof renderCatSortList==='function') renderCatSortList(); renderCatManageList();
+    });
   };
   window.openTagManage=function(){
     closeSortSheet();
@@ -8866,23 +8931,27 @@ function renderSyncCfg(){
     }).join('');
   }
   window.tagManageRename=function(old){
-    var n=(window.prompt('重命名标签：', old)||'').trim(); if(!n || n===old) return;
-    for(var code in userTags){ var arr=userTags[code]; if(arr){ var i=arr.indexOf(old); while(i>=0){ arr[i]=n; i=arr.indexOf(old); } } }
-    try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
-    var o=loadTagOrder()||[]; var i=o.indexOf(old); if(i>=0){ o[i]=n; saveTagOrder(o); }
-    renderTagFilter(); if(typeof renderTagSortList==='function') renderTagSortList(); renderTagManageList();
+    ftPrompt('重命名标签：', old, function(n){
+      if(!n || n===old) return;
+      for(var code in userTags){ var arr=userTags[code]; if(arr){ var i=arr.indexOf(old); while(i>=0){ arr[i]=n; i=arr.indexOf(old); } } }
+      try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
+      var o=loadTagOrder()||[]; var i=o.indexOf(old); if(i>=0){ o[i]=n; saveTagOrder(o); }
+      renderTagFilter(); if(typeof renderTagSortList==='function') renderTagSortList(); renderTagManageList();
+    });
   };
   window.tagManageDelete=function(old){
-    if(!window.confirm('删除标签「'+old+'」？\n所有基金上的该标签会被移除。')) return;
-    for(var code in userTags){ var arr=userTags[code]; if(arr){ var i=arr.indexOf(old); while(i>=0){ arr.splice(i,1); i=arr.indexOf(old); } if(!arr.length) delete userTags[code]; } }
-    try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
-    var o=loadTagOrder()||[]; var i=o.indexOf(old); if(i>=0){ o.splice(i,1); saveTagOrder(o); }
-    renderTagFilter(); if(typeof renderTagSortList==='function') renderTagSortList(); renderTagManageList();
+    ftConfirm('删除标签「'+old+'」？\n所有基金上的该标签会被移除。', function(ok){ if(!ok) return;
+      for(var code in userTags){ var arr=userTags[code]; if(arr){ var i=arr.indexOf(old); while(i>=0){ arr.splice(i,1); i=arr.indexOf(old); } if(!arr.length) delete userTags[code]; } }
+      try{ localStorage.setItem('ft_tags', JSON.stringify(userTags)); }catch(e){}
+      var o=loadTagOrder()||[]; var i=o.indexOf(old); if(i>=0){ o.splice(i,1); saveTagOrder(o); }
+      renderTagFilter(); if(typeof renderTagSortList==='function') renderTagSortList(); renderTagManageList();
+    });
   };
   window.tagManageAdd=function(){
-    var n=(window.prompt('新增标签名称：','')||'').trim(); if(!n) return;
-    var o=loadTagOrder()||[]; if(o.indexOf(n)<0){ o.push(n); saveTagOrder(o); }
-    if(typeof renderTagSortList==='function') renderTagSortList(); renderTagManageList();
+    ftPrompt('新增标签名称：','', function(n){ if(!n) return;
+      var o=loadTagOrder()||[]; if(o.indexOf(n)<0){ o.push(n); saveTagOrder(o); }
+      if(typeof renderTagSortList==='function') renderTagSortList(); renderTagManageList();
+    });
   };
     window.renderAccSummary=function(){
     var box=document.getElementById('accSummaryList'); if(!box) return;
@@ -8931,7 +9000,7 @@ function renderSyncCfg(){
   window.closeCacheSheet=function(){ var m=document.getElementById('cacheSheetMask'); if(m) m.classList.remove('show'); };
   window.doClearCache=function(){ closeCacheSheet(); try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
   window.clearCache=function(){ openCacheSheet(); };
-  window.resetApp=function(){ if(!confirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置/密码锁/云同步配置）且无法恢复。\n建议先「导出 JSON」备份。')) return; try{ var keys=[]; for(var i=0;i<localStorage.length;i++){ keys.push(localStorage.key(i)); } keys.forEach(function(k){ if(k && k.indexOf('ft_')===0) localStorage.removeItem(k); }); }catch(e){} location.reload(); };
+  window.resetApp=function(){ ftConfirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置/密码锁/云同步配置）且无法恢复。\n建议先「导出 JSON」备份。', function(ok){ if(!ok) return; try{ var keys=[]; for(var i=0;i<localStorage.length;i++){ keys.push(localStorage.key(i)); } keys.forEach(function(k){ if(k && k.indexOf('ft_')===0) localStorage.removeItem(k); }); }catch(e){} location.reload(); }); };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('click',function(e){ if(e.target.closest && (e.target.closest('#accTitle')||e.target.closest('#accMenu'))) return; closeAccMenu(); });
@@ -9061,10 +9130,10 @@ function renderSyncCfg(){
 // 统一加自选：输 6 位代码→识别基金/债基并自动拉数据；输名称→加基金自选
 function addUnifiedWatch(){
   const el=document.getElementById('uwInput'); if(!el) return;
-  const v=(el.value||'').trim(); if(!v){ alert('请输入基金代码或名称'); return; }
+  const v=(el.value||'').trim(); if(!v){ ftAlert('请输入基金代码或名称'); return; }
   if(/^\d{6}$/.test(v)){ fetchFundInfoUnified(v); el.value=''; return; }
   const w=loadWatch();
-  if(w.some(function(x){ return x.name===v; })){ alert('已在自选'); return; }
+  if(w.some(function(x){ return x.name===v; })){ ftAlert('已在自选'); return; }
   w.push({code:'', name:v}); try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
   renderWatchTab();
 }

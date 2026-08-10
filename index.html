@@ -3210,19 +3210,20 @@ function sortKeyVal(f,k){
   return 0;
 }
 
-// 持仓 dense 表第一列伪吸左：CSS position:sticky 在 Chrome td 不生效，改为 JS scroll 监听 + translateX 抵消（绝对稳定）
+// 持仓 dense 表第一列伪吸左：CSS position:sticky 在 Chrome td 不生效，改为 rAF 轮询 + translateX 抵消
+// （不依赖 scroll 事件——iOS Safari touch 滚动期间 scroll 事件不连续触发，rAF 每帧同步最稳）
 function bindDenseStickyFirstCol(root){
   root.querySelectorAll('.table-scroll').forEach(function(scroll){
     if(scroll.__stickyBound) return; scroll.__stickyBound=true;
-    const apply=function(){
-      const x=scroll.scrollLeft;
-      scroll.querySelectorAll('.dense-table tr').forEach(function(tr){
-        const cells=tr.children;
-        if(cells[0]) cells[0].style.transform='translateX('+x+'px)';
-      });
+    var rows=scroll.querySelectorAll('.dense-table tr');
+    var lastX=-1;
+    var apply=function(){
+      var x=scroll.scrollLeft;
+      if(x===lastX) return; lastX=x;
+      for(var i=0;i<rows.length;i++){ var c=rows[i].children[0]; if(c) c.style.transform='translateX('+x+'px)'; }
     };
     scroll.addEventListener('scroll', apply, {passive:true});
-    apply();
+    (function loop(){ apply(); requestAnimationFrame(loop); })();
   });
 }
 function renderHomeList(){

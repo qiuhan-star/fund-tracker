@@ -2610,7 +2610,7 @@ function renderIdxGrid(){
   const box=document.getElementById('idxGrid'); if(!box) return;
   let html='';
   INDEX_GRID.forEach(function(g){
-    const items=g.items.map(function(it){
+    g.items.forEach(function(it){
       const st=INDEX_STATE.find(function(s){ return s.group===g.group; }).items.find(function(x){ return x.secid===it.secid; });
       const day=st.day;
       const cls=day==null?'zero':(day>=0?'pos':'neg');
@@ -2628,17 +2628,18 @@ function renderIdxGrid(){
       }
       const high=st.high==null?'\u2014':(+st.high).toLocaleString('en-US',{maximumFractionDigits:2});
       const low=st.low==null?'\u2014':(+st.low).toLocaleString('en-US',{maximumFractionDigits:2});
-      return '<div class="idx-card">'
+      html+='<div class="idx-card">'
+        +'<div class="idx-tag">'+esc(g.group)+'</div>'
         +'<div class="idx-nm">'+esc(it.name)+'</div>'
         +'<div class="idx-pct '+cls+'">'+sym+' '+pctTxt+' <span class="live">实时</span></div>'
         +'<div class="idx-price '+cls+'">'+price+'</div>'
         +'<div class="idx-spk">'+svg+'</div>'
         +'<div class="idx-row"><span>高 '+high+'</span><span>低 '+low+'</span></div>'
         +'</div>';
-    }).join('');
-    html+='<div class="idx-sec-head">'+esc(g.group)+' <span style="font-weight:400">· '+g.items.length+'</span></div><div class="idx-grid">'+items+'</div>';
+    });
   });
-  box.innerHTML=html;
+  // 单一大 grid 连续铺（不按组分行，避免"港股只有1张卡占1/3列孤岛"视觉重叠）
+  box.innerHTML='<div class="idx-grid">'+html+'</div>';
 }
 function loadIdxAndRender(){
   if(IDX_BUSY) return;
@@ -8941,7 +8942,7 @@ function renderSyncCfg(){
   /* 不分组视图顶部对齐：用 padding-top 避开 margin 折叠，把表格顶推到与分组视图首组头齐平（523.7≈组头顶），两种模式顶部一致 */
   .home-ctable-wrap { padding-top: 2px; }
 /* ===== 大盘指数卡片（市场风向 Tab 独立模块；防"叠在一起"=grid-auto-rows 等高+overflow hidden） ===== */
-.idx-sec-head{font-size:12px;font-weight:600;color:var(--text-3);padding:14px 14px 4px;display:flex;justify-content:space-between;align-items:center}
+.idx-tag{font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .idx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 14px 12px}
 .idx-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:7px 9px;display:flex;flex-direction:column;gap:1px;overflow:hidden;min-width:0;font-variant-numeric:tabular-nums;height:112px}
 .idx-card .idx-nm{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

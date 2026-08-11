@@ -1248,6 +1248,63 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .bar-pct { display: none; }
 }
 
+
+/* ===== 记一笔交易 BottomSheet 美化（2026-08-11 redesign） ===== */
+#tradeQuickMask { align-items:flex-end; padding:0; }
+#tradeQuickSheet.sm-modal { width:100%; max-width:412px; margin:0 auto; height:auto; max-height:92vh; border-radius:24px 24px 0 0; display:flex; flex-direction:column; overflow:hidden; }
+#tradeQuickSheet .sm-head { display:none; }
+.tq-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:10px auto 4px; flex-shrink:0; }
+.tq-head { display:flex; align-items:center; justify-content:space-between; padding:10px 20px 6px; flex-shrink:0; }
+.tq-title { font-size:16px; font-weight:700; }
+.tq-close { width:28px; height:28px; border-radius:50%; border:none; background:var(--surface-2); color:var(--text-2); font-size:18px; display:flex; align-items:center; justify-content:center; }
+.tq-fund-wrap { padding:0 20px 8px; }
+.tq-fund-name { font-size:14px; font-weight:600; color:var(--text-2); line-height:1.4; word-break:break-all; display:none; }
+.tq-fund-name.show { display:block; }
+#tq-fund { width:100%; border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:15px; background:var(--surface); color:var(--text); }
+#tq-fund.hide { display:none; }
+.tq-body { overflow-y:auto; padding:0 20px 90px; flex:1; }
+.tq-seg { display:flex; background:var(--surface-2); border-radius:10px; padding:3px; gap:3px; margin:10px 0; }
+.tq-seg button { flex:1; border:none; background:transparent; color:var(--text-2); font-size:14px; font-weight:600; padding:9px 0; border-radius:8px; }
+.tq-seg button.active { background:var(--accent); color:#fff; }
+.tq-amount { background:var(--surface-2); border-radius:12px; padding:14px 16px; margin:10px 0; }
+.tq-amount .lab { font-size:12px; color:var(--text-3); margin-bottom:4px; }
+.tq-amount .inp { display:flex; align-items:baseline; gap:6px; font-size:34px; font-weight:800; }
+.tq-amount .inp .cur { font-size:22px; color:var(--text-2); }
+.tq-amount .inp input { flex:1; background:transparent; border:none; outline:none; color:var(--text); font:inherit; width:100%; }
+.tq-amount .inp input::placeholder { color:var(--text-3); opacity:.5; }
+.tq-amount .hint { font-size:12px; color:var(--text-3); margin-top:6px; }
+.tq-fields { background:var(--surface-2); border-radius:12px; overflow:hidden; margin:10px 0; }
+.tq-field { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid var(--border); gap:10px; }
+.tq-field:last-child { border-bottom:none; }
+.tq-field .lab { font-size:14px; color:var(--text-2); white-space:nowrap; }
+.tq-field .val { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color:var(--text); }
+.tq-field .val select, .tq-field .val input { border:none; background:transparent; color:var(--text); font:inherit; font-size:14px; text-align:right; outline:none; }
+.tq-field .chev { color:var(--text-3); }
+.tq-pills { display:flex; gap:8px; }
+.tq-pill { border:1px solid var(--border); background:var(--surface); color:var(--text-2); padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; }
+.tq-pill.active { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+.tq-more { background:var(--surface-2); border-radius:12px; margin:10px 0; }
+.tq-more-head { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; color:var(--text-2); font-size:14px; }
+.tq-more-body { padding:0 16px 12px; display:none; }
+.tq-more.open .tq-more-body { display:block; }
+.tq-more-row { display:flex; justify-content:space-between; padding:8px 0; font-size:13px; }
+.tq-more-row .v { color:var(--text-3); }
+.tq-note-wrap { margin:10px 0; }
+.tq-note-wrap .lab { font-size:13px; color:var(--text-2); margin-bottom:6px; }
+#tq-note { width:100%; min-height:64px; border:1px solid var(--border); border-radius:10px; padding:10px; font-size:14px; background:var(--surface); color:var(--text); resize:vertical; }
+.tq-foot { position:absolute; bottom:0; left:0; right:0; padding:12px 20px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent 0%, var(--surface) 25%); }
+.tq-foot .btn { width:100%; padding:14px; border-radius:14px; font-size:16px; font-weight:700; }
+#tradeQuickMask .sm-modal { position:relative; }
+#tq-type { position:absolute; opacity:0; pointer-events:none; width:0; height:0; }
+#tq-confirm-seg { display:none; }
+
+/* ===== 详情页 FAB + 流水折叠 ===== */
+.detail-fab { display:none; }
+@media (max-width:768px) {
+  .detail-fab { display:flex; position:fixed; right:18px; bottom:calc(70px + env(safe-area-inset-bottom)); z-index:70; width:52px; height:52px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:26px; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.22); }
+}
+.tx-expand { display:block; width:calc(100% - 32px); margin:12px 16px 20px; padding:12px; text-align:center; color:var(--text-2); background:var(--surface); border:1px solid var(--border); border-radius:12px; font-size:14px; }
+.tx-more { display:none; }
 </style>
 <script>
   try{
@@ -1675,6 +1732,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   </div>
 
   <!-- ================= 详情页 ================= -->
+  <button class="detail-fab" id="detailFab" onclick="openTradeQuickFor(encodeURIComponent(detailName||''))" title="记一笔">+</button>
   <div id="detailView" style="display:none">
     <a href="#/" class="back-link">← 返回首页</a>
     <div id="detailContent"></div>
@@ -1858,75 +1916,61 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
   <!-- 记一笔交易弹窗 -->
   <div class="sm-mask" id="tradeQuickMask" onclick="if(event.target===this)closeTradePicker()">
-    <div class="sm-modal">
-      <div class="sm-head"><h2>＋ 记一笔交易</h2><button class="sm-x" onclick="closeTradePicker()">✕</button></div>
-      <div class="sm-body">
+    <div class="sm-modal trade-sheet" id="tradeQuickSheet">
+      <div class="tq-handle"></div>
+      <div class="tq-head">
+        <div class="tq-title">记一笔交易</div>
+        <button class="tq-close" onclick="closeTradePicker()">✕</button>
+      </div>
+      <div class="tq-fund-wrap">
+        <div class="tq-fund-name" id="tq-fund-name"></div>
+        <input id="tq-fund" list="tq-fund-list" placeholder="选或填基金" />
+        <datalist id="tq-fund-list"></datalist>
+      </div>
+      <div class="tq-body">
         <div class="draft-pill" id="tqDraftPill">已恢复未保存草稿 <button type="button" onclick="draftClear('ft_draft_tq',DRAFT_TQ_IDS);document.getElementById('tqDraftPill').classList.remove('show')">清除</button></div>
-        <div class="nf-field">
-          <label>基金名称</label>
-          <input id="tq-fund" list="tq-fund-list" placeholder="选或填基金" />
-          <datalist id="tq-fund-list"></datalist>
+        <div class="tq-seg" id="tq-type-seg">
+          <button type="button" class="active" data-v="buy" onclick="tqSetType('buy')">买入</button>
+          <button type="button" data-v="sell" onclick="tqSetType('sell')">卖出</button>
+          <button type="button" data-v="convert" onclick="tqSetType('convert')">转换</button>
         </div>
-        <div class="nf-row2">
-          <div class="nf-field">
-            <label>方向</label>
-            <select id="tq-type"></select>
-          </div>
-          <div class="nf-field">
-            <label>账户</label>
-            <select id="tq-acc"></select>
-          </div>
+        <select id="tq-type"></select>
+        <div class="tq-amount">
+          <div class="lab">金额（元）</div>
+          <div class="inp"><span class="cur">¥</span><input id="tq-amount" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="tqRecalcEst()" /></div>
+          <div class="hint" id="tqAmtHint">预估可买入 <b>—</b> 份 · 参考净值 —</div>
         </div>
-        <div class="nf-row2">
-          <div class="nf-field">
-            <label>金额（元）</label>
-            <input id="tq-amount" class="num" type="number" step="any" inputmode="decimal" placeholder="如 1000" oninput="tqRecalcEst()" />
-          </div>
-          <div class="nf-field">
-            <label>日期时间</label>
-            <div class="dt-wrap">
-              <input id="tq-datetime" type="datetime-local" />
-              <span class="cal">📅</span>
+        <div class="tq-fields">
+          <div class="tq-field"><span class="lab">账户</span><span class="val"><select id="tq-acc"></select><span class="chev">›</span></span></div>
+          <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="tq-datetime" type="datetime-local" /><span class="chev">›</span></span></div>
+          <div class="tq-field" style="flex-wrap:wrap">
+            <span class="lab">确认状态</span>
+            <div class="tq-pills">
+              <button type="button" class="tq-pill active" data-v="confirmed" onclick="tqSetConfirm('confirmed')">已确认</button>
+              <button type="button" class="tq-pill" data-v="pending" onclick="tqSetConfirm('pending')">待确认</button>
             </div>
+            <input type="hidden" id="tq-confirm" value="confirmed" />
           </div>
         </div>
-        <button class="more-toggle" id="tqMoreToggle" type="button" onclick="tqToggleMore()"><span class="arrow">▸</span><span>更多选项</span><span class="tag-opt">净值、费用、确认份额</span></button>
-        <div class="more-fields" id="tqMoreFields">
-          <div class="nf-row2">
-            <div class="nf-field">
-              <label>净值（留空=T+1）</label>
-              <input id="tq-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="tqRecalcEst()" />
-            </div>
-            <div class="nf-field">
-              <label>费用（元）</label>
-              <input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0" />
-            </div>
-          </div>
-          <div class="nf-field">
-            <label>确认份额（可选）</label>
-            <input id="tq-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="不填则按金额/净值估算" />
+        <div class="tq-more" id="tqMoreWrap">
+          <div class="tq-more-head" onclick="tqToggleMore()"><span>更多选项 <span id="tqMoreHint" style="color:var(--text-3);font-size:12px">净值、费用、确认份额</span></span><span id="tqMoreChev" style="color:var(--text-3)">▾</span></div>
+          <div class="tq-more-body" id="tqMoreFields">
+            <div class="tq-more-row"><span>净值（可选）</span><span class="v"><input id="tq-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="tqRecalcEst()" style="width:110px;text-align:right" /></span></div>
+            <div class="tq-more-row"><span>费用（元）</span><span class="v"><input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0" style="width:110px;text-align:right" /></span></div>
+            <div class="tq-more-row"><span>确认份额（可选）</span><span class="v"><input id="tq-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="自动估算" style="width:110px;text-align:right" /></span></div>
           </div>
         </div>
-        <div class="nf-field">
-          <label>确认状态</label>
-          <div class="seg" id="tq-confirm-seg">
-            <button type="button" class="seg-btn active" data-v="confirmed" onclick="tqSetConfirm('confirmed')">已确认</button>
-            <button type="button" class="seg-btn" data-v="pending" onclick="tqSetConfirm('pending')">待确认</button>
-          </div>
-          <input type="hidden" id="tq-confirm" value="confirmed" />
+        <div class="tq-note-wrap">
+          <div class="lab">备注（可选）</div>
+          <textarea id="tq-note" rows="2" placeholder="如：转换来源、截图留存等"></textarea>
         </div>
-        <div class="nf-field">
-          <label>预估份额</label>
-          <div class="est-shares" id="tqEstShares">— <span class="sub">填金额与净值后自动估算</span></div>
+        <div class="tq-field" style="background:transparent;border:none;padding:8px 0">
+          <span class="lab">预估份额</span>
+          <span class="val" id="tqEstShares" style="font-weight:500">— <span style="font-weight:400;color:var(--text-3)">填金额与净值后自动估算</span></span>
         </div>
-        <div class="nf-field">
-          <label>备注</label>
-          <textarea id="tq-note" rows="2" placeholder="可选：转换来源、截图留存等"></textarea>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
-          <button class="btn" onclick="closeTradePicker()">取消</button>
-          <button class="btn primary" onclick="tradeQuickSave()">保存</button>
-        </div>
+      </div>
+      <div class="tq-foot">
+        <button class="btn primary" onclick="tradeQuickSave()">保 存</button>
       </div>
     </div>
   </div>
@@ -5146,9 +5190,9 @@ function route(){
   const m=location.hash.match(/^#\/fund\/(.+)$/);
   if(m){ showDetail(decodeURIComponent(m[1])); } else { showHome(); }
 }
-function showHome(){ currentView='home'; detailName=null; document.getElementById('homeView').style.display='block'; document.getElementById('detailView').style.display='none'; var _b=document.getElementById('detailBar'); if(_b)_b.classList.remove('show'); render(); }
+function showHome(){ currentView='home'; detailName=null; window.__detailTxExpanded=false; document.getElementById('homeView').style.display='block'; document.getElementById('detailView').style.display='none'; var _b=document.getElementById('detailBar'); if(_b)_b.classList.remove('show'); render(); }
 function showDetail(name){
-  currentView='detail'; detailName=name;
+  currentView='detail'; detailName=name; window.__detailTxExpanded=false;
   detailAcc = pendingAcc || (_allHoldings.find(x=>x.name===name)?.account) || effAccount('本人账户'); pendingAcc=null;
   document.getElementById('homeView').style.display='none'; document.getElementById('detailView').style.display='block'; var _b=document.getElementById('detailBar'); if(_b)_b.classList.add('show');
   const f=findFund(name,detailAcc), c=document.getElementById('detailContent');
@@ -5454,6 +5498,7 @@ function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
+  setTimeout(function(){ collapseDetailTx(); },0);
   live.innerHTML += reviewCardHtml(f.name);
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   live.innerHTML += noteCardHtml(f.name);
@@ -5601,7 +5646,6 @@ function liveSection(f){
     // ===== 移动端：iOS 连体分组表单 + 卡片化历史流水 =====
     h+=`<div class="tr-ios">`;
     h+=`<div class="section-label">${tradeHead}</div>`;
-        h+=`<button class="ios-btn" onclick="openTradeQuickFor('${encodeURIComponent(f.name)}')">＋ 记一笔交易</button>`;
     // 历史流水卡片
     h+=`<div class="section-label">历史流水（${tr.length} 笔）</div>`;
     if(tr.length){
@@ -5632,7 +5676,7 @@ function liveSection(f){
     h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>${tradeHead}</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
     h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
         h+=`<p class="hint" style="margin:0 0 8px">点「＋ 记一笔交易」弹出填写窗口，保存前会再次确认；保存后自动锁定防误改，点「解锁」可临时编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
-        h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认</span><button class="btn sm primary" onclick="openTradeQuickFor('${encodeURIComponent(f.name)}')">＋ 记一笔交易</button></div></div>`;
+        h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认；点右下角 + 记一笔</span></div></div>`;
     if(tr.length){
       h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
       tr.forEach(t=>{
@@ -5812,23 +5856,36 @@ function addTradeMenu(){
   if(accSel){ const cur=accSel.value||effAccount('本人账户'); accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
   const dt=document.getElementById('tq-datetime'); if(dt && !dt.value){ var d=new Date(), pad=function(n){return String(n).padStart(2,'0');}; var _def=(function(){try{return localStorage.getItem('ft_default_time')||'1500';}catch(e){return '1500';}})(); var _t=_def==='now'?(pad(d.getHours())+':'+pad(d.getMinutes())):'15:00'; dt.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+_t; }
   const ty=document.getElementById('tq-type'); if(ty && !ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
-  const m=document.getElementById('tradeQuickMask'); if(m){ m.classList.add('show'); const el=document.getElementById('tq-fund'); if(el) setTimeout(()=>{ try{ el.focus(); }catch(e){} },60); }
+  const disp=document.getElementById('tq-fund-name'); if(disp) disp.classList.remove('show');
+  const fin=document.getElementById('tq-fund'); if(fin) fin.classList.remove('hide');
+  const m=document.getElementById('tradeQuickMask'); if(m){ m.classList.add('show'); const el=document.getElementById('tq-fund'); if(el && !el.classList.contains('hide')) setTimeout(()=>{ try{ el.focus(); }catch(e){} },60); }
   draftRestore('ft_draft_tq', DRAFT_TQ_IDS, 'tqDraftPill');
 }
 function openTradeQuickFor(name){
   addTradeMenu();
-  const f=document.getElementById('tq-fund'); if(f && name) f.value=name;
+  const f=document.getElementById('tq-fund');
+  const disp=document.getElementById('tq-fund-name');
+  const decoded=name?decodeURIComponent(name):'';
+  if(f) f.value=decoded;
+  if(disp){ disp.textContent=decoded; disp.classList.toggle('show',!!decoded); }
+  if(f) f.classList.toggle('hide',!!decoded);
+  const seg=document.getElementById('tq-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===(document.getElementById('tq-type').value||'buy')); });
 }
 
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
 function tqToggleMore(){
-  const t=document.getElementById('tqMoreToggle'); const f=document.getElementById('tqMoreFields');
-  if(!t||!f) return; const open=!t.classList.contains('open');
-  t.classList.toggle('open',open); f.classList.toggle('open',open);
+  const wrap=document.getElementById('tqMoreWrap'); const f=document.getElementById('tqMoreFields'); const chev=document.getElementById('tqMoreChev');
+  if(!wrap||!f) return; const open=!wrap.classList.contains('open');
+  wrap.classList.toggle('open',open); if(chev) chev.textContent=open?'▴':'▾';
+}
+function tqSetType(v){
+  const sel=document.getElementById('tq-type'); if(sel) sel.value=v;
+  const seg=document.getElementById('tq-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); });
 }
 function tradeQuickSave(){
   const g=id=>document.getElementById(id);
-  const name=(g('tq-fund').value||'').trim();
+  const disp=g('tq-fund-name');
+  const name=(disp && disp.classList.contains('show') ? disp.textContent : (g('tq-fund').value||'')).trim();
   if(!name){ toast('请选择或填写基金名称'); return; }
   const dtRaw=g('tq-datetime').value; const date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
   const amount=+g('tq-amount').value||0; if(!amount){ toast('请填写金额'); g('tq-amount').focus(); return; }
@@ -5923,6 +5980,31 @@ function drawerSave(){
 function confirmLabel(c){ return c==='pending'?'待确认':c==='cancelled'?'撤单':'已确认'; }
 function confirmClass(c){ return c==='pending'?'pend':c==='cancelled'?'cancel':''; }
 function cycleConfirm(i){ const t=trades[i]; if(!t) return; const order=['confirmed','pending','cancelled']; const cur=t.confirm||'confirmed'; const nx=order[(order.indexOf(cur)+1)%3]; trades[i].confirm=nx; silentSave(); compute(); if(currentView==='detail'){ try{ renderDetailLive(detailName); }catch(e){} } toast('状态：'+(nx==='confirmed'?'已确认':nx==='pending'?'待确认':'已撤单（不计入盈亏）')); }
+window.__detailTxExpanded=false;
+window.collapseDetailTx=function(){
+  if(window.innerWidth>768) return;
+  const lists=document.querySelectorAll('#detailLive .tx-list');
+  lists.forEach(function(list){
+    if(list.dataset.collapsed) return;
+    const cards=list.querySelectorAll(':scope > .tx-card');
+    if(cards.length<=3) return;
+    if(window.__detailTxExpanded){
+      // 已展开：保留全部卡片可见，仅放一个“收起”按钮
+      const btn=document.createElement('button'); btn.className='tx-expand'; btn.textContent='收起 ▴';
+      btn.onclick=function(e){ if(e&&e.stopPropagation) e.stopPropagation(); window.__detailTxExpanded=false; collapseDetailTx(); };
+      if(list.nextSibling) list.parentNode.insertBefore(btn,list.nextSibling); else list.parentNode.appendChild(btn);
+      list.dataset.collapsed='1';
+      return;
+    }
+    const more=document.createElement('div'); more.className='tx-more'; more.id='tx-more-'+Math.floor(Math.random()*1e6);
+    for(var i=3;i<cards.length;i++) more.appendChild(cards[i]);
+    const btn=document.createElement('button'); btn.className='tx-expand'; btn.textContent='查看全部 '+cards.length+' 笔交易 ▾';
+    btn.onclick=function(e){ if(e&&e.stopPropagation) e.stopPropagation(); var open=more.dataset.open==='1'; if(open){ more.style.display='none'; more.dataset.open=''; btn.textContent='查看全部 '+cards.length+' 笔交易 ▾'; window.__detailTxExpanded=false; } else { more.style.display='block'; more.dataset.open='1'; btn.textContent='收起 ▴'; window.__detailTxExpanded=true; } };
+    if(list.nextSibling) list.parentNode.insertBefore(more,list.nextSibling); else list.parentNode.appendChild(more);
+    if(more.nextSibling) list.parentNode.insertBefore(btn,more.nextSibling); else list.parentNode.appendChild(btn);
+    list.dataset.collapsed='1';
+  });
+};
 function tqSetConfirm(v){ const seg=document.getElementById('tq-confirm-seg'); if(seg) seg.querySelectorAll('.seg-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); }); const h=document.getElementById('tq-confirm'); if(h) h.value=v; }
 function tqRecalcEst(){ try{ const amt=+document.getElementById('tq-amount').value||0; const nav=+document.getElementById('tq-nav').value||0; const el=document.getElementById('tqEstShares'); if(!el) return; if(amt>0 && nav>0){ const sh=amt/nav; el.innerHTML=fmt(sh)+' 份 <span class="sub">'+M(amt)+' ÷ '+navFmt(nav)+'</span>'; } else if(amt>0 && !nav){ el.innerHTML='— <span class="sub">净值留空则 T+1 入账后估算</span>'; } else { el.innerHTML='— <span class="sub">填金额与净值后自动估算</span>'; } }catch(e){} }
 

@@ -4669,7 +4669,7 @@ function renderLiquidated(){
     +'<div class="mcard"><p class="lbl">盈亏比（均盈/均亏）</p><p class="val '+cls((plr||0)-1)+'">'+(plr!=null?plr.toFixed(2):'—')+'</p></div>'
     +'</div>';
   const filterBar=liqFilterBar(baseList);
-  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能填充原因</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">更新卖后表现</button></span></div>'+filterBar+'<p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
+  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能填充原因</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">更新卖后表现</button></span></div>"+filterBar+"<p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
   if(!cnt){
     const _emptyMsg = liqFilter.dim ? '当前筛选条件下没有匹配的清仓基金，换个标签或点「清除筛选」试试。' : '你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。';
     box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">'+_emptyMsg+'</div></div>';
@@ -8291,20 +8291,20 @@ function renderSyncCfg(){
         <section class="panel-section" id="panel-prefs">
           <h4 class="panel-title">偏好设置</h4>
 
-          <div class="nset-label">外观与风格</div>
+          <div class="nset-label" id="panel-prefs-appearance">外观与风格</div>
           <div class="nset-card">
             <div class="ap-row"><div class="ap-left"><div class="ap-title">主题模式</div></div><div class="ap-right"><div class="sm-seg" id="smThemeSeg"><button data-t="system">跟随系统</button><button data-t="light">浅色</button><button data-t="dark">深色</button></div></div></div>
             <div class="ap-row"><div class="ap-left"><div class="ap-title">主题风格</div></div><div class="ap-right"><div class="sm-seg" id="smStyleSeg"><button data-st="classic">经典</button><button data-st="morandi">莫兰迪</button><button data-st="cream">奶油</button></div></div></div>
             <div class="ap-row"><div class="ap-left"><div class="ap-title">强调色</div></div><div class="ap-right"><div class="sm-sw" id="smSwatches"></div></div></div>
           </div>
 
-          <div class="nset-label">列表与排序</div>
+          <div class="nset-label" id="panel-prefs-listsort">列表与排序</div>
           <div class="nset-card">
             <div class="ap-row ap-act" onclick="openSortSheet()"><div class="ap-left"><div class="ap-title">持仓表格列显示与顺序</div><div class="ap-desc">含分类标签与自定义标签排序</div></div><div class="ap-right"><span class="item-arrow">›</span></div></div>
           </div>
           <p class="ap-note">每次打开应用时默认进入的账户视图；首页列表的持仓列与排序在此调整。</p>
 
-          <div class="nset-label">记账偏好</div>
+          <div class="nset-label" id="panel-prefs-ledger">记账偏好</div>
           <div class="nset-card">
             <div id="dcaStatusPill" class="dca-status-pill"></div>
             <div class="panel-row"><div class="left"><div class="title">自动补记开关</div><div class="desc">打开后，刷新净值时按定投计划自动记账买入</div></div><div class="right"><label class="sm-switch"><input type="checkbox" id="dcaAutoSw" onchange="setDcaAuto(this.checked)"><span class="sm-slider"></span></label></div></div>
@@ -9016,9 +9016,9 @@ function renderSyncCfg(){
     var html='';
     html+=group('账户',[ row(SVG.acct,'#007AFF','账户名称、备注与排序','','',"openSettingsDetail('account')") ]);
     html+=group('偏好设置',[
-      row(SVG.palette,'#5856D6','外观与风格','','',"openSettingsDetail('prefs')"),
-      row(SVG.palette,'#5856D6','列表与排序','','',"openSettingsDetail('prefs')"),
-      row(SVG.palette,'#5856D6','记账偏好',(typeof dcaAutoEnabled==='function'?(dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭'):''),'',"openSettingsDetail('prefs')")
+      row(SVG.palette,'#5856D6','外观与风格','','',"openSettingsDetail('prefs','appearance')"),
+      row(SVG.palette,'#5856D6','列表与排序','','',"openSettingsDetail('prefs','listsort')"),
+      row(SVG.palette,'#5856D6','记账偏好',(typeof dcaAutoEnabled==='function'?(dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭'):''),'',"openSettingsDetail('prefs','ledger')")
     ]);
     html+=group('数据与备份',[
       row(SVG.cloud,'#1f93a8','云端同步','','',"openSettingsDetail('data','cloud')"),
@@ -9042,7 +9042,7 @@ function renderSyncCfg(){
     var panel=document.querySelector('.settings-panel'); if(!panel) return;
     var sc=document.getElementById('settingsMask');
     panel.classList.add('mobile-detail');
-    var subTitles={cloud:'云端同步', local:'本地备份', csv:'CSV 数据', cache:'缓存与危险区', query:'数据查询', export:'导出与生成', demo:'演示与研究数据'};
+    var subTitles={cloud:'云端同步', local:'本地备份', csv:'CSV 数据', cache:'缓存与危险区', query:'数据查询', export:'导出与生成', demo:'演示与研究数据', appearance:'外观与风格', listsort:'列表与排序', ledger:'记账偏好'};
     var t=document.getElementById('smMobileTitle'); if(t){ var c=null; for(var i=0;i<SM_MOBILE_CATS.length;i++){ if(SM_MOBILE_CATS[i].id===id) c=SM_MOBILE_CATS[i]; } t.textContent=(anchor&&subTitles[anchor])?subTitles[anchor]:(c?c.title:'设置'); }
     settingsTab(id);
     if(sc) sc.scrollTop=0;

@@ -9836,7 +9836,7 @@ function exportHoldingsCSV(){
   const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
   ftDownload(blob,'fund-holdings.csv','已导出 持仓+清仓 fund-holdings.csv（含全部账户）','已打开文件，点底部「分享」→「存储到文件」保存');
 }
-function downloadCSVTemplate(){ const t='基金名称,日期,方向,金额,净值,费用,确认,备注\n说明：删除本说明行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投；费用可留空；确认填 已确认/待确认/撤单，不填默认已确认）\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); ftDownload(blob,'fund-import-template.csv','已下载 CSV 模板（含 确认/备注 列，填真实交易即可）','已打开文件，点底部「分享」→「存储到文件」保存'); }
+function downloadCSVTemplate(){ const head=IMPORT_COLUMNS.map(function(c){return c.label;}).join(','); const note='说明：删除本说明行与示例行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投/转换；费用可留空；确认填 已确认/待确认/撤单，不填默认已确认）'; const sample='# 示例：示例成长混合C,2026-08-10,买入,2000,1.5230,,已确认,示例一笔买入（导入前请整行删除）'; const t=head+'\n'+note+'\n'+sample+'\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); ftDownload(blob,'fund-import-template.csv','已下载 CSV 模板（含 确认/备注 列，填真实交易即可）','已打开文件，点底部「分享」→「存储到文件」保存'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();
@@ -9934,13 +9934,26 @@ function importCSV(){
   inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
   document.body.appendChild(inp); inp.click();
 }
+// 导入列定义（单一数据源）：CSV 模板下载(downloadCSVTemplate)与文件解析(parseCSV)共用，改一处两处同步
+const IMPORT_COLUMNS=[
+  {key:'name',    label:'基金名称', aliases:['名称','基金','代码','标的']},
+  {key:'date',    label:'日期',     aliases:['日期','时间','买入日','成交日']},
+  {key:'type',    label:'方向',     aliases:['方向','类型','买卖','操作']},
+  {key:'amount',  label:'金额',     aliases:['金额','份额金额','成交金额','资金','金额(元)','金额元']},
+  {key:'nav',     label:'净值',     aliases:['净值','单价','成交净值','单位净值']},
+  {key:'fee',     label:'费用',     aliases:['费用','手续费','佣金','申购费','赎回费']},
+  {key:'confirm', label:'确认',     aliases:['确认','状态','confirm','是否确认']},
+  {key:'note',    label:'备注',     aliases:['备注','注释','说明','memo','note']}
+];
 function parseCSV(text, defaultAcc, forceAcc){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());
   if(!lines.length) return {count:0, dup:0, rows:[]};
   const split=l=>l.split(l.includes('\t')?/\t+/:/[,，]/).map(s=>s.trim().replace(/^"|"$/g,''));
   const head=split(lines[0]);
   const col={name:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
-  const kw={ name:['名称','基金','代码','标的'], date:['日期','时间','买入日','成交日'], type:['方向','类型','买卖','操作'], amount:['金额','份额金额','成交金额','资金','金额(元)','金额元'], nav:['净值','单价','成交净值','单位净值'], fee:['费用','手续费','佣金','申购费','赎回费'], account:['账户','账号','平台','来源'], market:['市场','交易所','地区'], code:['代码','代号','证券代码','ticker'], shares:['份额','份数','持仓份额','股数','数量','持股数','股份'], price:['价格','成交价','现价','市价'], confirm:['确认','状态','confirm','是否确认'], note:['备注','注释','说明','memo','note'] };
+  const kw={};
+  IMPORT_COLUMNS.forEach(function(c){ kw[c.key]=c.aliases; });
+  kw.account=['账户','账号','平台','来源']; kw.market=['市场','交易所','地区']; kw.code=['代码','代号','证券代码','ticker']; kw.shares=['份额','份数','持仓份额','股数','数量','持股数','股份']; kw.price=['价格','成交价','现价','市价'];
   const find=(arr)=>{ for(let i=0;i<head.length;i++){ if(arr.some(k=>head[i].includes(k))) return i; } return -1; };
   Object.keys(kw).forEach(k=>col[k]=find(kw[k]));
   const mapConfirm=(s)=>{ const v=String(s||'').trim(); if(/撤|取消|作废|cancel/i.test(v)) return 'cancelled'; if(/待|未|pending/i.test(v)) return 'pending'; return 'confirmed'; };
@@ -9967,6 +9980,7 @@ function parseCSV(text, defaultAcc, forceAcc){
       continue;
     }
     const name=col.name>=0?c[col.name]:''; if(!name) continue;
+    if(/^(#|\/\/|说明|示例|例子|样例)/.test(name)) continue; // 跳过模板里的说明行/示例行/注释行，避免被当成真实交易导入
     const date=col.date>=0?c[col.date]:'';
     const type=col.type>=0?guessType(c[col.type]):'buy';
     const amount=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
@@ -10031,6 +10045,7 @@ function parsePaste(text, defaultAcc, forceAcc){
       name=t.filter(function(x){ return x!==date && x!==type && x!==amount && x!==nav; }).join(' ');
     }
     if(!name) continue;
+    if(/^(#|\/\/|说明|示例|例子|样例)/.test(name)) continue; // 跳过模板说明行/示例行/注释行，避免被当成真实交易导入
     const tType=type?guessType(type):'buy';
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
     const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;

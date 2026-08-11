@@ -4261,7 +4261,9 @@ function accountListOrdered(){
 // Header 账户下拉（取代原顶部 scope-bar）：整合账户切换 + 全量 + 新增/重命名/删除
 function renderScopeBar(){
   const menu=document.getElementById('accMenu'); if(!menu) return;
-  const cntOf=a=> (a==='all')? _allRaw.length : _allRaw.filter(f=>effAccount(f.account)===a).length;
+  // 与仪表盘「基金数/胜率」卡片同口径：只算当前持有（份额=0 且非债券 且 无市值 的清仓不计入）
+  const isHold=f=>!(f.shares===0 && !f.isBond && !(f.mv>0));
+  const cntOf=a=> (a==='all')? _allRaw.filter(isHold).length : _allRaw.filter(f=>effAccount(f.account)===a && isHold(f)).length;
   const list=accountListOrdered();
   let html='<div class="acc-menu-head"><span>账户选择</span></div>';
   list.forEach(a=>{
@@ -6922,7 +6924,7 @@ function renderLiquidated(){
     +'<div class="mcard"><p class="lbl">盈亏比（均盈/均亏）</p><p class="val '+cls((plr||0)-1)+'">'+(plr!=null?plr.toFixed(2):'—')+'</p></div>'
     +'</div>';
   const filterBar=liqFilterBar(baseList);
-  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能归类</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">刷新卖后</button></span></div>"+sum+filterBar;
+  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2></div>"+sum+"<div class=\"sec-actions\" style=\"display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能归类</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">刷新卖后</button></div>"+filterBar;
   if(!cnt){
     const _emptyMsg = liqFilter.dim ? '当前筛选条件下没有匹配的清仓基金，换个标签或点「清除筛选」试试。' : '你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。';
     box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">'+_emptyMsg+'</div></div>';

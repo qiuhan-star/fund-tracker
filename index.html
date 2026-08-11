@@ -82,8 +82,8 @@ function ensureECharts(cb){
 .sk-hero-right { text-align:right; }
 .sk-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
 .sk-grid-item { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; }
-.sk-container { opacity:0; transition:opacity .25s; pointer-events:none; }
-.sk-container.show { opacity:1; }
+.sk-container { display:none; opacity:0; transition:opacity .25s; pointer-events:none; }
+.sk-container.show { display:block; opacity:1; }
 /* iOS 右侧抛空根治兜底：钳死所有卡片/图表/分段控件宽度，flex/grid 子项允许收缩，画布锁宽 */
 .wrap, .chart-box, .ov-wrap, .main-tabs, .scope-bar, .topbar { max-width: 100%; overflow-x: hidden; box-sizing: border-box; }
 .card, .ov-card, .mkt-card, .mcard, .ov-hero, .ov-grid, .grid2, .cards4 { max-width: 100%; box-sizing: border-box; }
@@ -3493,7 +3493,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   });
 })();
 </script>
-<div class="wrap" id="appWrap" style="padding-top: calc(20px + env(safe-area-inset-top) + 116px);">
+<div class="wrap" id="appWrap">
 
   <!-- ===== 下拉刷新指示器 ===== -->
   <div id="ptr" class="ptr-indicator" aria-hidden="true">
@@ -10893,7 +10893,7 @@ function renderSyncCfg(){
             <div class="panel-row" style="cursor:pointer" onclick="openCacheSheet()"><div class="left"><div class="title">本地缓存</div><div class="desc">净值快照与备份占用，点击清除</div></div><div class="right"><span class="sm-pill" id="smCacheSize">—</span></div></div>
           </div>
           <div class="nset-card danger-zone-card">
-            <div class="panel-row" style="cursor:pointer" onclick="removeSampleData()"><div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div><div class="right"><span class="item-arrow">›</span></div></div>
+            <div class="panel-row" style="cursor:pointer" onclick="ftConfirm('确定清除示例数据？\n将移除示例账户、演示债基与分析，你的真实持仓会保留。', function(ok){ if(!ok) return; removeSampleData(); })"><div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="resetApp()"><div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
           <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出全量备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
@@ -11320,7 +11320,7 @@ function renderSyncCfg(){
 </div>
 
 <style>
-.acc-prompt{ background:var(--surface); color:var(--text); width:100%; max-width:340px; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.28); padding:18px 16px 14px; }
+.acc-prompt{ margin:auto; background:var(--surface); color:var(--text); width:100%; max-width:340px; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.28); padding:18px 16px 14px; }
 .acc-prompt .ap-title{ font-size:16px; font-weight:600; margin-bottom:12px; text-align:center; }
 .acc-prompt .ap-input{ width:100%; box-sizing:border-box; font-size:16px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text); }
 .acc-prompt .ap-msg{ font-size:13px; color:#e53935; min-height:16px; margin:8px 2px 0; text-align:center; white-space:pre-line; }

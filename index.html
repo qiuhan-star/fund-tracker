@@ -9852,7 +9852,7 @@ function exportHoldingsCSV(){
   const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
   ftDownload(blob,'fund-holdings.csv','已导出 持仓+清仓 fund-holdings.csv（含全部账户）','已打开文件，点底部「分享」→「存储到文件」保存');
 }
-function downloadCSVTemplate(){ const head=IMPORT_COLUMNS.map(function(c){return c.label;}).join(','); const note='说明：删除本说明行与示例行，再按表头逐行填你的真实交易（方向填 买入/卖出/定投/转换；费用可留空；确认填 已确认/待确认/撤单，不填默认已确认）'; const sample='# 示例：示例成长混合C,2026-08-10,买入,2000,1.5230,,已确认,示例一笔买入（导入前请整行删除）'; const t=head+'\n'+note+'\n'+sample+'\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); ftDownload(blob,'fund-import-template.csv','已下载 CSV 模板（含 确认/备注 列，填真实交易即可）','已打开文件，点底部「分享」→「存储到文件」保存'); }
+function downloadCSVTemplate(){ const head=IMPORT_COLUMNS.map(function(c){return c.label;}).join(','); const note='说明：删除本说明行与示例行，再按表头逐行填真实交易。业务类型填 买入/卖出/清仓/分红/转换/活动（清仓 = 卖出剩余全部份额，App 自动归入「清仓」列表）；类别/代码可留空由 App 推断；费用可留空；确认填 已确认/待确认/撤单，不填默认已确认。'; const sample='# 示例-持有：示例成长混合C,科技,900001,买入,2000,,1.5230,2026-08-10,1311.88,示例一笔买入,已确认\n# 示例-清仓：示例成长混合C,科技,900001,清仓,2000,,1.5230,2026-08-10,1311.88,卖出剩余全部份额后归清仓,已确认'; const t=head+'\n'+note+'\n'+sample+'\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); ftDownload(blob,'fund-import-template.csv','已下载 CSV 模板（Excel 交易明细表头，填真实交易即可）','已打开文件，点底部「分享」→「存储到文件」保存'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();
@@ -9952,25 +9952,28 @@ function importCSV(){
 }
 // 导入列定义（单一数据源）：CSV 模板下载(downloadCSVTemplate)与文件解析(parseCSV)共用，改一处两处同步
 const IMPORT_COLUMNS=[
-  {key:'name',    label:'基金名称', aliases:['名称','基金','代码','标的']},
-  {key:'date',    label:'日期',     aliases:['日期','时间','买入日','成交日']},
-  {key:'type',    label:'方向',     aliases:['方向','类型','买卖','操作']},
-  {key:'amount',  label:'金额',     aliases:['金额','份额金额','成交金额','资金','金额(元)','金额元']},
-  {key:'nav',     label:'净值',     aliases:['净值','单价','成交净值','单位净值']},
-  {key:'fee',     label:'费用',     aliases:['费用','手续费','佣金','申购费','赎回费']},
-  {key:'confirm', label:'确认',     aliases:['确认','状态','confirm','是否确认']},
-  {key:'note',    label:'备注',     aliases:['备注','注释','说明','memo','note']}
+  {key:'name',    label:'标的名称',    aliases:['标的名称','名称','基金','基金名称','标的']},
+  {key:'cat',     label:'类别',        aliases:['类别','分类','品种']},
+  {key:'code',    label:'代码',        aliases:['代码','代号','证券代码','ticker','编码']},
+  {key:'type',    label:'业务类型',    aliases:['业务类型','方向','类型','买卖','操作']},
+  {key:'amount',  label:'申请金额(元)', aliases:['申请金额','申请金额(元)','金额','份额金额','成交金额','资金','金额元']},
+  {key:'fee',     label:'手续费(元)',  aliases:['手续费','手续费(元)','费用','佣金','申购费','赎回费']},
+  {key:'nav',     label:'确认净值',    aliases:['确认净值','净值','单价','成交净值','单位净值']},
+  {key:'date',    label:'交易日',      aliases:['交易日','交易日（买入时间）','日期','时间','买入日','成交日','交易日期']},
+  {key:'shares',  label:'份额',        aliases:['份额','份数','持仓份额','股数','数量','持股数','股份']},
+  {key:'note',    label:'备注',        aliases:['备注','注释','说明','memo','note']},
+  {key:'confirm', label:'确认',        aliases:['确认','状态','confirm','是否确认']}
 ];
 function parseCSV(text, defaultAcc, forceAcc){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());
   if(!lines.length) return {count:0, dup:0, rows:[]};
   const split=l=>l.split(l.includes('\t')?/\t+/:/[,，]/).map(s=>s.trim().replace(/^"|"$/g,''));
   const head=split(lines[0]);
-  const col={name:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
+  const col={name:-1,cat:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
   const kw={};
   IMPORT_COLUMNS.forEach(function(c){ kw[c.key]=c.aliases; });
   kw.account=['账户','账号','平台','来源']; kw.market=['市场','交易所','地区']; kw.code=['代码','代号','证券代码','ticker']; kw.shares=['份额','份数','持仓份额','股数','数量','持股数','股份']; kw.price=['价格','成交价','现价','市价'];
-  const find=(arr)=>{ for(let i=0;i<head.length;i++){ if(arr.some(k=>head[i].includes(k))) return i; } return -1; };
+  const find=(arr)=>{ let bi=-1,bs=0; for(let i=0;i<head.length;i++){ for(const k of arr){ if(head[i].includes(k)){ const sc=k.length*2+(head[i]===k?1:0); if(sc>bs){ bi=i; bs=sc; } } } } return bi; };
   Object.keys(kw).forEach(k=>col[k]=find(kw[k]));
   const mapConfirm=(s)=>{ const v=String(s||'').trim(); if(/撤|取消|作废|cancel/i.test(v)) return 'cancelled'; if(/待|未|pending/i.test(v)) return 'pending'; return 'confirmed'; };
   const guessType=(s)=>{ const v=String(s||'').toLowerCase().trim(); if(v==='buy') return 'buy'; if(v==='sell') return 'sell'; if(v==='convert_in') return 'convert'; if(v==='convert_out') return 'convert_out'; if(v==='convert') return 'convert'; if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'convert_out'; if(/定投/.test(v)) return 'dca'; if(/活动/.test(v)) return 'activity'; if(/买|申购/.test(v)) return 'buy'; if(/卖|赎|清仓|清掉/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; if(/拆/.test(v)) return 'split'; return 'buy'; };
@@ -9992,7 +9995,7 @@ function parseCSV(text, defaultAcc, forceAcc){
       const feS=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
       const amtS=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
       if(!(sh||pr||amtS)) continue;
-      added.push({type:'stock',market:m,code:codeRaw,name:nameS,date:dateS,ttype:tt,shares:sh,price:pr,fee:feS,amount:amtS});
+      const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({type:'stock',market:m,code:codeRaw,name:nameS,date:dateS,ttype:tt,shares:sh,price:pr,fee:feS,amount:amtS,cat:catV});
       continue;
     }
     const name=col.name>=0?c[col.name]:''; if(!name) continue;
@@ -10008,10 +10011,13 @@ function parseCSV(text, defaultAcc, forceAcc){
     if(!(amount||nav||sh)) continue;
     const confirm = col.confirm>=0 ? mapConfirm(c[col.confirm]) : 'confirmed';
     const note = col.note>=0 ? String(c[col.note]||'').trim() : '';
-    added.push({name,date,type,amount,nav,fee,account,shares:sh,confirm,note});
+    const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({name,date,type,amount,nav,fee,account,shares:sh,confirm,note,cat:catV});
   }
   // 注册导入中出现的未知账户，避免塌缩进「本人账户」或成孤儿账户（下拉/口径筛选都找不到）
   const _accSeen={}; added.forEach(t=>{ const a=normalizeAccount(t.account); if(a && !_accSeen[a]){ _accSeen[a]=1; registerImportAccount(a); } });
+  // 导入「类别」列 -> 写入分类覆盖（与页面内 catMenu 同一持久化通道），让持仓按 Excel 类别归类
+  added.forEach(function(t){ if(t.cat){ catOverride[t.name]=t.cat; } });
+  try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
   if(!added.length) return {count:0, dup:0, rows:[]};
   // 增量更新（upsert）：同名+同日+同金额+同账户 视为同一笔。已存在且净值相同→跳过；已存在但缺净值/净值不同→用新行补全或覆盖（支持补净值或修正后重导，不生成重复交易）
   const normNum=v=>(v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):'';
@@ -10030,47 +10036,67 @@ function parseCSV(text, defaultAcc, forceAcc){
 function escHtml(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){ return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;'; }); }
 // 粘贴文本导入：解析但不写入，返回 {count,dup,rows}（fresh 行），由 showImpPreview→commitImpPreview 负责追加，避免预览时重复写入
 function parsePaste(text, defaultAcc, forceAcc){
-  const lines=text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
-  if(!lines.length) return {count:0,dup:0,rows:[]};
-  // 跳过表头行（无真实日期数字却含 名称/日期/金额 关键词）
-  if(/^名称/.test(lines[0]) || (/日期/.test(lines[0]) && /金额/.test(lines[0]) && !/\d{4}[-/]\d/.test(lines[0]))) lines.shift();
-  const guessType=function(s){ const v=String(s||'').toLowerCase(); if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'convert_out'; if(/定投/.test(v)) return 'dca'; if(/活动/.test(v)) return 'activity'; if(/买|申购/.test(v)) return 'buy'; if(/卖|赎|清|撤/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend';     if(/再投|红利再投资/.test(v)) return 'reinvest'; return 'buy'; };
+  const rawLines=text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+  if(!rawLines.length) return {count:0,dup:0,rows:[]};
+  const splitCsv=function(l){ return l.split(l.includes('\t')?/\t+/:/[,，]/).map(function(s){return s.trim().replace(/^"|"$/g,''); }); };
+  const guessType=function(s){ const v=String(s||'').toLowerCase(); if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'convert_out'; if(/定投/.test(v)) return 'dca'; if(/活动/.test(v)) return 'activity'; if(/买|申购/.test(v)) return 'buy'; if(/卖|赎|清|撤/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; return 'buy'; };
   const mapConfirmPaste=function(s){ const v=String(s||'').trim(); if(/撤|取消|作废|cancel/i.test(v)) return 'cancelled'; if(/待|未|pending/i.test(v)) return 'pending'; return 'confirmed'; };
+  // 表头识别（与 parseCSV 共用 IMPORT_COLUMNS 关键词）：首行命中 标的/日期/金额/方向 任一词即当表头，按列名认列，兼容从 Excel「交易明细」直接复制
+  const kwP={}; IMPORT_COLUMNS.forEach(function(c){ kwP[c.key]=c.aliases; });
+  kwP.account=['账户','账号','平台','来源']; kwP.market=['市场','交易所','地区']; kwP.code=['代码','代号','证券代码','ticker','编码']; kwP.shares=['份额','份数','持仓份额','股数','数量','持股数','股份']; kwP.price=['价格','成交价','现价','市价'];
+  const head=splitCsv(rawLines[0]);
+  const col={name:-1,cat:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
+  const find=(arr)=>{ let bi=-1,bs=0; for(let i=0;i<head.length;i++){ for(const k of arr){ if(head[i].includes(k)){ const sc=k.length*2+(head[i]===k?1:0); if(sc>bs){ bi=i; bs=sc; } } } } return bi; };
+  Object.keys(kwP).forEach(function(k){ col[k]=find(kwP[k]); });
+  const looksHeader = col.name>=0 && (col.date>=0||col.amount>=0||col.type>=0);
+  let start=0;
+  if(looksHeader){ start=1; } else { col.name=0; col.cat=1; col.date=2; col.type=3; col.amount=4; col.nav=5; col.fee=6; col.shares=7; col.account=8; col.confirm=9; col.note=10; }
   const added=[];
-  for(let i=0;i<lines.length;i++){
-    const raw=lines[i];
-    let name='',date='',type='',amount='',nav='',account='';
-    if(raw.includes('\t')){
-      const p=raw.split(/\t+/).map(function(s){return s.trim().replace(/^"|"$/g,'');});
-      name=p[0]||''; date=p[1]||''; type=p[2]||''; amount=p[3]||''; nav=p[4]||''; account=p[5]||'';
-    } else if(/[,，]/.test(raw)){
-      const p=raw.split(/[,，]/).map(function(s){return s.trim().replace(/^"|"$/g,'');});
-      const idx={};       const kwm={name:['名称','基金','代码','标的'],date:['日期','时间','买入日','成交日'],type:['方向','类型','买卖','操作'],amount:['金额','份额金额','成交金额','资金'],nav:['净值','单价','成交净值','单位净值'],account:['账户','账号','平台','来源'],confirm:['确认','状态'],note:['备注','注释','说明']};
-      p.forEach(function(pp,ii){ for(const k in kwm){ if(kwm[k].some(function(kw){return pp.includes(kw);})){ if(idx[k]==null) idx[k]=ii; break; } } });
-      const hasHeader = idx.name!=null || idx.date!=null || idx.amount!=null;
-      const get=function(k,pos){ return hasHeader ? (idx[k]!=null?p[idx[k]]:'') : (p[pos]||''); };
-      name=get('name',0); date=get('date',1); type=get('type',2); amount=get('amount',3); nav=get('nav',4); account=get('account',5); const _conf=get('confirm',6); const _note=get('note',7);
-    } else {
-      // 空格语义解析：按 日期/方向 关键字与数字定位，其余归名称（兼容带空格的基金名）
-      const t=raw.split(/\s+/).filter(Boolean);
-      date=t.find(function(x){ return /^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(x); })||'';
-      type=t.find(function(x){ return /买|卖|赎|申|转|定投|清仓|分红|再投|配|拆|convert|buy|sell|dividend|reinvest/i.test(x); })||'';
-      const nums=t.filter(function(x){ return /^\d+(\.\d+)?$/.test(String(x).replace(/[元¥]/g,'')); });
-      amount=nums.length?nums[0]:'';
-      nav=nums.length>1?nums[1]:'';
-      name=t.filter(function(x){ return x!==date && x!==type && x!==amount && x!==nav; }).join(' ');
-    }
-    if(!name) continue;
-    if(/^(#|\/\/|说明|示例|例子|样例)/.test(name)) continue; // 跳过模板说明行/示例行/注释行，避免被当成真实交易导入
+  function pushRow(name,date,type,amount,nav,fee,shares,account,confirm,note,cat){
+    if(!name) return;
+    if(/^(#|\/\/|说明|示例|例子|样例)/.test(name)) return; // 跳过模板说明行/示例行/注释行
     const tType=type?guessType(type):'buy';
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
     const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;
-    const rawAcc2 = forceAcc ? (defaultAcc||'') : (account ? account : (defaultAcc||''));
-    const account2=normalizeAccount(rawAcc2);
-    if(!(amt||nv)) continue;
-    const confirm=_conf?mapConfirmPaste(_conf):'confirmed'; const note=(_note||'').trim();
-    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:0,account:account2,shares:0,confirm,note});
+    const feS=parseFloat(String(fee).replace(/[^\d.\-]/g,''))||0;
+    const sh=parseFloat(String(shares).replace(/[^\d.\-]/g,''))||0;
+    const acc=normalizeAccount(account?account:(defaultAcc||''));
+    if(!(amt||nv||sh)) return;
+    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:confirm||'confirmed',note:note||'',cat:cat||''});
   }
+  for(let i=start;i<rawLines.length;i++){
+    const raw=rawLines[i];
+    // 纯空格分隔（无逗号/制表符）：按关键字+数字做语义解析，兼容自由文本记账
+    if(!/[,\t，]/.test(raw)){
+      const t=raw.split(/\s+/).filter(Boolean);
+      const date=t.find(function(x){ return /^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(x); })||'';
+      const type=t.find(function(x){ return /买|卖|赎|申|转|定投|清仓|分红|再投|配|拆|convert|buy|sell|dividend|reinvest/i.test(x); })||'';
+      const nums=t.filter(function(x){ return /^\d+(\.\d+)?$/.test(String(x).replace(/[元¥]/g,'')); });
+      const amount=nums.length?nums[0]:''; const nav=nums.length>1?nums[1]:'';
+      const name=t.filter(function(x){ return x!==date && x!==type && x!==amount && x!==nav; }).join(' ');
+      pushRow(name,date,type,amount,nav,'','', defaultAcc, '', '', '');
+      continue;
+    }
+    const c=splitCsv(raw);
+    if(c.length<2) continue;
+    const name=col.name>=0?c[col.name]:(c[0]||'');
+    const date=col.date>=0?c[col.date]:'';
+    const type=col.type>=0?c[col.type]:'';
+    const amount=col.amount>=0?c[col.amount]:'';
+    const nav=col.nav>=0?c[col.nav]:'';
+    const fee=col.fee>=0?c[col.fee]:'';
+    const shares=col.shares>=0?c[col.shares]:'';
+    const account=col.account>=0?c[col.account]:'';
+    const confirm=col.confirm>=0?c[col.confirm]:'';
+    const note=col.note>=0?c[col.note]:'';
+    let cat='';
+    if(looksHeader && col.cat>=0 && c[col.cat] && !/^(#|\/\/|说明|示例|例子|样例)/.test(String(c[col.cat]))) cat=String(c[col.cat]).trim();
+    const rawAcc=forceAcc?(defaultAcc||''):(account||(defaultAcc||''));
+    pushRow(name,date,type,amount,nav,fee,shares,rawAcc,confirm,note,cat);
+  }
+  // 导入「类别」列 -> 写入分类覆盖（与页面内 catMenu 同一持久化通道），让持仓按 Excel 类别归类
+  added.forEach(function(t){ if(t.cat){ catOverride[t.name]=t.cat; } });
+  try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
   if(!added.length) return {count:0,dup:0,rows:[]};
   const normNum=function(v){ return (v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):''; };
   const keyOf=function(t){ return (t.name||'')+'|'+(t.date||'')+'|'+normNum(t.amount)+'|'+normNum(t.nav)+'|'+((t.account)||''); };
@@ -10688,6 +10714,19 @@ async function cloudPush(manual){
 async function cloudPull(manual){
   if(!syncEnabled()){ if(manual) ftAlert('请先在设置开启云同步并填写配置'); return; }
   var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) ftAlert('请先填写 GitHub 令牌与仓库路径'); return; }
+  if(_syncBusy) return;
+  if(manual){
+    var _conf=localStorage.getItem('ft_sync_conflict')||'local';
+    var _dirty=localStorage.getItem('ft_sync_dirty')==='1';
+    if(_conf==='local' && _dirty){
+      setSyncStatus('本机有未上传改动');
+      ftConfirm('本机有尚未上传的改动，立即下载会用云端覆盖本机，这些改动会丢失。\n建议先「立即上传」再下载。\n确定仍要下载？', function(ok){ if(ok) cloudPullInner(true); });
+      return;
+    }
+  }
+  cloudPullInner(manual);
+}
+async function cloudPullInner(manual){
   if(_syncBusy) return; _syncBusy=true; if(manual) setSyncStatus('下载中…');
   try{
     var conflict=localStorage.getItem('ft_sync_conflict')||'local';

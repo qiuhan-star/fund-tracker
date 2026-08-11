@@ -8149,13 +8149,13 @@ function renderSyncCfg(){
         <!-- 1. 账户管理 -->
         <section class="panel-section active" id="panel-account">
           <h4 class="panel-title">账户管理</h4>
-          <p class="sm-note">在此统一管理账户：查看、重命名、排序或删除。账户栏只负责切换，不再显示编辑按钮。</p>
-          <div class="nset-label">当前账户</div>
-          <div class="nset-card"><div id="accSummaryList" class="acc-summary"></div></div>
-          <div class="nset-label">账户实体</div>
-          <div class="nset-card"><div id="accNameList" class="sort-list"></div></div>
-          <div class="nset-card add-acc-card" onclick="addAccount()" role="button" tabindex="0"><div class="panel-row">＋ 添加账户</div></div>
-          <div class="nset-card sort-acc-card" onclick="openSortSheet()" role="button" tabindex="0"><div class="panel-row">⇅ 排序账户</div></div>
+          <p class="sm-note">点选账户即切换；轻点右侧 <span class="arr-demo">›</span> 可重命名、改备注或删除。排序点下方「⇅ 排序账户」。</p>
+          <div class="nset-label">账户</div>
+          <div class="nset-card"><div id="accNameList" class="acc-sel-list"></div></div>
+          <div class="acc-sel-actions">
+            <div class="acc-sel-add" onclick="addAccount()" role="button" tabindex="0">＋ 添加账户</div>
+            <div class="acc-sel-sort" onclick="openSortSheet()" role="button" tabindex="0">⇅ 排序账户</div>
+          </div>
         </section>
 
         <!-- 2. 偏好设置 -->
@@ -8171,7 +8171,6 @@ function renderSyncCfg(){
 
           <div class="nset-label">列表与排序</div>
           <div class="nset-card">
-            <div class="ap-row ap-act" onclick="openScopeSheet()"><div class="ap-left"><div class="ap-title">默认账户</div></div><div class="ap-right"><span class="ap-val" id="scopeVal">本人账户</span><span class="item-arrow">›</span></div></div>
             <div class="ap-row ap-act" onclick="openSortSheet()"><div class="ap-left"><div class="ap-title">持仓表格列显示与顺序</div><div class="ap-desc">含分类标签与自定义标签排序</div></div><div class="ap-right"><span class="item-arrow">›</span></div></div>
           </div>
           <p class="ap-note">每次打开应用时默认进入的账户视图；首页列表的持仓列与排序在此调整。</p>
@@ -8375,6 +8374,20 @@ function renderSyncCfg(){
             <div class="ap-sheet-cancel" onclick="closeCacheSheet()"><button>取消</button></div>
           </div>
         </div>
+        <div class="ap-sheet-mask" id="accEditMask" onclick="closeAccEdit()">
+          <div class="ap-sheet" onclick="event.stopPropagation()">
+            <div class="ap-sheet-title" id="accEditTitle">账户</div>
+            <div class="ap-sheet-group">
+              <div class="acc-edit-field"><label class="acc-edit-label">账户名称</label><input class="acc-edit-input" id="accEditName" type="text" /></div>
+              <div class="acc-edit-field"><label class="acc-edit-label">备注</label><input class="acc-edit-input" id="accEditNote" type="text" placeholder="选填" /></div>
+            </div>
+            <div class="ap-sheet-group">
+              <button class="ap-sheet-opt" onclick="saveAccEdit()">保存</button>
+              <button class="ap-sheet-opt destructive" id="accEditDel" onclick="delAccEdit()">删除账户</button>
+            </div>
+            <div class="ap-sheet-cancel" onclick="closeAccEdit()"><button>取消</button></div>
+          </div>
+        </div>
       </main>
     </div>
   </div>
@@ -8429,11 +8442,6 @@ function renderSyncCfg(){
   .sm-sec-ic svg{width:18px;height:18px;}
   .sm-sec-name{font-size:17px;font-weight:600;color:var(--text);}
   .sm-sec-rows .smg-row:first-child{border-top:none;}
-  .acc-summary{padding:4px 0;}
-  .acc-sum-item{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;}
-  .acc-sum-item+.acc-sum-item{border-top:1px solid var(--border-2);}
-  .acc-sum-name{font-size:15px;color:var(--text);}
-  .acc-sum-tag{font-size:12px;color:var(--text-3);background:var(--surface-3);padding:2px 9px;border-radius:10px;}
 
 </style>
 
@@ -8688,9 +8696,23 @@ function renderSyncCfg(){
 .acc-prompt .ap-btn{ flex:1; padding:11px 0; border:none; border-radius:10px; font-size:16px; font-family:inherit; font-weight:600; background:var(--bg); color:var(--text); cursor:pointer; }
 .acc-prompt .ap-btn.primary{ background:var(--accent); color:#fff; }
 .acc-prompt .ap-btn.danger{ background:#ff3b30; color:#fff; }
-#accNameList .acc-row{ padding:9px 10px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:8px; touch-action:none; }
-#accNameList .ai-main{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-#accNameList .acc-note{ width:100%; box-sizing:border-box; margin-top:8px; font-size:13px; padding:7px 10px; border:1px solid var(--border-3); border-radius:8px; background:var(--bg); color:var(--text); }
+.acc-sel-list{display:flex;flex-direction:column;gap:8px;}
+.acc-sel-row{display:flex;align-items:center;gap:8px;padding:12px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-3);cursor:pointer;}
+.acc-sel-row.on{background:#F0F6FF;border-color:#cfe0ff;}
+.acc-sel-row.on .acc-sel-name{color:var(--accent);font-weight:700;}
+.acc-sel-name{font-size:16px;color:var(--text);flex:0 0 auto;}
+.acc-sel-tag{font-size:11px;color:var(--text-3);background:var(--surface-3);padding:2px 8px;border-radius:9px;flex:0 0 auto;}
+.acc-sel-tag-all{background:#eef3ff;color:#5b8def;}
+.acc-sel-note{font-size:12px;color:var(--text-3);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acc-sel-go{font-size:20px;color:var(--text-3);flex:0 0 auto;padding:0 2px;line-height:1;}
+.acc-sel-actions{display:flex;align-items:center;gap:18px;margin-top:10px;padding-left:2px;}
+.acc-sel-add{color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;}
+.acc-sel-sort{color:var(--text-3);font-size:15px;cursor:pointer;}
+.acc-edit-field{display:flex;flex-direction:column;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.acc-edit-field:last-child{border-bottom:none;}
+.acc-edit-label{font-size:12px;color:var(--text-3);}
+.acc-edit-input{width:100%;box-sizing:border-box;font-size:16px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-family:inherit;}
+.arr-demo{color:var(--text-3);}
 </style>
 
 <div id="accPromptMask" class="sm-mask">
@@ -8817,7 +8839,6 @@ function renderSyncCfg(){
     if(typeof renderSyncCfg==='function') renderSyncCfg();
     if(typeof renderMobileSettingsHome==='function') renderMobileSettingsHome();
     if(typeof renderProfileCard==='function') renderProfileCard();
-    if(typeof renderAccSummary==='function') renderAccSummary();
     try{ var ac=loadAnalysisCfg();
       var segA=document.getElementById('riskPresetSeg'); if(segA){ Array.prototype.forEach.call(segA.querySelectorAll('button'),function(b){ b.classList.toggle('on', b.getAttribute('data-p')===ac.preset); }); }
       var tm=document.getElementById('thMaxShare'); if(tm) tm.value=ac.maxShare;
@@ -9000,26 +9021,56 @@ function renderSyncCfg(){
       if(typeof renderTagSortList==='function') renderTagSortList(); renderTagManageList();
     });
   };
-    window.renderAccSummary=function(){
-    var box=document.getElementById('accSummaryList'); if(!box) return;
-    var list=(typeof accountListOrdered==='function')?accountListOrdered():[];
-    if(!list.length){ box.innerHTML='<p class="sm-note">暂无账户。</p>'; return; }
-    box.innerHTML=list.map(function(a){
-      var bi=(typeof accIsBuiltin==='function')?accIsBuiltin(a):false;
-      return '<div class="acc-sum-item"><span class="acc-sum-name">'+escHtml(a)+'</span><span class="acc-sum-tag">'+(bi?'内置':'自定义')+'</span></div>';
-    }).join('');
+  window.pickAccSetting=function(name){
+    try{ setScopeAcc(name); }catch(e){}
+    try{ if(typeof renderAccountNames==='function') renderAccountNames(); }catch(e){}
+    try{ if(typeof renderScopeBar==='function') renderScopeBar(); }catch(e){}
   };
   window.renderAccountNames=function(){
     var box=document.getElementById('accNameList'); if(!box) return;
     var list=accountListOrdered().slice();
     try{ (_allRaw||[]).forEach(function(f){ var e=effAccount(f.account); if(e && list.indexOf(e)<0) list.push(e); }); }catch(e){}
-    if(!list.length){ box.innerHTML='<p class="sm-note">暂无账户。</p>'; return; }
-    box.innerHTML=list.map(function(a){
+    var allOn=(scopeAcc==='all')?' on':'';
+    var rows='<div class="acc-sel-row'+allOn+'" onclick="pickAccSetting(\'all\')"><span class="acc-sel-name">全部</span><span class="acc-sel-tag acc-sel-tag-all">聚合</span></div>';
+    rows+=list.map(function(a){
       var bi=accIsBuiltin(a);
-      var btns='<button class="sort-up" data-acc="'+escAttr(a)+'" onclick="renameAccount(this.getAttribute(\'data-acc\'))" title="重命名" aria-label="重命名">✎</button>';
-      if(!bi) btns+='<button class="sort-down" data-acc="'+escAttr(a)+'" onclick="removeAccount(this.getAttribute(\'data-acc\'))" title="删除" aria-label="删除">×</button>';
-      return '<div class="acc-row" data-key="'+escAttr(a)+'"><div class="ai-main"><span class="sort-label">'+escHtml(a)+'</span><span class="sort-ctrl">'+btns+'</span></div><input class="acc-note" type="text" placeholder="备注（可选）" value="'+escAttr(getAccNote(a))+'" onchange="setAccNote('+escJs(a)+', this.value)" /></div>';
+      var sel=(scopeAcc===a)?' on':'';
+      var note=getAccNote(a)||'';
+      var noteHtml=note?'<span class="acc-sel-note">'+escHtml(note)+'</span>':'';
+      var tag='<span class="acc-sel-tag">'+((bi?'内置':'自定义'))+'</span>';
+      var go='<span class="acc-sel-go" data-acc="'+escAttr(a)+'" onclick="event.stopPropagation(); openAccEdit(this.getAttribute('data-acc'))">›</span>';
+      return '<div class="acc-sel-row'+sel+'" data-acc="'+escAttr(a)+'" onclick="pickAccSetting(this.getAttribute('data-acc'))"><span class="acc-sel-name">'+escHtml(a)+'</span>'+tag+noteHtml+go+'</div>';
     }).join('');
+    box.innerHTML=rows;
+  };
+  window.openAccEdit=function(name){
+    var m=document.getElementById('accEditMask'); if(!m) return;
+    m.setAttribute('data-acc', name||'');
+    var bi=accIsBuiltin(name);
+    var t=document.getElementById('accEditTitle'); if(t) t.textContent=name||'';
+    var nm=document.getElementById('accEditName'); if(nm){ nm.value=name||''; nm.readOnly=bi; nm.style.opacity=bi?'0.6':'1'; }
+    var nt=document.getElementById('accEditNote'); if(nt) nt.value=getAccNote(name)||'';
+    var del=document.getElementById('accEditDel'); if(del){ del.style.display=bi?'none':''; }
+    m.classList.add('show');
+    if(nm && !bi) setTimeout(function(){ try{ nm.focus(); }catch(e){} },60);
+  };
+  window.closeAccEdit=function(){ var m=document.getElementById('accEditMask'); if(m) m.classList.remove('show'); };
+  window.saveAccEdit=function(){
+    var m=document.getElementById('accEditMask'); if(!m) return;
+    var old=m.getAttribute('data-acc')||'';
+    var nm=document.getElementById('accEditName'); var nt=document.getElementById('accEditNote');
+    var newName=nm?nm.value.trim():old; var note=nt?nt.value.trim():'';
+    if(!newName){ if(typeof toast==='function') toast('名称不能为空'); return; }
+    try{ if(newName!==old){ _renameAccountRaw(old, newName); } setAccNote(newName, note); silentSave(); }catch(e){ console.warn('saveAccEdit', e); }
+    closeAccEdit();
+    try{ if(typeof renderAccountNames==='function') renderAccountNames(); }catch(e){}
+    try{ if(typeof renderScopeBar==='function') renderScopeBar(); }catch(e){}
+    if(typeof toast==='function') toast('已保存');
+  };
+  window.delAccEdit=function(){
+    var m=document.getElementById('accEditMask'); if(!m) return;
+    var name=m.getAttribute('data-acc')||'';
+    closeAccEdit(); removeAccount(name);
   };
   window.renderAccSortList=function(){
     var box=document.getElementById('ssAccList'); if(!box) return;

@@ -9038,8 +9038,8 @@ function renderSyncCfg(){
       var note=getAccNote(a)||'';
       var noteHtml=note?'<span class="acc-sel-note">'+escHtml(note)+'</span>':'';
       var tag='<span class="acc-sel-tag">'+((bi?'内置':'自定义'))+'</span>';
-      var go='<span class="acc-sel-go" data-acc="'+escAttr(a)+'" onclick="event.stopPropagation(); openAccEdit(this.getAttribute('data-acc'))">›</span>';
-      return '<div class="acc-sel-row'+sel+'" data-acc="'+escAttr(a)+'" onclick="pickAccSetting(this.getAttribute('data-acc'))"><span class="acc-sel-name">'+escHtml(a)+'</span>'+tag+noteHtml+go+'</div>';
+      var go='<span class="acc-sel-go" data-acc="'+escAttr(a)+'" onclick="event.stopPropagation(); openAccEdit(this.getAttribute(\'data-acc\'))">›</span>';
+      return '<div class="acc-sel-row'+sel+'" data-acc="'+escAttr(a)+'" onclick="pickAccSetting(this.getAttribute(\'data-acc\'))"><span class="acc-sel-name">'+escHtml(a)+'</span>'+tag+noteHtml+go+'</div>';
     }).join('');
     box.innerHTML=rows;
   };

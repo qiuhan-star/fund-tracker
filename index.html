@@ -7000,7 +7000,7 @@ function renderLiquidated(){
       return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(a)+'</span><span class="liq-imp-bar"><i class="'+bcls+'" style="width:'+(Math.abs(g.r)/_accMax*100).toFixed(1)+'%"></i></span><span class="liq-imp-val">'+g.c+'只 · 胜率'+wr+'% · 盈亏'+sign(g.r)+M(g.r)+'</span></div>';
     }).join('')+'</div>':'';
   const scatter=liqScatter(list);
-  box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+scatter+period+behavior+pareto+account+impact+'</div>';
+  box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+scatter+period+behavior+account+pareto+impact+'</div>';
   fillLiqStatus();
 }
 

@@ -4541,9 +4541,10 @@ function renderLiquidated(){
   // 按当前账户口径过滤（与持仓列表逻辑一致：scopeMatches 判大口径，curAccount 判子账户）
   if(currentScope!=='all') list=list.filter(function(f){ return scopeMatches(f.account); });
   if(curAccount && curAccount!=='全部') list=list.filter(function(f){ return (effAccount(f.account)||effAccount('本人账户'))===curAccount; });
-  let sumR=0, sumB=0, sumS=0, wins=0, sumD=0, sumRetPct=0; const catMap={};
-  list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; sumRetPct+=f.retPct; if(f.win) wins++; catMap[f.cat]=(catMap[f.cat]||0)+f.totalBuy; });
+  let sumR=0, sumB=0, sumS=0, wins=0, sumD=0, sumRetPct=0, sumAbs=0, avgWin=0, avgLoss=0; const catMap={}, catRetMap={};
+  list.forEach(function(f){ sumR+=f.realized; sumB+=f.totalBuy; sumS+=f.totalSell; sumD+=f.days; sumRetPct+=f.retPct; sumAbs+=Math.abs(f.realized); if(f.win){ wins++; avgWin+=f.realized; } else { avgLoss+=Math.abs(f.realized); } catMap[f.cat]=(catMap[f.cat]||0)+f.totalBuy; catRetMap[f.cat]=(catRetMap[f.cat]||0)+f.realized; });
   const cnt=list.length, winRate=cnt?wins/cnt*100:0, avgD=cnt?Math.round(sumD/cnt):0, avgRet=cnt?sumRetPct/cnt:0;
+  const _aw=wins?avgWin/wins:0, _al=(cnt-wins)?avgLoss/(cnt-wins):0; const plr=(_al>0)?(_aw/_al):null;
   const cls=function(v){ return v>=0?'pos':'neg'; }, sign=function(v){ return v>=0?'+':''; };
   const sum='<div class="cards4">'
     +'<div class="mcard"><p class="lbl">清仓基金数</p><p class="val">'+cnt+'</p></div>'
@@ -4553,6 +4554,7 @@ function renderLiquidated(){
     +'<div class="mcard"><p class="lbl">平均收益率</p><p class="val '+cls(avgRet)+'">'+sign(avgRet)+avgRet.toFixed(2)+'%</p></div>'
     +'<div class="mcard"><p class="lbl">胜率（赚/亏）</p><p class="val">'+(cnt?wins+'/'+cnt:'—')+'</p><p class="lbl" style="margin:4px 0 0">'+winRate.toFixed(0)+'%</p></div>'
     +'<div class="mcard"><p class="lbl">平均持有天数</p><p class="val">'+(cnt?avgD:'—')+'</p></div>'
+    +'<div class="mcard"><p class="lbl">盈亏比（均盈/均亏）</p><p class="val '+cls((plr||0)-1)+'">'+(plr!=null?plr.toFixed(2):'—')+'</p></div>'
     +'</div>';
   const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button></span></div><p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
   if(!cnt){
@@ -4589,9 +4591,9 @@ function renderLiquidated(){
       +'</div>';
   }).join('');
   const catKeys=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];});
-  const impact=catKeys.length?'<div class="liq-impact"><p class="lbl">清仓资金去向（按类别 · 累计投入）</p>'+catKeys.map(function(c){
-    const v=catMap[c], pct=sumB>0?v/sumB*100:0;
-    return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(c)+'</span><span class="liq-imp-bar"><i style="width:'+pct.toFixed(1)+'%"></i></span><span class="liq-imp-val">'+M(v)+' · '+pct.toFixed(0)+'%</span></div>';
+  const impact=catKeys.length?'<div class="liq-impact"><p class="lbl">盈亏贡献（按类别 · 投入 / 盈亏 / 收益率）</p>'+catKeys.map(function(c){
+    const v=catMap[c], p=catRetMap[c], rp=v>0?p/v*100:0, pct=sumB>0?v/sumB*100:0, w=pct>0?Math.min(100,pct):0, bcls=p>=0?'pos':'neg';
+    return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(c)+'</span><span class="liq-imp-bar"><i class="'+bcls+'" style="width:'+w.toFixed(1)+'%"></i></span><span class="liq-imp-val">'+M(v)+' · 盈亏'+sign(p)+M(p)+' ('+sign(rp)+rp.toFixed(1)+'%)</span></div>';
   }).join('')+'</div>':'';
   box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+impact+'</div>';
   fillLiqStatus();

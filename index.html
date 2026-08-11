@@ -1170,6 +1170,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sync-state.busy .ss-dot{ background:#007aff; }
   .sync-state.warn{ background:rgba(255,149,0,.12); border-color:rgba(255,149,0,.4); color:#b26a00; }
   .sync-state.warn .ss-dot{ background:#ff9500; }
+  .sync-sum-val{ font-size:14px; color:var(--text-2); text-align:right; }
+  .sync-form-foot{ text-align:right; margin-top:10px; }
+  .sync-done{ border:none; background:var(--accent); color:#fff; border-radius:9px; padding:8px 18px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .sync-done:active{ opacity:.85; }
 
 /* 定投/XIRR 测算卡片：紧凑一体化结果 + 卡片内 Tab 切换 */
 .xirr-card h2 { font-size: 18px; margin-bottom: 6px; }
@@ -10639,6 +10643,27 @@ function scheduleCloudPush(){ if(!syncEnabled()) return; if(_syncTimer) clearTim
 function setSyncStatus(txt){ var el=document.getElementById('syncStatus'); if(!el) return; var t=el.querySelector('.ss-txt'); if(t) t.textContent=txt; else el.textContent=txt; el.classList.remove('ok','err','busy','warn','idle'); if(/失败|错误|无法|异常/.test(txt)) el.classList.add('err'); else if(/中…|同步中|拉取中/.test(txt)) el.classList.add('busy'); else if(/还差|暂无|保留本机/.test(txt)) el.classList.add('warn'); else if(/已上传|已下载|就绪|已保存|成功|最新/.test(txt)) el.classList.add('ok'); else el.classList.add('idle'); }
 function syncStatusAuto(){ var c=syncCfg(); var miss=[]; if(!(c.pat||'').trim()) miss.push('GitHub 令牌'); if(!(c.repo||'').trim()) miss.push('仓库路径'); if(miss.length) setSyncStatus('还差：'+miss.join('、')); else setSyncStatus('配置就绪 · 可以同步'); }
 function syncSavedFlash(input){ if(!input) return; var old=document.getElementById('syncSavedTip'); if(old&&old.parentNode) old.parentNode.removeChild(old); var r=input.getBoundingClientRect(); var tip=document.createElement('span'); tip.id='syncSavedTip'; tip.textContent='✓ 已保存'; tip.style.cssText='position:fixed;z-index:99999;font-size:12px;font-weight:600;color:#34c759;background:var(--surface);border:1px solid rgba(52,199,89,.5);border-radius:6px;padding:3px 8px;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none;transition:opacity .4s;opacity:1;'; tip.style.left=Math.max(8,Math.min(window.innerWidth-90,r.right-100))+'px'; tip.style.top=(r.bottom+8)+'px'; document.body.appendChild(tip); setTimeout(function(){ tip.style.opacity='0'; },1300); setTimeout(function(){ if(tip.parentNode) tip.parentNode.removeChild(tip); },1800); }
+var _syncEditing=false;
+function syncCfgComplete(){ var c=syncCfg(); return !!((c.pat||'').trim() && (c.repo||'').trim()); }
+function syncUpdateView(){
+  var form=document.getElementById('syncForm'), sum=document.getElementById('syncSummary'), foot=document.getElementById('syncFormFoot');
+  if(!form||!sum) return;
+  var complete=syncCfgComplete();
+  if(foot) foot.style.display=(_syncEditing&&complete)?'block':'none';
+  if(_syncEditing){ form.style.display='block'; sum.style.display='none'; return; }
+  if(complete){
+    var c=syncCfg();
+    var repoEl=document.getElementById('sumRepo'); if(repoEl) repoEl.textContent=c.repo||'—';
+    var tokEl=document.getElementById('sumToken'); if(tokEl) tokEl.textContent='已配置';
+    var bpEl=document.getElementById('sumBranchPath'); if(bpEl) bpEl.textContent=(c.branch||'main')+' · '+(c.path||'fund-tracker-data.json');
+    var cfEl=document.getElementById('sumConflict'); if(cfEl) cfEl.textContent=(localStorage.getItem('ft_sync_conflict')||'local')==='remote'?'云端为准':'本机为准';
+    sum.style.display='block'; form.style.display='none';
+  } else {
+    sum.style.display='none'; form.style.display='block';
+  }
+}
+function openSyncForm(){ _syncEditing=true; syncUpdateView(); }
+function syncDoneEditing(){ _syncEditing=false; syncStatusAuto(); syncUpdateView(); }
 async function cloudPush(manual){
   if(!syncEnabled()){ if(manual) ftAlert('请先在设置开启云同步并填写配置'); return; }
   var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) ftAlert('请先填写 GitHub 令牌与仓库路径'); return; }
@@ -10701,11 +10726,12 @@ function renderSyncCfg(){
   var pth=document.getElementById('smSyncPath'); if(pth) pth.value=c.path||'fund-tracker-data.json';
   var cf=localStorage.getItem('ft_sync_conflict')||'local';
   var seg=document.getElementById('smSyncConflict'); if(seg) Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on',(b.getAttribute('data-c')||'')===cf); });
-  ['smSyncPat','smSyncRepo','smSyncBranch','smSyncPath'].forEach(function(id){ var e=document.getElementById(id); if(e) e.onchange=function(){ var cc=syncCfg(); if(id==='smSyncPat') cc.pat=e.value.trim(); else if(id==='smSyncRepo') cc.repo=e.value.trim(); else if(id==='smSyncBranch') cc.branch=e.value.trim(); else if(id==='smSyncPath') cc.path=e.value.trim(); setSyncCfg(cc); syncSavedFlash(e); syncStatusAuto(); }; });
+  ['smSyncPat','smSyncRepo','smSyncBranch','smSyncPath'].forEach(function(id){ var e=document.getElementById(id); if(e) e.onchange=function(){ var cc=syncCfg(); if(id==='smSyncPat') cc.pat=e.value.trim(); else if(id==='smSyncRepo') cc.repo=e.value.trim(); else if(id==='smSyncBranch') cc.branch=e.value.trim(); else if(id==='smSyncPath') cc.path=e.value.trim(); setSyncCfg(cc); syncSavedFlash(e); syncStatusAuto(); syncUpdateView(); }; });
   var fwEl=document.getElementById('syncFileWarn'); if(fwEl) fwEl.classList.toggle('show', location.protocol==='file:');
   var lp=localStorage.getItem('ft_sync_lastpush'); var c2=syncCfg();
   if((c2.pat||'').trim() && (c2.repo||'').trim() && lp) setSyncStatus('已上传 · 云端为最新 · '+new Date(lp).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
   else syncStatusAuto();
+  _syncEditing=false; syncUpdateView();
 }
 // ===== 以下进入应用初始化 =====
 (async function init(){
@@ -10873,6 +10899,7 @@ function renderSyncCfg(){
           <div class="nset-card">
             <div class="panel-row"><div class="left"><div class="title">开启云同步</div><div class="desc">改动自动备份到你的 GitHub 私有仓库，打开网页自动拉取，多设备一致</div></div><div class="right"><label class="sm-switch"><input type="checkbox" id="smSyncOn" onchange="onSyncToggle()"><span class="sm-slider"></span></label></div></div>
             <div id="syncCfg" style="display:none">
+              <div id="syncForm">
               <div class="panel-row stacked">
                 <div class="left"><div class="title">GitHub 令牌</div><div class="desc">用于读写你的私有仓库，仅存于本地</div></div>
                 <div class="right" style="display:flex;align-items:center;gap:6px"><input id="smSyncPat" type="password" class="settings-input" style="flex:1;min-width:0" placeholder="ghp_xxx…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" class="sync-eye" onclick="toggleSyncPat()">👁</button></div>
@@ -10893,6 +10920,15 @@ function renderSyncCfg(){
                 <div class="left"><div class="title">冲突时</div><div class="desc">本地与云端数据不一致时的取舍</div></div>
                 <div class="right"><div class="sm-seg" id="smSyncConflict"><button data-c="local" class="on" onclick="setSyncConflict('local')">本机为准</button><button data-c="remote" onclick="setSyncConflict('remote')">云端为准</button></div></div>
               </div>
+              </div>
+              <div id="syncSummary" style="display:none">
+                <div class="panel-row"><div class="left"><div class="title">仓库路径</div></div><div class="right"><span class="sync-sum-val" id="sumRepo">—</span></div></div>
+                <div class="panel-row"><div class="left"><div class="title">GitHub 令牌</div></div><div class="right"><span class="sync-sum-val" id="sumToken">已配置</span></div></div>
+                <div class="panel-row"><div class="left"><div class="title">分支 / 文件路径</div></div><div class="right"><span class="sync-sum-val" id="sumBranchPath">—</span></div></div>
+                <div class="panel-row"><div class="left"><div class="title">冲突策略</div></div><div class="right"><span class="sync-sum-val" id="sumConflict">—</span></div></div>
+                <div class="panel-row" style="cursor:pointer" onclick="openSyncForm()"><div class="left"><div class="title" style="color:var(--accent)">编辑配置</div><div class="desc">修改令牌 / 仓库 / 策略时点这里</div></div><div class="right"><span class="item-arrow">›</span></div></div>
+              </div>
+              <div class="sync-form-foot" id="syncFormFoot" style="display:none"><button type="button" class="sync-done" onclick="syncDoneEditing()">✓ 完成</button></div>
               <div class="sync-filewarn" id="syncFileWarn">你正以 <b>本地文件 (file://)</b> 打开，无法调用 GitHub API。请改用线上版，或用「导出备份 (JSON)」手动备份。</div>
               <div class="sync-state idle" id="syncStatus" role="status"><span class="ss-dot"></span><span class="ss-txt">未同步</span></div>
               <div class="sync-actions">

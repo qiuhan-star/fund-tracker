@@ -1160,6 +1160,16 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sync-btn.danger:active{ background:rgba(255,59,48,.18); }
   .sync-up-arrow{ width:15px; height:15px; }
   .sync-foot{ margin:10px 0 0; font-size:12px; color:var(--text-3); line-height:1.5; }
+  .sync-state{ display:flex; align-items:center; gap:6px; margin:12px 0 10px; padding:8px 12px; border-radius:9px; background:var(--surface-3); border:1px solid var(--border-2); font-size:13px; color:var(--text-2); line-height:1.4; }
+  .sync-state .ss-dot{ width:8px; height:8px; border-radius:50%; background:var(--text-3); flex-shrink:0; }
+  .sync-state.ok{ background:rgba(52,199,89,.12); border-color:rgba(52,199,89,.4); color:#1f9e46; }
+  .sync-state.ok .ss-dot{ background:#34c759; }
+  .sync-state.err{ background:rgba(255,59,48,.10); border-color:rgba(255,59,48,.4); color:#e53935; }
+  .sync-state.err .ss-dot{ background:#ff3b30; }
+  .sync-state.busy{ background:rgba(0,122,255,.10); border-color:rgba(0,122,255,.4); color:#2f6fed; }
+  .sync-state.busy .ss-dot{ background:#007aff; }
+  .sync-state.warn{ background:rgba(255,149,0,.12); border-color:rgba(255,149,0,.4); color:#b26a00; }
+  .sync-state.warn .ss-dot{ background:#ff9500; }
 
 /* 定投/XIRR 测算卡片：紧凑一体化结果 + 卡片内 Tab 切换 */
 .xirr-card h2 { font-size: 18px; margin-bottom: 6px; }
@@ -10626,7 +10636,9 @@ function syncApiUrl(){ var c=syncCfg(); return 'https://api.github.com/repos/'+c
 function ghHeaders(){ var c=syncCfg(); var h={'Accept':'application/vnd.github+json','Content-Type':'application/json'}; if(c.pat) h['Authorization']='Bearer '+c.pat; return h; }
 function touchSync(){ if(_syncSuppress) return; if(!syncEnabled()) return; localStorage.setItem('ft_sync_dirty','1'); scheduleCloudPush(); }
 function scheduleCloudPush(){ if(!syncEnabled()) return; if(_syncTimer) clearTimeout(_syncTimer); _syncTimer=setTimeout(function(){ cloudPush(false); },2500); }
-function setSyncStatus(txt){ var el=document.getElementById('syncStatus'); if(el) el.textContent=txt; }
+function setSyncStatus(txt){ var el=document.getElementById('syncStatus'); if(!el) return; var t=el.querySelector('.ss-txt'); if(t) t.textContent=txt; else el.textContent=txt; el.classList.remove('ok','err','busy','warn','idle'); if(/失败|错误|无法|异常/.test(txt)) el.classList.add('err'); else if(/中…|同步中|拉取中/.test(txt)) el.classList.add('busy'); else if(/还差|暂无|保留本机/.test(txt)) el.classList.add('warn'); else if(/已上传|已下载|就绪|已保存|成功|最新/.test(txt)) el.classList.add('ok'); else el.classList.add('idle'); }
+function syncStatusAuto(){ var c=syncCfg(); var miss=[]; if(!(c.pat||'').trim()) miss.push('GitHub 令牌'); if(!(c.repo||'').trim()) miss.push('仓库路径'); if(miss.length) setSyncStatus('还差：'+miss.join('、')); else setSyncStatus('配置就绪 · 可以同步'); }
+function syncSavedFlash(input){ if(!input) return; var old=document.getElementById('syncSavedTip'); if(old&&old.parentNode) old.parentNode.removeChild(old); var r=input.getBoundingClientRect(); var tip=document.createElement('span'); tip.id='syncSavedTip'; tip.textContent='✓ 已保存'; tip.style.cssText='position:fixed;z-index:99999;font-size:12px;font-weight:600;color:#34c759;background:var(--surface);border:1px solid rgba(52,199,89,.5);border-radius:6px;padding:3px 8px;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none;transition:opacity .4s;opacity:1;'; tip.style.left=Math.max(8,Math.min(window.innerWidth-90,r.right-100))+'px'; tip.style.top=(r.bottom+8)+'px'; document.body.appendChild(tip); setTimeout(function(){ tip.style.opacity='0'; },1300); setTimeout(function(){ if(tip.parentNode) tip.parentNode.removeChild(tip); },1800); }
 async function cloudPush(manual){
   if(!syncEnabled()){ if(manual) ftAlert('请先在设置开启云同步并填写配置'); return; }
   var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) ftAlert('请先填写 GitHub 令牌与仓库路径'); return; }
@@ -10689,9 +10701,11 @@ function renderSyncCfg(){
   var pth=document.getElementById('smSyncPath'); if(pth) pth.value=c.path||'fund-tracker-data.json';
   var cf=localStorage.getItem('ft_sync_conflict')||'local';
   var seg=document.getElementById('smSyncConflict'); if(seg) Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on',(b.getAttribute('data-c')||'')===cf); });
-  ['smSyncPat','smSyncRepo','smSyncBranch','smSyncPath'].forEach(function(id){ var e=document.getElementById(id); if(e) e.onchange=function(){ var cc=syncCfg(); if(id==='smSyncPat') cc.pat=e.value.trim(); else if(id==='smSyncRepo') cc.repo=e.value.trim(); else if(id==='smSyncBranch') cc.branch=e.value.trim(); else if(id==='smSyncPath') cc.path=e.value.trim(); setSyncCfg(cc); setSyncStatus('配置已保存'); }; });
+  ['smSyncPat','smSyncRepo','smSyncBranch','smSyncPath'].forEach(function(id){ var e=document.getElementById(id); if(e) e.onchange=function(){ var cc=syncCfg(); if(id==='smSyncPat') cc.pat=e.value.trim(); else if(id==='smSyncRepo') cc.repo=e.value.trim(); else if(id==='smSyncBranch') cc.branch=e.value.trim(); else if(id==='smSyncPath') cc.path=e.value.trim(); setSyncCfg(cc); syncSavedFlash(e); syncStatusAuto(); }; });
   var fwEl=document.getElementById('syncFileWarn'); if(fwEl) fwEl.classList.toggle('show', location.protocol==='file:');
-  var lp=localStorage.getItem('ft_sync_lastpush'); if(lp) setSyncStatus('已上传 · 云端为最新 · '+new Date(lp).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
+  var lp=localStorage.getItem('ft_sync_lastpush'); var c2=syncCfg();
+  if((c2.pat||'').trim() && (c2.repo||'').trim() && lp) setSyncStatus('已上传 · 云端为最新 · '+new Date(lp).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
+  else syncStatusAuto();
 }
 // ===== 以下进入应用初始化 =====
 (async function init(){

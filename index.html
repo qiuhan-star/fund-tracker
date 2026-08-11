@@ -458,8 +458,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交易：更多选项折叠 */
 .more-toggle { display:flex; align-items:center; gap:6px; width:100%; background:transparent; border:1px dashed var(--border-strong); color:var(--text-2); border-radius:9px; padding:10px 12px; font-size:14px; font-family:inherit; cursor:pointer; margin:2px 0 12px; }.more-toggle:hover { border-color:var(--accent); color:var(--accent); }.more-toggle .arrow { transition:transform .2s; font-size:12px; }.more-toggle.open .arrow { transform:rotate(90deg); }.more-fields { display:none; animation:fadeIn .2s ease; padding-top:2px; }.more-fields.open { display:block; }@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }/* 合并日期时间字段 */
 .dt-wrap { position:relative; }.dt-wrap input { padding-right:34px; }.dt-wrap .cal { position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--text-3); pointer-events:none; }.sm-act { display:flex; align-items:center; gap:9px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:10px; padding:11px 13px; font-size: 14px; cursor:pointer; text-align:left; font-family:inherit; }@media (hover: hover) { .sm-act:hover {  border-color:var(--accent); color:var(--accent);  } }
-/* 详情页定投快捷卡 */
-.dca-quick { padding:10px 14px; margin:0 0 12px; }.dca-quick-row { display:flex; align-items:center; gap:10px; }.dca-quick-t { font-weight:600; font-size: 14px; }.dca-quick .btn { margin-left:auto; }/* 定投计划管理弹窗 */
+/* 定投计划管理弹窗 */
 .dca-mask { position:fixed; inset:0; background:rgba(0,0,0,.38); display:none; z-index:1200; }
 .dca-mask.show { display:block; }
 .dca-sheet { position:absolute; left:0; right:0; bottom:0; background:var(--bg); border-radius:20px 20px 0 0; max-height:90%; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 -4px 30px rgba(0,0,0,.18); animation:dcaSheetUp .26s cubic-bezier(.32,.72,0,1); }
@@ -1346,6 +1345,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .profit-panel .profit-cell { background:var(--surface-2); border:1px solid var(--border-2); border-radius:10px; padding:10px; min-width:0; }
 .profit-panel .profit-cell .k { font-size:12px; color:var(--text-3); margin-bottom:5px; }
 .profit-panel .profit-cell .v { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.profit-explain { margin:10px 0 0; padding:10px 12px; border-radius:10px; background:var(--surface-2); color:var(--text-2); font-size:13px; line-height:1.55; }
+.profit-explain b { color:var(--text); }
 .trade-modal .sm-body { padding:14px 16px 18px; overflow:auto; }
 .trade-modal .trade-section { margin:0; box-shadow:none; border:none; padding:0; }
 @media (max-width:560px) {
@@ -5566,6 +5567,11 @@ function detailEditHolding(){
   openDetailTrades();
   toast('持仓由交易流水自动计算，可在交易记录里新增 / 修改笔数');
 }
+function detailScrollAlert(){
+  var card=document.getElementById('detailAlertCard');
+  if(card){ card.scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  toast('提醒设置暂未生成，稍后再试');
+}
 function detailAddWatch(){
   if(!detailName) return;
   var code=syncCode(detailName);
@@ -5606,9 +5612,9 @@ function headerHtml(f){
         <div class="dh-subitem"><div class="k">持有收益率</div><div class="v ${pcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       </div>
       <div class="dh-actions">
-        <button class="dh-action" onclick="detailSetTab('profit')"><span class="ico">¥</span><span>收益明细</span></button>
         <button class="dh-action" onclick="openDetailTrades()"><span class="ico">≡</span><span>交易记录</span></button>
         <button class="dh-action" onclick="openDcaModal('${encodeURIComponent(f.name)}')"><span class="ico">↻</span><span>我的定投</span></button>
+        <button class="dh-action" onclick="detailScrollAlert()"><span class="ico">!</span><span>提醒设置</span></button>
       </div>
     </div>
     <div class="dh-sync">
@@ -5727,16 +5733,14 @@ function detailProfitPanelHtml(f){
   const day=dayGainOf(f);
   const dayCls=day==null?'zero':day>0?'pos':day<0?'neg':'zero';
   return `<div class="card profit-panel">
-    <div class="sec-head"><h2 style="margin:0;font-size: 16px">累计盈亏</h2><span class="hint">持仓 + 已实现</span></div>
+    <div class="sec-head"><h2 style="margin:0;font-size: 16px">累计盈亏</h2><span class="hint">持有收益 + 已实现盈亏</span></div>
     <div class="profit-main"><span class="amt ${totalCls}">${total>=0?'+':''}${M(total)}</span><span class="pct ${f.ret>=0?'pos':'neg'}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</span></div>
     <div class="profit-grid">
       <div class="profit-cell"><div class="k">持有收益</div><div class="v ${f.profit>=0?'pos':'neg'}">${f.profit>=0?'+':''}${M(f.profit)}</div></div>
       <div class="profit-cell"><div class="k">已实现盈亏</div><div class="v ${f.realized>=0?'pos':'neg'}">${f.realized>=0?'+':''}${M(f.realized||0)}</div></div>
       <div class="profit-cell"><div class="k">今日收益</div><div class="v ${dayCls}">${day==null?'—':((day>=0?'+':'')+M(day))}</div></div>
-      <div class="profit-cell"><div class="k">当前市值</div><div class="v">${M(f.mv)}</div></div>
-      <div class="profit-cell"><div class="k">持仓成本</div><div class="v">${M(f.cost)}</div></div>
-      <div class="profit-cell"><div class="k">持有份额</div><div class="v">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
     </div>
+    <div class="profit-explain">累计盈亏 = 持有收益 + 已实现盈亏。持有收益是当前持仓的浮动盈亏，已实现盈亏是卖出后落袋的结果，今日收益按最新净值估算。</div>
   </div>`;
 }
 
@@ -5872,9 +5876,6 @@ function liveSection(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   let h='';
   const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
-  // 定投快捷入口：进详情即可一键设为/查看定投计划
-  const _plans=dcaPlanOf(f.name);
-  h+=`<div class="card dca-quick"><div class="dca-quick-row"><span class="dca-quick-t">🗓️ 定投计划</span>${_plans.length?('<span class="tag">已设 '+_plans.length+' 个</span>'):('<span class="hint">未设置</span>')}<button class="btn sm" onclick="openDcaModal('${encodeURIComponent(f.name)}')">${_plans.length?'管理':'设为定投'}</button></div></div>`;
   // 交易记录已移到详情页顶部独立区块（detailTrades），此处不再重复渲染
   // 若后续需要在详情底部再加一条快速入口，可单独放一个跳转按钮
 
@@ -5915,7 +5916,7 @@ function liveSection(f){
   }
   const al=alerts[f.name]||{};
   const curRet=(f.ret!=null?f.ret:0);
-  h+=`<div class="card"><h2>止盈 / 止损预警线 <span class="tp-badge" id="tpBadge">监控中</span></h2>
+  h+=`<div class="card" id="detailAlertCard"><h2>止盈 / 止损预警线 <span class="tp-badge" id="tpBadge">监控中</span></h2>
     <p class="hint">设置后，首页列表会按当前收益率高亮提醒（刷新后生效）。下方标尺实时显示你当前处于哪个区间。</p>
     <div class="tp-status">当前收益率 <b class="${curRet>=0?'pos':'neg'}" id="tpCur">${curRet>=0?'+':''}${curRet.toFixed(1)}%</b> · 距止盈线还有 <b id="tpRemain">—</b></div>
     <div class="tp-scalewrap" id="tpScalewrap" style="display:none">

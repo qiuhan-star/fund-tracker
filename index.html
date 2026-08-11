@@ -1320,6 +1320,39 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 @media (min-width: 768px) {
   .trade-section .tx-expand { display: none; }
 }
+/* 详情页：参考支付宝资产详情的摘要 + 三段切换 */
+.dh-summary { text-align:center; padding: 8px 0 2px; }
+.dh-summary .dh-sec { justify-content:center; margin-bottom:6px; }
+.dh-summary-amount { font-size: 30px; line-height:1.15; font-weight: 760; letter-spacing:.02em; font-variant-numeric: tabular-nums; color:var(--text); }
+.dh-subgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin-top:14px; border-top:1px solid var(--border-2); padding-top:12px; }
+.dh-subitem { min-width:0; padding:0 8px; border-right:1px solid var(--border-2); }
+.dh-subitem:last-child { border-right:none; }
+.dh-subitem .k { font-size:12px; color:var(--text-3); margin-bottom:5px; white-space:nowrap; }
+.dh-subitem .v { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dh-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--border-2); }
+.dh-action { border:none; background:transparent; color:var(--text-2); font-family:inherit; font-size:13px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:8px 4px; border-radius:10px; cursor:pointer; }
+.dh-action:active { background:var(--surface-2); }
+.dh-action .ico { width:26px; height:26px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; background:var(--surface-2); color:var(--accent); font-weight:700; }
+.detail-switch-card { padding:10px 12px; }
+.detail-seg { display:grid; grid-template-columns:repeat(3,1fr); gap:0; border-bottom:1px solid var(--border-2); }
+.detail-seg button { position:relative; border:none; background:transparent; color:var(--text-2); padding:10px 4px 11px; font-size:15px; font-weight:600; font-family:inherit; cursor:pointer; }
+.detail-seg button.on { color:var(--accent); }
+.detail-seg button.on::after { content:''; position:absolute; left:18%; right:18%; bottom:-1px; height:2px; border-radius:2px; background:var(--accent); }
+.detail-tab-pane { margin-top:12px; }
+.profit-panel .profit-main { display:flex; align-items:baseline; justify-content:center; gap:8px; padding:14px 0 10px; }
+.profit-panel .profit-main .amt { font-size:28px; font-weight:760; font-variant-numeric:tabular-nums; }
+.profit-panel .profit-main .pct { font-size:15px; font-weight:700; }
+.profit-panel .profit-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.profit-panel .profit-cell { background:var(--surface-2); border:1px solid var(--border-2); border-radius:10px; padding:10px; min-width:0; }
+.profit-panel .profit-cell .k { font-size:12px; color:var(--text-3); margin-bottom:5px; }
+.profit-panel .profit-cell .v { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.trade-modal .sm-body { padding:14px 16px 18px; overflow:auto; }
+.trade-modal .trade-section { margin:0; box-shadow:none; border:none; padding:0; }
+@media (max-width:560px) {
+  .dh-summary-amount { font-size: 28px; }
+  .dh-subitem .v { font-size:15px; }
+  .profit-panel .profit-grid { grid-template-columns:1fr; }
+}
 </style>
 <script>
   try{
@@ -5196,7 +5229,7 @@ function render(){
     if(activeTab===1){ renderPie(); renderBar(); renderSector(); renderThemeHeat(); renderAccountSummary(); renderRisk(); } renderAdvice();
     if(activeTab===0){ renderBond(); renderDcaSection(); }
     if(activeTab===2){ renderLiquidated(); }
-  } else if(currentView==='detail'){ renderDetailLive(detailName?findFund(detailName,detailAcc):null); }
+  } else if(currentView==='detail'){ const f=detailName?findFund(detailName,detailAcc):null; if(f){ renderDetailTabs(f); renderDetailLive(f); } }
   restoreFocus();
 }
 
@@ -5219,9 +5252,7 @@ function enterDetail(f){
   detailAcc=effAccount(f.account)||effAccount('本人账户');
   const a=getAnalysis(f.name), c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
-    +`<div id="detailTrades"></div>`
-    +`<div id="detailIntraday"></div>`
-    +`<div id="detailHistory"></div>`
+    +`<div id="detailTabs"></div>`
     +`<div id="detailProfile"></div>`
     +`<div id="detailHoldings"></div>`
     +`<div id="detailStatic"></div>`
@@ -5229,10 +5260,8 @@ function enterDetail(f){
   const st=document.getElementById('detailStatic');
   if(a){ st.innerHTML=`<div class="card"><div class="am-inline">${a.body}</div></div>`; try{ a.charts(); detailChartFund=f.name; }catch(e){console.error(e);} }
   else { st.innerHTML=genericDetail(f); }
-  renderDetailTrades(f);
+  renderDetailTabs(f);
   renderDetailLive(f);
-  renderIntraday(f);
-  renderNavHistory(f);
   renderFundProfile(f);
   renderFundHoldings(f);
 }
@@ -5527,25 +5556,15 @@ function renderDetailLive(arg){
 function detailGoBack(){ location.hash='#/'; }
 function detailDelHolding(){ if(detailName) delFundByIndex(encodeURIComponent(detailName)); }
 function detailScrollTrades(){
-  if(!detailName) return;
-  var f=findFund(detailName,detailAcc); if(!f) return;
-  var idx=fundsView.indexOf(f);
-  var tr=document.getElementById('tr-'+idx);
-  if(tr){
-    tr.classList.remove('collapsed');
-    var sec=tr.previousElementSibling; if(sec){ var ch=sec.querySelector('.chev'); if(ch) ch.textContent='▾'; }
-    tr.scrollIntoView({behavior:'smooth', block:'start'});
-  } else { toast('该基金暂无交易流水'); }
+  openDetailTrades();
 }
 function detailEditHolding(){
   if(!detailName) return;
   var f=findFund(detailName,detailAcc); if(!f) return;
   var card=document.getElementById('genericDetailCard');
   if(card){ card.scrollIntoView({behavior:'smooth', block:'center'}); var inp=card.querySelector('input'); if(inp) inp.focus(); toast('可在此手动修改市值 / 净值 / 收益率'); return; }
-  var idx=fundsView.indexOf(f);
-  var tr=document.getElementById('tr-'+idx);
-  if(tr){ tr.classList.remove('collapsed'); tr.scrollIntoView({behavior:'smooth', block:'start'}); toast('持仓由交易流水自动计算，可在交易流水里新增 / 修改笔数'); }
-  else { toast('持仓由交易流水自动计算，先记录一笔交易即可修改'); }
+  openDetailTrades();
+  toast('持仓由交易流水自动计算，可在交易记录里新增 / 修改笔数');
 }
 function detailAddWatch(){
   if(!detailName) return;
@@ -5556,8 +5575,14 @@ function detailAddWatch(){
   addWatch(code, detailName);
 }
 
+function detailDayGainText(f){
+  const v=dayGainOf(f);
+  return v==null?'—':((v>=0?'+':'')+M(v));
+}
+
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=getAnalysis(f.name);
+  const _dayGain=dayGainOf(f), dayCls=_dayGain==null?'zero':(_dayGain>0?'pos':_dayGain<0?'neg':'zero');
   const syncText = (function(){
     try{
       const ts=localStorage.getItem('ft_lastSync');
@@ -5572,33 +5597,23 @@ function headerHtml(f){
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
-    <div class="dh-main">
-      <div class="dh-primary">
-        <div class="dh-sec">当前市值</div>
-        <div class="dh-mv" id="dhMv">${M(f.mv)}</div>
-        <div class="dh-cost">持仓成本 <b id="dhCost">${M(f.cost)}</b></div>
+    <div class="dh-summary">
+      <div class="dh-sec">金额（元）</div>
+      <div class="dh-summary-amount" id="dhMv">${M(f.mv)}</div>
+      <div class="dh-subgrid">
+        <div class="dh-subitem"><div class="k">今日收益</div><div class="v ${dayCls}" id="dhDayGain">${detailDayGainText(f)}</div></div>
+        <div class="dh-subitem"><div class="k">持有收益</div><div class="v ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</div></div>
+        <div class="dh-subitem"><div class="k">持有收益率</div><div class="v ${pcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       </div>
-      <div class="dh-primary dh-profit">
-        <div class="dh-sec">持有收益</div>
-        <div class="dh-profit-row">
-          <span class="dh-amt ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</span>
-        </div>
-        <div class="dh-pct ${pcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div>
-      </div>
-      <div class="dh-primary">
-        <div class="dh-sec">已实现盈亏</div>
-        <div class="dh-amt ${f.realized>=0?'pos':'neg'}" id="dhRealized">${f.realized>=0?'+':''}${M(f.realized||0)}</div>
-        <div class="dh-cost">落袋收益</div>
-      </div>
-      <div class="dh-primary">
-        <div class="dh-sec">持有份额</div>
-        <div class="dh-mv" id="dhShares">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div>
-        <div class="dh-cost">份额 · 份</div>
+      <div class="dh-actions">
+        <button class="dh-action" onclick="detailSetTab('profit')"><span class="ico">¥</span><span>收益明细</span></button>
+        <button class="dh-action" onclick="openDetailTrades()"><span class="ico">≡</span><span>交易记录</span></button>
+        <button class="dh-action" onclick="openDcaModal('${encodeURIComponent(f.name)}')"><span class="ico">↻</span><span>我的定投</span></button>
       </div>
     </div>
     <div class="dh-sync">
       <span id="dhSyncText">${syncText}</span>
-      <button class="btn sm" onclick="refresh().then(function(){try{if(typeof updateDetailHeader==='function'&&detailName){const f=findFund(detailName,detailAcc);if(f)updateDetailHeader(f);}const el=document.getElementById('dhSyncText');if(el){const ts=localStorage.getItem('ft_lastSync');if(ts){const diff=Math.floor((Date.now()-(+ts))/1000);el.textContent='净值数据 · '+(diff<60?'刚刚更新':Math.floor(diff/60)+' 分钟前更新');}}}catch(e){}})">↻ 刷新净值</button>
+      <button class="btn sm" onclick="refresh().then(function(){try{if(typeof updateDetailHeader==='function'&&detailName){const f=findFund(detailName,detailAcc);if(f){updateDetailHeader(f);renderDetailTabs(f);}}const el=document.getElementById('dhSyncText');if(el){const ts=localStorage.getItem('ft_lastSync');if(ts){const diff=Math.floor((Date.now()-(+ts))/1000);el.textContent='净值数据 · '+(diff<60?'刚刚更新':Math.floor(diff/60)+' 分钟前更新');}}}catch(e){}})">↻ 刷新净值</button>
     </div>
     </div>`;
 }
@@ -5607,6 +5622,7 @@ function updateDetailHeader(f){
   set('dhMv',M(f.mv));
   set('dhCost',M(f.cost));
   set('dhShares', f.shares!=null&&f.shares>0?fmt(f.shares):'—');
+  const day=document.getElementById('dhDayGain'); if(day){ const v=dayGainOf(f); day.textContent=v==null?'—':((v>=0?'+':'')+M(v)); day.classList.remove('pos','neg','zero'); day.classList.add(v==null?'zero':(v>0?'pos':v<0?'neg':'zero')); }
   const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.classList.remove('pos','neg','zero'); e.classList.add(f.ret>0?'pos':f.ret<0?'neg':'zero');}
   const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+M(f.profit); e2.classList.remove('pos','neg','zero'); e2.classList.add(f.profit>0?'pos':f.profit<0?'neg':'zero');}
   const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.classList.remove('pos','neg'); e3.classList.add(f.realized>=0?'pos':'neg');}
@@ -5672,8 +5688,60 @@ function loadFundHoldings(f){
   document.body.appendChild(s);
 }
 
+let detailTab='profit';
+function renderDetailTabs(f){
+  const box=document.getElementById('detailTabs'); if(!box) return;
+  box.innerHTML=`<div class="card detail-switch-card">
+    <div class="detail-seg">
+      <button data-detail-tab="profit" onclick="detailSetTab('profit')">累计盈亏</button>
+      <button data-detail-tab="history" onclick="detailSetTab('history')">业绩走势</button>
+      <button data-detail-tab="intraday" onclick="detailSetTab('intraday')">盘中估值</button>
+    </div>
+  </div><div id="detailTabPane" class="detail-tab-pane"></div>`;
+  renderDetailTabPane(f);
+}
+
+function detailSetTab(tab){
+  detailTab=tab||'profit';
+  const f=detailName?findFund(detailName,detailAcc):null;
+  if(f) renderDetailTabs(f);
+}
+
+function renderDetailTabPane(f){
+  document.querySelectorAll('[data-detail-tab]').forEach(function(b){ b.classList.toggle('on', b.dataset.detailTab===detailTab); });
+  const pane=document.getElementById('detailTabPane'); if(!pane) return;
+  if(detailTab==='history'){
+    pane.innerHTML='<div id="detailHistory"></div>';
+    renderNavHistory(f);
+  } else if(detailTab==='intraday'){
+    pane.innerHTML='<div id="detailIntraday"></div>';
+    renderIntraday(f);
+  } else {
+    pane.innerHTML=detailProfitPanelHtml(f);
+  }
+}
+
+function detailProfitPanelHtml(f){
+  const total=(f.profit||0)+(f.realized||0);
+  const totalCls=total>0?'pos':total<0?'neg':'zero';
+  const day=dayGainOf(f);
+  const dayCls=day==null?'zero':day>0?'pos':day<0?'neg':'zero';
+  return `<div class="card profit-panel">
+    <div class="sec-head"><h2 style="margin:0;font-size: 16px">累计盈亏</h2><span class="hint">持仓 + 已实现</span></div>
+    <div class="profit-main"><span class="amt ${totalCls}">${total>=0?'+':''}${M(total)}</span><span class="pct ${f.ret>=0?'pos':'neg'}">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</span></div>
+    <div class="profit-grid">
+      <div class="profit-cell"><div class="k">持有收益</div><div class="v ${f.profit>=0?'pos':'neg'}">${f.profit>=0?'+':''}${M(f.profit)}</div></div>
+      <div class="profit-cell"><div class="k">已实现盈亏</div><div class="v ${f.realized>=0?'pos':'neg'}">${f.realized>=0?'+':''}${M(f.realized||0)}</div></div>
+      <div class="profit-cell"><div class="k">今日收益</div><div class="v ${dayCls}">${day==null?'—':((day>=0?'+':'')+M(day))}</div></div>
+      <div class="profit-cell"><div class="k">当前市值</div><div class="v">${M(f.mv)}</div></div>
+      <div class="profit-cell"><div class="k">持仓成本</div><div class="v">${M(f.cost)}</div></div>
+      <div class="profit-cell"><div class="k">持有份额</div><div class="v">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
+    </div>
+  </div>`;
+}
+
 function renderDetailTrades(f){
-  const box=document.getElementById('detailTrades'); if(!box) return;
+  const box=document.getElementById('detailTradeModalBody') || document.getElementById('detailTrades'); if(!box) return;
   const html=buildTradeSection(f);
   box.innerHTML=html;
   setTimeout(function(){ collapseDetailTx(); },0);
@@ -5683,7 +5751,9 @@ function refreshDetailTradesByName(name){
   if(!name || currentView!=='detail') return;
   try{
     const f=findFund(name,detailAcc);
-    if(f) renderDetailTrades(f);
+    if(f){ updateDetailHeader(f); renderDetailTabs(f); }
+    const modal=document.getElementById('detailTradeModal');
+    if(f && modal && modal.classList.contains('show')) renderDetailTrades(f);
   }catch(e){}
 }
 
@@ -5766,6 +5836,36 @@ function buildTradeSection(f){
     h+=`</div></div>`;
   }
   return h;
+}
+
+function ensureDetailTradeModal(){
+  let mask=document.getElementById('detailTradeModal');
+  if(mask) return mask;
+  mask=document.createElement('div');
+  mask.id='detailTradeModal';
+  mask.className='sm-mask';
+  mask.onclick=function(e){ if(e.target===mask) closeDetailTrades(); };
+  mask.innerHTML=`<div class="sm-modal trade-modal">
+    <div class="sm-head"><h2>交易记录</h2><button class="sm-x" onclick="closeDetailTrades()">✕</button></div>
+    <div class="sm-body"><div id="detailTradeModalBody"></div></div>
+  </div>`;
+  document.body.appendChild(mask);
+  return mask;
+}
+
+function openDetailTrades(){
+  if(!detailName) return;
+  const f=findFund(detailName,detailAcc);
+  if(!f){ toast('未找到当前基金'); return; }
+  window.__detailTxExpanded=false;
+  const mask=ensureDetailTradeModal();
+  mask.classList.add('show');
+  renderDetailTrades(f);
+}
+
+function closeDetailTrades(){
+  const mask=document.getElementById('detailTradeModal');
+  if(mask) mask.classList.remove('show');
 }
 
 function liveSection(f){

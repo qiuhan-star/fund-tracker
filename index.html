@@ -7910,7 +7910,7 @@ function buildTradeSection(f){
         const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
         const idTxt=typeLabel(t.type)+' · '+accOf(t);
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
-        const navTxt=(t.nav!=null&&t.nav!=='')?('净值 '+navFmt(t.nav)):'净值 待确认';
+        const navTxt=(t.nav!=null&&t.nav!=='')?('净值 '+navFmt(t.nav)+(t.confirmDate?(' · 确认'+esc(t.confirmDate)):'')):'净值 待确认';
         const shareTxt=(t.shares!=null&&t.shares!=='')?(' · 份额 '+fmt(t.shares)):'';
         if(t.locked!==false){
           h+=`<div class="tx-card${_canc?' cancelled':''}"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt}</div>${_note}</div><div class="tx-right"><span class="tx-status">已锁定</span>${_confBadge}<div class="tx-ops"><button type="button" onclick="event.stopPropagation();unlockTrade(${i})">解锁</button><button type="button" class="del" onclick="event.stopPropagation();delTrade(${i})">删除</button></div></div></div></div>`;
@@ -7930,7 +7930,7 @@ function buildTradeSection(f){
     h+=`<p class="hint" style="margin:0 0 8px">点「＋ 记一笔交易」弹出填写窗口，保存前会再次确认；保存后自动锁定防误改，点「解锁」可临时编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
     h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认；点右下角 + 记一笔</span></div></div>`;
     if(tr.length){
-      h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
+      h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">净值确认日</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
       tr.forEach(t=>{
         const i=trades.indexOf(t);
         const _canc = t.confirm==='cancelled';
@@ -7944,6 +7944,7 @@ function buildTradeSection(f){
             <td class="num">${M(t.amount)}</td>
             <td class="num">${t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class="pending-nav">待填</span>'}</td>
             <td class="num">${t.fee?M(t.fee):'—'}</td>
+            <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
             <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'—'}</td>
             <td><button class="lk" title="解锁编辑" onclick="unlockTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></button> <button class="lk danger" title="删除" onclick="delTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>
           </tr>`;
@@ -7956,6 +7957,7 @@ function buildTradeSection(f){
             <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
             <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
             <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
+            <td class="num"><input data-fld="t-confirmDate-${i}" value="${esc(t.confirmDate||'')}" placeholder="确认日" oninput="trades[${i}].confirmDate=this.value;silentSave()"></td>
             <td class="num"><input data-fld="t-shares-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.shares||''}" placeholder="份额" oninput="trades[${i}].shares=+this.value;compute();silentSave()"></td>
             <td><button class="lk lock" title="锁定" onclick="lockTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button> <button class="lk danger" title="删除" onclick="delTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>
           </tr>`;
@@ -9959,6 +9961,7 @@ const IMPORT_COLUMNS=[
   {key:'amount',  label:'申请金额(元)', aliases:['申请金额','申请金额(元)','金额','份额金额','成交金额','资金','金额元']},
   {key:'fee',     label:'手续费(元)',  aliases:['手续费','手续费(元)','费用','佣金','申购费','赎回费']},
   {key:'nav',     label:'确认净值',    aliases:['确认净值','净值','单价','成交净值','单位净值']},
+  {key:'confirmDate', label:'净值确认日期', aliases:['净值确认日期','净值/确认日期','确认日期','份额确认日','净值确认日','T日','T+1日']},
   {key:'date',    label:'交易日',      aliases:['交易日','交易日（买入时间）','日期','时间','买入日','成交日','交易日期']},
   {key:'shares',  label:'份额',        aliases:['份额','份数','持仓份额','股数','数量','持股数','股份']},
   {key:'note',    label:'备注',        aliases:['备注','注释','说明','memo','note']},
@@ -10011,7 +10014,8 @@ function parseCSV(text, defaultAcc, forceAcc){
     if(!(amount||nav||sh)) continue;
     const confirm = col.confirm>=0 ? mapConfirm(c[col.confirm]) : 'confirmed';
     const note = col.note>=0 ? String(c[col.note]||'').trim() : '';
-    const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({name,date,type,amount,nav,fee,account,shares:sh,confirm,note,cat:catV});
+    const confirmDate = col.confirmDate>=0 ? String(c[col.confirmDate]||'').trim() : '';
+    const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({name,date,type,amount,nav,fee,account,shares:sh,confirm,note,cat:catV,confirmDate:confirmDate});
   }
   // 注册导入中出现的未知账户，避免塌缩进「本人账户」或成孤儿账户（下拉/口径筛选都找不到）
   const _accSeen={}; added.forEach(t=>{ const a=normalizeAccount(t.account); if(a && !_accSeen[a]){ _accSeen[a]=1; registerImportAccount(a); } });
@@ -10052,7 +10056,7 @@ function parsePaste(text, defaultAcc, forceAcc){
   let start=0;
   if(looksHeader){ start=1; } else { col.name=0; col.cat=1; col.date=2; col.type=3; col.amount=4; col.nav=5; col.fee=6; col.shares=7; col.account=8; col.confirm=9; col.note=10; }
   const added=[];
-  function pushRow(name,date,type,amount,nav,fee,shares,account,confirm,note,cat){
+  function pushRow(name,date,type,amount,nav,fee,shares,account,confirm,note,cat,confirmDate){
     if(!name) return;
     if(/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(name)) return; // 跳过模板说明行/示例行/注释行
     const tType=type?guessType(type):'buy';
@@ -10062,7 +10066,7 @@ function parsePaste(text, defaultAcc, forceAcc){
     const sh=parseFloat(String(shares).replace(/[^\d.\-]/g,''))||0;
     const acc=normalizeAccount(account?account:(defaultAcc||''));
     if(!(amt||nv||sh)) return;
-    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||''});
+    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||'',confirmDate:confirmDate||''});
   }
   for(let i=start;i<rawLines.length;i++){
     const raw=rawLines[i];
@@ -10089,10 +10093,11 @@ function parsePaste(text, defaultAcc, forceAcc){
     const account=col.account>=0?c[col.account]:'';
     const confirm=col.confirm>=0?c[col.confirm]:'';
     const note=col.note>=0?c[col.note]:'';
+    const confirmDate=col.confirmDate>=0?c[col.confirmDate]:'';
     let cat='';
     if(looksHeader && col.cat>=0 && c[col.cat] && !/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(String(c[col.cat]))) cat=String(c[col.cat]).trim();
     const rawAcc=forceAcc?(defaultAcc||''):(account||(defaultAcc||''));
-    pushRow(name,date,type,amount,nav,fee,shares,rawAcc,confirm,note,cat);
+    pushRow(name,date,type,amount,nav,fee,shares,rawAcc,confirm,note,cat,confirmDate);
   }
   // 导入「类别」列 -> 写入分类覆盖（与页面内 catMenu 同一持久化通道），让持仓按 Excel 类别归类
   added.forEach(function(t){ if(t.cat){ catOverride[t.name]=t.cat; } });

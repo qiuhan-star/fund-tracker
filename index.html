@@ -4549,7 +4549,7 @@ const LIQ_REASON_KEY='ft_liq_reason';
 function getLiqReasons(){ try{ return JSON.parse(localStorage.getItem(LIQ_REASON_KEY)||'{}'); }catch(e){ return {}; } }
 function getLiqReason(acc,name){ const m=getLiqReasons(); return m[acc+'||'+name]||null; }
 function setLiqReason(acc,name,r){ const m=getLiqReasons(); const k=acc+'||'+name; if(r){ m[k]=r; }else{ delete m[k]; } try{ localStorage.setItem(LIQ_REASON_KEY,JSON.stringify(m)); }catch(e){} }
-function onLiqReasonChange(sel,nameEnc,accEnc){ const name=decodeURIComponent(nameEnc), acc=decodeURIComponent(accEnc); setLiqReason(name,acc,sel.value||null); renderLiquidated(); }
+function onLiqReasonChange(sel,nameEnc,accEnc){ const name=decodeURIComponent(nameEnc), acc=decodeURIComponent(accEnc); setLiqReason(acc,name,sel.value||null); renderLiquidated(); }
 function autoTagLiqReasons(){ const L=buildLiquidatedView(); let n=0; L.forEach(function(f){ if(!getLiqReason(f.account,f.name)){ setLiqReason(f.account,f.name, f.win?'止盈':'止损'); n++; } }); try{ toast('已为 '+n+' 只未标记基金自动标记（盈→止盈 / 亏→止损）'); }catch(e){} renderLiquidated(); }
 function liqReasonSelect(f){ const cur=getLiqReason(f.account,f.name); return '<select class="liq-reason-sel" onchange="onLiqReasonChange(this,\''+encodeURIComponent(f.name)+'\',\''+encodeURIComponent(f.account)+'\')">'+[''].concat(LIQ_REASONS).map(function(o){ return '<option value="'+o+'"'+(o===cur?' selected':'')+'>'+(o||'标记原因')+'</option>'; }).join('')+'</select>'; }
 function renderLiquidated(){

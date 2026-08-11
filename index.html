@@ -1339,11 +1339,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 #tq-type { position:absolute; opacity:0; pointer-events:none; width:0; height:0; }
 #tq-confirm-seg { display:none; }
 
-/* ===== 详情页 FAB + 流水折叠 ===== */
-.detail-fab { display:none; }
-@media (max-width:768px) {
-  .detail-fab { display:flex; position:fixed; right:18px; bottom:calc(70px + env(safe-area-inset-bottom)); z-index:70; width:52px; height:52px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:26px; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.22); }
-}
+/* ===== 详情页 流水折叠 ===== */
 .tx-expand { display:block; width:calc(100% - 32px); margin:12px 16px 20px; padding:12px; text-align:center; color:var(--text-2); background:var(--surface); border:1px solid var(--border); border-radius:12px; font-size:14px; }
 .tx-more { display:none; }
 /* 交易记录卡片折叠：通过类名隐藏，保持卡片容器一致，避免展开后宽度变化 */
@@ -3848,7 +3844,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   </div>
 
   <!-- ================= 详情页 ================= -->
-  <button class="detail-fab" id="detailFab" onclick="openTradeQuickFor(encodeURIComponent(detailName||''))" title="记一笔">+</button>
+
   <div id="detailView" style="display:none">
     <a href="#/" class="back-link">← 返回首页</a>
     <div id="detailContent"></div>

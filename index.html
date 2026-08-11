@@ -9999,7 +9999,7 @@ function parseCSV(text, defaultAcc, forceAcc){
       continue;
     }
     const name=col.name>=0?c[col.name]:''; if(!name) continue;
-    if(/^(#|\/\/|说明|示例|例子|样例)/.test(name)) continue; // 跳过模板里的说明行/示例行/注释行，避免被当成真实交易导入
+    if(/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(name)) continue; // 跳过模板里的说明行/示例行/注释行，避免被当成真实交易导入
     const date=col.date>=0?c[col.date]:'';
     const type=col.type>=0?guessType(c[col.type]):'buy';
     const amount=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
@@ -10021,7 +10021,7 @@ function parseCSV(text, defaultAcc, forceAcc){
   if(!added.length) return {count:0, dup:0, rows:[]};
   // 增量更新（upsert）：同名+同日+同金额+同账户 视为同一笔。已存在且净值相同→跳过；已存在但缺净值/净值不同→用新行补全或覆盖（支持补净值或修正后重导，不生成重复交易）
   const normNum=v=>(v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):'';
-  const matchKey=t=>(t.name||'')+'|'+(t.date||'')+'|'+normNum(t.amount)+'|'+((t.account)||'');
+  const matchKey=t=>(t.name||'')+'|'+(t.date||'')+'|'+(t.type||'')+'|'+normNum(t.amount)+'|'+((t.account)||'');
   const byMatch={}; trades.forEach(t=>{ const k=matchKey(t); (byMatch[k]=byMatch[k]||[]).push(t); });
   let dup=0; const fresh=[];
   for(const t of added){
@@ -10054,7 +10054,7 @@ function parsePaste(text, defaultAcc, forceAcc){
   const added=[];
   function pushRow(name,date,type,amount,nav,fee,shares,account,confirm,note,cat){
     if(!name) return;
-    if(/^(#|\/\/|说明|示例|例子|样例)/.test(name)) return; // 跳过模板说明行/示例行/注释行
+    if(/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(name)) return; // 跳过模板说明行/示例行/注释行
     const tType=type?guessType(type):'buy';
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
     const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;
@@ -10062,7 +10062,7 @@ function parsePaste(text, defaultAcc, forceAcc){
     const sh=parseFloat(String(shares).replace(/[^\d.\-]/g,''))||0;
     const acc=normalizeAccount(account?account:(defaultAcc||''));
     if(!(amt||nv||sh)) return;
-    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:confirm||'confirmed',note:note||'',cat:cat||''});
+    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||''});
   }
   for(let i=start;i<rawLines.length;i++){
     const raw=rawLines[i];
@@ -10090,7 +10090,7 @@ function parsePaste(text, defaultAcc, forceAcc){
     const confirm=col.confirm>=0?c[col.confirm]:'';
     const note=col.note>=0?c[col.note]:'';
     let cat='';
-    if(looksHeader && col.cat>=0 && c[col.cat] && !/^(#|\/\/|说明|示例|例子|样例)/.test(String(c[col.cat]))) cat=String(c[col.cat]).trim();
+    if(looksHeader && col.cat>=0 && c[col.cat] && !/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(String(c[col.cat]))) cat=String(c[col.cat]).trim();
     const rawAcc=forceAcc?(defaultAcc||''):(account||(defaultAcc||''));
     pushRow(name,date,type,amount,nav,fee,shares,rawAcc,confirm,note,cat);
   }
@@ -10099,7 +10099,7 @@ function parsePaste(text, defaultAcc, forceAcc){
   try{ localStorage.setItem('ft_catoverride', JSON.stringify(catOverride)); }catch(e){}
   if(!added.length) return {count:0,dup:0,rows:[]};
   const normNum=function(v){ return (v!=null&&v!==''&&!isNaN(parseFloat(v)))?String(parseFloat(v).toFixed(2)):''; };
-  const keyOf=function(t){ return (t.name||'')+'|'+(t.date||'')+'|'+normNum(t.amount)+'|'+normNum(t.nav)+'|'+((t.account)||''); };
+  const keyOf=function(t){ return (t.name||'')+'|'+(t.date||'')+'|'+(t.type||'')+'|'+normNum(t.amount)+'|'+normNum(t.nav)+'|'+((t.account)||''); };
   const seen=new Set(trades.map(keyOf));
   let dup=0; const fresh=[];
   for(let i=0;i<added.length;i++){ const k=keyOf(added[i]); if(seen.has(k)){ dup++; } else { seen.add(k); fresh.push(added[i]); } }
@@ -10674,9 +10674,10 @@ function syncSavedFlash(input){ if(!input) return; var old=document.getElementBy
 var _syncEditing=false;
 function syncCfgComplete(){ var c=syncCfg(); return !!((c.pat||'').trim() && (c.repo||'').trim()); }
 function syncUpdateView(){
-  var form=document.getElementById('syncForm'), sum=document.getElementById('syncSummary'), foot=document.getElementById('syncFormFoot');
+  var form=document.getElementById('syncForm'), sum=document.getElementById('syncSummary'), foot=document.getElementById('syncFormFoot'), act=document.getElementById('syncActions');
   if(!form||!sum) return;
   var complete=syncCfgComplete();
+  if(act) act.style.display=complete?'flex':'none';
   if(foot) foot.style.display=(_syncEditing&&complete)?'block':'none';
   if(_syncEditing){ form.style.display='block'; sum.style.display='none'; return; }
   if(complete){
@@ -10685,29 +10686,50 @@ function syncUpdateView(){
     var tokEl=document.getElementById('sumToken'); if(tokEl) tokEl.textContent='已配置';
     var bpEl=document.getElementById('sumBranchPath'); if(bpEl) bpEl.textContent=(c.branch||'main')+' · '+(c.path||'fund-tracker-data.json');
     var cfEl=document.getElementById('sumConflict'); if(cfEl) cfEl.textContent=(localStorage.getItem('ft_sync_conflict')||'local')==='remote'?'云端为准':'本机为准';
+    var upT=fmtSyncTime(localStorage.getItem('ft_sync_lastpush')), dnT=fmtSyncTime(localStorage.getItem('ft_sync_lastpull'));
+    var lsEl=document.getElementById('sumLastSync'); if(lsEl) lsEl.textContent=[upT?('上传 '+upT):null,dnT?('下载 '+dnT):null].filter(Boolean).join('  /  ')||'尚未同步';
     sum.style.display='block'; form.style.display='none';
   } else {
     sum.style.display='none'; form.style.display='block';
   }
 }
+function fmtSyncTime(iso){ if(!iso) return null; try{ return new Date(iso).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return null; } }
 function openSyncForm(){ _syncEditing=true; syncUpdateView(); }
 function syncDoneEditing(){ _syncEditing=false; syncStatusAuto(); syncUpdateView(); }
 async function cloudPush(manual){
   if(!syncEnabled()){ if(manual) ftAlert('请先在设置开启云同步并填写配置'); return; }
   var c=syncCfg(); if(!c.pat||!c.repo){ if(manual) ftAlert('请先填写 GitHub 令牌与仓库路径'); return; }
+  if(_syncBusy) return;
+  cloudPushInner(manual);
+}
+async function cloudPushInner(manual){
   if(_syncBusy) return; _syncBusy=true; if(manual) setSyncStatus('上传中…');
   try{
+    var c=syncCfg();
     var payload={_ts:new Date().toISOString(),keys:{}};
     SYNC_KEYS.forEach(function(k){ var v=localStorage.getItem(k); if(v!=null) payload.keys[k]=v; });
-    var body={message:'fund-tracker sync '+payload._ts,content:b64enc(JSON.stringify(payload)),branch:c.branch||'main'};
-    var sha=null;
-    try{ var r0=await fetch(syncApiUrl(),{headers:ghHeaders()}); if(r0.ok){ var j0=await r0.json(); sha=j0.sha||null; } }catch(e){}
-    if(sha) body.sha=sha;
-    var res=await fetch('https://api.github.com/repos/'+c.repo+'/contents/'+encodeURIComponent(c.path||'fund-tracker-data.json'),{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
-    if(!res.ok){ var e1=await res.json().catch(function(){return{};}); throw new Error(e1.message||('HTTP '+res.status)); }
-    _syncSuppress=true; localStorage.setItem('ft_sync_dirty','0'); localStorage.setItem('ft_sync_lastpush',payload._ts); _syncSuppress=false;
-    setSyncStatus('已上传 · 云端为最新 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
-    if(manual) toast('已上传到 GitHub');
+    var putUrl='https://api.github.com/repos/'+c.repo+'/contents/'+encodeURIComponent(c.path||'fund-tracker-data.json');
+    var lastErr=null;
+    for(var attempt=0; attempt<3; attempt++){
+      var body={message:'fund-tracker sync '+payload._ts+(attempt>0?' (retry '+(attempt+1)+')':''),content:b64enc(JSON.stringify(payload)),branch:c.branch||'main'};
+      try{
+        var sha=null;
+        try{ var r0=await fetch(syncApiUrl(),{headers:ghHeaders()}); if(r0.ok){ var j0=await r0.json(); sha=j0.sha||null; } }catch(e){}
+        if(sha) body.sha=sha;
+        var res=await fetch(putUrl,{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
+        if(res.ok){
+          _syncSuppress=true; localStorage.setItem('ft_sync_dirty','0'); localStorage.setItem('ft_sync_lastpush',payload._ts); _syncSuppress=false;
+          setSyncStatus('已上传 · 云端为最新 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
+          if(manual) toast('已上传到 GitHub');
+          return;
+        }
+        var e1=await res.json().catch(function(){return{};});
+        lastErr=new Error(e1.message||('HTTP '+res.status));
+        if(!/does not match/i.test(e1.message||'')) break;
+        if(attempt<2) await new Promise(function(r){ setTimeout(r,400); });
+      }catch(e){ lastErr=e; break; }
+    }
+    throw lastErr||new Error('上传失败');
   }catch(e){ setSyncStatus('上传失败：'+(e&&e.message||e)); if(manual) ftAlert('上传失败：'+(e&&e.message||e)); }
   finally{ _syncBusy=false; }
 }
@@ -10967,12 +10989,13 @@ function renderSyncCfg(){
                 <div class="panel-row"><div class="left"><div class="title">GitHub 令牌</div></div><div class="right"><span class="sync-sum-val" id="sumToken">已配置</span></div></div>
                 <div class="panel-row"><div class="left"><div class="title">分支 / 文件路径</div></div><div class="right"><span class="sync-sum-val" id="sumBranchPath">—</span></div></div>
                 <div class="panel-row"><div class="left"><div class="title">冲突策略</div></div><div class="right"><span class="sync-sum-val" id="sumConflict">—</span></div></div>
+                <div class="panel-row"><div class="left"><div class="title">上次同步</div></div><div class="right"><span class="sync-sum-val" id="sumLastSync">尚未同步</span></div></div>
                 <div class="panel-row" style="cursor:pointer" onclick="openSyncForm()"><div class="left"><div class="title" style="color:var(--accent)">编辑配置</div><div class="desc">修改令牌 / 仓库 / 策略时点这里</div></div><div class="right"><span class="item-arrow">›</span></div></div>
               </div>
               <div class="sync-form-foot" id="syncFormFoot" style="display:none"><button type="button" class="sync-done" onclick="syncDoneEditing()">✓ 完成</button></div>
               <div class="sync-filewarn" id="syncFileWarn">你正以 <b>本地文件 (file://)</b> 打开，无法调用 GitHub API。请改用线上版，或用「导出备份 (JSON)」手动备份。</div>
               <div class="sync-state idle" id="syncStatus" role="status"><span class="ss-dot"></span><span class="ss-txt">未同步</span></div>
-              <div class="sync-actions">
+              <div class="sync-actions" id="syncActions">
                 <button class="sync-btn primary" onclick="cloudPull(true)"><span>⬇️</span>立即下载</button>
                 <button class="sync-btn danger" onclick="cloudPush(true)"><svg class="sync-up-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"></path><path d="M6 11l6-6 6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>立即上传</button>
               </div>

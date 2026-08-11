@@ -6487,11 +6487,11 @@ function buildDecideBlocks(ban, fundWarn){
     return '<span class="wt-badge wt-badge-'+level+'">'+label+'</span>';
   }
 
-  // 异常分组
+  // 异常分组：Badge + 简明标题
   var dangerHtml='';
   if(dangerAlerts.length){
     dangerHtml+='<div class="wt-decide-group danger">'
-      +'<div class="wt-decide-hd">'+badge('提示','warn')+'<span class="wt-decide-title">检测与建议</span><span class="hint">'+dangerAlerts.length+' 条需关注</span></div>'
+      +'<div class="wt-decide-hd">'+badge('异常','warn')+'<span class="wt-decide-title">同类占比提示</span><span class="hint">'+dangerAlerts.length+' 条</span></div>'
       + dangerAlerts.map(function(a){ return a.html; }).join('')
     +'</div>';
   }
@@ -6502,7 +6502,7 @@ function buildDecideBlocks(ban, fundWarn){
   if(hasRealSug){
     var realSug=sugList.filter(function(s){ return s.level==='suggest' });
     sugHtml='<div class="wt-decide-group suggest">'
-      +'<div class="wt-decide-hd">'+badge('建议','info')+'<span class="wt-decide-title">调仓参考</span><span class="hint">'+realSug.length+' 条</span></div>'
+      +'<div class="wt-decide-hd">'+badge('建议','info')+'<span class="wt-decide-title">建仓参考</span><span class="hint">'+realSug.length+' 条</span></div>'
       + realSug.map(function(s){ return s.html; }).join('')
     +'</div>';
   }
@@ -6510,7 +6510,7 @@ function buildDecideBlocks(ban, fundWarn){
   // 正常状态折叠为一行微型 Tag
   var passHtml='';
   if(okAlerts.length && !dangerAlerts.length && !hasRealSug){
-    passHtml='<div class="wt-decide-pass"><span class="dot"></span>同质化检测通过 · 无明显集中</div>';
+    passHtml='<div class="wt-decide-pass">'+badge('通过','ok')+'<span>同质化检测正常 · 无明显集中</span></div>';
   }
 
   return dangerHtml + sugHtml + passHtml;
@@ -12167,8 +12167,8 @@ function renderWatchTab(){
     +'.wt-calc-card .wt-empty-desc{color:var(--text-3)}'
     +'.wt-calc-card .wt-empty-hint{display:none}'   // 兼容旧 id，无内容时隐藏
     // 3. 正常通过：折叠为一行微型 Tag
-    +'.wt-calc-card .wt-decide-pass{display:flex;align-items:center;gap:6px;padding:8px 12px;background:transparent;border:1px solid var(--border-2);border-radius:8px;font-size:12px;color:var(--text-2)}'
-    +'.wt-calc-card .wt-decide-pass .dot{flex:0 0 6px;width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15)}'
+    +'.wt-calc-card .wt-decide-pass{display:flex;align-items:center;gap:6px;padding:6px 10px;background:transparent;border:1px solid var(--border-2);border-radius:8px;font-size:12px;color:var(--text-2)}'
+    +'.wt-calc-card .wt-decide-pass>span:last-child{flex:1;min-width:0}'
     // 4. 细节：总市值右侧 padding + % 与数字基线对齐
     +'.wt-calc-card .calc-sub{padding-right:4px}'
     +'.wt-calc-card .pct-wrap{align-items:baseline}'
@@ -12242,7 +12242,7 @@ function renderWatchTab(){
             // 1. 引导条只在「无任何待买」时合并成空状态卡片，文案只保留一句
             +(buyTotal
               ? '<div class="calc-res" id="wtBuyRes"></div>'
-              : '<div class="wt-empty" id="wtEmpty"><div class="wt-empty-ico">🛒</div><div class="wt-empty-ttl">待买清单 (0)</div><div class="wt-empty-desc">到左侧「自选清单」点条目右侧的 🛒，加入后会在这里出建议金额</div><div class="wt-empty-hint" id="wtBuyRes"></div></div>')
+              : '<div class="wt-empty" id="wtEmpty"><span class="wt-empty-ico">🛒</span><span class="wt-empty-ttl">待买清单 (0)</span><span class="wt-empty-desc">到左侧自选点 🛒 加入</span><span class="wt-empty-hint" id="wtBuyRes"></span></div>')
             // 2+3. 告警按风险等级分组：异常高亮 / 正常折叠为一行微型 Tag
             //    图标统一用线性 Badge：[异常][提示][建议][通过]
             +'<div class="wt-decide">'

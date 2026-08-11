@@ -9086,6 +9086,7 @@ function renderSyncCfg(){
   .grp-head:first-child { margin-top: 2px; }
   /* 不分组视图顶部对齐：用 padding-top 避开 margin 折叠，把表格顶推到与分组视图首组头齐平（523.7≈组头顶），两种模式顶部一致 */
   .home-ctable-wrap { padding-top: 2px; }
+}
 /* ===== 大盘指数卡片（市场风向 Tab 独立模块；防"叠在一起"=grid-auto-rows 等高+overflow hidden） ===== */
 .idx-tag{font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .idx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px 14px 12px;min-width:0}
@@ -9102,11 +9103,10 @@ function renderSyncCfg(){
 .idx-card .idx-spk{flex:1 1 auto;min-height:12px;max-height:24px;display:flex;align-items:center}.idx-card .idx-spk svg{max-height:100%;width:100%}.idx-card .idx-nm,.idx-card .idx-price{min-width:0}.idx-card .idx-pct,.idx-card .idx-row{min-height:0}
 .idx-card .idx-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:0;padding-top:3px;border-top:1px dashed var(--border-3)}
 .idx-card .idx-row span{white-space:nowrap}
-@media(min-width:681px){.idx-list2{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}.idx-list2 .idx-card{height:118px}}
-@media(max-width:680px){.idx-grid{grid-template-columns:repeat(2,1fr)}.idx-card{height:124px;min-height:124px}}
 .idx-grid2.idx-collapsed .idx-spk{display:none}
 .idx-card .idx-spk{cursor:pointer}
-}
+@media(max-width:680px){.idx-grid{grid-template-columns:repeat(2,1fr)}.idx-card{height:124px;min-height:124px}}
+@media(min-width:681px){.idx-list2{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}.idx-list2 .idx-card{height:118px}}
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }
 .bond-drawer.open{ display:block; }
 .bd-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45); }

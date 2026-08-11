@@ -6926,7 +6926,7 @@ function renderLiquidated(){
     +'<div class="mcard"><p class="lbl">盈亏比（均盈/均亏）</p><p class="val '+cls((plr||0)-1)+'">'+(plr!=null?plr.toFixed(2):'—')+'</p></div>'
     +'</div>';
   const filterBar=liqFilterBar(baseList);
-  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能归类</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">刷新卖后</button></span></div>"+filterBar+sum;
+  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能归类</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">刷新卖后</button></span></div>"+sum+filterBar;
   if(!cnt){
     const _emptyMsg = liqFilter.dim ? '当前筛选条件下没有匹配的清仓基金，换个标签或点「清除筛选」试试。' : '你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。';
     box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">'+_emptyMsg+'</div></div>';
@@ -6943,7 +6943,7 @@ function renderLiquidated(){
     return '<div class="liq-row">'
       +'<div class="liq-head"><span class="liq-nm">'+esc(f.name||'—')+'</span>'
       +'<span class="tag">'+esc(f.cat)+'</span><span class="tag">'+esc(f.account)+'</span>'
-      +'<span class="liq-date">'+(f.lastSell||'—')+'</span></div>'
+      +'<span class="liq-date">'+(f.lastSell||'—')+'</span><button class="btn sm primary" data-nm="'+enc+'" data-acc="'+esc(f.account)+'" onclick="goLiq(this)">查看 →</button></div>'
       +'<div class="liq-body">'
       +'<div class="liq-metric"><span class="liq-lbl">投入</span><span class="liq-val">'+M(f.totalBuy)+'</span></div>'
       +'<div class="liq-metric"><span class="liq-lbl">赎回</span><span class="liq-val">'+M(f.totalSell)+'</span></div>'
@@ -6960,7 +6960,7 @@ function renderLiquidated(){
       +liqPostBadge(f)
       +'</div>'
       +'<div class="liq-reason"><span class="liq-lbl">清仓原因</span>'+liqReasonSelect(f)+'</div>'
-      +'<div class="liq-action"><button class="btn sm primary" data-nm="'+enc+'" data-acc="'+esc(f.account)+'" onclick="goLiq(this)">查看 →</button></div>'
+      
       +'</div>';
   }).join('');
   const catKeys=Object.keys(catMap).sort(function(a,b){return catMap[b]-catMap[a];});

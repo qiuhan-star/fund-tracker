@@ -68,6 +68,22 @@ function ensureECharts(cb){
     --axis:#31405c; --grid:rgba(255,255,255,.06); --shadow:0 6px 22px rgba(0,0,0,.5);
     --card:var(--surface); --input:var(--surface-3);
   }* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; line-height: 1.55; }input, select, textarea, button { -webkit-appearance: none; appearance: none; }input[type="date"], input[type="time"] { -webkit-appearance: auto; appearance: auto; }html { width: 100%; height: 100%; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }body { width: 100%; min-height: 100%; margin: 0; overflow-x: hidden; position: relative; }::-webkit-scrollbar { display: none; }.wrap { width: 100%; max-width: 920px; margin: 0 auto; box-sizing: border-box; overflow-x: hidden; padding: calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); }h1 { font-size: 18px; margin: 0 0 2px; font-weight: 600; }.sub { color: var(--text-3); font-size: 14px; margin: 0; }.card { background:var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.03); }.card h2 { font-size: 15px; margin: 0 0 12px; font-weight: 600; }.cards4 { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 10px; }.mcard { background: var(--surface-2); border-radius: 10px; padding: 12px; }.mcard .lbl { font-size: 12px; color: var(--text-3); margin: 0 0 5px; }.mcard .val { font-size: 18px; font-weight: 600; margin: 0; }
+/* ===== 骨架屏 Skeleton ===== */
+@keyframes sk-shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.sk-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 18px; margin-bottom:14px; }
+.sk-row { display:flex; gap:14px; margin-bottom:12px; align-items:center; }
+.sk-row:last-child { margin-bottom:0; }
+.sk-line { height:14px; border-radius:7px; background:linear-gradient(90deg,var(--border-3) 25%,var(--surface-3) 50%,var(--border-3) 75%); background-size:800px 100%; animation:sk-shimmer 1.8s infinite ease-in-out; }
+.sk-line.w-20 { width:20%; } .sk-line.w-25 { width:25%; } .sk-line.w-30 { width:30%; } .sk-line.w-40 { width:40%; } .sk-line.w-50 { width:50%; } .sk-line.w-60 { width:60%; } .sk-line.w-70 { width:70%; } .sk-line.w-80 { width:80%; }
+.sk-line.h-10 { height:10px; } .sk-line.h-12 { height:12px; } .sk-line.h-14 { height:14px; } .sk-line.h-18 { height:18px; } .sk-line.h-24 { height:24px; border-radius:12px; } .sk-line.h-32 { height:32px; border-radius:8px; }
+.sk-line.sk-circle { width:32px; height:32px; border-radius:50%; flex-shrink:0; }
+.sk-hero { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:flex-end; }
+.sk-hero-left { display:flex; flex-direction:column; gap:10px; }
+.sk-hero-right { text-align:right; }
+.sk-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+.sk-grid-item { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; }
+.sk-container { opacity:0; transition:opacity .25s; pointer-events:none; }
+.sk-container.show { opacity:1; }
 /* iOS 右侧抛空根治兜底：钳死所有卡片/图表/分段控件宽度，flex/grid 子项允许收缩，画布锁宽 */
 .wrap, .chart-box, .ov-wrap, .main-tabs, .scope-bar, .topbar { max-width: 100%; overflow-x: hidden; box-sizing: border-box; }
 .card, .ov-card, .mkt-card, .mcard, .ov-hero, .ov-grid, .grid2, .cards4 { max-width: 100%; box-sizing: border-box; }
@@ -768,6 +784,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .ov-hero-meta > div { display:flex; flex-direction:column; gap:2px; }
 .ov-hero-meta .lab { font-size:12px; color:var(--text-3); }
 .ov-hero-meta .val { font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; }
+/* ===== 下拉刷新 Pull-to-Refresh ===== */
+.ptr-indicator { position:absolute; left:0; right:0; top:0; z-index:20; display:flex; justify-content:center; align-items:flex-end; height:0; overflow:hidden; transition:height .2s; pointer-events:none; }
+.ptr-indicator.active { height:56px; }
+.ptr-content { display:flex; align-items:center; gap:8px; padding:8px 0; color:var(--text-3); font-size:14px; }
+.ptr-icon { transition:transform .3s; color:var(--accent); }
+.ptr-icon.flip { transform:rotate(180deg); }
+.ptr-icon.spin { animation:ptr-spin .8s infinite linear; }
+@keyframes ptr-spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 /* ==================== 手机端 (移动端) 阅读体验深度优化 ==================== */
 @media (max-width: 768px) {
   /* 1. 容器与字号优化：提升基本可读性 */
@@ -1374,7 +1398,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   function _setTheme(c){ try{localStorage.setItem('ft_theme',c);}catch(e){} if(c==='system'){ var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.setAttribute('data-theme', m?'dark':'light'); } else document.documentElement.setAttribute('data-theme', c); _syncAppleChrome(); if(window.reapplyStyleAccent) window.reapplyStyleAccent(); }
   function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');_setTheme(cur==='dark'?'light':'dark'); _syncThemeIcons();}
   function _syncThemeIcons(){ var dark=document.documentElement.getAttribute('data-theme')==='dark'; var lb=document.getElementById('lightBtn'), db=document.getElementById('darkBtn'); if(lb) lb.classList.toggle('on', !dark); if(db) db.classList.toggle('on', dark); }
-  window.addEventListener('DOMContentLoaded',function(){ _syncThemeIcons(); _syncAppleChrome(); if(window.reapplyStyleAccent) window.reapplyStyleAccent(); showBackupReminder();});
+  window.addEventListener('DOMContentLoaded',function(){ _syncThemeIcons(); _syncAppleChrome(); if(window.reapplyStyleAccent) window.reapplyStyleAccent(); showBackupReminder(); setTimeout(setupPullToRefresh, 500); setTimeout(autoBackup, 3000);});
   if(window.matchMedia){ try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){ try{ if((localStorage.getItem('ft_theme')||'system')==='system'){ document.documentElement.setAttribute('data-theme', e.matches?'dark':'light'); _syncAppleChrome(); } }catch(_){} }); }catch(_){} }
 </script>
 <style>
@@ -3469,7 +3493,31 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   });
 })();
 </script>
-<div class="wrap" style="padding-top: calc(20px + env(safe-area-inset-top) + 116px);">
+<div class="wrap" id="appWrap" style="padding-top: calc(20px + env(safe-area-inset-top) + 116px);">
+
+  <!-- ===== 下拉刷新指示器 ===== -->
+  <div id="ptr" class="ptr-indicator" aria-hidden="true">
+    <div class="ptr-content">
+      <svg class="ptr-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <span class="ptr-text" id="ptrText">下拉刷新</span>
+    </div>
+  </div>
+
+  <!-- ===== 骨架屏（加载占位） ===== -->
+  <div id="skeletonContainer" class="sk-container" aria-hidden="true">
+    <div class="sk-hero">
+      <div class="sk-hero-left"><div class="sk-line w-40 h-12"></div><div class="sk-line w-60 h-24"></div><div class="sk-line w-30 h-10"></div></div>
+      <div class="sk-hero-right"><div class="sk-line w-25 h-12"></div><div class="sk-line w-30 h-18" style="margin-top:6px"></div></div>
+    </div>
+    <div class="sk-grid">
+      <div class="sk-grid-item"><div class="sk-line w-50 h-12"></div><div class="sk-line w-70 h-24"></div><div class="sk-line w-30 h-10"></div></div>
+      <div class="sk-grid-item"><div class="sk-line w-50 h-12"></div><div class="sk-line w-70 h-24"></div><div class="sk-line w-30 h-10"></div></div>
+      <div class="sk-grid-item"><div class="sk-line w-50 h-12"></div><div class="sk-line w-70 h-24"></div><div class="sk-line w-30 h-10"></div></div>
+      <div class="sk-grid-item"><div class="sk-line w-50 h-12"></div><div class="sk-line w-70 h-24"></div><div class="sk-line w-30 h-10"></div></div>
+    </div>
+    <div class="sk-card"><div class="sk-row"><div class="sk-line w-30 h-14"></div><div class="sk-line w-20 h-14" style="margin-left:auto"></div></div><div class="sk-row"><div class="sk-line sk-circle"></div><div class="sk-line w-40 h-14"></div><div class="sk-line w-20 h-14" style="margin-left:auto"></div></div><div class="sk-row"><div class="sk-line sk-circle"></div><div class="sk-line w-50 h-14"></div><div class="sk-line w-15 h-14" style="margin-left:auto"></div></div><div class="sk-row"><div class="sk-line sk-circle"></div><div class="sk-line w-35 h-14"></div><div class="sk-line w-25 h-14" style="margin-left:auto"></div></div></div>
+    <div class="sk-card"><div class="sk-row"><div class="sk-line w-25 h-14"></div><div class="sk-line w-20 h-14" style="margin-left:auto"></div></div><div class="sk-row"><div class="sk-line sk-circle"></div><div class="sk-line w-45 h-14"></div><div class="sk-line w-18 h-14" style="margin-left:auto"></div></div><div class="sk-row"><div class="sk-line sk-circle"></div><div class="sk-line w-55 h-14"></div><div class="sk-line w-22 h-14" style="margin-left:auto"></div></div></div>
+  </div>
 
   <!-- ================= 首页 ================= -->
   <div id="homeView" style="display: block;">
@@ -9159,6 +9207,113 @@ async function renderFundHoldings(f){
   }).join('');
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size: 14px">前十大持仓 <span class="tag">天天基金</span></h2><span class="hint" style="font-size: 12px">前十合计 ${total.toFixed(2)}% ${rpt}</span></div><div style="overflow-x:auto"><table class="hk-table"><thead><tr><th>#</th><th>名称</th><th>占比</th><th>较上期</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
+/* ===== 骨架屏 ===== */
+function showSkeleton(){
+  const sk=document.getElementById('skeletonContainer');
+  const homeList=document.getElementById('homeList');
+  if(sk && homeList){ homeList.style.display='none'; sk.classList.add('show'); }
+}
+function hideSkeleton(){
+  const sk=document.getElementById('skeletonContainer');
+  const homeList=document.getElementById('homeList');
+  if(sk && homeList){ sk.classList.remove('show'); homeList.style.display=''; }
+}
+/* ===== 下拉刷新 Pull-to-Refresh ===== */
+function setupPullToRefresh(){
+  const wrap=document.getElementById('appWrap'); if(!wrap) return;
+  const ptr=document.getElementById('ptr'); if(!ptr) return;
+  const ptrText=document.getElementById('ptrText'); if(!ptrText) return;
+  const ptrIcon=ptr.querySelector('.ptr-icon'); if(!ptrIcon) return;
+  let startY=0, pulling=false, refreshReady=false, refreshing=false;
+  const THRESHOLD=80;
+  /* 检测是否在页面顶部（不在滚动容器内） */
+  function isAtTop(){
+    /* 检查所有可能滚动的容器 */
+    const scrollEls=wrap.querySelectorAll('.table-scroll, .cat-scroll, .dense-table-wrap, [style*="overflow"]');
+    for(let i=0;i<scrollEls.length;i++){
+      const el=scrollEls[i];
+      if(el.scrollTop>0) return false;
+    }
+    /* 检查 body/html 滚动 */
+    const docTop=window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    return docTop<=0;
+  }
+  wrap.addEventListener('touchstart', function(e){
+    if(refreshing || currentView!=='home') return;
+    if(!isAtTop()) return;
+    startY=e.touches[0].clientY;
+    pulling=true; refreshReady=false;
+  }, {passive:true});
+  wrap.addEventListener('touchmove', function(e){
+    if(!pulling || refreshing) return;
+    if(!isAtTop()){ ptr.classList.remove('active'); return; }
+    const dy=e.touches[0].clientY-startY;
+    if(dy<=0){ ptr.classList.remove('active'); refreshReady=false; return; }
+    ptr.classList.add('active');
+    if(dy>=THRESHOLD){
+      if(!refreshReady){
+        refreshReady=true;
+        ptrText.textContent='释放刷新';
+        ptrIcon.classList.add('flip');
+        ptrIcon.classList.remove('spin');
+      }
+    } else {
+      if(refreshReady){
+        refreshReady=false;
+        ptrText.textContent='下拉刷新';
+        ptrIcon.classList.remove('flip');
+      }
+      ptrIcon.style.transform='scale('+Math.min(1, dy/THRESHOLD)+')';
+    }
+  }, {passive:true});
+  wrap.addEventListener('touchend', function(){
+    if(!pulling) return;
+    pulling=false;
+    if(refreshReady && !refreshing){
+      refreshing=true;
+      ptrText.textContent='刷新中…';
+      ptrIcon.classList.remove('flip');
+      ptrIcon.classList.add('spin');
+      refresh().then(function(){
+        refreshing=false;
+        ptr.classList.remove('active');
+        ptrText.textContent='下拉刷新';
+        ptrIcon.classList.remove('spin');
+        refreshReady=false;
+      }).catch(function(){
+        refreshing=false;
+        ptr.classList.remove('active');
+        ptrText.textContent='下拉刷新';
+        ptrIcon.classList.remove('spin');
+        refreshReady=false;
+      });
+    } else {
+      ptr.classList.remove('active');
+      ptrText.textContent='下拉刷新';
+      ptrIcon.classList.remove('flip');
+      refreshReady=false;
+    }
+  }, {passive:true});
+}
+/* ===== 自动备份 ===== */
+function autoBackup(){
+  try{
+    const last=localStorage.getItem('ft_auto_backup');
+    const now=Date.now();
+    if(last && (now-(+last))<86400000) return; // 每天最多一次
+    const data={snaps:snaps, trades:trades, navCache:navCache, dca:dcaPlans, bonds:bonds, tags:tags, watchList:watchList, _ts:now};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='fund-tracker-auto-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 10000);
+    localStorage.setItem('ft_auto_backup', String(now));
+    console.log('auto backup saved');
+  }catch(e){ console.warn('auto backup failed', e); }
+}
 async function refresh(){
   const u=document.getElementById('updated'); if(u){ u.textContent='⏳ 正在刷新…'; u.className='loading'; }
   const _fb0=document.getElementById('freshBadge'); if(_fb0){ _fb0.style.display='inline-block'; _fb0.className='fresh-badge fr-warn'; _fb0.textContent='⏳ 刷新中'; }
@@ -9166,6 +9321,7 @@ async function refresh(){
   if(_line){ _line.className='status-line'; }
   if(_dot){ _dot.style.display='inline-block'; _dot.className='dot closed'; }
   if(_txt){ _txt.innerHTML='<span class="retry" style="color:var(--text-3);font-weight:400">↻ 正在刷新…</span>'; }
+  showSkeleton();
   Object.keys(intradayCache).forEach(k=>delete intradayCache[k]);
   const prev={}; Object.keys(navCache).forEach(k=>prev[k]=navCache[k].nav);
   const names=[...new Set([...snaps.map(s=>s.name),...trades.map(t=>t.name)])].filter(Boolean);
@@ -9193,6 +9349,7 @@ async function refresh(){
   // 今日盈亏与列表「当日收益」列统一用 dayGainOf（优先盘中估算 gszzl，退回官方 navChg），保证账户总当日收益=各子项之和
   fundsView.forEach(f=>{ const g=dayGainOf(f); if(g!=null){ todayGain+=g; anyG=true; } });
   todayGain=anyG?todayGain:null; if(currentView==='home'){ renderOverview(); renderHomeList(); if(activeTab===1) renderPie(); }
+  hideSkeleton();
   recordSnapshot();
   prefetchHoldings();
   const got=Object.keys(navCache).length;

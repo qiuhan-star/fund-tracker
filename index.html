@@ -6926,7 +6926,7 @@ function renderLiquidated(){
     +'<div class="mcard"><p class="lbl">盈亏比（均盈/均亏）</p><p class="val '+cls((plr||0)-1)+'">'+(plr!=null?plr.toFixed(2):'—')+'</p></div>'
     +'</div>';
   const filterBar=liqFilterBar(baseList);
-  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能填充原因</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">更新卖后表现</button></span></div>"+filterBar+"<p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
+  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class=\"btn sm\" onclick=\"autoTagLiqReasons()\">智能归类</button><button class=\"btn sm\" onclick=\"updateLiqPost()\">刷新卖后</button></span></div>"+filterBar+sum;
   if(!cnt){
     const _emptyMsg = liqFilter.dim ? '当前筛选条件下没有匹配的清仓基金，换个标签或点「清除筛选」试试。' : '你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。';
     box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">'+_emptyMsg+'</div></div>';

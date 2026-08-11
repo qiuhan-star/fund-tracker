@@ -8870,7 +8870,8 @@ function renderSyncCfg(){
     var t=document.getElementById('smMobileTitle'); if(t){ var c=null; for(var i=0;i<SM_MOBILE_CATS.length;i++){ if(SM_MOBILE_CATS[i].id===id) c=SM_MOBILE_CATS[i]; } t.textContent=(anchor&&subTitles[anchor])?subTitles[anchor]:(c?c.title:'设置'); }
     settingsTab(id);
     if(sc) sc.scrollTop=0;
-    if(anchor){ setTimeout(function(){ var el=document.getElementById('panel-'+id+'-'+anchor); if(el && sc){ sc.scrollTop = Math.max(0, el.offsetTop - 64); } }, 10); }
+    panel.scrollTop=0;
+    if(anchor){ setTimeout(function(){ var el=document.getElementById('panel-'+id+'-'+anchor); if(el){ var mrect=sc?sc.getBoundingClientRect():null; var prect=panel.getBoundingClientRect(); var e=el.getBoundingClientRect(); if(sc){ sc.scrollTop=Math.max(0,(e.top-(mrect?mrect.top:0))+sc.scrollTop-64); } panel.scrollTop=Math.max(0,(e.top-prect.top)+panel.scrollTop-64); } }, 12); }
   };
   window.closeSettingsDetail=function(){
     var panel=document.querySelector('.settings-panel'); if(!panel) return;

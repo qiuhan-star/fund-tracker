@@ -5971,7 +5971,7 @@ function renderOverview(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const realized=fundsView.reduce((a,f)=>a+(f.realized||0),0);
   const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length, flat=fundsView.filter(f=>f.ret===0).length;
-  const cnt=fundsView.length;
+  const cnt=fundsView.length; const _holdF=f=>!(f.shares===0 && !f.isBond && !(f.mv>0)); const cntHold=fundsView.filter(_holdF).length;
   let principal=0;
   // f.cost 已是正确成本基准：有逐笔交易走 FIFO，纯快照回退 costPx×份额（buildFundsView 算好），直接求和即可，勿用交易流重算（会漏掉无交易流的快照基金）
   fundsView.forEach(f=>{ principal+=(f.cost||0); });
@@ -6024,7 +6024,7 @@ function renderOverview(){
           <div class="dash-head">${IC.bars} 基金数 / 胜率</div>
           <div class="dash-val">${hasBattle?(win/cnt*100).toFixed(1)+'%':'—'}</div>
           ${hasBattle?`<div class="dash-bar"><span class="db-pos" style="width:${(win/cnt*100).toFixed(1)}%"></span><span class="db-neg" style="width:${(lose/cnt*100).toFixed(1)}%"></span></div>`:''}
-          <div class="dash-desc ${hasBattle?'':'muted'}">${hasBattle?winLoseSub+' · 共 '+cnt+' 只':'样本过少，暂不统计胜率'}</div>
+          <div class="dash-desc ${hasBattle?'':'muted'}">${hasBattle?winLoseSub+' · 持有 '+cntHold+' 只':'样本过少，暂不统计胜率'}</div>
         </div>
         <div class="dash-card">
           <div class="dash-head">${IC.pie} 赛道集中度</div>
@@ -7202,7 +7202,7 @@ function setSectorView(i){
 }
 function renderSectorTotal(){
   const te=document.getElementById('sectorTotal'); if(!te) return;
-  te.textContent=`共 ${fundsView.length} 只标的 · 合计 100%`;
+  te.textContent=`共 ${fundsView.filter(f=>!(f.shares===0 && !f.isBond && !(f.mv>0))).length} 只标的 · 合计 100%`;
 }
 let _dupChecked=false;
 function detectCrossAccountDups(){

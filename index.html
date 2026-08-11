@@ -3350,7 +3350,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           to { opacity: 1; transform: scale(1); }
         }
       </style></head>
-<body><div id="fileWarn" class="file-warn" style="position: fixed; top: 0px; left: 0px; right: 0px; z-index: 9999;"><div class="fw-head"><span class="fw-ico">⚠️</span>当前为本地临时模式</div><div class="fw-text">数据仅保存在当前浏览器，刷新或清理缓存可能丢失。推荐使用线上稳定版，享受云端同步与备份保障。</div><div class="fw-actions"><button type="button" class="fw-btn ghost" onclick="exportJSON()">导出 JSON 备份</button><a class="fw-btn primary" href="https://fund-tracker-chi.vercel.app" target="_blank" rel="noopener">前往线上版 ↗</a></div></div>
+<body>
 <div class="pwa-hint" id="pwaHint">📲 在浏览器菜单选择「添加到主屏幕」，即可像 App 一样全屏使用<span class="x" onclick="try{localStorage.setItem('pwaHintDone','1')}catch(e){};document.getElementById('pwaHint').style.display='none'">×</span></div>
 <script>try{if(localStorage.getItem('pwaHintDone'))document.getElementById('pwaHint').style.display='none';}catch(e){}</script>
 
@@ -10680,26 +10680,6 @@ function renderSyncCfg(){
 }
 // ===== 以下进入应用初始化 =====
 (async function init(){
-  if(location.protocol==='file:'){
-    // 本地文件打开：localStorage 在不同浏览器/刷新下不可靠，提醒用户改到线上版操作
-    setTimeout(function(){
-      try{
-        let b=document.getElementById('fileWarn');
-        if(!b){ b=document.createElement('div'); b.id='fileWarn'; b.className='file-warn';
-          b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999';
-          b.innerHTML=''
-            + '<div class="fw-head"><span class="fw-ico">⚠️</span>当前为本地临时模式</div>'
-            + '<div class="fw-text">数据仅保存在当前浏览器，刷新或清理缓存可能丢失。推荐使用线上稳定版，享受云端同步与备份保障。</div>'
-            + '<div class="fw-actions">'
-            +   '<button type="button" class="fw-btn ghost" onclick="exportJSON()">导出 JSON 备份</button>'
-            +   '<a class="fw-btn primary" href="https://fund-tracker-chi.vercel.app" target="_blank" rel="noopener">前往线上版 ↗</a>'
-            + '</div>';
-          document.body.insertBefore(b, document.body.firstChild);
-          applyBannerOffset();
-        }
-      }catch(e){}
-    },150);
-  }
   if(syncEnabled()){ try{ await cloudPullBeforeBoot(); }catch(e){ console.warn('cloud pull before boot failed', e); } }
   const saved=localStorage.getItem('ft_data');
   let loaded=false;

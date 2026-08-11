@@ -435,8 +435,11 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .watch-list { list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px; }.watch-item { display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border-3);border-radius:8px; }.watch-name { font-weight:600;font-size: 14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }.watch-code { font-size: 12px;color:var(--text-3); }.watch-acts { display:flex;gap:4px; }.watch-item { cursor:pointer; }.watch-held { font-size: 12px;font-weight:600;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border-3);border-radius:6px;padding:2px 7px;white-space:nowrap; }.watch-quote { font-size: 14px;font-weight:600;color:var(--text-2);min-width:76px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap; }/* 首页「仅自选」视图：观察中（自选但未持仓）区块 */
 .obs-block { margin-top:14px;border-top:1px dashed var(--border-strong);padding-top:12px; }.obs-block h3 { margin:0 0 4px;font-size: 14px;display:flex;align-items:center;gap:8px; }.obs-item { display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px dashed var(--border-3);cursor:pointer; }.obs-item:last-child { border-bottom:none; }.obs-name { font-weight:600;font-size: 14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }.obs-code { font-size: 12px;color:var(--text-3); }.obs-quote { font-size: 14px;font-weight:600;font-variant-numeric:tabular-nums;min-width:84px;text-align:right;white-space:nowrap; }/* 交易时段状态灯（A股沪深） */
 .mkt-light { display:inline-flex;align-items:center;gap:4px;margin-left:10px;font-size: 14px;font-weight:600;padding:1px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border-3);color:var(--text-3);vertical-align:middle; }.mkt-light.ms-open { color:#1f9d4d;background:rgba(31,157,77,.12);border-color:rgba(31,157,77,.35); }.mkt-light.ms-lunch { color:#c6840a;background:rgba(198,132,10,.12);border-color:rgba(198,132,10,.35); }.mkt-light.ms-closed { color:#8a9099;background:rgba(138,144,153,.12);border-color:rgba(138,144,153,.3); }/* 详情页：浮动/已实现区分 + FIFO 口径声明 */
-  .tag-unreal { background:var(--warn); color:#fff; font-size: 12px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }.tag-real { background:rgba(31,157,77,.15); color:#1f9d4d; font-size: 12px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }.basis-note { font-size: 12px; color:var(--text-3); margin-top:10px; line-height:1.5; }.basis-note b { color:var(--text-2); }/* 详情页头部：主次聚焦（方案A）—— 金额与百分比绑定、成本降级小字 */
-  .dh-main { display:grid; grid-template-columns:1.1fr 1fr; gap:16px; margin-top:2px; }.dh-primary { background:var(--surface-2); border:1px solid var(--border-2); border-radius:12px; padding:14px 16px; }.dh-sec { font-size: 14px; color:var(--text-3); font-weight:600; letter-spacing:.5px; margin-bottom:7px; }.dh-sec .tag-unreal { margin-left:5px; vertical-align:middle; }.dh-mv { font-size: 28px; font-weight:700; letter-spacing:.5px; line-height:1.1; }.dh-cost { font-size: 14px; color:var(--text-3); margin-top:6px; }.dh-cost b { color:var(--text-2); font-weight:600; }.dh-profit-row { display:flex; align-items:baseline; gap:12px; }.dh-amt { font-size: 24px; font-weight:700; }.dh-pct { font-size: 18px; font-weight:600; }.dh-realized { font-size: 14px; color:var(--text-3); margin-top:11px; border-top:1px dashed var(--border-3); padding-top:10px; }.dh-realized b { font-weight:600; color:var(--text-2); font-size: 14px; }@media (max-width:560px) { .dh-main { grid-template-columns:1fr; gap:12px; }.dh-mv { font-size: 24px; }.dh-amt { font-size: 24px; }  }
+  .tag-unreal { background:var(--warn); color:#fff; font-size: 12px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }.tag-real { background:rgba(31,157,77,.15); color:#1f9d4d; font-size: 12px; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle; }.basis-note { font-size: 12px; color:var(--text-3); margin-top:10px; line-height:1.5; }.basis-note b { color:var(--text-2); }/* 详情页头部：轻量化指标网格（4 列），避免两个大数字卡片造成压迫感 */
+  .dh-main { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; }.dh-primary { background:var(--surface-2); border:1px solid var(--border-2); border-radius:10px; padding:10px 12px; min-width:0; }.dh-sec { font-size: 12px; color:var(--text-3); font-weight:500; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }.dh-sec .tag-unreal { margin-left:4px; vertical-align:middle; }.dh-mv { font-size: 20px; font-weight:700; line-height:1.2; font-variant-numeric: tabular-nums; }.dh-cost { font-size: 12px; color:var(--text-3); margin-top:4px; line-height:1.4; }.dh-cost b { color:var(--text-2); font-weight:600; }.dh-profit-row { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }.dh-amt { font-size: 18px; font-weight:700; font-variant-numeric: tabular-nums; }.dh-pct { font-size: 14px; font-weight:600; font-variant-numeric: tabular-nums; }.dh-realized { font-size: 12px; color:var(--text-3); margin-top:6px; line-height:1.4; }.dh-realized b { font-weight:600; color:var(--text-2); font-size: 12px; }
+  /* 数据状态行：净值更新时间 + 刷新按钮 */
+  .dh-sync { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; font-size: 12px; color:var(--text-3); }.dh-sync .btn { margin-left:auto; }
+  @media (max-width:560px) { .dh-main { grid-template-columns:repeat(2,1fr); gap:8px; }.dh-mv { font-size: 18px; }.dh-amt { font-size: 16px; }.dh-pct { font-size: 13px; }  }
 /* 备份防丢提醒条 */
   .bk-reminder { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:rgba(198,132,10,.10); border:1px solid rgba(198,132,10,.4); color:#9a6a08; padding:9px 12px; border-radius:10px; margin-bottom:12px; font-size: 14px; }.bk-reminder b { color:#b8740a; }.bk-btn { border:none; background:#c6840a; color:#fff; padding:6px 12px; border-radius:8px; font-size: 14px; cursor:pointer; font-family:inherit; }@media (hover: hover) { .bk-btn:hover {  background:#b0740a;  } }
 .bk-skip { border:1px solid rgba(198,132,10,.5); background:transparent; color:#9a6a08; padding:6px 12px; border-radius:8px; font-size: 14px; cursor:pointer; font-family:inherit; }/* 平行宇宙复盘推演 */
@@ -1305,6 +1308,18 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 }
 .tx-expand { display:block; width:calc(100% - 32px); margin:12px 16px 20px; padding:12px; text-align:center; color:var(--text-2); background:var(--surface); border:1px solid var(--border); border-radius:12px; font-size:14px; }
 .tx-more { display:none; }
+/* 交易记录卡片折叠：通过类名隐藏，保持卡片容器一致，避免展开后宽度变化 */
+.tx-list .tx-card.tx-hidden { display:none; }
+/* 详情页交易记录区块：统一卡片内边距与标题层级 */
+.trade-section { margin-bottom: 14px; }
+.trade-section .sec-head { margin-bottom: 10px; }
+.trade-section .sec-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.trade-section .hint { font-size: 12px; color: var(--text-3); }
+.trade-section .tx-list { margin: 0; }
+.trade-section .tx-expand { width: 100%; margin: 10px 0 4px; }
+@media (min-width: 768px) {
+  .trade-section .tx-expand { display: none; }
+}
 </style>
 <script>
   try{
@@ -5204,14 +5219,17 @@ function enterDetail(f){
   detailAcc=effAccount(f.account)||effAccount('本人账户');
   const a=getAnalysis(f.name), c=document.getElementById('detailContent');
   c.innerHTML=headerHtml(f)
+    +`<div id="detailTrades"></div>`
     +`<div id="detailIntraday"></div>`
     +`<div id="detailHistory"></div>`
     +`<div id="detailProfile"></div>`
     +`<div id="detailHoldings"></div>`
-    +`<div id="detailStatic"></div>`    +`<div id="detailLive"></div>`;
+    +`<div id="detailStatic"></div>`
+    +`<div id="detailLive"></div>`;
   const st=document.getElementById('detailStatic');
   if(a){ st.innerHTML=`<div class="card"><div class="am-inline">${a.body}</div></div>`; try{ a.charts(); detailChartFund=f.name; }catch(e){console.error(e);} }
   else { st.innerHTML=genericDetail(f); }
+  renderDetailTrades(f);
   renderDetailLive(f);
   renderIntraday(f);
   renderNavHistory(f);
@@ -5498,7 +5516,6 @@ function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
-  setTimeout(function(){ collapseDetailTx(); },0);
   live.innerHTML += reviewCardHtml(f.name);
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   live.innerHTML += noteCardHtml(f.name);
@@ -5541,31 +5558,56 @@ function detailAddWatch(){
 
 function headerHtml(f){
   const rcls=f.ret>0?'pos':f.ret<0?'neg':'zero', pcls=f.profit>0?'pos':f.profit<0?'neg':'zero', a=getAnalysis(f.name);
+  const syncText = (function(){
+    try{
+      const ts=localStorage.getItem('ft_lastSync');
+      if(!ts) return '净值数据尚未刷新';
+      const diff=Math.floor((Date.now()-(+ts))/1000);
+      if(diff<60) return '净值数据 · 刚刚更新';
+      if(diff<3600) return '净值数据 · '+Math.floor(diff/60)+' 分钟前更新';
+      if(diff<86400) return '净值数据 · '+Math.floor(diff/3600)+' 小时前更新';
+      return '净值数据 · '+Math.floor(diff/86400)+' 天前更新';
+    }catch(e){ return '净值数据'; }
+  })();
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
-    <div style="display:flex;gap:8px"><button class="btn" onclick="refresh()">↻ 刷新净值</button><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
+    <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
     <div class="dh-main">
       <div class="dh-primary">
-        <div class="dh-sec">当前市值（元）</div>
+        <div class="dh-sec">当前市值</div>
         <div class="dh-mv" id="dhMv">${M(f.mv)}</div>
-        <div class="dh-cost">持仓成本 <b id="dhCost">${M(f.cost)}</b>${f.shares!=null&&f.shares>0?` <span id="dhShares">· ${fmt(f.shares)} 份</span>`:''}</div>
+        <div class="dh-cost">持仓成本 <b id="dhCost">${M(f.cost)}</b></div>
       </div>
       <div class="dh-primary dh-profit">
         <div class="dh-sec">持有收益</div>
         <div class="dh-profit-row">
           <span class="dh-amt ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</span>
-          <span class="dh-pct ${pcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</span>
         </div>
-        <div class="dh-realized">已实现盈亏（落袋）：<b id="dhRealized" class="${f.realized>=0?'pos':'neg'}">${f.realized>=0?'+':''}${M(f.realized||0)}</b></div>
+        <div class="dh-pct ${pcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div>
       </div>
+      <div class="dh-primary">
+        <div class="dh-sec">已实现盈亏</div>
+        <div class="dh-amt ${f.realized>=0?'pos':'neg'}" id="dhRealized">${f.realized>=0?'+':''}${M(f.realized||0)}</div>
+        <div class="dh-cost">落袋收益</div>
+      </div>
+      <div class="dh-primary">
+        <div class="dh-sec">持有份额</div>
+        <div class="dh-mv" id="dhShares">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div>
+        <div class="dh-cost">份额 · 份</div>
+      </div>
+    </div>
+    <div class="dh-sync">
+      <span id="dhSyncText">${syncText}</span>
+      <button class="btn sm" onclick="refresh().then(function(){try{if(typeof updateDetailHeader==='function'&&detailName){const f=findFund(detailName,detailAcc);if(f)updateDetailHeader(f);}const el=document.getElementById('dhSyncText');if(el){const ts=localStorage.getItem('ft_lastSync');if(ts){const diff=Math.floor((Date.now()-(+ts))/1000);el.textContent='净值数据 · '+(diff<60?'刚刚更新':Math.floor(diff/60)+' 分钟前更新');}}}catch(e){}})">↻ 刷新净值</button>
     </div>
     </div>`;
 }
 function updateDetailHeader(f){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set('dhMv',M(f.mv));
-  const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.classList.remove('pos','neg','zero'); e.classList.add(f.ret>0?'pos':f.ret<0?'neg':'zero');}
   set('dhCost',M(f.cost));
+  set('dhShares', f.shares!=null&&f.shares>0?fmt(f.shares):'—');
+  const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.classList.remove('pos','neg','zero'); e.classList.add(f.ret>0?'pos':f.ret<0?'neg':'zero');}
   const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+M(f.profit); e2.classList.remove('pos','neg','zero'); e2.classList.add(f.profit>0?'pos':f.profit<0?'neg':'zero');}
   const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.classList.remove('pos','neg'); e3.classList.add(f.realized>=0?'pos':'neg');}
 }
@@ -5630,24 +5672,32 @@ function loadFundHoldings(f){
   document.body.appendChild(s);
 }
 
-function liveSection(f){
-  const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
+function renderDetailTrades(f){
+  const box=document.getElementById('detailTrades'); if(!box) return;
+  const html=buildTradeSection(f);
+  box.innerHTML=html;
+  setTimeout(function(){ collapseDetailTx(); },0);
+}
+
+function refreshDetailTradesByName(name){
+  if(!name || currentView!=='detail') return;
+  try{
+    const f=findFund(name,detailAcc);
+    if(f) renderDetailTrades(f);
+  }catch(e){}
+}
+
+function buildTradeSection(f){
+  const idx=fundsView.indexOf(f);
   let h='';
   const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
-  // 定投快捷入口：进详情即可一键设为/查看定投计划
-  const _plans=dcaPlanOf(f.name);
-  h+=`<div class="card dca-quick"><div class="dca-quick-row"><span class="dca-quick-t">🗓️ 定投计划</span>${_plans.length?('<span class="tag">已设 '+_plans.length+' 个</span>'):('<span class="hint">未设置</span>')}<button class="btn sm" onclick="openDcaModal('${encodeURIComponent(f.name)}')">${_plans.length?'管理':'设为定投'}</button></div></div>`;
-  const tdtoday=new Date().toISOString().slice(0,10);
-  const defCol = tr.length>12;
   const _tc={buy:0,sell:0,conv:0,oth:0};
   tr.forEach(function(t){ const k=t.type; if(k==='buy'||k==='dca'||k==='activity')_tc.buy++; else if(k==='sell')_tc.sell++; else if(k==='convert'||k==='convert_out')_tc.conv++; else _tc.oth++; });
-  const tradeHead = `本只基金 · 交易流水（${tr.length} 笔 · 买入${_tc.buy} 卖出${_tc.sell}${_tc.conv?(' 转换'+_tc.conv):''}${_tc.oth?(' 其他'+_tc.oth):''}）`;
+  const tradeHead = `交易记录`;
+  const tradeMeta = `${tr.length} 笔 · 买入${_tc.buy} · 卖出${_tc.sell}${_tc.conv?(' · 转换'+_tc.conv):''}${_tc.oth?(' · 其他'+_tc.oth):''}`;
   if(isMobile()){
-    // ===== 移动端：iOS 连体分组表单 + 卡片化历史流水 =====
-    h+=`<div class="tr-ios">`;
-    h+=`<div class="section-label">${tradeHead}</div>`;
-    // 历史流水卡片
-    h+=`<div class="section-label">历史流水（${tr.length} 笔）</div>`;
+    h+=`<div class="card trade-section">`;
+    h+=`<div class="sec-head"><h2>${tradeHead}</h2><span class="hint">${tradeMeta}</span></div>`;
     if(tr.length){
       h+=`<div class="tx-list">`;
       tr.forEach(t=>{
@@ -5668,15 +5718,15 @@ function liveSection(f){
       });
       h+=`</div>`;
     } else {
-      h+=`<p class="hint" style="margin:0 16px 8px">还没有交易流水。在上方填写后点「保存并锁定」即可记录第一笔。</p>`;
+      h+=`<p class="hint" style="margin:0 0 6px">还没有交易记录。可在下方或右下角 + 记一笔。</p>`;
     }
     h+=`</div>`;
   } else {
-    // ===== 桌面端：保持原 Table 渲染 =====
-    h+=`<div class="card"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>${tradeHead}</h2><span class="chev">${defCol?'▸':'▾'}</span></div>`;
+    const defCol = tr.length>12;
+    h+=`<div class="card trade-section"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>${tradeHead}</h2><span class="hint">${tradeMeta}<span class="chev" style="margin-left:10px">${defCol?'▸':'▾'}</span></span></div>`;
     h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
-        h+=`<p class="hint" style="margin:0 0 8px">点「＋ 记一笔交易」弹出填写窗口，保存前会再次确认；保存后自动锁定防误改，点「解锁」可临时编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
-        h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认；点右下角 + 记一笔</span></div></div>`;
+    h+=`<p class="hint" style="margin:0 0 8px">点「＋ 记一笔交易」弹出填写窗口，保存前会再次确认；保存后自动锁定防误改，点「解锁」可临时编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
+    h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认；点右下角 + 记一笔</span></div></div>`;
     if(tr.length){
       h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
       tr.forEach(t=>{
@@ -5715,6 +5765,18 @@ function liveSection(f){
     }
     h+=`</div></div>`;
   }
+  return h;
+}
+
+function liveSection(f){
+  const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
+  let h='';
+  const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  // 定投快捷入口：进详情即可一键设为/查看定投计划
+  const _plans=dcaPlanOf(f.name);
+  h+=`<div class="card dca-quick"><div class="dca-quick-row"><span class="dca-quick-t">🗓️ 定投计划</span>${_plans.length?('<span class="tag">已设 '+_plans.length+' 个</span>'):('<span class="hint">未设置</span>')}<button class="btn sm" onclick="openDcaModal('${encodeURIComponent(f.name)}')">${_plans.length?'管理':'设为定投'}</button></div></div>`;
+  // 交易记录已移到详情页顶部独立区块（detailTrades），此处不再重复渲染
+  // 若后续需要在详情底部再加一条快速入口，可单独放一个跳转按钮
 
   const calcNav=f.nav||(f.shares?f.mv/f.shares:0);
   const _ncBk=navCache[f.name]||{};
@@ -5844,9 +5906,9 @@ function addTradeForForm(enc){
   if(isMobile() && typeof renderDetailLive==='function') renderDetailLive(encodeURIComponent(name));
   }
 }
-function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); } }
-function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); } }
-function delTrade(i){ if(!trades[i]) return; ftConfirm('确定删除这笔交易？', function(ok){ if(!ok) return; trades.splice(i,1); silentSave(); compute(); }); }
+function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); refreshDetailTradesByName(trades[i].name); } }
+function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); refreshDetailTradesByName(trades[i].name); } }
+function delTrade(i){ if(!trades[i]) return; ftConfirm('确定删除这笔交易？', function(ok){ if(!ok) return; const name=trades[i].name; trades.splice(i,1); silentSave(); compute(); refreshDetailTradesByName(name); }); }
 function addTradeMenu(){
   const list=(_allHoldings.length?_allHoldings:fundsView).slice().sort((a,b)=>b.mv-a.mv);
   if(!list.length){ toast('还没有基金，先点「＋ 加一只基金」添加'); return; }
@@ -5979,29 +6041,29 @@ function drawerSave(){
 // ---------- 确认状态 / 撤单 / 预估份额 辅助 ----------
 function confirmLabel(c){ return c==='pending'?'待确认':c==='cancelled'?'撤单':'已确认'; }
 function confirmClass(c){ return c==='pending'?'pend':c==='cancelled'?'cancel':''; }
-function cycleConfirm(i){ const t=trades[i]; if(!t) return; const order=['confirmed','pending','cancelled']; const cur=t.confirm||'confirmed'; const nx=order[(order.indexOf(cur)+1)%3]; trades[i].confirm=nx; silentSave(); compute(); if(currentView==='detail'){ try{ renderDetailLive(detailName); }catch(e){} } toast('状态：'+(nx==='confirmed'?'已确认':nx==='pending'?'待确认':'已撤单（不计入盈亏）')); }
+function cycleConfirm(i){ const t=trades[i]; if(!t) return; const order=['confirmed','pending','cancelled']; const cur=t.confirm||'confirmed'; const nx=order[(order.indexOf(cur)+1)%3]; trades[i].confirm=nx; silentSave(); compute(); if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} } toast('状态：'+(nx==='confirmed'?'已确认':nx==='pending'?'待确认':'已撤单（不计入盈亏）')); }
 window.__detailTxExpanded=false;
 window.collapseDetailTx=function(){
   if(window.innerWidth>768) return;
-  const lists=document.querySelectorAll('#detailLive .tx-list');
+  const lists=document.querySelectorAll('.tx-list');
   lists.forEach(function(list){
     if(list.dataset.collapsed) return;
     const cards=list.querySelectorAll(':scope > .tx-card');
     if(cards.length<=3) return;
     if(window.__detailTxExpanded){
-      // 已展开：保留全部卡片可见，仅放一个“收起”按钮
+      list.classList.add('tx-expanded');
+      cards.forEach(function(card){ card.classList.remove('tx-hidden'); });
       const btn=document.createElement('button'); btn.className='tx-expand'; btn.textContent='收起 ▴';
       btn.onclick=function(e){ if(e&&e.stopPropagation) e.stopPropagation(); window.__detailTxExpanded=false; collapseDetailTx(); };
       if(list.nextSibling) list.parentNode.insertBefore(btn,list.nextSibling); else list.parentNode.appendChild(btn);
       list.dataset.collapsed='1';
       return;
     }
-    const more=document.createElement('div'); more.className='tx-more'; more.id='tx-more-'+Math.floor(Math.random()*1e6);
-    for(var i=3;i<cards.length;i++) more.appendChild(cards[i]);
+    cards.forEach(function(card, i){ if(i>=3) card.classList.add('tx-hidden'); });
+    list.classList.remove('tx-expanded');
     const btn=document.createElement('button'); btn.className='tx-expand'; btn.textContent='查看全部 '+cards.length+' 笔交易 ▾';
-    btn.onclick=function(e){ if(e&&e.stopPropagation) e.stopPropagation(); var open=more.dataset.open==='1'; if(open){ more.style.display='none'; more.dataset.open=''; btn.textContent='查看全部 '+cards.length+' 笔交易 ▾'; window.__detailTxExpanded=false; } else { more.style.display='block'; more.dataset.open='1'; btn.textContent='收起 ▴'; window.__detailTxExpanded=true; } };
-    if(list.nextSibling) list.parentNode.insertBefore(more,list.nextSibling); else list.parentNode.appendChild(more);
-    if(more.nextSibling) list.parentNode.insertBefore(btn,more.nextSibling); else list.parentNode.appendChild(btn);
+    btn.onclick=function(e){ if(e&&e.stopPropagation) e.stopPropagation(); var open=list.classList.contains('tx-expanded'); if(open){ cards.forEach(function(card, i){ if(i>=3) card.classList.add('tx-hidden'); }); list.classList.remove('tx-expanded'); btn.textContent='查看全部 '+cards.length+' 笔交易 ▾'; window.__detailTxExpanded=false; } else { cards.forEach(function(card){ card.classList.remove('tx-hidden'); }); list.classList.add('tx-expanded'); btn.textContent='收起 ▴'; window.__detailTxExpanded=true; } };
+    if(list.nextSibling) list.parentNode.insertBefore(btn,list.nextSibling); else list.parentNode.appendChild(btn);
     list.dataset.collapsed='1';
   });
 };
@@ -7561,7 +7623,7 @@ function parseCSV(text, defaultAcc, forceAcc){
   const find=(arr)=>{ for(let i=0;i<head.length;i++){ if(arr.some(k=>head[i].includes(k))) return i; } return -1; };
   Object.keys(kw).forEach(k=>col[k]=find(kw[k]));
   const mapConfirm=(s)=>{ const v=String(s||'').trim(); if(/撤|取消|作废|cancel/i.test(v)) return 'cancelled'; if(/待|未|pending/i.test(v)) return 'pending'; return 'confirmed'; };
-  const guessType=(s)=>{ const v=String(s||'').toLowerCase().trim(); if(v==='buy') return 'buy'; if(v==='sell') return 'sell'; if(v==='convert_in') return 'convert'; if(v==='convert_out') return 'convert_out'; if(v==='convert') return 'convert'; if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'convert_out'; if(/买|申购|定投/.test(v)) return 'buy'; if(/卖|赎|清仓|清掉/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; if(/拆/.test(v)) return 'split'; return 'buy'; };
+  const guessType=(s)=>{ const v=String(s||'').toLowerCase().trim(); if(v==='buy') return 'buy'; if(v==='sell') return 'sell'; if(v==='convert_in') return 'convert'; if(v==='convert_out') return 'convert_out'; if(v==='convert') return 'convert'; if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'convert_out'; if(/定投/.test(v)) return 'dca'; if(/活动/.test(v)) return 'activity'; if(/买|申购/.test(v)) return 'buy'; if(/卖|赎|清仓|清掉/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend'; if(/再投|红利再投资/.test(v)) return 'reinvest'; if(/拆/.test(v)) return 'split'; return 'buy'; };
   let start=1; const added=[];
   // 无表头判断：只有「名称列 + 任一关键列(日期/金额/方向)」都被识别时才当表头；否则(首行就是数据、或基金名恰含「基金」被误命中名称列)按列序解析，避免首行数据被当表头跳过
   const looksLikeHeader = col.name>=0 && (col.date>=0||col.amount>=0||col.type>=0);
@@ -7592,7 +7654,7 @@ function parseCSV(text, defaultAcc, forceAcc){
     const sh=col.shares>=0?parseFloat(String(c[col.shares]).replace(/[^\d.\-]/g,''))||0:0;
     const rawAcc = forceAcc ? (defaultAcc||'') : (col.account>=0 ? c[col.account] : (defaultAcc||''));
     const account=normalizeAccount(rawAcc);
-    if(!(amount||nav)) continue;
+    if(!(amount||nav||sh)) continue;
     const confirm = col.confirm>=0 ? mapConfirm(c[col.confirm]) : 'confirmed';
     const note = col.note>=0 ? String(c[col.note]||'').trim() : '';
     added.push({name,date,type,amount,nav,fee,account,shares:sh,confirm,note});
@@ -7621,7 +7683,7 @@ function parsePaste(text, defaultAcc, forceAcc){
   if(!lines.length) return {count:0,dup:0,rows:[]};
   // 跳过表头行（无真实日期数字却含 名称/日期/金额 关键词）
   if(/^名称/.test(lines[0]) || (/日期/.test(lines[0]) && /金额/.test(lines[0]) && !/\d{4}[-/]\d/.test(lines[0]))) lines.shift();
-  const guessType=function(s){ const v=String(s||'').toLowerCase(); if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'sell'; if(/买|申购|定投/.test(v)) return 'buy'; if(/卖|赎|清|撤/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend';     if(/再投|红利再投资/.test(v)) return 'reinvest'; return 'buy'; };
+  const guessType=function(s){ const v=String(s||'').toLowerCase(); if(/转换转入/.test(v)) return 'convert'; if(/转换转出/.test(v)) return 'convert_out'; if(/定投/.test(v)) return 'dca'; if(/活动/.test(v)) return 'activity'; if(/买|申购/.test(v)) return 'buy'; if(/卖|赎|清|撤/.test(v)) return 'sell'; if(/分红|现金红利/.test(v)) return 'dividend';     if(/再投|红利再投资/.test(v)) return 'reinvest'; return 'buy'; };
   const mapConfirmPaste=function(s){ const v=String(s||'').trim(); if(/撤|取消|作废|cancel/i.test(v)) return 'cancelled'; if(/待|未|pending/i.test(v)) return 'pending'; return 'confirmed'; };
   const added=[];
   for(let i=0;i<lines.length;i++){

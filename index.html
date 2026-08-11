@@ -725,7 +725,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .settings-panel.mobile-detail .panel-section:first-child { padding-top:8px; }
 
   /* 移动端纵向表单：stacked 行在窄屏改为标签在上、控件在下 */
-  .panel-row.stacked { display:block; padding:12px 0; }
+  .panel-row.stacked { display:block; padding:12px 14px; }
   .panel-row.stacked .left { width:100%; margin-bottom:8px; }
   .panel-row.stacked .right { width:100%; display:block; }
   .panel-row.stacked .right .settings-input { width:100%; box-sizing:border-box; }
@@ -1174,6 +1174,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sync-form-foot{ text-align:right; margin-top:10px; }
   .sync-done{ border:none; background:var(--accent); color:#fff; border-radius:9px; padding:8px 18px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
   .sync-done:active{ opacity:.85; }
+  /* 手机端：云同步输入框 ≥16px，聚焦时 iOS 不再自动放大整页（14px 会触发缩放） */
+  @media (max-width:640px){ #syncCfg .settings-input{ font-size:16px; } }
 
 /* 定投/XIRR 测算卡片：紧凑一体化结果 + 卡片内 Tab 切换 */
 .xirr-card h2 { font-size: 18px; margin-bottom: 6px; }

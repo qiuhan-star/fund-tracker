@@ -4595,7 +4595,23 @@ function renderLiquidated(){
     const v=catMap[c], p=catRetMap[c], rp=v>0?p/v*100:0, pct=sumB>0?v/sumB*100:0, w=pct>0?Math.min(100,pct):0, bcls=p>=0?'pos':'neg';
     return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(c)+'</span><span class="liq-imp-bar"><i class="'+bcls+'" style="width:'+w.toFixed(1)+'%"></i></span><span class="liq-imp-val">'+M(v)+' · 盈亏'+sign(p)+M(p)+' ('+sign(rp)+rp.toFixed(1)+'%)</span></div>';
   }).join('')+'</div>':'';
-  box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+impact+'</div>';
+  // 持有周期分布（超短线/中线/长线）
+  const _bk=function(d){ return d<30?'s':(d<=180?'m':'l'); };
+  const pm={s:{c:0,w:0,r:0,n:0,label:'超短线 <30天'},m:{c:0,w:0,r:0,n:0,label:'中线波段 30-180天'},l:{c:0,w:0,r:0,n:0,label:'长线配置 >180天'}};
+  list.forEach(function(f){ const b=_bk(f.days); pm[b].c++; if(f.win)pm[b].w++; pm[b].r+=f.realized; pm[b].n+=f.retPct; });
+  const period='<div class="liq-impact liq-period"><p class="lbl">持仓周期分布（按持有天数归类）</p>'
+    +['s','m','l'].map(function(k){ var g=pm[k]; if(!g.c) return ''; var wr=g.c?Math.round(g.w/g.c*100):0; var ar=g.c?g.r/g.c:0;
+      return '<div class="liq-imp-row"><span class="liq-imp-cat">'+g.label+'</span><span class="liq-imp-val">'+g.c+'只 · 胜率'+wr+'% · 均收益'+sign(ar)+ar.toFixed(1)+'% · 盈亏'+sign(g.r)+M(g.r)+'</span></div>';
+    }).join('')+'</div>';
+  // Pareto 20/80：按 |盈亏| 排序，前 20% 基金贡献的盈亏波动占比
+  const sortedAbs=list.slice().sort(function(a,b){ return Math.abs(b.realized)-Math.abs(a.realized); });
+  const topN=Math.max(1,Math.ceil(cnt*0.2));
+  let topAbs=0; for(var ti=0;ti<topN;ti++){ topAbs+=Math.abs(sortedAbs[ti].realized); }
+  const paretoPct=sumAbs>0?topAbs/sumAbs*100:0;
+  const pareto='<div class="liq-impact liq-pareto"><p class="lbl">盈亏集中度（Pareto 20/80）</p>'
+    +'<div class="liq-imp-row"><span class="liq-imp-cat">前 '+topN+' 只 / 共 '+cnt+' 只</span><span class="liq-imp-bar"><i class="pos" style="width:'+Math.min(100,paretoPct).toFixed(1)+'%"></i></span><span class="liq-imp-val">贡献 '+paretoPct.toFixed(0)+'% 盈亏波动</span></div>'
+    +'</div>';
+  box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+period+pareto+impact+'</div>';
   fillLiqStatus();
 }
 

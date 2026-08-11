@@ -11873,12 +11873,12 @@ function calcWatchBuy(){
   if(totalEl) totalEl.value=Math.round(total);
   const totalValEl=document.getElementById('uwTotalVal');
   if(totalValEl) totalValEl.textContent=Math.round(total).toLocaleString();
-  // 顶部"已测算 N 只"标签同步更新
+  // 顶部"已测算 N 只"标签同步更新（buyTotal==0 时由外层 wtEmpty 空状态卡片负责提示，这里不再重复）
   const tagEl=document.getElementById('wtCalcTag');
   if(tagEl){
     const n=countWatchBuy();
     if(n>0){ tagEl.className='tag-ok'; tagEl.textContent='已测算 '+n+' 只'; }
-    else { tagEl.className='tag-idle'; tagEl.textContent='点 🛒 加入'; }
+    else { tagEl.className='tag-idle'; tagEl.textContent='待买 (0)'; }
   }
   // 总市值为 0（无持仓）时，用预备买入资金作分母，首笔建仓占比 = sug / cap = pct%；cap 也为 0 时无法计算
   const box=document.getElementById('wtBuyRes'); if(!box) return;
@@ -11888,7 +11888,7 @@ function calcWatchBuy(){
   // 只测算点亮 🛒 待买的自选（观察中的不进决策）
   loadWatch().filter(function(x){ return x.buy; }).forEach(function(x){ const c=guessCat(x.name); const sug=Math.round(cap*pct/100); const v=total>0?((catSum[c]||0)+sug)/total:null; rows.push({name:x.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
   loadBondWatch().filter(function(f){ return bondWsInScope(f)&&f.buy; }).forEach(function(f){ const t=bondTypeOf(f); const sug=Math.round(cap*pct/100); const v=total>0?((bondSum[t]||0)+sug)/total:null; rows.push({name:f.name,sug:sug,after:isFinite(v)&&v>=0?v:null}); });
-  if(!rows.length){ box.innerHTML='<div class="line empty"><span class="nm">暂无待买基金 —— 点自选条目右侧 🛒 加入测算</span></div>'; return; }
+  if(!rows.length){ box.innerHTML=''; return; }
   box.innerHTML=rows.map(function(r){
     const afterHtml=r.after!=null?'（占比 '+(r.after*100).toFixed(1)+'%）':'';
     const flag=r.after!=null&&r.after>0.3?' <span class="tag warn">占比过高</span>':'';
@@ -12103,6 +12103,7 @@ function renderWatchTab(){
     +'.wt .sec-cap .count{font-size:14px;font-weight:500;color:var(--text-3)}'
     +'.wt .sec-cap .more{margin-left:auto;font-size:14px;font-weight:600;color:var(--accent)}'
     +'.wt .sec-cap .tag-ok{font-size:11px;font-weight:600;color:#2f9e58;background:#eafaf0;border:1px solid #cdeeda;border-radius:99px;padding:2px 9px}'
+    +'.wt .sec-cap .tag-idle{font-size:11px;font-weight:500;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border-2);border-radius:99px;padding:2px 9px}'
     +'.wt .sec-cap .info-trigger{margin-left:auto;flex:0 0 18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--text-3);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}'
     +'.wt .card{background:var(--surface);border-radius:14px;overflow:hidden;margin:0 14px 14px;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}'
     +'.wt .grp-head{font-size:13px;font-weight:600;color:var(--text-2);padding:14px 16px 6px}'
@@ -12160,10 +12161,10 @@ function renderWatchTab(){
     +'.wt-badge-ok{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}'
     +'.wt-badge-suggest{background:#ede9fe;color:#6d28d9;border:1px solid #ddd6fe}'
     // 1. 待买空状态卡片
-    +'.wt-calc-card .wt-empty{text-align:center;padding:18px 14px 16px;background:var(--surface-2);border:1px dashed var(--border-strong);border-radius:12px;margin-top:6px}'
-    +'.wt-calc-card .wt-empty-ico{font-size:28px;line-height:1;opacity:.45;margin-bottom:6px}'
-    +'.wt-calc-card .wt-empty-ttl{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}'
-    +'.wt-calc-card .wt-empty-desc{font-size:12px;color:var(--text-3);line-height:1.6;max-width:280px;margin:0 auto}'
+    +'.wt-calc-card .wt-empty{display:flex;align-items:center;gap:8px;text-align:left;padding:10px 12px;background:var(--surface-2);border:1px dashed var(--border-2);border-radius:10px;margin-top:6px;font-size:12px;color:var(--text-3);line-height:1.5}'
+    +'.wt-calc-card .wt-empty-ico{font-size:15px;line-height:1;opacity:.55;flex:0 0 auto}'
+    +'.wt-calc-card .wt-empty-ttl{font-size:12px;font-weight:600;color:var(--text-2)}'
+    +'.wt-calc-card .wt-empty-desc{color:var(--text-3)}'
     +'.wt-calc-card .wt-empty-hint{display:none}'   // 兼容旧 id，无内容时隐藏
     // 3. 正常通过：折叠为一行微型 Tag
     +'.wt-calc-card .wt-decide-pass{display:flex;align-items:center;gap:6px;padding:8px 12px;background:transparent;border:1px solid var(--border-2);border-radius:8px;font-size:12px;color:var(--text-2)}'

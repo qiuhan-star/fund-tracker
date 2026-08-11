@@ -277,6 +277,11 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 /* 清仓分析 · 持仓周期分布：放宽类别列，避免「超短线 <30天」被挤换行 */
 .liq-period .liq-imp-cat { flex:0 0 116px; }
 .liq-period .liq-imp-val { flex:1 1 auto; min-width:0; line-height:1.5; }
+/* 清仓分析 · 原因标记下拉 + 行为分布提示 */
+.liq-reason { display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12px; }
+.liq-reason .liq-lbl { color:var(--text-3); white-space:nowrap; }
+.liq-reason-sel { font-size:13px; padding:3px 8px; border:1px solid var(--border-strong); border-radius:7px; background:var(--surface); color:var(--text); font-family:inherit; max-width:160px; }
+.liq-imp-note { margin-top:8px; font-size:12px; color:var(--text-3); line-height:1.6; }
 /* 当前 vs 建议 双柱对比（自包含，替代 Chart.js） */
 .cmp-leg2 { display:flex; gap:16px; flex-wrap:wrap; font-size: 14px; color:var(--text-2); margin:4px 0 8px; align-items:center; }
 .cmp-leg2 .sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle; }
@@ -2177,7 +2182,7 @@ function _renameAccountRaw(oldName, nv){
   ACC_RENAME_MAP[origin]=nv;
   try{ localStorage.setItem('ft_acc_rename', JSON.stringify(ACC_RENAME_MAP)); }catch(e){}
   if(ACCOUNT_META[oldName]){ ACCOUNT_META[nv]=ACCOUNT_META[oldName]; delete ACCOUNT_META[oldName]; }
-  CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.map(a=> effAccount(a)===oldName? nv : a);
+  CUSTOM_ACCOUNTS=CUSTOM_ACCOUNTS.map(a=> a===oldName? nv : a);
   try{ localStorage.setItem('ft_accounts', JSON.stringify(CUSTOM_ACCOUNTS)); }catch(e){}
   if(scopeAcc===oldName) scopeAcc=nv;
   if(curAccount===oldName) curAccount=nv;
@@ -4531,16 +4536,25 @@ function buildLiquidatedView(){
     const days=(firstBuy&&lastSell)?Math.max(0,Math.round((new Date(lastSell)-new Date(firstBuy))/864e5)):0;
     const retPct=totalBuy>0?realized/totalBuy*100:0;
     const annual=(days>0&&totalBuy>0&&(realized/totalBuy)>-1)?(Math.pow(1+realized/totalBuy,365/days)-1)*100:null;
-    out.push({name:name, account:acc, cat:cat, totalBuy:totalBuy, totalSell:totalSell, div:div, realized:realized, days:days, firstBuy:firstBuy, lastSell:lastSell, retPct:retPct, annual:annual, win:realized>=0, sellFee:sellFee, avgSellNav:avgSellNav});
+    out.push({name:name, account:acc, cat:cat, totalBuy:totalBuy, totalSell:totalSell, div:div, realized:realized, days:days, firstBuy:firstBuy, lastSell:lastSell, retPct:retPct, annual:annual, win:realized>=0, sellFee:sellFee, avgSellNav:avgSellNav, reason:getLiqReason(acc,name)});
   });
   out.sort(function(a,b){ return liqSort==='ret' ? (b.retPct-a.retPct) : (b.realized-a.realized); });
   return out;
 }
 function goLiq(el){ goDetail(el.dataset.nm, el.dataset.acc); }
 function setLiqSort(s){ liqSort=s; renderLiquidated(); }
+// ===== 清仓原因/心态标签（第二阶段）=====
+const LIQ_REASONS=['止盈','止损','调仓','套利','其他'];
+const LIQ_REASON_KEY='ft_liq_reason';
+function getLiqReasons(){ try{ return JSON.parse(localStorage.getItem(LIQ_REASON_KEY)||'{}'); }catch(e){ return {}; } }
+function getLiqReason(acc,name){ const m=getLiqReasons(); return m[acc+'||'+name]||null; }
+function setLiqReason(acc,name,r){ const m=getLiqReasons(); const k=acc+'||'+name; if(r){ m[k]=r; }else{ delete m[k]; } try{ localStorage.setItem(LIQ_REASON_KEY,JSON.stringify(m)); }catch(e){} }
+function onLiqReasonChange(sel,nameEnc,accEnc){ const name=decodeURIComponent(nameEnc), acc=decodeURIComponent(accEnc); setLiqReason(name,acc,sel.value||null); renderLiquidated(); }
+function autoTagLiqReasons(){ const L=buildLiquidatedView(); let n=0; L.forEach(function(f){ if(!getLiqReason(f.account,f.name)){ setLiqReason(f.account,f.name, f.win?'止盈':'止损'); n++; } }); try{ toast('已为 '+n+' 只未标记基金自动标记（盈→止盈 / 亏→止损）'); }catch(e){} renderLiquidated(); }
+function liqReasonSelect(f){ const cur=getLiqReason(f.account,f.name); return '<select class="liq-reason-sel" onchange="onLiqReasonChange(this,\''+encodeURIComponent(f.name)+'\',\''+encodeURIComponent(f.account)+'\')">'+[''].concat(LIQ_REASONS).map(function(o){ return '<option value="'+o+'"'+(o===cur?' selected':'')+'>'+(o||'标记原因')+'</option>'; }).join('')+'</select>'; }
 function renderLiquidated(){
   const box=document.getElementById('tp2'); if(!box) return;
-  let list=buildLiquidatedView();
+  const allLiq=buildLiquidatedView(); let list=allLiq.slice();
   // 按当前账户口径过滤（与持仓列表逻辑一致：scopeMatches 判大口径，curAccount 判子账户）
   if(currentScope!=='all') list=list.filter(function(f){ return scopeMatches(f.account); });
   if(curAccount && curAccount!=='全部') list=list.filter(function(f){ return (effAccount(f.account)||effAccount('本人账户'))===curAccount; });
@@ -4559,7 +4573,7 @@ function renderLiquidated(){
     +'<div class="mcard"><p class="lbl">平均持有天数</p><p class="val">'+(cnt?avgD:'—')+'</p></div>'
     +'<div class="mcard"><p class="lbl">盈亏比（均盈/均亏）</p><p class="val '+cls((plr||0)-1)+'">'+(plr!=null?plr.toFixed(2):'—')+'</p></div>'
     +'</div>';
-  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button></span></div><p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
+  const head="<div class=\"sec-head\"><h2>清仓分析 · 已全部赎回的基金</h2><span style=\"display:flex;gap:6px\"><button class=\"btn sm "+(liqSort==='realized'?'primary':'')+"\" onclick=\"setLiqSort('realized')\">按盈亏</button><button class=\"btn sm "+(liqSort==='ret'?'primary':'')+"\" onclick=\"setLiqSort('ret')\">按收益率</button><button class="btn sm" onclick="autoTagLiqReasons()">智能填充原因</button></span></div><p class=\"hint\">自动识别「有买入+卖出、最终净份额≈0」的基金（即你已全部赎回的）。沿用与「分析」Tab 一致的已实现盈亏算法（卖出=(净值−均价)×份额−费；现金分红降成本并计入已实现）。「继续持有(近似)」= 用清仓日的加权卖出净值与当前净值估算，若当时没卖、持有到今天这笔赎回款约值多少。</p>"+sum;
   if(!cnt){
     box.innerHTML='<div class="card">'+head+'<div class="at-empty" style="margin-top:14px">你目前所有基金都还持有中，暂无任何清仓记录。<br>当某只基金被全部赎回后，会自动出现在这里。</div></div>';
     return;
@@ -4590,6 +4604,7 @@ function renderLiquidated(){
       +'<span class="liq-meta">'+(f.annual!=null?'年化 '+sign(f.annual)+f.annual.toFixed(1)+'%':'')+'</span>'
       +'<span class="liq-hold">继续持有≈'+holdCell+'</span>'
       +'</div>'
+      +'<div class="liq-reason"><span class="liq-lbl">清仓原因</span>'+liqReasonSelect(f)+'</div>'
       +'<div class="liq-action"><button class="btn sm primary" data-nm="'+enc+'" data-acc="'+esc(f.account)+'" onclick="goLiq(this)">查看 →</button></div>'
       +'</div>';
   }).join('');
@@ -4614,7 +4629,22 @@ function renderLiquidated(){
   const pareto='<div class="liq-impact liq-pareto"><p class="lbl">盈亏集中度（Pareto 20/80）</p>'
     +'<div class="liq-imp-row"><span class="liq-imp-cat">前 '+topN+' 只 / 共 '+cnt+' 只</span><span class="liq-imp-bar"><i class="pos" style="width:'+Math.min(100,paretoPct).toFixed(1)+'%"></i></span><span class="liq-imp-val">贡献 '+paretoPct.toFixed(0)+'% 盈亏波动</span></div>'
     +'</div>';
-  box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+period+pareto+impact+'</div>';
+  // 清仓行为分布（按标记原因：止盈/止损/调仓/套利/其他/未标记）
+  const _rbk=LIQ_REASONS.concat(['未标记']); const _rb={}; _rbk.forEach(function(r){ _rb[r]={c:0,w:0,r:0,n:0}; });
+  list.forEach(function(f){ const rk=f.reason||'未标记'; _rb[rk].c++; if(f.win)_rb[rk].w++; _rb[rk].r+=f.realized; _rb[rk].n+=f.retPct; });
+  const _rbMax=Math.max.apply(null,_rbk.map(function(r){return _rb[r].c;}));
+  const behavior='<div class="liq-impact liq-behavior"><p class="lbl">清仓行为分布（按标记原因）</p>'
+    +_rbk.filter(function(r){return _rb[r].c;}).map(function(r){ var g=_rb[r]; var wr=g.c?Math.round(g.w/g.c*100):0; var arp=g.c?g.n/g.c:0; var bw=_rbMax?g.c/_rbMax*100:0; var bcls=g.r>=0?'pos':'neg';
+      return '<div class="liq-imp-row"><span class="liq-imp-cat">'+r+'</span><span class="liq-imp-bar"><i class="'+bcls+'" style="width:'+bw.toFixed(1)+'%"></i></span><span class="liq-imp-val">'+g.c+'只 · 胜率'+wr+'% · 盈亏'+sign(g.r)+M(g.r)+' · 均收益'+sign(arp)+arp.toFixed(1)+'%</span></div>';
+    }).join('')+(_rb['未标记'].c?'<div class="liq-imp-note">提示：点每只基金下方「标记原因」手动分类，或点顶部「智能填充原因」一键按盈亏标记。</div>':'')+'</div>';
+  // 账户对比（各账户清仓表现，始终基于全量，不受上方账户筛选影响）
+  const _acc={}; allLiq.forEach(function(f){ if(!_acc[f.account])_acc[f.account]={c:0,w:0,r:0}; _acc[f.account].c++; _acc[f.account].r+=f.realized; if(f.win)_acc[f.account].w++; });
+  const _accKeys=Object.keys(_acc); const _accMax=Math.max.apply(null,_accKeys.map(function(a){return Math.abs(_acc[a].r);}))||1;
+  const account=_accKeys.length?'<div class="liq-impact liq-account"><p class="lbl">账户对比（各账户清仓表现）</p>'
+    +_accKeys.map(function(a){ var g=_acc[a]; var wr=g.c?Math.round(g.w/g.c*100):0; var bcls=g.r>=0?'pos':'neg';
+      return '<div class="liq-imp-row"><span class="liq-imp-cat">'+esc(a)+'</span><span class="liq-imp-bar"><i class="'+bcls+'" style="width:'+(Math.abs(g.r)/_accMax*100).toFixed(1)+'%"></i></span><span class="liq-imp-val">'+g.c+'只 · 胜率'+wr+'% · 盈亏'+sign(g.r)+M(g.r)+'</span></div>';
+    }).join('')+'</div>':'';
+  box.innerHTML='<div class="card">'+head+'<div class="liq-list" style="margin-top:12px">'+rows+'</div>'+period+behavior+pareto+account+impact+'</div>';
   fillLiqStatus();
 }
 
@@ -9451,6 +9481,19 @@ function showOcrCandidates(codes){
 }
 
 function markHint(html){ return html.replace('class="wrow"','class="wrow hint"'); }
+function startAddWatch(){
+  const input=document.getElementById('uwInput');
+  if(!input) return;
+  input.focus();
+  input.scrollIntoView({behavior:'smooth',block:'center'});
+  const wrap=input.closest('.wt-search');
+  if(wrap){
+    wrap.classList.remove('flash');
+    void wrap.offsetWidth;
+    wrap.classList.add('flash');
+    setTimeout(function(){ wrap.classList.remove('flash'); }, 950);
+  }
+}
 
 function renderWatchTab(){
   const bc=document.getElementById('tp3'); if(!bc) return;
@@ -9482,7 +9525,7 @@ function renderWatchTab(){
 
   const STYLE='<style>'
     +'.wt{max-width:600px;margin:0 auto;padding:0 0 90px}'    +'.wt-split{display:block}'    +'.wt-split.single{display:block}'    +'.wt-col{display:flex;flex-direction:column}'    +'.wt .sec-cap .tag-idle{font-size:11px;font-weight:600;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border-2);border-radius:99px;padding:2px 9px}'    +'@media (min-width:900px){'    +'.wt{max-width:1040px;padding:0 24px 90px}'    +'.wt-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}'    +'.wt-search{margin:6px 0 0}'    +'.wt .card{margin:0 0 14px}'    +'.wt .sec-cap{padding-left:0;padding-right:0}'    +'.wt .card.wt-calc-card{margin:0}'    +'}'
-    +'.wt-search{display:flex;align-items:center;gap:8px;padding:11px 18px;background:var(--surface-2);border-radius:12px;margin:6px 14px 0}'
+    +'.wt-search{display:flex;align-items:center;gap:8px;padding:11px 18px;background:var(--surface-2);border-radius:12px;margin:6px 14px 0}'+'.wt-search.flash{animation:wtSearchFlash .9s ease-out}'+'@keyframes wtSearchFlash{0%{outline:2px solid var(--accent);outline-offset:2px}70%{outline:2px solid transparent;outline-offset:8px}100%{outline:2px solid transparent;outline-offset:8px}}'
     +'.wt-search .lens{color:var(--text-3);font-size:14px;line-height:1;display:inline-flex;width:16px;flex:0 0 16px;align-items:center;justify-content:center}'
     +'.wt-search input{flex:1;border:0;background:transparent;outline:0;font-size:15px;color:var(--text);min-width:0}'
     +'.wt-search input::placeholder{color:var(--text-3)}'
@@ -9558,7 +9601,7 @@ function renderWatchTab(){
   } else {
     listHtml='<div class="card">'+items.map(function(it,idx){ return (showHint&&idx===0?markHint(uwRow(it)):uwRow(it)); }).join('')+'</div>';
   }
-  if(!items.length){ listHtml='<div class="wt-empty-ceremony"><div class="ico">📭</div><div class="ttl">暂无自选基金</div><div class="desc">在上方输入 6 位基金代码或名称，回车即可加入；<br>或点 📷 上传持仓截图，自动提取代码并加入自选。</div><button class="btn" onclick="var i=document.getElementById(\'uwInput\');if(i)i.focus()">＋ 立即添加第一只自选</button><div class="hint">自选与资产页债基池已合并到这里</div></div>'; }
+  if(!items.length){ listHtml='<div class="wt-empty-ceremony"><div class="ico">📭</div><div class="ttl">暂无自选基金</div><div class="desc">在上方输入 6 位基金代码或名称，回车即可加入；<br>或点 📷 上传持仓截图，自动提取代码并加入自选。</div><button class="btn" onclick="startAddWatch()">＋ 立即添加第一只自选</button><div class="hint">自选与资产页债基池已合并到这里</div></div>'; }
 
   const isEmptyWatch = (!items.length && !bWatch.length);
   const buyTotal = items.filter(function(x){return x.buy;}).length + bWatch.filter(function(f){return f.buy;}).length;

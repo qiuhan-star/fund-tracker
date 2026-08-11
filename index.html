@@ -5968,7 +5968,7 @@ function tradeQuickSave(){
   closeTradePicker();
   draftClear('ft_draft_tq', DRAFT_TQ_IDS); const _tq=document.getElementById('tqDraftPill'); if(_tq) _tq.classList.remove('show');
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
-  if(currentView==='detail'){ try{ renderDetailLive(detailName); }catch(e){} }
+  if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} }
   toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
   }
 }
@@ -6031,6 +6031,7 @@ function drawerSave(){
   trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,confirm,note,locked:true});
   silentSave(); compute(); recordSnapshot();
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+  if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} }
   toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
   g('dr-amount').value=''; g('dr-nav').value=''; g('dr-fee').value=''; g('dr-shares').value=''; g('dr-fund').value='';
   draftClear('ft_draft_drawer', DRAFT_DR_IDS); const _dp=document.getElementById('drDraftPill'); if(_dp) _dp.classList.remove('show');

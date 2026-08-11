@@ -9351,7 +9351,24 @@ function renderSyncCfg(){
     settingsTab(id);
     if(sc) sc.scrollTop=0;
     panel.scrollTop=0;
-    if(anchor){ setTimeout(function(){ var el=document.getElementById('panel-'+id+'-'+anchor); if(el){ var mrect=sc?sc.getBoundingClientRect():null; var prect=panel.getBoundingClientRect(); var e=el.getBoundingClientRect(); if(sc){ sc.scrollTop=Math.max(0,(e.top-(mrect?mrect.top:0))+sc.scrollTop-64); } panel.scrollTop=Math.max(0,(e.top-prect.top)+panel.scrollTop-64); } }, 12); }
+    // 滚动定位 anchor：等面板切完 + 等一次重排再读位置（手机视口下 12ms 经常不够，会读到 0/默认值）
+    function scrollToAnchor(){
+      if(!anchor) return;
+      var el=document.getElementById('panel-'+id+'-'+anchor);
+      if(!el) return;
+      var mrect=sc?sc.getBoundingClientRect():null;
+      var prect=panel.getBoundingClientRect();
+      var e=el.getBoundingClientRect();
+      if(sc){ sc.scrollTop=Math.max(0,(e.top-(mrect?mrect.top:0))+sc.scrollTop-64); }
+      panel.scrollTop=Math.max(0,(e.top-prect.top)+panel.scrollTop-64);
+    }
+    if(anchor){
+      if(typeof requestAnimationFrame==='function'){
+        requestAnimationFrame(function(){ requestAnimationFrame(scrollToAnchor); });
+      } else {
+        setTimeout(scrollToAnchor, 80);
+      }
+    }
   };
   window.closeSettingsDetail=function(){
     var panel=document.querySelector('.settings-panel'); if(!panel) return;

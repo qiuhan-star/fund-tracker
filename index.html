@@ -11548,7 +11548,7 @@ function renderSyncCfg(){
   window.uploadImg=function(){ var f=document.getElementById('profImgUp'); if(f) f.click(); };
   window.onImg=function(ev){ var file=ev.target.files&&ev.target.files[0]; if(!file) return; var r=new FileReader(); r.onload=function(){ var u=getUser(); u.img=r.result; u.avatar=null; setUser(u); var a=document.getElementById('profAv'); if(a) a.innerHTML='<img src="'+r.result+'" alt="">'; }; r.readAsDataURL(file); var m=document.getElementById('avMask'); if(m) m.classList.remove('show'); ev.target.value=''; };
   ['profMask','avMask'].forEach(function(id){ var m=document.getElementById(id); if(m) m.addEventListener('click',function(e){ if(e.target===m) m.classList.remove('show'); }); });
-  window.openFeedback=function(){ window.open('https://github.com/qiuhan-star/fund-tracker/issues','_blank'); };
+  window.openFeedback=function(){ var url='https://github.com/qiuhan-star/fund-tracker/issues'; var w=window.open(url,'_blank'); if(!w){ location.href=url; } };
 })();
 </script>
 

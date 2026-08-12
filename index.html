@@ -427,7 +427,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .risk-diag{ margin-top:10px; padding:10px 12px; border-radius:12px; font-size:13px; line-height:1.55; }
 .risk-diag.warn{ background:rgba(245,158,11,.12); color:#b45309; }
 .risk-diag.ok{ background:rgba(16,185,129,.12); color:#047857; }
-.note-ta{ width:100%; box-sizing:border-box; min-height:64px; border:1px solid var(--border, rgba(0,0,0,.12)); border-radius:10px; padding:8px 10px; font-family:inherit; font-size:14px; resize:vertical; background:var(--surface,#fff); color:var(--text,#1f2933); margin-top:8px; }
+.note-ta{ display:block; width:100%; box-sizing:border-box; min-height:64px; border:1px solid var(--border, rgba(0,0,0,.12)); border-radius:10px; padding:8px 10px; font-family:inherit; font-size:14px; resize:vertical; background:var(--surface,#fff); color:var(--text,#1f2933); margin-top:8px; }
 .note-bar{ display:flex; align-items:center; gap:10px; margin-top:8px; }
 .note-saved{ margin-top:8px; font-size:12px; color:var(--text-3,#94a3b8); white-space:pre-wrap; }
 .note-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:#3b82f6; margin-left:5px; vertical-align:middle; }
@@ -663,7 +663,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sm-mask { padding:0; align-items:stretch; }
   .sm-modal.settings-modal, .sm-modal { width:100%; max-width:100%; height:100%; max-height:100%; border-radius:0; border:none; margin:0; }
   .sm-head { display:none; }
-  .trade-foot { display:flex; }
+  .trade-modal .trade-foot { display:flex; }
   .sm-body.settings-body { padding:0; overflow:hidden; flex:1; min-height:0; display:flex; }
   .settings-panel { padding:0; overflow:hidden; position:relative; display:block; width:100%; background:var(--surface-2); }
 
@@ -6891,7 +6891,7 @@ function renderTrade(){
       <td class="num"><input data-fld="ht-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()" title="${isSplit?'拆分倍数(如2=1拆2)':'金额(元)'}"></td>
       <td class="num"><input data-fld="ht-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
       <td class="num"><input data-fld="ht-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
-      <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
+      <td><button class="del" onclick="removeTrade(${i})">✕</button></td>
     </tr>`);
   });
   tb.innerHTML=_rows.join('');
@@ -8171,6 +8171,7 @@ function openDetailTrades(){
 }
 
 function closeDetailTrades(){
+  finalizeUndo();
   const mask=document.getElementById('detailTradeModal');
   if(mask) mask.classList.remove('show');
 }
@@ -8312,7 +8313,7 @@ function addTradeForForm(enc){
 }
 function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); refreshDetailTradesByName(trades[i].name); } }
 function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); refreshDetailTradesByName(trades[i].name); } }
-function delTrade(i){ if(!trades[i]) return; ftConfirm('确定删除这笔交易？', function(ok){ if(!ok) return; const name=trades[i].name; trades.splice(i,1); silentSave(); compute(); refreshDetailTradesByName(name); }); }
+function delTrade(i){ if(!trades[i]) return; ftConfirm('确定删除这笔交易？', function(ok){ if(!ok) return; removeTrade(i); }); }
 var deleteTrade=delTrade;
 function addTradeMenu(){
   const list=(_allHoldings.length?_allHoldings:fundsView).slice().sort((a,b)=>b.mv-a.mv);
@@ -8451,11 +8452,7 @@ function deleteTradeEdit(){
   var i=_editTradeIdx; if(i<0||!trades[i]) return;
   ftConfirm('确定删除这笔交易？', function(ok){
     if(!ok) return;
-    var nm=trades[i].name;
-    trades.splice(i,1);
-    silentSave(); compute();
-    closeTradeEdit();
-    if(currentView==='detail'){ try{ renderDetailLive(nm); refreshDetailTradesByName(nm); }catch(e){} }
+    var nm=trades[i].name; removeTrade(i); closeTradeEdit(); if(currentView==='detail'){ try{ renderDetailLive(nm); }catch(e){} }
     if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
     toast('已删除');
   });
@@ -10027,6 +10024,9 @@ function exportJSON(){
     {grp:'account', key:'ft_bond_list', label:'债券清单', desc:'债基研究与决策工作台'},
     {grp:'account', key:'ft_watch', label:'基金自选池', desc:'含分组标签与观察状态'},
     {grp:'account', key:'ft_bond_watch', label:'债券自选池', desc:'纯研究观察，不计入总资产'},
+    // ── 笔记与便签 ──
+    {grp:'notes', key:'ft_review', label:'个人复盘 & 调仓笔记', desc:'复盘/调仓记录（含预期与回看）'},
+    {grp:'notes', key:'ft_notes', label:'策略便签', desc:'各基金买卖逻辑随手记'},
     // ── 界面与个性化 ──
     {grp:'prefs', key:'ft_tags', label:'标签体系', desc:'自定义标签定义'},
     {grp:'prefs', key:'ft_tag_order', label:'标签排序', desc:''},
@@ -10056,6 +10056,7 @@ function exportJSON(){
   ];
   var GRP_META={
     account:{icon:'💼', title:'账户与持仓数据'},
+    notes:{icon:'📝', title:'笔记与便签'},
     prefs:{icon:'⚙️', title:'界面与个性化偏好'},
     security:{icon:'🔒', title:'安全凭证（建议勿导出）'}
   };
@@ -10737,6 +10738,52 @@ function toast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
 }
+
+// ---------- 删除交易：撤销（返回/切后台/超时即生效）----------
+var _undoTrade=null, _undoTimer=null, _undoInited=false;
+function initUndo(){
+  if(_undoInited) return; _undoInited=true;
+  if(!document.getElementById('undoStyle')){
+    var st=document.createElement('style'); st.id='undoStyle';
+    st.textContent='.undo-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));z-index:3200;display:none;align-items:center;gap:16px;max-width:92vw;background:rgba(28,30,36,.97);color:#fff;padding:11px 14px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px;font-weight:500}.undo-bar.show{display:flex}.undo-bar #undoBtn{background:none;border:none;color:#4f9bff;font-weight:700;font-size:14px;padding:4px 10px;margin:-4px -4px -4px 0;cursor:pointer}';
+    document.head.appendChild(st);
+  }
+  if(!document.getElementById('undoBar')){
+    var bar=document.createElement('div'); bar.id='undoBar'; bar.className='undo-bar';
+    bar.innerHTML='<span id="undoMsg"></span><button id="undoBtn" onclick="undoDeleteTrade()">撤销</button>';
+    document.body.appendChild(bar);
+  }
+}
+function _clearUndoTimer(){ if(_undoTimer){ clearTimeout(_undoTimer); _undoTimer=null; } }
+function finalizeUndo(){ _undoTrade=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show'); }
+function undoDeleteTrade(){
+  if(!_undoTrade) return;
+  var u=_undoTrade;
+  if(u.idx>=trades.length) trades.push(u.rec); else trades.splice(u.idx,0,u.rec);
+  silentSave(); compute();
+  if(u.name) refreshDetailTradesByName(u.name);
+  if(typeof renderTrade==='function') renderTrade();
+  _undoTrade=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show');
+  toast('已恢复');
+}
+function removeTrade(i){
+  if(!trades[i]) return null;
+  initUndo();
+  var rec=trades[i], idx=i, name=rec.name;
+  trades.splice(i,1);
+  silentSave(); compute();
+  if(name) refreshDetailTradesByName(name);
+  if(typeof renderTrade==='function') renderTrade();
+  _undoTrade={idx:idx, rec:rec, name:name};
+  _clearUndoTimer();
+  var b=document.getElementById('undoBar');
+  if(b){ var m=document.getElementById('undoMsg'); if(m) m.textContent='已删除一笔交易'; b.classList.add('show'); }
+  _undoTimer=setTimeout(finalizeUndo, 8000);
+  return rec;
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') finalizeUndo(); });
+window.addEventListener('pagehide', finalizeUndo);
+
 function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function M(n){ if(hidden) return '••••'; const s=fmt(Math.abs(n||0)); return (n||0)<0?'-¥'+s:'¥'+s; }
 function mask4(v){ return hidden ? '••••' : (v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'); }
@@ -10967,7 +11014,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_acc_note','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_review','ft_notes','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_acc_note','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }

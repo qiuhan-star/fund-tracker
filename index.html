@@ -11273,6 +11273,7 @@ function renderSyncCfg(){
               </div>
               <p class="sync-foot">数据会离开浏览器存到 GitHub（私有仓库也算出浏览器）。请用<strong>私有仓库</strong>且仅放账本。需 https 托管的线上版才能联网。</p>
             </div>
+            <div class="panel-row" style="cursor:pointer" onclick="clearSyncConfig()"><div class="left"><div class="title">清除云同步配置</div><div class="desc">断开 GitHub 同步，删除令牌与仓库配置（数据保留在本机）</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
 
           <div class="nset-label" id="panel-data-local">本地备份</div>
@@ -12169,6 +12170,15 @@ function renderSyncCfg(){
         try{ Promise.resolve(cloudPushInner(true)).then(done).catch(done); }
         catch(e){ done(); }
       } else { done(); }
+    });
+  };
+  window.clearSyncConfig=function(){
+    ftConfirm('确定清除云同步配置？\n\n将删除 GitHub 令牌、仓库等同步配置并断开同步。\n你的持仓 / 交易等数据会保留在本机，云端旧备份也不会被改动。\n之后需重新填写配置才能再次同步。', function(ok){
+      if(!ok) return;
+      try{ localStorage.setItem('ft_sync_on','0'); }catch(e){} // 先关开关，避免 Storage 覆写钩子触发自动上传
+      ['ft_sync_cfg','ft_sync_dirty','ft_sync_lastpush','ft_sync_lastpull','ft_sync_conflict','ft_lastSync','ft_lastSyncFail'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+      if(typeof renderSettings==='function'){ try{ renderSettings(); }catch(e){} }
+      if(typeof toast==='function') toast('已清除云同步配置，数据保留在本机');
     });
   };
   window.resetApp=function(){ ftConfirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置/密码锁/云同步配置）且无法恢复。\n建议先「导出 JSON」备份。', function(ok){ if(!ok) return; try{ var keys=[]; for(var i=0;i<localStorage.length;i++){ keys.push(localStorage.key(i)); } keys.forEach(function(k){ if(k && k.indexOf('ft_')===0) localStorage.removeItem(k); }); }catch(e){} location.reload(); }); };

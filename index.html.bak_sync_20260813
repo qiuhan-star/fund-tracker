@@ -11068,13 +11068,11 @@ async function cloudPushInner(manual){
     SYNC_KEYS.forEach(function(k){ var v=localStorage.getItem(k); if(v!=null) payload.keys[k]=v; });
     var putUrl='https://api.github.com/repos/'+c.repo+'/contents/'+encodeURIComponent(c.path||'fund-tracker-data.json');
     var lastErr=null;
-    var maxAttempts=4;
-    for(var attempt=0; attempt<maxAttempts; attempt++){
+    for(var attempt=0; attempt<3; attempt++){
       var body={message:'fund-tracker sync '+payload._ts+(attempt>0?' (retry '+(attempt+1)+')':''),content:b64enc(JSON.stringify(payload)),branch:c.branch||'main'};
       try{
-        var sha=null, shaOk=false;
-        try{ var r0=await fetch(syncApiUrl(),{headers:ghHeaders()}); if(r0.ok){ var j0=await r0.json(); sha=j0.sha||null; shaOk=true; } }catch(e){}
-        if(!shaOk && attempt<maxAttempts-1){ lastErr=new Error('获取云端版本失败，准备重试'); await new Promise(function(r){ setTimeout(r,500); }); continue; }
+        var sha=null;
+        try{ var r0=await fetch(syncApiUrl(),{headers:ghHeaders()}); if(r0.ok){ var j0=await r0.json(); sha=j0.sha||null; } }catch(e){}
         if(sha) body.sha=sha;
         var res=await fetch(putUrl,{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
         if(res.ok){
@@ -11084,12 +11082,10 @@ async function cloudPushInner(manual){
           return;
         }
         var e1=await res.json().catch(function(){return{};});
-        var msg=(e1&&e1.message)||('HTTP '+res.status);
-        lastErr=new Error(msg);
-        var hardFail=/bad ?credentials|unauthorized|401|not found|404|repository not found/i.test(msg);
-        if(hardFail) break;
-        if(attempt<maxAttempts-1) await new Promise(function(r){ setTimeout(r,600); });
-      }catch(e){ lastErr=e; if(attempt<maxAttempts-1){ await new Promise(function(r){ setTimeout(r,600); }); continue; } break; }
+        lastErr=new Error(e1.message||('HTTP '+res.status));
+        if(!/does not match/i.test(e1.message||'')) break;
+        if(attempt<2) await new Promise(function(r){ setTimeout(r,400); });
+      }catch(e){ lastErr=e; break; }
     }
     throw lastErr||new Error('上传失败');
   }catch(e){ setSyncStatus('上传失败：'+(e&&e.message||e)); if(manual) ftAlert('上传失败：'+(e&&e.message||e)); }

@@ -230,7 +230,22 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   #tradePicker { display:none; position: fixed; inset:0; z-index:1000; align-items:center; justify-content:center; }.tp-mask { position:absolute; inset:0; background:rgba(0,0,0,.35); }.tp-pop { position:relative; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); width:min(420px,92vw); max-height:80vh; overflow:auto; padding:16px; }.tp-title { font-size: 14px; font-weight:600; margin-bottom:10px; }.tp-search { width:100%; padding:8px 10px; border:1px solid var(--border-strong); border-radius:9px; font-size: 14px; margin-bottom:10px; box-sizing:border-box; font-family:inherit; }.tp-list { display:flex; flex-direction:column; gap:4px; }.tp-item { text-align:left; padding:9px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface-2); cursor:pointer; font-size: 14px; color:var(--text); }@media (hover: hover) { .tp-item:hover {  border-color:var(--accent-text); background:var(--accent-soft);  } }
 /* 全部交易聚合弹窗 */
   #allTradesModal { display:none; position: fixed; inset:0; z-index:1000; align-items:center; justify-content:center; }.at-pop { position:relative; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); width:min(680px,94vw); max-height:84vh; display:flex; flex-direction:column; padding:16px; }.at-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }.at-head h3 { margin:0; font-size: 15px; }.at-head .count { font-size: 14px; color:var(--text-3); }.at-search { width:100%; padding:8px 10px; border:1px solid var(--border-strong); border-radius:9px; font-size: 14px; margin-bottom:8px; box-sizing:border-box; font-family:inherit; }.at-scroll { overflow:auto; flex:1; }.at-table { width:100%; }.at-table tbody tr { cursor:pointer; }@media (hover: hover) { .at-table tbody tr:hover {  background:var(--accent-soft);  } }
-.at-row .nm { font-weight:600; }.at-row .tag { font-size: 12px; margin-left:2px; }.at-row .pending-nav { color:var(--warn); font-weight:600; }.at-empty { padding:28px 10px; text-align:center; color:var(--text-3); font-size: 14px; line-height:1.7; }.at-foot { text-align:right; margin-top:10px; }/* 刷新状态指示 */
+.at-row .nm { font-weight:600; }.at-row .tag { font-size: 12px; margin-left:2px; }.at-row .pending-nav { color:var(--warn); font-weight:600; }.at-empty { padding:28px 10px; text-align:center; color:var(--text-3); font-size: 14px; line-height:1.7; }.at-foot { text-align:right; margin-top:10px; }/* 全部交易弹窗 - 移动端卡片 */
+.at-card-list{ display:flex; flex-direction:column; gap:10px; padding:2px 0; }
+.at-card{ background:var(--surface); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.04),0 0 1px rgba(0,0,0,.06); border:1px solid var(--border-2); cursor:pointer; position:relative; transition:all .12s; }
+.at-card:active{ background:var(--surface-2); transform:scale(.98); }
+.at-card::after{ content:'›'; position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:16px; color:var(--text-3); opacity:.4; }
+.at-card-inner{ padding:12px 28px 12px 14px; display:flex; flex-direction:column; gap:5px; }
+.at-card-line1{ display:flex; justify-content:space-between; align-items:center; }
+.at-card-fund{ font-size:14px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:65%; }
+.at-card-amt{ font-size:16px; font-weight:700; color:var(--text); flex-shrink:0; }
+.at-card-line2{ display:flex; justify-content:space-between; align-items:center; }
+.at-card-line2 .tx-id{ font-size:12px; font-weight:600; gap:5px; }
+.at-card-line2 .tx-id .dot{ width:8px; height:8px; }
+.at-card-date{ font-size:12px; color:var(--text-3); }
+.at-card-line3{ display:flex; justify-content:space-between; align-items:center; }
+.at-card-sub{ font-size:12px; color:var(--text-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:65%; }
+.at-card-line3 .tx-conf{ font-size:11px; padding:3px 8px; flex-shrink:0; }
   #updated.live { color: #0f8a63; }#updated.closed { color: var(--text-3); }/* 数据新鲜度徽标：顶部状态条 + 估值格副标题 */
   #updated.fr-fail-text { color: #c0392b; font-weight: 600; }.fresh-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 8px; white-space: nowrap; vertical-align: middle; }.fresh-badge.fr-now { background: rgba(15,138,99,.12);  color: #0f8a63; }.fresh-badge.fr-warn { background: rgba(214,158,46,.16); color: #b07d12; }.fresh-badge.fr-old { background: rgba(200,90,40,.16);  color: #bd5a2a; }.fresh-badge.fr-fail { background: rgba(200,40,40,.14);  color: #c0392b; }.dt-sub2.est-fresh { color: var(--text-3); }.dt-sub2.est-fresh .est-tag { font-weight: 600; }.dt-sub2.est-fresh .est-dot { color: var(--text-3); margin: 0 4px; }.dt-sub2.est-fresh .est-age { color: #0f8a63; font-weight: 600; }.dt-sub2.est-stale { color: var(--text-3); }.dt-sub2.est-stale .est-tag { font-weight: 600; }.dt-sub2.est-stale .est-dot { color: var(--text-3); margin: 0 4px; }.dt-sub2.est-nodata { color: var(--text-3); }/* 官方涨跌：今晚已更新净值（收盘日期=今天）高亮，区别于仍用昨日净值的滞后基金 */
   .day-fresh .dt-sub2 { color: var(--accent-text); font-weight: 600; }.day-fresh .day-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--accent); margin-right:4px; vertical-align: middle; }/* Toast 轻提示 */
@@ -286,7 +301,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .flash.pos { animation: flashUp 1.8s ease-out; }.flash.neg { animation: flashDown 1.8s ease-out; }/* ===== 详情页 ===== */
   .back-link { display: inline-block; margin-bottom: 12px; color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 500; }@media (hover: hover) { .back-link:hover {  color: var(--accent-strong);  } }
 .detail-head .dh-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }.am-inline .am-chart, .am-chart { width: 100%; }.am-kpis { display: grid; grid-template-columns: repeat(auto-fit,minmax(110px,1fr)); gap: 8px; margin: 6px 0 4px; }.am-kpi { background: var(--surface-2); border-radius: 10px; padding: 11px; }.am-kpi .l { font-size: 12px; color: var(--text-3); margin: 0 0 4px; }.am-kpi .v { font-size: 18px; font-weight: 700; margin: 0; font-variant-numeric: tabular-nums; }.am-note { background: var(--warn-bg); border-left: 3px solid var(--warn); padding: 8px 12px; border-radius: 0 8px 8px 0; font-size: 14px; margin: 8px 0; line-height: 1.7; }.am-sev { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 12px; font-weight: 600; }.am-sev.h { background: var(--up-bg); color: var(--up); }.am-sev.m { background: var(--warn-bg); color: #b8760a; }.am-sev.l { background: var(--down-bg); color: #0f6e56; }.am-src { font-size: 14px; color: var(--text-3); line-height: 1.8; }.am-disc { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--text-2); line-height: 1.8; margin-top: 8px; }.am-tldr { background: linear-gradient(135deg,var(--accent),var(--accent-strong)); color: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }.am-tldr h4 { margin: 0 0 6px; font-size: 14px; font-weight: 700; }.am-tldr ul { margin: 0; padding-left: 18px; }.am-tldr li { margin: 5px 0; font-size: 14px; line-height: 1.6; }h4.am-h { font-size: 14px; margin: 16px 0 8px; font-weight: 600; display: flex; align-items: center; gap: 8px; }/* 定投模拟 / XIRR 测算工具 */
-  .calc-row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size: 14px; }.calc-row label { flex:0 0 72px; color:var(--text-3); }.calc-row input.num { width:96px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; }.calc-out { margin-top:10px; }.co-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-2); font-size: 14px; }.co-row span { color:var(--text-3); }.co-row b { font-variant-numeric:tabular-nums; }.xr-row { display:flex; gap:6px; align-items:center; margin:5px 0; }.xr-row .xr-date { flex:0 0 132px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size: 14px; }.xr-row .xr-amt { flex:1; min-width:0; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; text-align:right; }.xr-row .xr-dir { padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size: 14px; }h4.am-h .n { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; background: var(--accent); color: #fff; border-radius: 6px; font-size: 12px; font-weight: 700; }.am-toggle { display: flex; gap: 6px; margin-bottom: 8px; }.am-toggle button { border: 1px solid var(--border-strong); background:var(--surface); border-radius: 8px; padding: 4px 13px; font-size: 14px; cursor: pointer; font-family: inherit; }.am-toggle button.on { background: var(--accent); color: #fff; border-color: var(--accent); }.am-empty { padding: 28px 18px; text-align: center; color: var(--text-3); font-size: 14px; line-height: 2; }table.am-t { width: 100%; border-collapse: collapse; font-size: 14px; }table.am-t th, table.am-t td { padding: 6px 7px; text-align: left; border-bottom: 1px solid var(--border-2); }table.am-t th { color: var(--text-3); font-weight: 500; font-size: 12px; }.am-inline .pos { color: var(--up); }.am-inline .neg { color: var(--down); }.am-inline .zero { color: var(--text-3); }.am-tag { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 12px; background: var(--border-3); color: var(--text-2); }.am-tag.st { background: var(--up-bg); color: var(--up); }.am-tag.eq { background: var(--accent-soft); color: var(--accent); }.am-tag.pcb { background: var(--warn-bg); color: #b8760a; }.am-tag.ch { background: var(--down-bg); color: #0f6e56; }.am-foot { margin-top: 12px; font-size: 14px; }/* 清仓列表：卡片式布局（替代 13 列宽表格） */
+  .calc-row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size: 14px; }.calc-row label { flex:0 0 72px; color:var(--text-3); }.calc-row input.num { width:96px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; }.calc-out { margin-top:10px; }.co-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed var(--border-2); font-size: 14px; }.co-row span { color:var(--text-3); }.co-row b { font-variant-numeric:tabular-nums; }.xr-row { display:flex; gap:6px; align-items:center; margin:5px 0; }.xr-row .xr-date { flex:0 0 132px; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size: 14px; }.xr-row .xr-amt { flex:1; min-width:0; padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; text-align:right; }.xr-row .xr-dir { padding:4px 6px; border:1px solid var(--border-strong); border-radius:7px; font-size: 14px; }h4.am-h .n { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; background: var(--accent); color: #fff; border-radius: 6px; font-size: 12px; font-weight: 700; }.am-toggle { display: flex; gap: 6px; margin-bottom: 8px; }.am-toggle button { border: 1px solid var(--border-strong); background:var(--surface); border-radius: 8px; padding: 4px 13px; font-size: 14px; cursor: pointer; font-family: inherit; }.am-toggle button.on { background: var(--accent); color: #fff; border-color: var(--accent); }.am-empty { padding: 28px 18px; text-align: center; color: var(--text-3); font-size: 14px; line-height: 2; }table.am-t { width: 100%; border-collapse: separate; border-spacing:0; font-size: 14px; }table.am-t th, table.am-t td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border-2); }table.am-t th { color: var(--text-3); font-weight: 500; font-size: 12px; padding: 8px 8px; }table.am-t tbody tr { transition:background .12s; }table.am-t tbody tr:hover { background:var(--accent-soft); }table.am-t tbody tr:active { background:var(--surface-2); }.am-inline .pos { color: var(--up); }.am-inline .neg { color: var(--down); }.am-inline .zero { color: var(--text-3); }.am-tag { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 12px; background: var(--border-3); color: var(--text-2); }.am-tag.st { background: var(--up-bg); color: var(--up); }.am-tag.eq { background: var(--accent-soft); color: var(--accent); }.am-tag.pcb { background: var(--warn-bg); color: #b8760a; }.am-tag.ch { background: var(--down-bg); color: #0f6e56; }.am-foot { margin-top: 12px; font-size: 14px; }/* 清仓列表：卡片式布局（替代 13 列宽表格） */
   .liq-list { display: flex; flex-direction: column; gap: 10px; }.liq-row { background: var(--surface-2); border: 1px solid var(--border-3); border-radius: 10px; padding: 10px 12px; transition: box-shadow .15s; }@media (hover: hover) { .liq-row:hover {  box-shadow: 0 2px 10px rgba(0,0,0,.06);  } }
 .liq-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }.liq-nm { font-weight: 600; font-size: 14px; color: var(--text); line-height: 1.35; flex: 1; min-width: 0; word-break: break-word; }.liq-date { font-size: 12px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }.liq-body { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 12px; margin-bottom: 6px; }.liq-metric { display: flex; flex-direction: column; gap: 1px; }.liq-lbl { font-size: 12px; color: var(--text-3); }.liq-val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }.liq-highlight .liq-val { font-size: 15px; }.liq-foot { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }.liq-meta { }.liq-hold { margin-left: auto; font-style: italic; }.liq-hold .pos { color: var(--up); }.liq-hold .neg { color: var(--down); }.liq-sub { font-variant-numeric: tabular-nums; }.liq-action { margin-top: 6px; text-align: right; }.liq-impact { margin-top:14px; padding:12px 14px; background:var(--surface-2); border:1px solid var(--border-3); border-radius:10px; }.liq-impact .lbl { margin:0 0 8px; font-size: 14px; color:var(--text-3); font-weight:600; }.liq-imp-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; font-size: 14px; }.liq-imp-cat { flex:0 0 84px; color:var(--text-2); }.liq-imp-bar { flex:1; height:9px; background:var(--border-3); border-radius:999px; overflow:hidden; }.liq-imp-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:999px; }.liq-imp-val { flex:0 0 auto; color:var(--text-2); font-variant-numeric:tabular-nums; }.am-foot a { color: var(--accent); }.cmp-bar { margin-top: 6px; }
 /* 清仓分析 · 持仓周期分布：放宽类别列，避免「超短线 <30天」被挤换行 */
@@ -892,6 +907,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     max-height: 85vh !important;
     border-radius: 12px !important;
   }
+  .at-pop { padding: 14px !important; }
 
   /* 移动端持仓表格：列可配置（跟随「≡ 列」开关）+ 列多时横向滚动；基金名列固定左侧 */
   .home-ctable-wrap{ background:var(--surface); margin:0; }
@@ -974,9 +990,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
   /* 11. 手动维护快照：4列表格改卡片式单列 */
   .am-t, .am-t tbody, .am-t tr, .am-t th, .am-t td { display: block !important; width: 100% !important; box-sizing: border-box !important; }
-  .am-t tr { margin-bottom: 8px !important; background: var(--surface-2) !important; border-radius: 10px !important; padding: 8px 10px !important; }
+  .am-t tr { margin-bottom: 10px !important; background: var(--surface-2) !important; border-radius: 12px !important; padding: 10px 12px !important; }
   .am-t th { border: none !important; padding: 4px 0 2px !important; font-size: 12px !important; color: var(--text-3) !important; }
-  .am-t td { border: none !important; padding: 2px 0 6px !important; }
+  .am-t td { border: none !important; padding: 3px 0 6px !important; }
   .am-t td input { width: 100% !important; max-width: none !important; }
 
   /* 12. 交易流水表单：多列改成单列全宽 */
@@ -3949,19 +3965,30 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .te-foot .btn { flex:1; padding:14px; border-radius:14px; font-size:16px; font-weight:700; }
 
   /* ===== 移动端交易卡片重设计 ===== */
-  .tr-ios .tx-list{ margin:0; gap:8px; display:flex; flex-direction:column; }
-  .tr-ios .tx-card{ background:var(--surface); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.04),0 0 1px rgba(0,0,0,.06); padding:14px 16px; margin-bottom:0; cursor:pointer; transition:background .15s; position:relative; }
-  .tr-ios .tx-card:active{ background:var(--surface-2); }
+  .tr-ios .tx-list{ margin:0; gap:12px; display:flex; flex-direction:column; }
+  .tr-ios .tx-card{ background:var(--surface); border-radius:14px; box-shadow:0 2px 6px rgba(0,0,0,.05),0 0 1px rgba(0,0,0,.08); padding:14px 16px; margin-bottom:0; cursor:pointer; transition:all .15s; position:relative; border:1px solid var(--border-2); }
+  .tr-ios .tx-card:active{ background:var(--surface-2); transform:scale(.98); }
   .tr-ios .tx-card.cancelled{ opacity:.45; }
-  .tr-ios .tx-line1{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-  .tr-ios .tx-id{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:600; }
-  .tr-ios .tx-date{ font-size:12px; color:var(--text-3); }
+  .tr-ios .tx-card::after{ content:'›'; position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--text-3); opacity:.5; }
+  .tr-ios .tx-card .tx-card-inner{ padding-right:14px; }
+  .tr-ios .tx-line1{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .tr-ios .tx-id{ display:flex; align-items:center; gap:7px; font-size:14px; font-weight:600; }
+  .tr-ios .dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .tr-ios .dot.buy{ background:var(--up); }
+  .tr-ios .dot.sell{ background:var(--down); }
+  .tr-ios .tx-id.buy{ color:var(--up); }
+  .tr-ios .tx-id.sell{ color:var(--down); }
+  .tr-ios .tx-date{ font-size:13px; color:var(--text-3); }
   .tr-ios .tx-line2{ display:flex; justify-content:space-between; align-items:flex-end; }
   .tr-ios .tx-amount{ font-size:20px; font-weight:700; letter-spacing:-.01em; }
-  .tr-ios .tx-sub{ font-size:12px; color:var(--text-3); margin-top:2px; }
+  .tr-ios .tx-sub{ font-size:13px; color:var(--text-3); margin-top:3px; }
   .tr-ios .tx-right{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
   .tr-ios .tx-lock-icon{ font-size:11px; color:var(--text-3); background:var(--surface-2); padding:3px 7px; border-radius:6px; white-space:nowrap; }
-  .tr-ios .tx-note{ font-size:11px; color:var(--text-3); margin-top:3px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tr-ios .tx-note{ font-size:12px; color:var(--text-3); margin-top:4px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tr-ios .tx-conf{ font-size:12px; padding:4px 10px; }
+  /* 交易记录头部「+ 记一笔」按钮 */
+  .tx-add-btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:5px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .tx-add-btn:active{ opacity:.8; }
   /* 移除旧的 tx-ops 和 tx-status 在卡片内的显示 */
   .tr-ios .tx-card .tx-ops, .tr-ios .tx-card .tx-status{ display:none; }
 
@@ -7980,7 +8007,7 @@ function buildTradeSection(f){
   const tradeMeta = `${tr.length} 笔 · 买入${_tc.buy} · 卖出${_tc.sell}${_tc.conv?(' · 转换'+_tc.conv):''}${_tc.oth?(' · 其他'+_tc.oth):''}`;
   if(isMobile()){
     h+=`<div class="card trade-section">`;
-    h+=`<div class="sec-head"><h2>${tradeHead}</h2><span class="hint">${tradeMeta}</span></div>`;
+    h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn" onclick="event.stopPropagation();addTradeMenu()">＋ 记一笔</button></div></div>`;
     if(tr.length){
       h+=`<div class="tx-list">`;
       tr.forEach(t=>{
@@ -7995,11 +8022,11 @@ function buildTradeSection(f){
         const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'待确认';
         const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'';
         const lockIcon=(t.locked!==false)?'<span class="tx-lock-icon">🔒</span>':'';
-        h+=`<div class="tx-card${_canc?' cancelled':''}" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${lockIcon}${_confBadge}</div></div></div>`;
+        h+=`<div class="tx-card${_canc?' cancelled':''}" onclick="openTradeEdit(${i})"><div class="tx-card-inner"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${lockIcon}${_confBadge}</div></div></div></div>`;
       });
       h+=`</div>`;
     } else {
-      h+=`<p class="hint" style="margin:0 0 6px">还没有交易记录。可在下方或右下角 + 记一笔。</p>`;
+      h+=`<p class="hint" style="margin:0 0 6px">还没有交易记录，点「＋ 记一笔」添加。</p>`;
     }
     h+=`</div>`;
   } else {
@@ -8263,6 +8290,8 @@ function openTradeEdit(idx){
   var mc=g('teMoreChev'); if(mc) mc.textContent='▾';
   // 显示弹窗
   var mask=g('tradeEditMask'); if(mask) mask.classList.add('show');
+  // 自动聚焦金额输入
+  setTimeout(function(){ try{ var _el=document.getElementById('te-amount'); if(_el) _el.focus(); }catch(e){} },350);
 }
 function closeTradeEdit(){ var m=document.getElementById('tradeEditMask'); if(m) m.classList.remove('show'); _editTradeIdx=-1; }
 function teSetType(v){
@@ -8531,18 +8560,29 @@ function openAllTrades(){
     box.innerHTML="<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3></div><div class=\"at-empty\">还没有任何交易记录。<br>点「⋯ 更多 → + 记一笔交易」开始记录第一笔。</div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
     box.style.display='flex'; return;
   }
+  const _mobile=isMobile();
   const rows=list.map(function(t){
     const enc=encodeURIComponent(t.name||'');
     const acc=accOf(t);
     const bg=t.type==='sell'?'var(--down-bg)':'var(--up-bg)';
     const col=t.type==='sell'?'var(--down)':'var(--up)';
+    const confLbl=confirmLabel(t.confirm);
+    const confCls=confirmClass(t.confirm);
+    if(_mobile){
+      const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
+      const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'待确认';
+      const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'';
+      return "<div class='at-card' onclick='atGo(\""+enc+"\",\""+esc(acc)+"\")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
+    }
     return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class=\"pending-nav\">待填</span>')+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
   }).join('');
-  box.innerHTML="<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><table class=\"am-t at-table\"><thead><tr><th>基金 / 账户</th><th>日期</th><th>方向</th><th class=\"num\">金额</th><th class=\"num\">净值</th><th class=\"num\">费用</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
+  box.innerHTML=_mobile
+    ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"
+    :"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><table class=\"am-t at-table\"><thead><tr><th>基金 / 账户</th><th>日期</th><th>方向</th><th class=\"num\">金额</th><th class=\"num\">净值</th><th class=\"num\">费用</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
   box.style.display='flex';
 }
 function closeAllTrades(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('allTradesModal'); if(b) b.style.display='none'; }
-function atFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#allTradesModal .at-row').forEach(function(r){ r.style.display=(!q||r.textContent.includes(q))?'':'none'; }); }
+function atFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#allTradesModal .at-row, #allTradesModal .at-card').forEach(function(r){ r.style.display=(!q||r.textContent.includes(q))?'':'none'; }); }
 function atGo(nm,acc){ closeAllTrades(); goDetail(nm,acc); }
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;

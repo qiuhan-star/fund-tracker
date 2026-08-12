@@ -11729,6 +11729,10 @@ function renderSyncCfg(){
 .acc-prompt .ap-btn{ flex:1; padding:11px 0; border:none; border-radius:10px; font-size:16px; font-family:inherit; font-weight:600; background:var(--bg); color:var(--text); cursor:pointer; }
 .acc-prompt .ap-btn.primary{ background:var(--accent); color:#fff; }
 .acc-prompt .ap-btn.danger{ background:#ff3b30; color:#fff; }
+/* 删除/确认对话框：z-index 提到 2000，高于其它 .sm-mask(1000)/dca/prof/cat(1200)/编辑弹窗(1300)。
+   关键点：detailTradeModal 是运行时 append 到 body 的，DOM 顺序在 #ftDialogMask 之后、且同为 1000，会把确认框盖住，
+   导致从「交易记录」弹窗里点删除时确认框被压在底下、点「好」没反应。提到 2000 解决。 */
+#ftDialogMask { z-index:2000; }
 .acc-sel-list{display:flex;flex-direction:column;gap:8px;}
 .acc-sel-row{display:flex;align-items:center;gap:8px;padding:12px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border-3);cursor:pointer;}
 .acc-sel-row.on{background:#F0F6FF;border-color:#cfe0ff;}
@@ -11785,7 +11789,7 @@ function renderSyncCfg(){
     <div class="ap-msg" id="ftDialogMsg"></div>
     <div class="ap-btns">
       <button class="ap-btn" id="ftDialogCancel" onclick="_ftDialogCancel()">取消</button>
-      <button class="ap-btn primary" onclick="_ftDialogOk()">好</button>
+      <button class="ap-btn primary" id="ftDialogOk" onclick="_ftDialogOk()">好</button>
     </div>
   </div>
 </div>

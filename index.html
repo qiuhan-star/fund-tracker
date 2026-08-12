@@ -10340,7 +10340,8 @@ function parseCSV(text, defaultAcc, forceAcc){
     if(!hit){ hit=grp.find(e=> !e.nav || normNum(e.nav)!==normNum(t.nav)); if(hit){ if(t.nav) hit.nav=t.nav; if(t.shares) hit.shares=t.shares; if(t.fee) hit.fee=t.fee; } }
     if(hit) dup++; else fresh.push(t);
   }
-  trades=trades.concat(fresh);
+  // 注意：解析阶段不要写入 trades —— 写入统一由 commitImpPreview 在确认导入时执行一次，
+  // 否则文件导入会先被这里写入一遍、commit 再追加一遍，导致每笔交易翻倍。
   return {count:fresh.length, dup, rows:fresh};
 }
 function escHtml(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){ return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;'; }); }

@@ -1388,7 +1388,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .trade-section .tx-amount { font-size:20px; font-weight:700; letter-spacing:-.01em; color:var(--text); }
 .trade-section .tx-sub { font-size:13px; color:var(--text-3); margin-top:3px; }
 .trade-section .tx-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
-.trade-section .tx-lock-icon { font-size:11px; color:var(--text-3); background:var(--surface-2); padding:3px 7px; border-radius:6px; white-space:nowrap; }
+.trade-section .tx-lock-icon { font-size:11px; color:var(--text-3); background:var(--surface-2); padding:3px 7px; border-radius:6px; white-space:nowrap; cursor:pointer; }
+.trade-section .tx-lock-icon:active { background:var(--border-2); }
 .trade-section .tx-note { font-size:12px; color:var(--text-3); margin-top:4px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .trade-section .tx-expand { width: 100%; margin: 10px 0 4px; }
 @media (min-width: 768px) {
@@ -8041,8 +8042,8 @@ function buildTradeSection(f){
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
         const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'待确认';
         const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'';
-        const lockIcon=(t.locked!==false)?'<span class="tx-lock-icon">🔒</span>':'';
-        h+=`<div class="tx-card${_canc?' cancelled':''}" onclick="openTradeEdit(${i})"><div class="tx-card-inner"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${lockIcon}${_confBadge}</div></div></div></div>`;
+        const lockIcon=(t.locked!==false)?'<span class="tx-lock-icon" onclick="event.stopPropagation();toggleTradeLock('+i+')" title="点击解锁/锁定">🔒</span>':'<span class="tx-lock-icon" onclick="event.stopPropagation();toggleTradeLock('+i+')" title="点击锁定">🔓</span>';
+        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}" onclick="openTradeEdit(${i})"><div class="tx-card-inner"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${lockIcon}${_confBadge}</div></div></div></div>`;
       });
       h+=`</div>`;
     } else {
@@ -8277,6 +8278,47 @@ function openTradeQuickFor(name){
 }
 
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
+
+// ---------- 锁定/解锁交易 ----------
+function toggleTradeLock(idx){
+  if(!trades[idx]) return;
+  trades[idx].locked = (trades[idx].locked===false)?true:false;
+  saveTrades();
+  toast(trades[idx].locked?'已锁定':'已解锁');
+  refreshDetailTradesByName(trades[idx].name);
+  renderCurrentView();
+}
+
+// ---------- 右滑编辑（触摸手势） ----------
+(function(){
+  var _touchStartX=0, _touchStartY=0, _touchStartTime=0, _activeCard=null, _threshold=60;
+  document.addEventListener('touchstart', function(e){
+    var card=e.target.closest('.tx-card[data-tx-idx]');
+    if(card){ _touchStartX=e.touches[0].clientX; _touchStartY=e.touches[0].clientY; _touchStartTime=Date.now(); _activeCard=card; }
+  }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    if(!_activeCard) return;
+    var dx=e.touches[0].clientX-_touchStartX, dy=Math.abs(e.touches[0].clientY-_touchStartY);
+    if(Math.abs(dy)>Math.abs(dx)) _activeCard=null;
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if(!_activeCard) return;
+    var dx=e.changedTouches[0].clientX-_touchStartX, dt=Date.now()-_touchStartTime;
+    if(dx>_threshold && dt<400 && Math.abs(dx)>Math.abs(e.changedTouches[0].clientY-_touchStartY)){
+      var idx=parseInt(_activeCard.dataset.txIdx,10);
+      if(!isNaN(idx)){ e.preventDefault(); openTradeEdit(idx); }
+    }
+    _activeCard=null;
+  }, {passive:true})();
+})();
+
+// ---------- 记一笔：关闭详情弹窗再打开（避免嵌套遮罩） ----------
+var _origAddTradeMenu=addTradeMenu;
+addTradeMenu=function(){
+  var dm=document.getElementById('detailTradeModal');
+  if(dm && dm.classList.contains('show')) closeDetailTrades();
+  _origAddTradeMenu();
+};
 
 // ---------- 编辑交易弹窗 ----------
 var _editTradeIdx=-1;

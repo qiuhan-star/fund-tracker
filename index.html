@@ -6058,7 +6058,7 @@ function applyStreak(code, days, dir){
 
 // ---------- Group-By 分组渲染（动态子标题，避免硬编行分组）----------
 function groupSortKey(dim,k){
-  if(dim==='asset'){ const o=['股票','债券','商品·黄金','货币·理财','混合']; const i=o.indexOf(k); return i<0?99:i; }
+  if(dim==='asset'){ const o=['股票型','债券','商品·黄金','货币·理财','混合']; const i=o.indexOf(k); return i<0?99:i; }
   if(dim==='market'){ return k==='国内'?0:1; }
   return 0; // 账户：保持原顺序
 }
@@ -7291,13 +7291,13 @@ function guessCat(name){
   return '其他';
 }
 // ---------- 资产大类 / 市场区域（与「主题分类 cat」解耦，供 Group-By 维度）----------
-// 资产大类：股票 / 债券 / 商品·黄金 / 货币·理财 / 混合（五档）
+// 资产大类：股票型 / 债券 / 商品·黄金 / 货币·理财 / 混合（五档）
 function guessAsset(name){
   if(/混合|灵活配置/.test(name)) return '混合';
   if(/债券|纯债|信用债|利率债|中短债|可转债|债基/.test(name)) return '债券';
   if(/黄金|金ETF|上海金/.test(name)) return '商品·黄金';
   if(/货币|余额宝|现金管理|活期宝|理财宝/.test(name)) return '货币·理财';
-  return '股票';
+  return '股票型';
 }
 // 市场区域：海外 / 国内（海外=QDII/港美股等跨市场）
 function guessMarket(name){
@@ -7818,8 +7818,8 @@ function renderRisk(){
   const top3pct=top3mv/total*100;
   const maxpct=(maxShare.mv||0)/total*100;
   const hhi=list.reduce(function(a,f){const p=(f.mv||0)/total*100; return a+p*p;},0);
-  const assets={}; list.forEach(function(f){const a=f.asset||'股票'; assets[a]=(assets[a]||0)+(f.mv||0);});
-  const ASSET_COL={ '股票':'#ef4444','债券':'#10b981','商品·黄金':'#f59e0b','货币·理财':'#3b82f6','混合':'#8b5cf6' };
+  const assets={}; list.forEach(function(f){const a=f.asset||'股票型'; assets[a]=(assets[a]||0)+(f.mv||0);});
+  const ASSET_COL={ '股票型':'#ef4444','债券':'#10b981','商品·黄金':'#f59e0b','货币·理财':'#3b82f6','混合':'#8b5cf6' };
   const catTop=(getCatAllocation()||[]).slice(0,3);
   const triggered=[];
   if(maxpct>=cfg.maxShare) triggered.push('单一基金「'+maxShare.name+'」占比 '+maxpct.toFixed(1)+'%，偏高');

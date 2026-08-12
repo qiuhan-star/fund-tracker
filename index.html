@@ -8052,7 +8052,7 @@ function buildTradeSection(f){
   const tradeMeta = `${tr.length} 笔 · 买入${_tc.buy} · 卖出${_tc.sell}${_tc.conv?(' · 转换'+_tc.conv):''}${_tc.oth?(' · 其他'+_tc.oth):''}`;
   if(isMobile()){
     h+=`<div class="card trade-section">`;
-    h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn" onclick="event.stopPropagation();addTradeMenu()">＋ 记一笔</button></div></div>`;
+    h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn" onclick="event.stopPropagation();openTradeQuickFor('${encodeURIComponent(f.name)}')">＋ 记一笔</button></div></div>`;
     if(tr.length){
       h+=`<div class="tx-list">`;
       tr.forEach(t=>{

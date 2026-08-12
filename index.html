@@ -1374,7 +1374,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .trade-section .tx-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; position:relative; cursor:pointer; }
 .trade-section .tx-card:active { background:var(--surface-2); }
 .trade-section .tx-card.cancelled { opacity:.5; }
-.trade-section .tx-card::after { content:'›'; position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--text-3); opacity:.45; }
+.trade-section .tx-card::after { content:''; display:none; }
 .trade-section .tx-card .tx-card-inner { padding-right:20px; }
 .trade-section .tx-line1 { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 .trade-section .tx-id { display:flex; align-items:center; gap:7px; font-size:14px; font-weight:600; }
@@ -3983,7 +3983,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* ===== 编辑交易弹窗 ===== */
   #tradeEditMask { align-items:flex-end; padding:0; }
   #tradeEditMask .sm-modal { position:relative; }
-  #tradeEditSheet.sm-modal { width:100%; max-width:412px; margin:0 auto; height:auto; max-height:92vh; border-radius:24px 24px 0 0; display:flex; flex-direction:column; overflow:hidden; }
+  #tradeEditSheet.sm-modal { width:100%; max-width:100%; margin:0; height:100%; max-height:100%; border-radius:0; display:flex; flex-direction:column; overflow:hidden; }
+  #tradeEditSheet .tq-handle { display:none; }
   #tradeEditSheet .sm-head { display:none; }
   .te-fund-label { padding:4px 20px 8px; font-size:14px; font-weight:600; color:var(--text-2); word-break:break-all; }
   .te-foot { position:absolute; bottom:0; left:0; right:0; padding:12px 20px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent 0%, var(--surface) 25%); display:flex; gap:12px; align-items:center; }
@@ -4175,7 +4176,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <div class="tq-handle"></div>
       <div class="tq-head">
         <div class="tq-title">编辑交易</div>
-        <button class="tq-close" onclick="closeTradeEdit()">✕</button>
+        <button class="tq-close" onclick="closeTradeEdit()">‹</button>
       </div>
       <div class="te-fund-label" id="te-fund-name"></div>
       <div class="tq-body">
@@ -8312,23 +8313,25 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
     if(!_activeCard) return;
     var dx=e.touches[0].clientX-_touchStartX, dy=Math.abs(e.touches[0].clientY-_touchStartY);
     if(Math.abs(dy)>Math.abs(dx)*1.2){ _activeCard=null; return; }
-    if(dx>0){
-      var inner=_activeCard.querySelector('.tx-card-inner');
-      if(inner) inner.style.transform='translateX('+Math.min(dx,_threshold+80)+'px)';
-    }
+    var inner=_activeCard.querySelector('.tx-card-inner');
+    if(!inner) return;
+    // 已展开时基准为 -130，未展开为 0；左滑(负)展开、右滑(正)收起，夹在 [-(阈值+80), 0]
+    var base=(_activeCard===_openedCard)?-130:0;
+    var next=Math.max(-(_threshold+80), Math.min(0, base+dx));
+    inner.style.transform='translateX('+next+'px)';
   }, {passive:true});
   document.addEventListener('touchend', function(e){
     if(!_activeCard) return;
     var dx=e.changedTouches[0].clientX-_touchStartX;
     var inner=_activeCard.querySelector('.tx-card-inner');
-    if(dx>_threshold && inner){
-      // 滑出操作按钮
-      if(_openedCard && _openedCard!==_activeCard){ var prevInner=_openedCard.querySelector('.tx-card-inner'); if(prevInner) prevInner.style.transform=''; }
-      inner.style.transform='translateX(130px)';
+    if(!inner){ _activeCard=null; return; }
+    var open=(dx < -_threshold);  // 左滑超过阈值 → 展开右侧编辑/删除按钮
+    if(open){
+      if(_openedCard && _openedCard!==_activeCard){ var p=_openedCard.querySelector('.tx-card-inner'); if(p) p.style.transform=''; }
+      inner.style.transform='translateX(-130px)';
       _openedCard=_activeCard;
     } else {
-      // 回弹
-      if(inner) inner.style.transform='';
+      inner.style.transform='translateX(0)';
       if(_activeCard===_openedCard) _openedCard=null;
     }
     _activeCard=null;

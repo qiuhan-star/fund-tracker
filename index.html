@@ -4411,7 +4411,7 @@ function accountListOrdered(){
 function renderScopeBar(){
   const menu=document.getElementById('accMenu'); if(!menu) return;
   // 与仪表盘「基金数/胜率」卡片同口径：只算当前持有（份额=0 且非债券 且 无市值 的清仓不计入）
-  const isHold=f=>!(f.shares===0 && !f.isBond && !(f.mv>0));
+  const isHold=f=>!(f.shares===0 && !f.isBond && !f.pending && !(f.mv>0));
   const cntOf=a=> (a==='all')? _allRaw.filter(isHold).length : _allRaw.filter(f=>effAccount(f.account)===a && isHold(f)).length;
   const list=accountListOrdered();
   let html='<div class="acc-menu-head"><span>账户选择</span></div>';
@@ -5791,7 +5791,7 @@ function renderHomeList(){
   if(curAccount && curAccount!=='全部') list=list.filter(f=> (effAccount(f.account)||effAccount('本人账户'))===curAccount || (effAccount(f.acc)||effAccount('本人账户'))===curAccount);
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   // 已清仓（净份额=0 且无市值）不进活跃持仓列表，只在「清仓」Tab 展示
-  list=list.filter(f=> !(f.shares===0 && !f.isBond && !(f.mv>0)) );
+  list=list.filter(f=> !(f.shares===0 && !f.isBond && !f.pending && !(f.mv>0)) );
   // 动态标题：跟随当前账户
   const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=(curAccount==='全部'||!curAccount)?'全部持仓':(effAccount(curAccount)+'持仓');
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q) || (f.cat||'').toLowerCase().includes(q)); }
@@ -5951,6 +5951,15 @@ function effectiveDayChg(nc){
   if(!mkt && nc.navChg!=null) return nc.navChg;
   if(nc.gszzl!=null) return nc.gszzl;
   return nc.navChg!=null?nc.navChg:null;
+}
+// 详情页「今日/昨日收益」标签：盘中(有实时估算)或确认净值日期=今天 → 今日收益；收盘且数据已是昨天 → 昨日收益（对齐支付宝自动翻转）。
+function dayGainLabel(nc){
+  if(nc && isMarketOpen(new Date()) && nc.gszzl!=null) return '今日收益';
+  const d=nc&&nc.navChgDate;
+  const t=new Date();
+  const today=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2);
+  if(d && String(d).slice(0,10)===today) return '今日收益';
+  return '昨日收益';
 }
 // 当日收益（今天一天盈亏）：收盘后用官方 navChg，盘中用 gszzl。列表子项与账户总卡片共用此函数，保证「账户总当日收益 = 各子项之和」。
 function dayGainOf(f){ const nc=navCache[f.name]||{}; const chg=effectiveDayChg(nc); if(chg==null||f.mv==null) return null; return f.mv - f.mv/(1+chg/100); }
@@ -6143,7 +6152,7 @@ function renderOverview(){
   const total=fundsView.reduce((a,f)=>a+f.mv,0);
   const realized=fundsView.reduce((a,f)=>a+(f.realized||0),0);
   const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length, flat=fundsView.filter(f=>f.ret===0).length;
-  const cnt=fundsView.length; const _holdF=f=>!(f.shares===0 && !f.isBond && !(f.mv>0)); const cntHold=fundsView.filter(_holdF).length;
+  const cnt=fundsView.length; const _holdF=f=>!(f.shares===0 && !f.isBond && !f.pending && !(f.mv>0)); const cntHold=fundsView.filter(_holdF).length;
   let principal=0;
   // f.cost 已是正确成本基准：有逐笔交易走 FIFO，纯快照回退 costPx×份额（buildFundsView 算好），直接求和即可，勿用交易流重算（会漏掉无交易流的快照基金）
   fundsView.forEach(f=>{ principal+=(f.cost||0); });
@@ -7218,14 +7227,15 @@ function buildFundsView(){
     const cat=snap?snap.cat:(tr[0]?guessCat(tr[0].name):guessCat(name));
     let f;
     if(tr.length){
-      let shares=0,cost=0,firstDate=null,realized=0,lots=[],lastNav=0;  // lots：严格 FIFO 批次 {sh,cp}；lastNav：缺净值成交的近似净值
+      let shares=0,cost=0,firstDate=null,realized=0,lots=[],lastNav=0,invested=0;  // lots：严格 FIFO 批次 {sh,cp}；lastNav：缺净值成交的近似净值；invested：累计买入/活动金额（份额或净值缺失时用于反推/兜底）
+      const liveNav=(navCache[name]&&navCache[name].nav>0)?navCache[name].nav:0;  // 联网实时净值回退：CSV 该笔净值为空时，用它反推份额（避免黄金等「金额有、净值空」的基金算不出份额）
       const sortedTr=tr.filter(t=>t.confirm!=='cancelled').sort((a,b)=>a.date.localeCompare(b.date));
       sortedTr.forEach(t=>{
         const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
         // 份额：手动份额优先 → 否则金额÷净值 → 净值缺失且金额>0 时，用「该日期之前最近一次买入净值」近似（转换常不带净值）
-        let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
+        let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:(liveNav>0?amt/liveNav:0));
         if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
-        if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; /* 手动份额优先，否则金额÷净值（T+1 待确认） */ }
+        if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
         else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); const sellPx=nav>0?nav:lastNav; realized+=(sellPx-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }
         else if(ty==='dividend'){ if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
         else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
@@ -7246,6 +7256,9 @@ function buildFundsView(){
       if(shares===0 && snap && !hasSell){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
         f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(navCache[name]?navCache[name].nav:null)),trades:tr,realized:0};
+      } else if(shares===0 && invested>0 && !hasSell){
+        // 待补全：有投入金额但份额/净值均缺失，且联网也查不到净值（离线 / 名称未匹配到代码）→ 成本认投入、市值待补全，避免被「份额=0 即隐藏」规则吞掉
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:0,cost:invested,mv:null,profit:null,ret:null,days:null,nav:null,costPx:null,trades:tr,realized:0,pending:true};
       } else {
         const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:0);
         const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
@@ -7914,7 +7927,7 @@ function headerHtml(f){
       <div class="dh-sec">金额（元）</div>
       <div class="dh-summary-amount" id="dhMv">${M(f.mv)}</div>
       <div class="dh-subgrid">
-        <div class="dh-subitem"><div class="k">今日收益</div><div class="v ${dayCls}" id="dhDayGain">${detailDayGainText(f)}</div></div>
+        <div class="dh-subitem"><div class="k" id="dhDayGainK">${dayGainLabel(navCache[f.name]||{})}</div><div class="v ${dayCls}" id="dhDayGain">${detailDayGainText(f)}</div></div>
         <div class="dh-subitem"><div class="k">持有收益</div><div class="v ${pcls}" id="dhProfit">${f.profit>=0?'+':''}${M(f.profit)}</div></div>
         <div class="dh-subitem"><div class="k">持有收益率</div><div class="v ${pcls}" id="dhRet">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></div>
       </div>
@@ -7941,6 +7954,7 @@ function updateDetailHeader(f){
   set('dhCost',M(f.cost));
   set('dhShares', f.shares!=null&&f.shares>0?fmt(f.shares):'—');
   const day=document.getElementById('dhDayGain'); if(day){ const v=dayGainOf(f); day.textContent=v==null?'—':((v>=0?'+':'')+M(v)); day.classList.remove('pos','neg','zero'); day.classList.add(v==null?'zero':(v>0?'pos':v<0?'neg':'zero')); }
+  const kl=document.getElementById('dhDayGainK'); if(kl) kl.textContent=dayGainLabel(navCache[f.name]||{});
   const e=document.getElementById('dhRet'); if(e){e.textContent=(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'; e.classList.remove('pos','neg','zero'); e.classList.add(f.ret>0?'pos':f.ret<0?'neg':'zero');}
   const e2=document.getElementById('dhProfit'); if(e2){e2.textContent=(f.profit>=0?'+':'')+M(f.profit); e2.classList.remove('pos','neg','zero'); e2.classList.add(f.profit>0?'pos':f.profit<0?'neg':'zero');}
   const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.classList.remove('pos','neg'); e3.classList.add(f.realized>=0?'pos':'neg');}
@@ -8057,7 +8071,7 @@ function detailProfitPanelHtml(f){
     <div class="profit-grid">
       <div class="profit-cell"><div class="k">持有收益</div><div class="v ${f.profit>=0?'pos':'neg'}">${f.profit>=0?'+':''}${M(f.profit)}</div></div>
       <div class="profit-cell"><div class="k">已实现盈亏</div><div class="v ${f.realized>=0?'pos':'neg'}">${f.realized>=0?'+':''}${M(f.realized||0)}</div></div>
-      <div class="profit-cell"><div class="k">今日收益</div><div class="v ${dayCls}">${day==null?'—':((day>=0?'+':'')+M(day))}</div></div>
+      <div class="profit-cell"><div class="k">${dayGainLabel(navCache[f.name]||{})}</div><div class="v ${dayCls}">${day==null?'—':((day>=0?'+':'')+M(day))}</div></div>
     </div>
     <div class="profit-explain">累计盈亏 = 持有收益 + 已实现盈亏。持有收益是当前持仓的浮动盈亏，已实现盈亏是卖出后落袋的结果，今日收益按最新净值估算。</div>
   </div>`;

@@ -22,6 +22,14 @@
   }catch(e){}
 })();
 </script><link rel="manifest" href="blob:file:///2b840f79-e554-4bdc-b633-0f4979d5c0a6">
+<script>
+/* PWA 离线缓存：仅 https（含 Vercel 线上版）生效；本地 file:// 自动跳过，不报错 */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  });
+}
+</script>
 <title>本人账户基金追踪器 · Fund Tracker</title>
 <script src="pu-core.js"></script>
 <script>
@@ -4760,7 +4768,26 @@ function showRestoreModal(bk, done){
 
 let _quotaWarned=false;
 function lsSafeSet(key,val){ try{ localStorage.setItem(key,val); return true; }catch(e){ const name=(e&&e.name)||'', msg=(e&&e.message)||'', code=e&&e.code; const quota = name==='QuotaExceededError' || code===22 || code===1014 || name.indexOf('Quota')>=0 || msg.toLowerCase().indexOf('quota')>=0; if(quota && !_quotaWarned){ _quotaWarned=true; showQuotaBanner(); } else if(!quota){ console.error('localStorage 写入失败:',e); } return false; } }
-async function silentSave(){ (snaps||[]).forEach(s=>{ if(s&&s.account&&ACCOUNT_RENAME[s.account]) s.account=ACCOUNT_RENAME[s.account]; }); (trades||[]).forEach(t=>{ if(t&&t.account&&ACCOUNT_RENAME[t.account]) t.account=ACCOUNT_RENAME[t.account]; }); (dcaPlans||[]).forEach(p=>{ if(p&&p.account&&ACCOUNT_RENAME[p.account]) p.account=ACCOUNT_RENAME[p.account]; }); lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots,dcaPlans})); }
+let _silentSaveTimer=null;
+function _silentSaveWrite(){
+  _silentSaveTimer=null;
+  lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots,dcaPlans}));
+}
+function silentSave(){
+  // 账户重命名归一（轻量，立即执行，保持内存数据一致）
+  (snaps||[]).forEach(s=>{ if(s&&s.account&&ACCOUNT_RENAME[s.account]) s.account=ACCOUNT_RENAME[s.account]; });
+  (trades||[]).forEach(t=>{ if(t&&t.account&&ACCOUNT_RENAME[t.account]) t.account=ACCOUNT_RENAME[t.account]; });
+  (dcaPlans||[]).forEach(p=>{ if(p&&p.account&&ACCOUNT_RENAME[p.account]) p.account=ACCOUNT_RENAME[p.account]; });
+  // 重的 localStorage 写入做尾部防抖（~300ms）：避免每次按键都序列化全量数据导致界面卡顿/卡死
+  if(_silentSaveTimer) clearTimeout(_silentSaveTimer);
+  _silentSaveTimer=setTimeout(_silentSaveWrite, 300);
+}
+// 立即落盘（取消待执行的防抖写入）——供关键路径/关闭页面前调用，避免防抖窗口内丢数据
+function flushSilentSave(){ if(_silentSaveTimer){ clearTimeout(_silentSaveTimer); _silentSaveWrite(); } }
+if(typeof window!=='undefined'){
+  window.addEventListener('pagehide', flushSilentSave);
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') flushSilentSave(); });
+}
 function showQuotaBanner(){
   let b=document.getElementById('quotaBar');
   if(!b){ b=document.createElement('div'); b.id='quotaBar'; b.className='quota-bar'; document.body.appendChild(b); }
@@ -5753,7 +5780,6 @@ function bindDenseStickyFirstCol(root){
       for(var i=0;i<rows.length;i++){ var c=rows[i].children[0]; if(c) c.style.transform='translateX('+x+'px)'; }
     };
     scroll.addEventListener('scroll', apply, {passive:true});
-    (function loop(){ apply(); requestAnimationFrame(loop); })();
   });
 }
 function renderHomeList(){
@@ -6855,11 +6881,11 @@ function setBondNote(code,v){ if(!bondState.notes) bondState.notes={}; bondState
 function renderTrade(){
   captureFocus();
   const tb=document.querySelector('#tradeTable tbody'); if(!tb){ restoreFocus(); return; }
-  tb.innerHTML='';
   const types=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','份额拆分']];
+  const _rows=[];
   trades.forEach((t,i)=>{
     const isSplit=t.type==='split';
-    tb.innerHTML+=`<tr>
+    _rows.push(`<tr>
       <td><input data-fld="ht-name-${i}" value="${esc(t.name)}" oninput="trades[${i}].name=this.value;compute();silentSave()"></td>
       <td><select data-fld="ht-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
       <td><input data-fld="ht-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
@@ -6869,8 +6895,9 @@ function renderTrade(){
       <td class="num"><input data-fld="ht-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
       <td class="num"><input data-fld="ht-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
       <td><button class="del" onclick="trades.splice(${i},1);renderTrade();compute();silentSave()">✕</button></td>
-    </tr>`;
+    </tr>`);
   });
+  tb.innerHTML=_rows.join('');
   restoreFocus();
 }
 
@@ -12910,4 +12937,4 @@ function wtAttachSwipe(){
 </script>
 
 
-<script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000001=/CN_MarketDataService.getKLineData?symbol=sh000001&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sz399006=/CN_MarketDataService.getKLineData?symbol=sz399006&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000688=/CN_MarketDataService.getKLineData?symbol=sh000688&amp;scale=5&amp;ma=no&amp;datalen=120"></script><div class="light"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container light"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation light"></div><div id="toast" class="toast">已加基金自选 嘉实黄金</div></body></html>
+<script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000001=/CN_MarketDataService.getKLineData?symbol=sh000001&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sz399006=/CN_MarketDataService.getKLineData?symbol=sz399006&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000688=/CN_MarketDataService.getKLineData?symbol=sh000688&amp;scale=5&amp;ma=no&amp;datalen=120"></script><div id="toast" class="toast">已加基金自选 嘉实黄金</div></body></html>

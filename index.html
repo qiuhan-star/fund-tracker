@@ -663,6 +663,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sm-mask { padding:0; align-items:stretch; }
   .sm-modal.settings-modal, .sm-modal { width:100%; max-width:100%; height:100%; max-height:100%; border-radius:0; border:none; margin:0; }
   .sm-head { display:none; }
+  .trade-foot { display:flex; }
   .sm-body.settings-body { padding:0; overflow:hidden; flex:1; min-height:0; display:flex; }
   .settings-panel { padding:0; overflow:hidden; position:relative; display:block; width:100%; background:var(--surface-2); }
 
@@ -1431,8 +1432,12 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .profit-panel .profit-cell .v { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .profit-explain { margin:10px 0 0; padding:10px 12px; border-radius:10px; background:var(--surface-2); color:var(--text-2); font-size:13px; line-height:1.55; }
 .profit-explain b { color:var(--text); }
-.trade-modal .sm-body { padding:14px 16px 18px; overflow:auto; }
+.trade-modal { display:flex; flex-direction:column; }
+.trade-modal .sm-body { flex:1; min-height:0; padding:14px 16px 18px; overflow:auto; -webkit-overflow-scrolling:touch; }
 .trade-modal .trade-section { margin:0; box-shadow:none; border:none; padding:0; }
+.trade-foot { display:none; flex-shrink:0; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); background:var(--surface); border-top:1px solid var(--border); gap:12px; }
+.trade-foot .btn { flex:1; padding:13px; border-radius:14px; font-size:16px; font-weight:700; }
+.trade-foot .arr { font-size:20px; line-height:1; margin-right:2px; }
 @media (max-width:560px) {
   .dh-summary-amount { font-size: 28px; }
   .dh-subitem .v { font-size:15px; }
@@ -8136,8 +8141,22 @@ function ensureDetailTradeModal(){
   mask.innerHTML=`<div class="sm-modal trade-modal">
     <div class="sm-head"><h2>交易记录</h2><button class="sm-x" onclick="closeDetailTrades()">✕</button></div>
     <div class="sm-body"><div id="detailTradeModalBody"></div></div>
+    <div class="trade-foot"><button class="btn" onclick="closeDetailTrades()"><span class="arr">‹</span>返回</button></div>
   </div>`;
   document.body.appendChild(mask);
+  // 右滑返回：仅对手指落在交易卡片「之外」的横向右滑生效，避免与卡片左滑（露出编辑/删除）冲突
+  (function(){
+    var sx=0, sy=0, active=false;
+    mask.addEventListener('touchstart', function(e){
+      if(e.target.closest('.tx-card')){ active=false; return; }
+      sx=e.touches[0].clientX; sy=e.touches[0].clientY; active=true;
+    }, {passive:true});
+    mask.addEventListener('touchend', function(e){
+      if(!active) return; active=false;
+      var dx=e.changedTouches[0].clientX-sx, dy=Math.abs(e.changedTouches[0].clientY-sy);
+      if(dx>60 && dx>dy) closeDetailTrades(); // 横向右滑 → 返回
+    }, {passive:true});
+  })();
   return mask;
 }
 

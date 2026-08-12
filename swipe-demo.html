@@ -111,6 +111,9 @@
     var inner = card.querySelector('.tx-card-inner');
     var startX = 0, dx = 0, active = false;
 
+    var swipeEl = card.querySelector('.tx-swipe-actions');
+    var w = swipeEl ? swipeEl.offsetWidth : 130; // 按按钮实际宽度位移，避免编辑按钮被盖住
+
     card.addEventListener('touchstart', function (e) {
       if (e.target.closest('.tx-swipe-actions')) return;
       startX = e.touches[0].clientX; dx = 0; active = true;
@@ -120,8 +123,8 @@
     card.addEventListener('touchmove', function (e) {
       if (!active) return;
       dx = e.touches[0].clientX - startX;
-      var base = (card === openedCard) ? OPEN : 0;
-      var next = Math.max(OPEN - 80, Math.min(0, base + dx));
+      var base = (card === openedCard) ? -w : 0;
+      var next = Math.max(-(w + 80), Math.min(0, base + dx));
       inner.style.transform = 'translateX(' + next + 'px)';
     }, { passive: true });
 
@@ -129,8 +132,9 @@
       if (e.target.closest('.tx-swipe-actions')) return;
       if (!active) return; active = false;
       inner.style.transition = 'transform .25s ease';
-      if (dx < -TH) { inner.style.transform = 'translateX(' + OPEN + 'px)'; openedCard = card; }
-      else { inner.style.transform = 'translateX(0)'; if (card === openedCard) openedCard = null; }
+      if (dx < -TH) { inner.style.transform = 'translateX(-' + w + 'px)'; openedCard = card; }
+      else if (dx > TH) { inner.style.transform = 'translateX(0)'; if (card === openedCard) openedCard = null; }
+      // 轻点(dx≈0)保持展开，不收起，让按钮 click 正常触发
     }, { passive: true });
 
     // 电脑：点卡片模拟左滑
@@ -138,7 +142,7 @@
       if (card === openedCard) { inner.style.transform = 'translateX(0)'; openedCard = null; }
       else {
         if (openedCard) openedCard.querySelector('.tx-card-inner').style.transform = 'translateX(0)';
-        inner.style.transform = 'translateX(' + OPEN + 'px)'; openedCard = card;
+        inner.style.transform = 'translateX(-' + w + 'px)'; openedCard = card;
       }
     });
 

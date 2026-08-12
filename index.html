@@ -8296,17 +8296,20 @@ function openTradeQuickFor(name){
 
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
 
-// ---------- 右滑露出操作按钮（编辑/删除） ----------
+// ---------- 左滑露出操作按钮（编辑/删除） ----------
 (function(){
   var _touchStartX=0, _touchStartY=0, _activeCard=null, _threshold=50, _openedCard=null;
-  function closeAllSwipe(){ if(_openedCard){ _openedCard.querySelector('.tx-card-inner').style.transform=''; _openedCard=null; } }
-  // 点击卡片空白区域收起操作按钮
+  // 按按钮实际宽度位移，确保编辑/删除按钮完整露出、不被卡片本体盖住
+  function swipeW(card){ var a=card.querySelector('.tx-swipe-actions'); return a?a.offsetWidth:130; }
+  function closeAllSwipe(){ if(_openedCard){ var i=_openedCard.querySelector('.tx-card-inner'); if(i) i.style.transform=''; _openedCard=null; } }
+  // 点击空白区域收起操作按钮（点编辑/删除由按钮自身处理）
   document.addEventListener('click', function(e){
+    if(e.target.closest('.tx-sa-edit') || e.target.closest('.tx-sa-del')) return;
     var card=e.target.closest('.tx-card');
     if(!card || card!==_openedCard) closeAllSwipe();
   });
   document.addEventListener('touchstart', function(e){
-    if(e.target.closest('.tx-swipe-actions')) return; // 点编辑/删除按钮不触发滑动与收起，避免吞掉点击
+    if(e.target.closest('.tx-swipe-actions')) return; // 点按钮不进入滑动逻辑，避免吞掉点击
     var card=e.target.closest('.tx-card[data-tx-idx]');
     if(card){ _touchStartX=e.touches[0].clientX; _touchStartY=e.touches[0].clientY; _activeCard=card; }
   }, {passive:true});
@@ -8316,9 +8319,9 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
     if(Math.abs(dy)>Math.abs(dx)*1.2){ _activeCard=null; return; }
     var inner=_activeCard.querySelector('.tx-card-inner');
     if(!inner) return;
-    // 已展开时基准为 -130，未展开为 0；左滑(负)展开、右滑(正)收起，夹在 [-(阈值+80), 0]
-    var base=(_activeCard===_openedCard)?-130:0;
-    var next=Math.max(-(_threshold+80), Math.min(0, base+dx));
+    var w=swipeW(_activeCard);
+    var base=(_activeCard===_openedCard)?-w:0;
+    var next=Math.max(-(w+80), Math.min(0, base+dx));
     inner.style.transform='translateX('+next+'px)';
   }, {passive:true});
   document.addEventListener('touchend', function(e){
@@ -8326,15 +8329,16 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
     var dx=e.changedTouches[0].clientX-_touchStartX;
     var inner=_activeCard.querySelector('.tx-card-inner');
     if(!inner){ _activeCard=null; return; }
-    var open=(dx < -_threshold);  // 左滑超过阈值 → 展开右侧编辑/删除按钮
-    if(open){
+    var w=swipeW(_activeCard);
+    if(dx < -_threshold){ // 左滑 → 展开，位移量=按钮实际宽度
       if(_openedCard && _openedCard!==_activeCard){ var p=_openedCard.querySelector('.tx-card-inner'); if(p) p.style.transform=''; }
-      inner.style.transform='translateX(-130px)';
+      inner.style.transform='translateX(-'+w+'px)';
       _openedCard=_activeCard;
-    } else {
+    } else if(dx > _threshold){ // 右滑 → 收起
       inner.style.transform='translateX(0)';
       if(_activeCard===_openedCard) _openedCard=null;
     }
+    // 否则（轻点，位移≈0）保持原状，不收起，让按钮 click 正常触发
     _activeCard=null;
   }, {passive:true});
 })();
@@ -8352,6 +8356,7 @@ var _editTradeIdx=-1;
 function openTradeEdit(idx){
   if(!trades[idx]) return;
   _editTradeIdx=idx;
+  var _m0=document.getElementById('tradeEditMask'); if(_m0) _m0.classList.add('show'); // 先显示编辑页，字段填充即使出错也不影响打开
   var t=trades[idx];
   var g=function(id){return document.getElementById(id);};
   // 填充基金名（只读）

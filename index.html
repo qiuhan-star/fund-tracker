@@ -5925,8 +5925,8 @@ function denseRowsHtml(list){
       else if(c.key==='holdpct') tds+=`<td class="${f.ret>=0?'pos':'neg'}"><div class="dt-big">${f.ret>=0?'+':''}${f.ret.toFixed(2)}%</div></td>`;
       else if(c.key==='mv')  tds+=`<td><div class="dt-big">${M(f.mv)}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
       else if(c.key==='ret'){
-        // 当日收益 = 今天一天的盈亏：优先用盘中估算涨跌(gszzl)，无估算(QDII等)退回官方当日涨跌(navChg)
-        const _chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null);
+        // 当日收益 = 今天一天的盈亏：盘中优先用实时估算 gszzl；收盘后用基金公司确认的 navChg，与官方昨日收益对齐。
+        const _chg=effectiveDayChg(nc);
         if(_chg!=null && f.mv!=null){
           const _amt=f.mv-f.mv/(1+_chg/100);
           tds+=`<td class="${_amt>=0?'pos':'neg'}"><div class="dt-big">${_amt>=0?'+':''}${M(_amt)}</div><div class="dt-sub2">${_chg>=0?'+':''}${_chg.toFixed(2)}%</div></td>`;
@@ -5944,9 +5944,16 @@ function renderHomeDense(list, showHead){
     <tbody>${denseRowsHtml(list)}</tbody>
   </table>`;
 }
-// 当日收益（今天一天盈亏）：优先盘中估算涨跌 gszzl，无估算(QDII等)退回官方当日涨跌 navChg。
-// 列表子项与账户总卡片共用此函数，保证「账户总当日收益 = 各子项之和」。
-function dayGainOf(f){ const nc=navCache[f.name]||{}; const chg=(nc.gszzl!=null)?nc.gszzl:(nc.navChg!=null?nc.navChg:null); if(chg==null||f.mv==null) return null; return f.mv - f.mv/(1+chg/100); }
+// 收盘后优先用基金公司确认的 navChg（与官方昨日收益对齐），盘中仍优先用实时估算 gszzl。
+function effectiveDayChg(nc){
+  if(!nc) return null;
+  const mkt=isMarketOpen(new Date());
+  if(!mkt && nc.navChg!=null) return nc.navChg;
+  if(nc.gszzl!=null) return nc.gszzl;
+  return nc.navChg!=null?nc.navChg:null;
+}
+// 当日收益（今天一天盈亏）：收盘后用官方 navChg，盘中用 gszzl。列表子项与账户总卡片共用此函数，保证「账户总当日收益 = 各子项之和」。
+function dayGainOf(f){ const nc=navCache[f.name]||{}; const chg=effectiveDayChg(nc); if(chg==null||f.mv==null) return null; return f.mv - f.mv/(1+chg/100); }
 
 function weightedEstChg(){
   let _wsum=0,_pw=0;

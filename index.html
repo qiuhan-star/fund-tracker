@@ -11295,6 +11295,7 @@ function renderSyncCfg(){
           </div>
           <div class="nset-card danger-zone-card">
             <div class="panel-row" style="cursor:pointer" onclick="ftConfirm('确定清除示例数据？\n将移除示例账户、演示债基与分析，你的真实持仓会保留。', function(ok){ if(!ok) return; removeSampleData(); })"><div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div><div class="right"><span class="item-arrow">›</span></div></div>
+            <div class="panel-row" style="cursor:pointer" onclick="clearData()"><div class="left"><div class="title is-danger">清除数据</div><div class="desc">清空持仓、交易记录与清仓记录（保留设置与云同步）</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="resetApp()"><div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
           <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出全量备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>
@@ -12152,6 +12153,24 @@ function renderSyncCfg(){
   window.closeCacheSheet=function(){ var m=document.getElementById('cacheSheetMask'); if(m) m.classList.remove('show'); };
   window.doClearCache=function(){ closeCacheSheet(); try{ if(typeof navCache!=='undefined'){ navCache={}; } if(typeof silentSave==='function') silentSave(); }catch(e){} renderSettings(); if(typeof toast==='function') toast('已清除净值缓存'); };
   window.clearCache=function(){ openCacheSheet(); };
+  window.clearData=function(){
+    var sync=syncEnabled();
+    var msg='确定清除全部持仓与交易数据？\n\n将清空：持仓、交易记录、清仓记录、成本快照。\n设置、分类、云同步配置会保留。\n此操作不可恢复。';
+    if(sync) msg+='\n\n⚠️ 你已开启云同步：清空后空数据会同步到云端，云端旧备份也会被一并清空。';
+    ftConfirm(msg, function(ok){
+      if(!ok) return;
+      trades=[]; snaps=[]; navCache={}; dailySnapshots=normDailySnap(null); dcaPlans=[]; alerts={}; growthSeries=[];
+      try{ localStorage.setItem('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps:snaps,trades:trades,navCache:navCache,daily_snapshots:dailySnapshots,dcaPlans:dcaPlans})); }catch(e){}
+      try{ localStorage.removeItem('ft_alerts'); }catch(e){}
+      try{ localStorage.removeItem('ft_growth'); }catch(e){}
+      var done=function(){ location.reload(); };
+      if(sync){
+        // 先把空状态推到云端，再 reload，避免开机 cloudPull 把云端旧数据拉回来
+        try{ Promise.resolve(cloudPushInner(true)).then(done).catch(done); }
+        catch(e){ done(); }
+      } else { done(); }
+    });
+  };
   window.resetApp=function(){ ftConfirm('确定重置应用？\n将清空本浏览器全部本地数据（持仓/交易/缓存/设置/密码锁/云同步配置）且无法恢复。\n建议先「导出 JSON」备份。', function(ok){ if(!ok) return; try{ var keys=[]; for(var i=0;i<localStorage.length;i++){ keys.push(localStorage.key(i)); } keys.forEach(function(k){ if(k && k.indexOf('ft_')===0) localStorage.removeItem(k); }); }catch(e){} location.reload(); }); };
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smThemeSeg button'); if(b){ _setTheme(b.getAttribute('data-t')); var seg=document.getElementById('smThemeSeg'); if(seg){ Array.prototype.forEach.call(seg.children,function(x){ x.classList.toggle('on', x===b); }); } } });
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smScopeSeg button'); if(b){ setScopeAcc(b.getAttribute('data-s')); var sc=document.getElementById('smScopeSeg'); if(sc){ Array.prototype.forEach.call(sc.children,function(x){ x.classList.toggle('on', x===b); }); } } });

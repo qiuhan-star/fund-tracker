@@ -11378,7 +11378,8 @@ function renderSyncCfg(){
                 <button class="sync-btn primary" onclick="cloudPull(true)"><span>⬇️</span>立即下载</button>
                 <button class="sync-btn danger" onclick="cloudPush(true)"><svg class="sync-up-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"></path><path d="M6 11l6-6 6 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>立即上传</button>
               </div>
-              <p class="sync-foot">数据会离开浏览器存到 GitHub（私有仓库也算出浏览器）。请用<strong>私有仓库</strong>且仅放账本。需 https 托管的线上版才能联网。</p>
+              <p class="sync-foot" style="margin-top:8px"><strong>⬇️ 立即下载</strong>：把云端账本拉回本机，换手机 / 本机数据丢失时用（开机也会自动拉一次）。<br><strong>⬆️ 立即上传</strong>：手动补传；平时改完约 2.5 秒已自动上传，一般不用点。</p>
+              <p class="sync-foot">数据会离开浏览器存到 GitHub（私有仓库也算出浏览器）。请用<strong>私有仓库</strong>且仅放账本。需 https 托管的线上版才能联网。<br><strong>自动上传：</strong>开关打开后，你每次改完数据约 2.5 秒会自动上传，不用手动保存。</p>
             </div>
             <div class="panel-row" style="cursor:pointer" onclick="clearSyncConfig()"><div class="left"><div class="title">清除云同步配置</div><div class="desc">断开 GitHub 同步，删除令牌与仓库配置（数据保留在本机）</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
@@ -11403,7 +11404,7 @@ function renderSyncCfg(){
           </div>
           <div class="nset-card danger-zone-card">
             <div class="panel-row" style="cursor:pointer" onclick="ftConfirm('确定清除示例数据？\n将移除示例账户、演示债基与分析，你的真实持仓会保留。', function(ok){ if(!ok) return; removeSampleData(); })"><div class="left"><div class="title">清除示例数据</div><div class="desc">保留真实持仓，移除示例账户、演示债基与分析</div></div><div class="right"><span class="item-arrow">›</span></div></div>
-            <div class="panel-row" style="cursor:pointer" onclick="clearData()"><div class="left"><div class="title is-danger">清除数据</div><div class="desc">清空持仓、交易记录与清仓记录（保留设置与云同步）</div></div><div class="right"><span class="item-arrow">›</span></div></div>
+            <div class="panel-row" style="cursor:pointer" onclick="clearData()"><div class="left"><div class="title is-danger">清除数据</div><div class="desc">清空持仓、交易记录与清仓记录（保留设置；若开启云同步，会连同云端一起清空）</div></div><div class="right"><span class="item-arrow">›</span></div></div>
             <div class="panel-row" style="cursor:pointer" onclick="resetApp()"><div class="left"><div class="title is-danger">重置应用</div><div class="desc">清空本浏览器全部本地数据（持仓 / 交易 / 设置），不可恢复</div></div><div class="right"><span class="item-arrow">›</span></div></div>
           </div>
           <p class="panel-note">所有数据仅保存在你本地浏览器 / 本文件，不上传任何服务器。完整备份请用「导出全量备份 (JSON)」；若开启云同步，改动会自动备份到 GitHub 私有仓库。</p>

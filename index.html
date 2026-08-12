@@ -8299,26 +8299,23 @@ function openTradeQuickFor(name){
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
 
 // ---------- 交易卡片交互 ----------
-// 设计：mobile 端直接在卡片底部显示"编辑 / 删除"两个按钮（已用 CSS 隐藏 swipe 逻辑），
-// 这样用户不需要左滑手势就能操作，避免 iOS Safari ghost-click、按钮"凸出来"等兼容性问题。
-// 卡片主体（除按钮、状态徽标外）仍然可点击直接打开编辑页。
-// 兜底 click 处理：解决 iOS ghost-click 或在某些 webview 下按钮点击不响应的问题。
+// 设计：mobile 端直接在卡片底部显示"编辑 / 删除"两个按钮，点击卡片主体也可打开编辑。
+// 按钮和卡片主体都通过 inline onclick 直接绑定函数，最可靠，不依赖 capture 阶段委托。
+// 以下兜底处理：当 inline onclick 因 iOS ghost-click 或 webview 问题不响应时，
+// 通过 bubbling 阶段 click 委托作为二次保障。
 (function(){
   if(document.__ftTxDelegated) return; document.__ftTxDelegated=true;
   document.addEventListener('click', function(e){
-    var editBtn = e.target.closest && e.target.closest('.tx-act-edit');
-    var delBtn  = e.target.closest && e.target.closest('.tx-act-del');
-    var card    = e.target.closest && e.target.closest('.tx-card');
+    var card = e.target.closest && e.target.closest('.tx-card');
     if(!card) return;
     var idx = +card.getAttribute('data-tx-idx');
     if(isNaN(idx)) return;
-    if(editBtn){ e.stopPropagation(); e.preventDefault(); try{ openTradeEdit(idx); }catch(err){ console.error(err); } return; }
-    if(delBtn){  e.stopPropagation(); e.preventDefault(); try{ deleteTrade(idx); }catch(err){ console.error(err); } return; }
-    // 点击卡片空白区域 → 打开编辑
-    if(e.target.closest('.tx-card-inner')){
-      try{ openTradeEdit(idx); }catch(err){ console.error(err); }
-    }
-  }, true);
+    // 只处理未被 inline onclick 捕获的点击（用已有标记避免重复执行）
+    if(e.target.closest('.tx-act-edit')){ try{ openTradeEdit(idx); }catch(err){} return; }
+    if(e.target.closest('.tx-act-del')){ try{ deleteTrade(idx); }catch(err){} return; }
+    if(e.target.closest('.tx-conf')){ try{ event.stopPropagation(); }catch(_){} return; }
+    if(e.target.closest('.tx-card-inner')){ try{ openTradeEdit(idx); }catch(err){} }
+  }, false); // ← 使用 bubbling 阶段，不和 inline onclick 冲突
 })();
 
 // ---------- 记一笔：关闭详情弹窗再打开（避免嵌套遮罩） ----------

@@ -3938,6 +3938,33 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .est-shares{ font-size:15px; font-weight:600; color:var(--text); padding:9px 0; }
   .est-shares .sub{ font-size:12px; color:var(--text-3); font-weight:400; margin-left:6px; }
 
+  /* ===== 编辑交易弹窗 ===== */
+  #tradeEditMask { align-items:flex-end; padding:0; }
+  #tradeEditMask .sm-modal { position:relative; }
+  #tradeEditSheet.sm-modal { width:100%; max-width:412px; margin:0 auto; height:auto; max-height:92vh; border-radius:24px 24px 0 0; display:flex; flex-direction:column; overflow:hidden; }
+  #tradeEditSheet .sm-head { display:none; }
+  .te-fund-label { padding:4px 20px 8px; font-size:14px; font-weight:600; color:var(--text-2); word-break:break-all; }
+  .te-foot { position:absolute; bottom:0; left:0; right:0; padding:12px 20px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent 0%, var(--surface) 25%); display:flex; gap:12px; align-items:center; }
+  .te-del-btn { border:none; background:transparent; color:var(--danger); font-size:14px; font-weight:600; padding:14px 0; font-family:inherit; white-space:nowrap; }
+  .te-foot .btn { flex:1; padding:14px; border-radius:14px; font-size:16px; font-weight:700; }
+
+  /* ===== 移动端交易卡片重设计 ===== */
+  .tr-ios .tx-list{ margin:0; gap:8px; display:flex; flex-direction:column; }
+  .tr-ios .tx-card{ background:var(--surface); border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.04),0 0 1px rgba(0,0,0,.06); padding:14px 16px; margin-bottom:0; cursor:pointer; transition:background .15s; position:relative; }
+  .tr-ios .tx-card:active{ background:var(--surface-2); }
+  .tr-ios .tx-card.cancelled{ opacity:.45; }
+  .tr-ios .tx-line1{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .tr-ios .tx-id{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:600; }
+  .tr-ios .tx-date{ font-size:12px; color:var(--text-3); }
+  .tr-ios .tx-line2{ display:flex; justify-content:space-between; align-items:flex-end; }
+  .tr-ios .tx-amount{ font-size:20px; font-weight:700; letter-spacing:-.01em; }
+  .tr-ios .tx-sub{ font-size:12px; color:var(--text-3); margin-top:2px; }
+  .tr-ios .tx-right{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .tr-ios .tx-lock-icon{ font-size:11px; color:var(--text-3); background:var(--surface-2); padding:3px 7px; border-radius:6px; white-space:nowrap; }
+  .tr-ios .tx-note{ font-size:11px; color:var(--text-3); margin-top:3px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* 移除旧的 tx-ops 和 tx-status 在卡片内的显示 */
+  .tr-ios .tx-card .tx-ops, .tr-ios .tx-card .tx-status{ display:none; }
+
   /* ===== 详情页底部「更多」Action Sheet ===== */
   .detail-bar-item .ico svg.filled{ fill:currentColor; stroke:none; }
   .detail-bar-item.more{ color:var(--text-3); }
@@ -4085,6 +4112,60 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       </div>
       <div class="tq-foot">
         <button class="btn primary" onclick="tradeQuickSave()">保 存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑交易弹窗 -->
+  <div class="sm-mask" id="tradeEditMask" onclick="if(event.target===this)closeTradeEdit()">
+    <div class="sm-modal trade-sheet" id="tradeEditSheet">
+      <div class="tq-handle"></div>
+      <div class="tq-head">
+        <div class="tq-title">编辑交易</div>
+        <button class="tq-close" onclick="closeTradeEdit()">✕</button>
+      </div>
+      <div class="te-fund-label" id="te-fund-name"></div>
+      <div class="tq-body">
+        <div class="tq-seg" id="te-type-seg">
+          <button type="button" data-v="buy" onclick="teSetType('buy')">买入</button>
+          <button type="button" data-v="sell" onclick="teSetType('sell')">卖出</button>
+          <button type="button" data-v="convert" onclick="teSetType('convert')">转换</button>
+        </div>
+        <select id="te-type"></select>
+        <div class="tq-amount">
+          <div class="lab">金额（元）</div>
+          <div class="inp"><span class="cur">¥</span><input id="te-amount" type="number" step="any" inputmode="decimal" placeholder="0.00"></div>
+        </div>
+        <div class="tq-fields">
+          <div class="tq-field"><span class="lab">账户</span><span class="val"><select id="te-acc"></select><span class="chev">›</span></span></div>
+          <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="te-datetime" type="datetime-local"><span class="chev">›</span></span></div>
+          <div class="tq-field" style="flex-wrap:wrap">
+            <span class="lab">确认状态</span>
+            <div class="tq-pills">
+              <button type="button" class="tq-pill active" data-v="confirmed" onclick="teSetConfirm('confirmed')">已确认</button>
+              <button type="button" class="tq-pill" data-v="pending" onclick="teSetConfirm('pending')">待确认</button>
+              <button type="button" class="tq-pill" data-v="cancelled" onclick="teSetConfirm('cancelled')">撤单</button>
+            </div>
+            <input type="hidden" id="te-confirm" value="confirmed">
+          </div>
+        </div>
+        <div class="tq-more" id="teMoreWrap">
+          <div class="tq-more-head" onclick="teToggleMore()"><span>更多选项 <span id="teMoreHint" style="color:var(--text-3);font-size:12px">净值、费用、份额</span></span><span id="teMoreChev" style="color:var(--text-3)">▾</span></div>
+          <div class="tq-more-body" id="teMoreFields">
+            <div class="tq-more-row"><span>净值</span><span class="v"><input id="te-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" style="width:120px;text-align:right"></span></div>
+            <div class="tq-more-row"><span>费用（元）</span><span class="v"><input id="te-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0" style="width:120px;text-align:right"></span></div>
+            <div class="tq-more-row"><span>份额</span><span class="v"><input id="te-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="可选" style="width:120px;text-align:right"></span></div>
+            <div class="tq-more-row"><span>净值确认日</span><span class="v"><input id="te-confirmDate" type="date" style="width:140px;text-align:right"></span></div>
+          </div>
+        </div>
+        <div class="tq-note-wrap">
+          <div class="lab">备注（可选）</div>
+          <textarea id="te-note" rows="2" placeholder="可选备注"></textarea>
+        </div>
+      </div>
+      <div class="te-foot">
+        <button class="te-del-btn" onclick="deleteTradeEdit()">删除这笔</button>
+        <button class="btn primary" onclick="saveTradeEdit()">保 存</button>
       </div>
     </div>
   </div>
@@ -7905,18 +7986,16 @@ function buildTradeSection(f){
       tr.forEach(t=>{
         const i=trades.indexOf(t);
         const _canc = t.confirm==='cancelled';
-        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" title="${esc(t.note||'')}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
+        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
         const _note = (t.note)?`<div class="tx-note">${esc(t.note)}</div>`:'';
         const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
-        const idTxt=typeLabel(t.type)+' · '+accOf(t);
+        const idTxt=typeLabel(t.type);
+        const accTxt=accOf(t);
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
-        const navTxt=(t.nav!=null&&t.nav!=='')?('净值 '+navFmt(t.nav)+(t.confirmDate?(' · 确认'+esc(t.confirmDate)):'')):'净值 待确认';
-        const shareTxt=(t.shares!=null&&t.shares!=='')?(' · 份额 '+fmt(t.shares)):'';
-        if(t.locked!==false){
-          h+=`<div class="tx-card${_canc?' cancelled':''}"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt}</div>${_note}</div><div class="tx-right"><span class="tx-status">已锁定</span>${_confBadge}<div class="tx-ops"><button type="button" onclick="event.stopPropagation();unlockTrade(${i})">解锁</button><button type="button" class="del" onclick="event.stopPropagation();delTrade(${i})">删除</button></div></div></div></div>`;
-        } else {
-          h+=`<div class="tx-card"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-edit"><div class="ios-row"><span class="label">账户</span><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></div><div class="ios-row"><span class="label">日期</span><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">时间</span><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></div><div class="ios-row"><span class="label">类型</span><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${TRADE_TYPES.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="ios-row"><span class="label">金额</span><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">净值</span><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">费用</span><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></div><div class="ios-row"><span class="label">份额</span><input data-fld="t-shares-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.shares||''}" placeholder="份额" oninput="trades[${i}].shares=+this.value;compute();silentSave()"></div></div><div class="tx-line2" style="margin-top:10px"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt}</div></div><div class="tx-right"><div class="tx-ops"><button type="button" onclick="lockTrade(${i})">锁定</button><button type="button" class="del" onclick="delTrade(${i})">删除</button></div></div></div></div>`;
-        }
+        const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'待确认';
+        const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'';
+        const lockIcon=(t.locked!==false)?'<span class="tx-lock-icon">🔒</span>':'';
+        h+=`<div class="tx-card${_canc?' cancelled':''}" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${lockIcon}${_confBadge}</div></div></div>`;
       });
       h+=`</div>`;
     } else {
@@ -7927,16 +8006,15 @@ function buildTradeSection(f){
     const defCol = tr.length>12;
     h+=`<div class="card trade-section"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>${tradeHead}</h2><span class="hint">${tradeMeta}<span class="chev" style="margin-left:10px">${defCol?'▸':'▾'}</span></span></div>`;
     h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
-    h+=`<p class="hint" style="margin:0 0 8px">点「＋ 记一笔交易」弹出填写窗口，保存前会再次确认；保存后自动锁定防误改，点「解锁」可临时编辑。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
+    h+=`<p class="hint" style="margin:0 0 8px">点击任意一行可编辑交易。净值<b>留空＝T+1 待确认</b>：结算日后首次刷新会自动填入最新净值。</p>`;
     h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认；点右下角 + 记一笔</span></div></div>`;
     if(tr.length){
       h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">净值确认日</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
       tr.forEach(t=>{
         const i=trades.indexOf(t);
         const _canc = t.confirm==='cancelled';
-        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" title="${esc(t.note||'')}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
-        if(t.locked!==false){
-          h+=`<tr class="tr-locked${_canc?' cancelled':''}">
+        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
+        h+=`<tr class="tr-locked${_canc?' cancelled':''}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">
             <td>${esc(accOf(t))}</td>
             <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
             <td>${typeLabel(t.type)}</td>
@@ -7946,22 +8024,8 @@ function buildTradeSection(f){
             <td class="num">${t.fee?M(t.fee):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
             <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'—'}</td>
-            <td><button class="lk" title="解锁编辑" onclick="unlockTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></button> <button class="lk danger" title="删除" onclick="delTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>
+            <td><button class="lk" title="编辑" onclick="event.stopPropagation();openTradeEdit(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
           </tr>`;
-        } else {
-          h+=`<tr>
-            <td><select data-fld="t-account-${i}" onchange="trades[${i}].account=this.value;compute();silentSave()">${ACCOUNTS.map(a=>`<option value="${a}" ${accOf(t)===a?'selected':''}>${a}</option>`).join('')}</select></td>
-            <td><input data-fld="t-date-${i}" value="${esc(t.date)}" placeholder="2026-01-15" oninput="trades[${i}].date=this.value;compute();silentSave()"></td>
-            <td><input data-fld="t-time-${i}" type="time" value="${esc(t.time||'')}" oninput="trades[${i}].time=this.value;silentSave()"></td>
-            <td><select data-fld="t-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${TRADE_TYPES.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
-            <td class="num"><input data-fld="t-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()"></td>
-            <td class="num"><input data-fld="t-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
-            <td class="num"><input data-fld="t-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
-            <td class="num"><input data-fld="t-confirmDate-${i}" value="${esc(t.confirmDate||'')}" placeholder="确认日" oninput="trades[${i}].confirmDate=this.value;silentSave()"></td>
-            <td class="num"><input data-fld="t-shares-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.shares||''}" placeholder="份额" oninput="trades[${i}].shares=+this.value;compute();silentSave()"></td>
-            <td><button class="lk lock" title="锁定" onclick="lockTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button> <button class="lk danger" title="删除" onclick="delTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td>
-          </tr>`;
-        }
       });
       h+=`</tbody></table></div><div style="margin-top:12px"><div style="font-size: 14px;font-weight:600;margin:0 0 6px">买卖点</div>${miniTimeline(f)}</div>`;
     } else {
@@ -8166,6 +8230,93 @@ function openTradeQuickFor(name){
 }
 
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
+
+// ---------- 编辑交易弹窗 ----------
+var _editTradeIdx=-1;
+function openTradeEdit(idx){
+  if(!trades[idx]) return;
+  _editTradeIdx=idx;
+  var t=trades[idx];
+  var g=function(id){return document.getElementById(id);};
+  // 填充基金名（只读）
+  var fn=g('te-fund-name'); if(fn) fn.textContent=t.name||'';
+  // 填充类型
+  var ty=g('te-type'); if(ty){ ty.innerHTML=TRADE_TYPES.map(function(v){return '<option value="'+v[0]+'">'+v[1]+'</option>';}).join(''); ty.value=t.type||'buy'; }
+  var seg=g('te-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===(t.type||'buy')); });
+  // 填充金额
+  var am=g('te-amount'); if(am) am.value=t.amount||'';
+  // 填充账户
+  var accSel=g('te-acc'); if(accSel){ accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(function(a){return '<option value="'+esc(a)+'" '+(a===accOf(t)?'selected':'')+'>'+esc(a)+'</option>';}).join(''); }
+  // 填充日期时间
+  var dt=g('te-datetime'); if(dt){ var pad=function(n){return String(n).padStart(2,'0');}; dt.value=(t.date||'')+'T'+(t.time||'15:00'); }
+  // 填充确认状态
+  var cf=g('te-confirm'); if(cf) cf.value=t.confirm||'confirmed';
+  var pills=document.querySelectorAll('#tradeEditMask .tq-pill'); pills.forEach(function(p){ p.classList.toggle('active', p.dataset.v===(t.confirm||'confirmed')); });
+  // 填充更多选项
+  var nav=g('te-nav'); if(nav) nav.value=(t.nav!=null&&t.nav!=='')?t.nav:'';
+  var fee=g('te-fee'); if(fee) fee.value=t.fee||'';
+  var sh=g('te-shares'); if(sh) sh.value=(t.shares!=null&&t.shares!=='')?t.shares:'';
+  var cd=g('te-confirmDate'); if(cd) cd.value=t.confirmDate||'';
+  var note=g('te-note'); if(note) note.value=t.note||'';
+  // 折叠更多选项
+  var mw=g('teMoreWrap'); if(mw) mw.classList.remove('open');
+  var mc=g('teMoreChev'); if(mc) mc.textContent='▾';
+  // 显示弹窗
+  var mask=g('tradeEditMask'); if(mask) mask.classList.add('show');
+}
+function closeTradeEdit(){ var m=document.getElementById('tradeEditMask'); if(m) m.classList.remove('show'); _editTradeIdx=-1; }
+function teSetType(v){
+  var sel=document.getElementById('te-type'); if(sel) sel.value=v;
+  var seg=document.getElementById('te-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); });
+}
+function teSetConfirm(v){
+  var hid=document.getElementById('te-confirm'); if(hid) hid.value=v;
+  var pills=document.querySelectorAll('#tradeEditMask .tq-pill'); pills.forEach(function(p){ p.classList.toggle('active', p.dataset.v===v); });
+}
+function teToggleMore(){
+  var wrap=document.getElementById('teMoreWrap'); var f=document.getElementById('teMoreFields'); var chev=document.getElementById('teMoreChev');
+  if(!wrap||!f) return; var open=!wrap.classList.contains('open');
+  wrap.classList.toggle('open',open); if(chev) chev.textContent=open?'▴':'▾';
+}
+function saveTradeEdit(){
+  var i=_editTradeIdx; if(i<0||!trades[i]) return;
+  var g=function(id){return document.getElementById(id);};
+  var dtRaw=g('te-datetime').value; var date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
+  var amount=+g('te-amount').value||0; if(!amount){ toast('请填写金额'); return; }
+  var t=trades[i];
+  t.type=g('te-type').value||'buy';
+  t.amount=amount;
+  t.account=g('te-acc').value||effAccount('本人账户');
+  t.date=date;
+  t.time=dtRaw.length>11?dtRaw.slice(11):'15:00';
+  t.confirm=g('te-confirm').value||'confirmed';
+  var navRaw=g('te-nav').value; t.nav=(navRaw===''||navRaw==null)?null:+navRaw;
+  t.fee=+g('te-fee').value||0;
+  var shRaw=g('te-shares').value; t.shares=(shRaw===''||shRaw==null)?null:+shRaw;
+  t.confirmDate=g('te-confirmDate').value||'';
+  t.note=(g('te-note').value||'').trim();
+  t.locked=true;
+  silentSave(); compute();
+  closeTradeEdit();
+  var nm=t.name;
+  if(currentView==='detail'){ try{ renderDetailLive(nm); refreshDetailTradesByName(nm); }catch(e){} }
+  if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+  toast('已保存 · '+typeLabel(t.type)+' '+M(t.amount));
+}
+function deleteTradeEdit(){
+  var i=_editTradeIdx; if(i<0||!trades[i]) return;
+  ftConfirm('确定删除这笔交易？', function(ok){
+    if(!ok) return;
+    var nm=trades[i].name;
+    trades.splice(i,1);
+    silentSave(); compute();
+    closeTradeEdit();
+    if(currentView==='detail'){ try{ renderDetailLive(nm); refreshDetailTradesByName(nm); }catch(e){} }
+    if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+    toast('已删除');
+  });
+}
+
 function tqToggleMore(){
   const wrap=document.getElementById('tqMoreWrap'); const f=document.getElementById('tqMoreFields'); const chev=document.getElementById('tqMoreChev');
   if(!wrap||!f) return; const open=!wrap.classList.contains('open');

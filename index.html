@@ -820,7 +820,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   }
   /* iOS 全宽无缝卡片流：移动端保留安全区 + 12px 基础边距，避免文字贴边被屏幕圆角/刘海裁切 */
   .wrap { padding-left: calc(12px + env(safe-area-inset-left)) !important; padding-right: calc(12px + env(safe-area-inset-right)) !important; }
-  .wrap .card { border-radius: 0; border-left: none; border-right: none; margin-bottom: 0; }
+  .wrap .card { border-radius: 0; border-left: none; border-right: none; margin-bottom: 0; overflow:hidden; }
   
   body { 
     font-size: 14px; /* 提升全局基础字号 */
@@ -1371,7 +1371,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .trade-section .hint { font-size: 12px; color: var(--text-3); }
 .trade-section .tx-list { margin: 0; display:flex; flex-direction:column; gap:10px; }
 /* 交易记录卡片：独立卡片 + 边框 + 间距，解决记录无分隔问题（不依赖死代码 .tr-ios） */
-.trade-section .tx-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; position:relative; cursor:pointer; }
+.trade-section .tx-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; position:relative; cursor:pointer; overflow:hidden; }
 .trade-section .tx-card:active { background:var(--surface-2); }
 .trade-section .tx-card.cancelled { opacity:.5; }
 .trade-section .tx-card::after { content:''; display:none; }
@@ -1388,17 +1388,18 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .trade-section .tx-amount { font-size:20px; font-weight:700; letter-spacing:-.01em; color:var(--text); }
 .trade-section .tx-sub { font-size:13px; color:var(--text-3); margin-top:3px; }
 .trade-section .tx-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
-/* 滑动操作按钮（右滑显示编辑/删除） */
-.trade-section .tx-card { overflow:hidden; position:relative; touch-action:pan-y pinch-zoom; }
-.trade-section .tx-card-inner { transition:transform .25s ease; position:relative; z-index:1; background:var(--surface); will-change:transform; }
-.trade-section .tx-swipe-actions { position:absolute; right:0; top:0; bottom:0; display:none; align-items:center; gap:0; z-index:0; pointer-events:none; }
-.trade-section .tx-card.swipe-open .tx-swipe-actions { display:flex; }
-.trade-section .tx-swipe-actions .tx-sa-btn { pointer-events:auto; border:none; color:#fff; font-size:14px; font-weight:600; font-family:inherit; padding:0 16px; height:100%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-.trade-section .tx-sa-edit { background:var(--accent); border-radius:0 12px 12px 0; }
-.trade-section .tx-sa-del { background:var(--danger); }
+/* 滑动操作按钮（右滑显示编辑/删除） - 已弃用，改为底部常显按钮 */
+.trade-section .tx-card { position:relative; }
+.trade-section .tx-card-inner { display:block; }
+.trade-section .tx-card-actions { display:flex; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border-2); }
+.trade-section .tx-act-btn { flex:1; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:13px; font-weight:600; padding:9px 0; border-radius:8px; cursor:pointer; font-family:inherit; transition:background .15s; }
+.trade-section .tx-act-btn:active { background:var(--bg); }
+.trade-section .tx-act-del { color:var(--danger); border-color:rgba(220,38,38,.25); }
+.trade-section .tx-act-del:active { background:rgba(220,38,38,.08); }
 .trade-section .tx-note { font-size:12px; color:var(--text-3); margin-top:4px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .trade-section .tx-expand { width: 100%; margin: 10px 0 4px; }
 @media (min-width: 768px) {
+  .trade-section .tx-card-actions { display:none; }
   .trade-section .tx-expand { display: none; }
 }
 /* 详情页：参考支付宝资产详情的摘要 + 三段切换 */
@@ -8060,7 +8061,7 @@ function buildTradeSection(f){
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
         const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'待确认';
         const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'';
-        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}" onclick="openTradeEdit(${i})"><div class="tx-card-inner"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${_confBadge}</div></div></div><div class="tx-swipe-actions"><button class="tx-sa-btn tx-sa-edit" onclick="event.stopPropagation();openTradeEdit(${i})">编辑</button><button class="tx-sa-btn tx-sa-del" onclick="event.stopPropagation();deleteTrade(${i})">删除</button></div></div>`;
+        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="event.stopPropagation();openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-del" type="button" onclick="event.stopPropagation();deleteTrade(${i})">删除</button></div></div></div>`;
       });
       h+=`</div>`;
     } else {
@@ -8297,82 +8298,27 @@ function openTradeQuickFor(name){
 
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
 
-// ---------- 左滑露出操作 / 轻点进编辑（iOS 兼容） ----------
-// 关键修复：iOS Safari 在 touchstart 之后用 CSS transform 挪动元素时，
-// 松手合成的 click 会派发到 touchstart 当时的元素（被挪走的卡片），
-// 导致「编辑/删除」按钮永远点不到（ghost-click）。故在 touchend 用
-// elementFromPoint 取手指真实落点直接派发动作，并支持「轻点卡片主体
-// 直接进编辑页」作为最稳的路径。
+// ---------- 交易卡片交互 ----------
+// 设计：mobile 端直接在卡片底部显示"编辑 / 删除"两个按钮（已用 CSS 隐藏 swipe 逻辑），
+// 这样用户不需要左滑手势就能操作，避免 iOS Safari ghost-click、按钮"凸出来"等兼容性问题。
+// 卡片主体（除按钮、状态徽标外）仍然可点击直接打开编辑页。
+// 兜底 click 处理：解决 iOS ghost-click 或在某些 webview 下按钮点击不响应的问题。
 (function(){
-  var _sx=0, _sy=0, _card=null, _onBtn=false, _opened=null, _th=45;
-  function swipeW(c){ var a=c.querySelector('.tx-swipe-actions'); return a?a.offsetWidth:130; }
-  function closeAll(){
-    if(_opened){
-      var i=_opened.querySelector('.tx-card-inner'); if(i) i.style.transform='';
-      _opened.classList.remove('swipe-open');
-      _opened=null;
-    }
-  }
-  // 兜底：兜底处理 click 事件 - iOS ghost-click / 真机点击失效场景
+  if(document.__ftTxDelegated) return; document.__ftTxDelegated=true;
   document.addEventListener('click', function(e){
-    var eb = e.target.closest && e.target.closest('.tx-sa-edit');
-    var db = e.target.closest && e.target.closest('.tx-sa-del');
-    if(eb){ e.stopPropagation(); var c=eb.closest('.tx-card'); if(c){ var idx=+c.getAttribute('data-tx-idx'); if(!isNaN(idx)) openTradeEdit(idx); closeAll(); } return; }
-    if(db){ e.stopPropagation(); var c2=db.closest('.tx-card'); if(c2){ var idx2=+c2.getAttribute('data-tx-idx'); if(!isNaN(idx2)) deleteTrade(idx2); closeAll(); } return; }
-    var c=e.target.closest && e.target.closest('.tx-card'); if(!c || c!==_opened) closeAll();
-  }, true);
-  document.addEventListener('touchstart', function(e){
-    var c=e.target.closest && e.target.closest('.tx-card[data-tx-idx]'); if(!c) return;
-    _sx=e.touches[0].clientX; _sy=e.touches[0].clientY; _card=c;
-    _onBtn=!!(e.target.closest && e.target.closest('.tx-swipe-actions'));
-  }, {passive:true});
-  document.addEventListener('touchmove', function(e){
-    if(!_card || _onBtn) return; // 从按钮起手不拖拽
-    var dx=e.touches[0].clientX-_sx, dy=Math.abs(e.touches[0].clientY-_sy);
-    if(dy>Math.abs(dx)*1.2){ _card=null; return; }
-    var inner=_card.querySelector('.tx-card-inner'); if(!inner) return;
-    var w=swipeW(_card), base=(_card===_opened)?-w:0;
-    inner.style.transform='translateX('+Math.max(-(w+80), Math.min(0, base+dx))+'px)';
-  }, {passive:true});
-  document.addEventListener('touchend', function(e){
-    if(!_card) return;
-    var t=e.changedTouches[0], dx=t.clientX-_sx, dy=Math.abs(t.clientY-_sy);
-    var inner=_card.querySelector('.tx-card-inner'); if(!inner){ _card=null; return; }
-    var w=swipeW(_card), idx=+_card.getAttribute('data-tx-idx');
-    // 真实落点（绕过 iOS ghost-click：click 会派发到 touchstart 时元素）
-    var el=document.elementFromPoint(t.clientX, t.clientY);
-    var eb=el&&el.closest?el.closest('.tx-sa-edit'):null;
-    var db=el&&el.closest?el.closest('.tx-sa-del'):null;
-    if(eb){ e.preventDefault(); openTradeEdit(idx); _card=null; return; }
-    if(db){ e.preventDefault(); deleteTrade(idx); _card=null; return; }
-    if(dx < -_th){ // 左滑 → 展开编辑/删除
-      if(_opened && _opened!==_card){
-        var p=_opened.querySelector('.tx-card-inner'); if(p) p.style.transform='';
-        _opened.classList.remove('swipe-open');
-      }
-      inner.style.transform='translateX(-'+w+'px)';
-      _card.classList.add('swipe-open');
-      _opened=_card;
-    } else if(dx > _th){ // 右滑 → 收起
-      inner.style.transform='translateX(0)';
-      _card.classList.remove('swipe-open');
-      if(_card===_opened) _opened=null;
-    } else if(!_onBtn && Math.abs(dx)<=12 && dy<=12 && !(e.target.closest&&e.target.closest('.tx-conf')) && !(e.target.closest&&e.target.closest('.tx-swipe-actions'))){
-      // 轻点卡片主体（非按钮、非状态徽标）→ 直接进编辑页（最可靠路径）
-      e.preventDefault(); openTradeEdit(idx);
-    } else { // 中途拖动未过阈值 → 吸附回最近状态
-      if(_card===_opened || dx < -_th/2){
-        inner.style.transform='translateX(-'+w+'px)';
-        _card.classList.add('swipe-open');
-        _opened=_card;
-      } else {
-        inner.style.transform='translateX(0)';
-        _card.classList.remove('swipe-open');
-        if(_card===_opened) _opened=null;
-      }
+    var editBtn = e.target.closest && e.target.closest('.tx-act-edit');
+    var delBtn  = e.target.closest && e.target.closest('.tx-act-del');
+    var card    = e.target.closest && e.target.closest('.tx-card');
+    if(!card) return;
+    var idx = +card.getAttribute('data-tx-idx');
+    if(isNaN(idx)) return;
+    if(editBtn){ e.stopPropagation(); e.preventDefault(); try{ openTradeEdit(idx); }catch(err){ console.error(err); } return; }
+    if(delBtn){  e.stopPropagation(); e.preventDefault(); try{ deleteTrade(idx); }catch(err){ console.error(err); } return; }
+    // 点击卡片空白区域 → 打开编辑
+    if(e.target.closest('.tx-card-inner')){
+      try{ openTradeEdit(idx); }catch(err){ console.error(err); }
     }
-    _card=null;
-  }, {passive:false});
+  }, true);
 })();
 
 // ---------- 记一笔：关闭详情弹窗再打开（避免嵌套遮罩） ----------
@@ -8386,38 +8332,41 @@ addTradeMenu=function(){
 // ---------- 编辑交易弹窗 ----------
 var _editTradeIdx=-1;
 function openTradeEdit(idx){
-  if(!trades[idx]) return;
+  if(idx<0 || !trades[idx]){ try{ console.warn('openTradeEdit: invalid idx', idx); }catch(e){} return; }
   _editTradeIdx=idx;
-  var _m0=document.getElementById('tradeEditMask'); if(_m0) _m0.classList.add('show'); // 先显示编辑页，字段填充即使出错也不影响打开
   var t=trades[idx];
   var g=function(id){return document.getElementById(id);};
-  // 填充基金名（只读）
-  var fn=g('te-fund-name'); if(fn) fn.textContent=t.name||'';
-  // 填充类型
-  var ty=g('te-type'); if(ty){ ty.innerHTML=TRADE_TYPES.map(function(v){return '<option value="'+v[0]+'">'+v[1]+'</option>';}).join(''); ty.value=t.type||'buy'; }
-  var seg=g('te-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===(t.type||'buy')); });
-  // 填充金额
-  var am=g('te-amount'); if(am) am.value=t.amount||'';
-  // 填充账户
-  var accSel=g('te-acc'); if(accSel){ accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(function(a){return '<option value="'+esc(a)+'" '+(a===accOf(t)?'selected':'')+'>'+esc(a)+'</option>';}).join(''); }
-  // 填充日期时间
-  var dt=g('te-datetime'); if(dt){ var pad=function(n){return String(n).padStart(2,'0');}; dt.value=(t.date||'')+'T'+(t.time||'15:00'); }
-  // 填充确认状态
-  var cf=g('te-confirm'); if(cf) cf.value=t.confirm||'confirmed';
-  var pills=document.querySelectorAll('#tradeEditMask .tq-pill'); pills.forEach(function(p){ p.classList.toggle('active', p.dataset.v===(t.confirm||'confirmed')); });
-  // 填充更多选项
-  var nav=g('te-nav'); if(nav) nav.value=(t.nav!=null&&t.nav!=='')?t.nav:'';
-  var fee=g('te-fee'); if(fee) fee.value=t.fee||'';
-  var sh=g('te-shares'); if(sh) sh.value=(t.shares!=null&&t.shares!=='')?t.shares:'';
-  var cd=g('te-confirmDate'); if(cd) cd.value=t.confirmDate||'';
-  var note=g('te-note'); if(note) note.value=t.note||'';
-  // 折叠更多选项
-  var mw=g('teMoreWrap'); if(mw) mw.classList.remove('open');
-  var mc=g('teMoreChev'); if(mc) mc.textContent='▾';
-  // 显示弹窗
+  try{
+    // 填充基金名（只读）
+    var fn=g('te-fund-name'); if(fn) fn.textContent=t.name||'';
+    // 填充类型
+    var ty=g('te-type'); if(ty){ ty.innerHTML=TRADE_TYPES.map(function(v){return '<option value="'+v[0]+'">'+v[1]+'</option>';}).join(''); ty.value=t.type||'buy'; }
+    var seg=g('te-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===(t.type||'buy')); });
+    // 填充金额
+    var am=g('te-amount'); if(am) am.value=t.amount||'';
+    // 填充账户
+    var accSel=g('te-acc'); if(accSel){ accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(function(a){return '<option value="'+esc(a)+'" '+(a===accOf(t)?'selected':'')+'>'+esc(a)+'</option>';}).join(''); }
+    // 填充日期时间
+    var dt=g('te-datetime'); if(dt){ dt.value=(t.date||'')+'T'+(t.time||'15:00'); }
+    // 填充确认状态
+    var cf=g('te-confirm'); if(cf) cf.value=t.confirm||'confirmed';
+    var pills=document.querySelectorAll('#tradeEditMask .tq-pill'); pills.forEach(function(p){ p.classList.toggle('active', p.dataset.v===(t.confirm||'confirmed')); });
+    // 填充更多选项
+    var nav=g('te-nav'); if(nav) nav.value=(t.nav!=null&&t.nav!=='')?t.nav:'';
+    var fee=g('te-fee'); if(fee) fee.value=t.fee||'';
+    var sh=g('te-shares'); if(sh) sh.value=(t.shares!=null&&t.shares!=='')?t.shares:'';
+    var cd=g('te-confirmDate'); if(cd) cd.value=t.confirmDate||'';
+    var note=g('te-note'); if(note) note.value=t.note||'';
+    // 折叠更多选项
+    var mw=g('teMoreWrap'); if(mw) mw.classList.remove('open');
+    var mc=g('teMoreChev'); if(mc) mc.textContent='▾';
+  }catch(err){
+    console.error('openTradeEdit populate error:', err);
+  }
+  // 显示弹窗（无论字段填充是否成功都确保打开）
   var mask=g('tradeEditMask'); if(mask) mask.classList.add('show');
   // 自动聚焦金额输入
-  setTimeout(function(){ try{ var _el=document.getElementById('te-amount'); if(_el) _el.focus(); }catch(e){} },350);
+  setTimeout(function(){ try{ var _el=g('te-amount'); if(_el) _el.focus(); }catch(e){} },350);
 }
 function closeTradeEdit(){ var m=document.getElementById('tradeEditMask'); if(m) m.classList.remove('show'); _editTradeIdx=-1; }
 function teSetType(v){

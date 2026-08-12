@@ -8306,6 +8306,7 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
     if(!card || card!==_openedCard) closeAllSwipe();
   });
   document.addEventListener('touchstart', function(e){
+    if(e.target.closest('.tx-swipe-actions')) return; // 点编辑/删除按钮不触发滑动与收起，避免吞掉点击
     var card=e.target.closest('.tx-card[data-tx-idx]');
     if(card){ _touchStartX=e.touches[0].clientX; _touchStartY=e.touches[0].clientY; _activeCard=card; }
   }, {passive:true});

@@ -112,6 +112,7 @@
     var startX = 0, dx = 0, active = false;
 
     card.addEventListener('touchstart', function (e) {
+      if (e.target.closest('.tx-swipe-actions')) return;
       startX = e.touches[0].clientX; dx = 0; active = true;
       inner.style.transition = 'none';
     }, { passive: true });
@@ -124,7 +125,8 @@
       inner.style.transform = 'translateX(' + next + 'px)';
     }, { passive: true });
 
-    card.addEventListener('touchend', function () {
+    card.addEventListener('touchend', function (e) {
+      if (e.target.closest('.tx-swipe-actions')) return;
       if (!active) return; active = false;
       inner.style.transition = 'transform .25s ease';
       if (dx < -TH) { inner.style.transform = 'translateX(' + OPEN + 'px)'; openedCard = card; }

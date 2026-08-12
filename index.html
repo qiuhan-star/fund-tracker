@@ -1389,8 +1389,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .trade-section .tx-sub { font-size:13px; color:var(--text-3); margin-top:3px; }
 .trade-section .tx-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
 /* 滑动操作按钮（右滑显示编辑/删除） */
-.trade-section .tx-card { overflow:hidden; position:relative; }
-.trade-section .tx-card-inner { transition:transform .25s ease; position:relative; z-index:1; background:var(--surface); }
+.trade-section .tx-card { overflow:hidden; position:relative; touch-action:pan-y pinch-zoom; }
+.trade-section .tx-card-inner { transition:transform .25s ease; position:relative; z-index:1; background:var(--surface); will-change:transform; }
 .trade-section .tx-swipe-actions { position:absolute; right:0; top:0; bottom:0; display:flex; align-items:center; gap:0; z-index:0; pointer-events:none; }
 .trade-section .tx-swipe-actions .tx-sa-btn { pointer-events:auto; border:none; color:#fff; font-size:14px; font-weight:600; font-family:inherit; padding:0 16px; height:100%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .trade-section .tx-sa-edit { background:var(--accent); border-radius:0 12px 12px 0; }

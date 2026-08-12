@@ -3985,8 +3985,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* ===== 编辑交易弹窗 ===== */
   #tradeEditMask { align-items:flex-end; padding:0; }
   #tradeEditMask .sm-modal { position:relative; }
-  #tradeEditSheet.sm-modal { width:100%; max-width:100%; margin:0; height:100%; max-height:100%; border-radius:0; display:flex; flex-direction:column; overflow:hidden; }
-  #tradeEditSheet .tq-handle { display:none; }
+  #tradeEditSheet.sm-modal { width:100%!important; max-width:412px!important; margin:0 auto!important; height:auto!important; min-height:auto!important; max-height:92vh!important; border-radius:24px 24px 0 0!important; border:none!important; display:flex!important; flex-direction:column!important; overflow:hidden!important; box-shadow:var(--shadow)!important; }
+  #tradeEditSheet .tq-handle { display:block; }
   #tradeEditSheet .sm-head { display:none; }
   .te-fund-label { padding:4px 20px 8px; font-size:14px; font-weight:600; color:var(--text-2); word-break:break-all; }
   .te-foot { position:absolute; bottom:0; left:0; right:0; padding:12px 20px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent 0%, var(--surface) 25%); display:flex; gap:12px; align-items:center; }
@@ -4178,7 +4178,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <div class="tq-handle"></div>
       <div class="tq-head">
         <div class="tq-title">编辑交易</div>
-        <button class="tq-close" onclick="closeTradeEdit()">‹</button>
+        <button class="tq-close" onclick="closeTradeEdit()">✕</button>
       </div>
       <div class="te-fund-label" id="te-fund-name"></div>
       <div class="tq-body">
@@ -8554,7 +8554,7 @@ window.collapseDetailTx=function(){
     list.dataset.collapsed='1';
   });
 };
-function tqSetConfirm(v){ const seg=document.getElementById('tq-confirm-seg'); if(seg) seg.querySelectorAll('.seg-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); }); const h=document.getElementById('tq-confirm'); if(h) h.value=v; }
+function tqSetConfirm(v){ const pills=document.querySelectorAll('#tradeQuickMask .tq-pill'); pills.forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); }); const h=document.getElementById('tq-confirm'); if(h) h.value=v; }
 function tqRecalcEst(){ try{ const amt=+document.getElementById('tq-amount').value||0; const nav=+document.getElementById('tq-nav').value||0; const el=document.getElementById('tqEstShares'); if(!el) return; if(amt>0 && nav>0){ const sh=amt/nav; el.innerHTML=fmt(sh)+' 份 <span class="sub">'+M(amt)+' ÷ '+navFmt(nav)+'</span>'; } else if(amt>0 && !nav){ el.innerHTML='— <span class="sub">净值留空则 T+1 入账后估算</span>'; } else { el.innerHTML='— <span class="sub">填金额与净值后自动估算</span>'; } }catch(e){} }
 
 // ---------- 草稿自动保存（移动端防丢失） ----------

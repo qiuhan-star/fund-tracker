@@ -3994,6 +3994,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .te-foot { position:absolute; bottom:0; left:0; right:0; padding:12px 20px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent 0%, var(--surface) 25%); display:flex; gap:12px; align-items:center; }
   .te-del-btn { border:none; background:transparent; color:var(--danger); font-size:14px; font-weight:600; padding:14px 0; font-family:inherit; white-space:nowrap; }
   .te-foot .btn { flex:1; padding:14px; border-radius:14px; font-size:16px; font-weight:700; }
+  /* 隐藏 te-type 原生下拉框：UI 已由上方分段控件接管，此 select 仅作值容器给 saveTradeEdit/teSetType 读写 */
+  #tradeEditMask #te-type { display:none !important; }
 
   /* ===== 移动端交易卡片重设计 ===== */
   .tr-ios .tx-list{ margin:0; gap:12px; display:flex; flex-direction:column; }

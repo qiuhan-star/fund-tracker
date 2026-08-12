@@ -1391,7 +1391,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 /* 滑动操作按钮（右滑显示编辑/删除） */
 .trade-section .tx-card { overflow:hidden; position:relative; touch-action:pan-y pinch-zoom; }
 .trade-section .tx-card-inner { transition:transform .25s ease; position:relative; z-index:1; background:var(--surface); will-change:transform; }
-.trade-section .tx-swipe-actions { position:absolute; right:0; top:0; bottom:0; display:flex; align-items:center; gap:0; z-index:0; pointer-events:none; }
+.trade-section .tx-swipe-actions { position:absolute; right:0; top:0; bottom:0; display:none; align-items:center; gap:0; z-index:0; pointer-events:none; }
+.trade-section .tx-card.swipe-open .tx-swipe-actions { display:flex; }
 .trade-section .tx-swipe-actions .tx-sa-btn { pointer-events:auto; border:none; color:#fff; font-size:14px; font-weight:600; font-family:inherit; padding:0 16px; height:100%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .trade-section .tx-sa-edit { background:var(--accent); border-radius:0 12px 12px 0; }
 .trade-section .tx-sa-del { background:var(--danger); }
@@ -8059,7 +8060,7 @@ function buildTradeSection(f){
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
         const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'待确认';
         const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'';
-        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${_confBadge}</div></div></div><div class="tx-swipe-actions"><button class="tx-sa-btn tx-sa-edit" onclick="event.stopPropagation();openTradeEdit(${i})">编辑</button><button class="tx-sa-btn tx-sa-del" onclick="event.stopPropagation();deleteTrade(${i})">删除</button></div></div>`;
+        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}" onclick="openTradeEdit(${i})"><div class="tx-card-inner"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${_confBadge}</div></div></div><div class="tx-swipe-actions"><button class="tx-sa-btn tx-sa-edit" onclick="event.stopPropagation();openTradeEdit(${i})">编辑</button><button class="tx-sa-btn tx-sa-del" onclick="event.stopPropagation();deleteTrade(${i})">删除</button></div></div>`;
       });
       h+=`</div>`;
     } else {
@@ -8305,11 +8306,21 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
 (function(){
   var _sx=0, _sy=0, _card=null, _onBtn=false, _opened=null, _th=45;
   function swipeW(c){ var a=c.querySelector('.tx-swipe-actions'); return a?a.offsetWidth:130; }
-  function closeAll(){ if(_opened){ var i=_opened.querySelector('.tx-card-inner'); if(i) i.style.transform=''; _opened=null; } }
+  function closeAll(){
+    if(_opened){
+      var i=_opened.querySelector('.tx-card-inner'); if(i) i.style.transform='';
+      _opened.classList.remove('swipe-open');
+      _opened=null;
+    }
+  }
+  // 兜底：兜底处理 click 事件 - iOS ghost-click / 真机点击失效场景
   document.addEventListener('click', function(e){
-    if((e.target.closest && e.target.closest('.tx-sa-edit')) || (e.target.closest && e.target.closest('.tx-sa-del'))) return;
+    var eb = e.target.closest && e.target.closest('.tx-sa-edit');
+    var db = e.target.closest && e.target.closest('.tx-sa-del');
+    if(eb){ e.stopPropagation(); var c=eb.closest('.tx-card'); if(c){ var idx=+c.getAttribute('data-tx-idx'); if(!isNaN(idx)) openTradeEdit(idx); closeAll(); } return; }
+    if(db){ e.stopPropagation(); var c2=db.closest('.tx-card'); if(c2){ var idx2=+c2.getAttribute('data-tx-idx'); if(!isNaN(idx2)) deleteTrade(idx2); closeAll(); } return; }
     var c=e.target.closest && e.target.closest('.tx-card'); if(!c || c!==_opened) closeAll();
-  });
+  }, true);
   document.addEventListener('touchstart', function(e){
     var c=e.target.closest && e.target.closest('.tx-card[data-tx-idx]'); if(!c) return;
     _sx=e.touches[0].clientX; _sy=e.touches[0].clientY; _card=c;
@@ -8335,16 +8346,30 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
     if(eb){ e.preventDefault(); openTradeEdit(idx); _card=null; return; }
     if(db){ e.preventDefault(); deleteTrade(idx); _card=null; return; }
     if(dx < -_th){ // 左滑 → 展开编辑/删除
-      if(_opened && _opened!==_card){ var p=_opened.querySelector('.tx-card-inner'); if(p) p.style.transform=''; }
-      inner.style.transform='translateX(-'+w+'px)'; _opened=_card;
+      if(_opened && _opened!==_card){
+        var p=_opened.querySelector('.tx-card-inner'); if(p) p.style.transform='';
+        _opened.classList.remove('swipe-open');
+      }
+      inner.style.transform='translateX(-'+w+'px)';
+      _card.classList.add('swipe-open');
+      _opened=_card;
     } else if(dx > _th){ // 右滑 → 收起
-      inner.style.transform='translateX(0)'; if(_card===_opened) _opened=null;
+      inner.style.transform='translateX(0)';
+      _card.classList.remove('swipe-open');
+      if(_card===_opened) _opened=null;
     } else if(!_onBtn && Math.abs(dx)<=12 && dy<=12 && !(e.target.closest&&e.target.closest('.tx-conf')) && !(e.target.closest&&e.target.closest('.tx-swipe-actions'))){
       // 轻点卡片主体（非按钮、非状态徽标）→ 直接进编辑页（最可靠路径）
       e.preventDefault(); openTradeEdit(idx);
     } else { // 中途拖动未过阈值 → 吸附回最近状态
-      if(_card===_opened || dx < -_th/2){ inner.style.transform='translateX(-'+w+'px)'; _opened=_card; }
-      else { inner.style.transform='translateX(0)'; if(_card===_opened) _opened=null; }
+      if(_card===_opened || dx < -_th/2){
+        inner.style.transform='translateX(-'+w+'px)';
+        _card.classList.add('swipe-open');
+        _opened=_card;
+      } else {
+        inner.style.transform='translateX(0)';
+        _card.classList.remove('swipe-open');
+        if(_card===_opened) _opened=null;
+      }
     }
     _card=null;
   }, {passive:false});

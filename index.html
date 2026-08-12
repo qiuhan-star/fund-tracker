@@ -1369,7 +1369,27 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .trade-section .sec-head { margin-bottom: 10px; }
 .trade-section .sec-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
 .trade-section .hint { font-size: 12px; color: var(--text-3); }
-.trade-section .tx-list { margin: 0; }
+.trade-section .tx-list { margin: 0; display:flex; flex-direction:column; gap:10px; }
+/* 交易记录卡片：独立卡片 + 边框 + 间距，解决记录无分隔问题（不依赖死代码 .tr-ios） */
+.trade-section .tx-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; position:relative; cursor:pointer; }
+.trade-section .tx-card:active { background:var(--surface-2); }
+.trade-section .tx-card.cancelled { opacity:.5; }
+.trade-section .tx-card::after { content:'›'; position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--text-3); opacity:.45; }
+.trade-section .tx-card .tx-card-inner { padding-right:20px; }
+.trade-section .tx-line1 { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.trade-section .tx-id { display:flex; align-items:center; gap:7px; font-size:14px; font-weight:600; }
+.trade-section .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.trade-section .dot.buy { background:var(--up); }
+.trade-section .dot.sell { background:var(--down); }
+.trade-section .tx-id.buy { color:var(--up); }
+.trade-section .tx-id.sell { color:var(--down); }
+.trade-section .tx-date { font-size:13px; color:var(--text-3); }
+.trade-section .tx-line2 { display:flex; justify-content:space-between; align-items:flex-end; }
+.trade-section .tx-amount { font-size:20px; font-weight:700; letter-spacing:-.01em; color:var(--text); }
+.trade-section .tx-sub { font-size:13px; color:var(--text-3); margin-top:3px; }
+.trade-section .tx-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.trade-section .tx-lock-icon { font-size:11px; color:var(--text-3); background:var(--surface-2); padding:3px 7px; border-radius:6px; white-space:nowrap; }
+.trade-section .tx-note { font-size:12px; color:var(--text-3); margin-top:4px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .trade-section .tx-expand { width: 100%; margin: 10px 0 4px; }
 @media (min-width: 768px) {
   .trade-section .tx-expand { display: none; }

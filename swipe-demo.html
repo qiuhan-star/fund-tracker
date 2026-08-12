@@ -87,14 +87,12 @@
     { name: "广发稳健增长", sub: "2026-08-01 · 买入", amt: "-¥8,000.00", type: "buy" }
   ];
 
-  var TH = 40;            // 触发阈值(px)
-  var OPEN = -130;        // 打开位移(px)
-  var openedCard = null;
   var list = document.getElementById('list');
 
   trades.forEach(function (t, i) {
     var card = document.createElement('div');
     card.className = 'tx-card';
+    card.setAttribute('data-tx-idx', i);
     card.innerHTML =
       '<div class="tx-swipe-actions">' +
         '<button class="tx-sa-btn tx-edit">编辑</button>' +
@@ -107,54 +105,49 @@
         '</div>' +
       '</div>';
     list.appendChild(card);
-
-    var inner = card.querySelector('.tx-card-inner');
-    var startX = 0, dx = 0, active = false;
-
-    var swipeEl = card.querySelector('.tx-swipe-actions');
-    var w = swipeEl ? swipeEl.offsetWidth : 130; // 按按钮实际宽度位移，避免编辑按钮被盖住
-
-    card.addEventListener('touchstart', function (e) {
-      if (e.target.closest('.tx-swipe-actions')) return;
-      startX = e.touches[0].clientX; dx = 0; active = true;
-      inner.style.transition = 'none';
-    }, { passive: true });
-
-    card.addEventListener('touchmove', function (e) {
-      if (!active) return;
-      dx = e.touches[0].clientX - startX;
-      var base = (card === openedCard) ? -w : 0;
-      var next = Math.max(-(w + 80), Math.min(0, base + dx));
-      inner.style.transform = 'translateX(' + next + 'px)';
-    }, { passive: true });
-
-    card.addEventListener('touchend', function (e) {
-      if (e.target.closest('.tx-swipe-actions')) return;
-      if (!active) return; active = false;
-      inner.style.transition = 'transform .25s ease';
-      if (dx < -TH) { inner.style.transform = 'translateX(-' + w + 'px)'; openedCard = card; }
-      else if (dx > TH) { inner.style.transform = 'translateX(0)'; if (card === openedCard) openedCard = null; }
-      // 轻点(dx≈0)保持展开，不收起，让按钮 click 正常触发
-    }, { passive: true });
-
-    // 电脑：点卡片模拟左滑
-    card.querySelector('.tx-card-inner').addEventListener('click', function () {
-      if (card === openedCard) { inner.style.transform = 'translateX(0)'; openedCard = null; }
-      else {
-        if (openedCard) openedCard.querySelector('.tx-card-inner').style.transform = 'translateX(0)';
-        inner.style.transform = 'translateX(-' + w + 'px)'; openedCard = card;
-      }
-    });
-
-    card.querySelector('.tx-edit').addEventListener('click', function (e) {
-      e.stopPropagation(); openEdit();
-    });
-    card.querySelector('.tx-del').addEventListener('click', function (e) {
-      e.stopPropagation(); card.style.display = 'none'; openedCard = null;
-    });
   });
 
-  function openEdit() { document.getElementById('editPage').classList.add('open'); }
+  // ---- 文档级手势（与 index.html 同逻辑：elementFromPoint 绕过 iOS ghost-click + 轻点进编辑）----
+  var _sx=0,_sy=0,_card=null,_onBtn=false,_opened=null,_th=45;
+  function swipeW(c){ var a=c.querySelector('.tx-swipe-actions'); return a?a.offsetWidth:130; }
+  function closeAll(){ if(_opened){ var i=_opened.querySelector('.tx-card-inner'); if(i) i.style.transform=''; _opened=null; } }
+  function openEdit(){ document.getElementById('editPage').classList.add('open'); }
+  function delCard(c){ c.style.display='none'; if(_opened===c)_opened=null; }
+  // 桌面点击按钮（触摸走下方 touchend）
+  document.addEventListener('click', function(e){
+    if(e.target.closest&&e.target.closest('.tx-edit')){ e.stopPropagation(); openEdit(); return; }
+    if(e.target.closest&&e.target.closest('.tx-del')){ e.stopPropagation(); var c=e.target.closest('.tx-card'); if(c) delCard(c); return; }
+    var c=e.target.closest&&e.target.closest('.tx-card'); if(!c||c!==_opened) closeAll();
+  });
+  document.addEventListener('touchstart', function(e){
+    var c=e.target.closest&&e.target.closest('.tx-card'); if(!c) return;
+    _sx=e.touches[0].clientX; _sy=e.touches[0].clientY; _card=c;
+    _onBtn=!!(e.target.closest&&e.target.closest('.tx-swipe-actions'));
+  }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    if(!_card||_onBtn) return;
+    var dx=e.touches[0].clientX-_sx, dy=Math.abs(e.touches[0].clientY-_sy);
+    if(dy>Math.abs(dx)*1.2){ _card=null; return; }
+    var inner=_card.querySelector('.tx-card-inner'); if(!inner) return;
+    var w=swipeW(_card), base=(_card===_opened)?-w:0;
+    inner.style.transform='translateX('+Math.max(-(w+80),Math.min(0,base+dx))+'px)';
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if(!_card) return;
+    var t=e.changedTouches[0], dx=t.clientX-_sx, dy=Math.abs(t.clientY-_sy);
+    var inner=_card.querySelector('.tx-card-inner'); if(!inner){ _card=null; return; }
+    var w=swipeW(_card);
+    var el=document.elementFromPoint(t.clientX,t.clientY);
+    var eb=el&&el.closest?el.closest('.tx-edit'):null;
+    var db=el&&el.closest?el.closest('.tx-del'):null;
+    if(eb){ e.preventDefault(); openEdit(); _card=null; return; }
+    if(db){ e.preventDefault(); delCard(_card); _card=null; return; }
+    if(dx<-_th){ if(_opened&&_opened!==_card){var p=_opened.querySelector('.tx-card-inner'); if(p)p.style.transform='';} inner.style.transform='translateX(-'+w+'px)'; _opened=_card; }
+    else if(dx>_th){ inner.style.transform='translateX(0)'; if(_card===_opened)_opened=null; }
+    else if(!_onBtn && Math.abs(dx)<=12 && dy<=12 && !(e.target.closest&&e.target.closest('.tx-swipe-actions'))){ e.preventDefault(); openEdit(); }
+    else { if(_card===_opened||dx<-_th/2){ inner.style.transform='translateX(-'+w+'px)'; _opened=_card; } else { inner.style.transform='translateX(0)'; if(_card===_opened)_opened=null; } }
+    _card=null;
+  }, {passive:false});
   function closeEdit() { document.getElementById('editPage').classList.remove('open'); }
 </script>
 </body>

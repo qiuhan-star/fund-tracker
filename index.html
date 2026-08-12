@@ -8296,51 +8296,58 @@ function openTradeQuickFor(name){
 
 function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); if(m) m.classList.remove('show'); }
 
-// ---------- 左滑露出操作按钮（编辑/删除） ----------
+// ---------- 左滑露出操作 / 轻点进编辑（iOS 兼容） ----------
+// 关键修复：iOS Safari 在 touchstart 之后用 CSS transform 挪动元素时，
+// 松手合成的 click 会派发到 touchstart 当时的元素（被挪走的卡片），
+// 导致「编辑/删除」按钮永远点不到（ghost-click）。故在 touchend 用
+// elementFromPoint 取手指真实落点直接派发动作，并支持「轻点卡片主体
+// 直接进编辑页」作为最稳的路径。
 (function(){
-  var _touchStartX=0, _touchStartY=0, _activeCard=null, _threshold=50, _openedCard=null;
-  // 按按钮实际宽度位移，确保编辑/删除按钮完整露出、不被卡片本体盖住
-  function swipeW(card){ var a=card.querySelector('.tx-swipe-actions'); return a?a.offsetWidth:130; }
-  function closeAllSwipe(){ if(_openedCard){ var i=_openedCard.querySelector('.tx-card-inner'); if(i) i.style.transform=''; _openedCard=null; } }
-  // 点击空白区域收起操作按钮（点编辑/删除由按钮自身处理）
+  var _sx=0, _sy=0, _card=null, _onBtn=false, _opened=null, _th=45;
+  function swipeW(c){ var a=c.querySelector('.tx-swipe-actions'); return a?a.offsetWidth:130; }
+  function closeAll(){ if(_opened){ var i=_opened.querySelector('.tx-card-inner'); if(i) i.style.transform=''; _opened=null; } }
   document.addEventListener('click', function(e){
-    if(e.target.closest('.tx-sa-edit') || e.target.closest('.tx-sa-del')) return;
-    var card=e.target.closest('.tx-card');
-    if(!card || card!==_openedCard) closeAllSwipe();
+    if((e.target.closest && e.target.closest('.tx-sa-edit')) || (e.target.closest && e.target.closest('.tx-sa-del'))) return;
+    var c=e.target.closest && e.target.closest('.tx-card'); if(!c || c!==_opened) closeAll();
   });
   document.addEventListener('touchstart', function(e){
-    if(e.target.closest('.tx-swipe-actions')) return; // 点按钮不进入滑动逻辑，避免吞掉点击
-    var card=e.target.closest('.tx-card[data-tx-idx]');
-    if(card){ _touchStartX=e.touches[0].clientX; _touchStartY=e.touches[0].clientY; _activeCard=card; }
+    var c=e.target.closest && e.target.closest('.tx-card[data-tx-idx]'); if(!c) return;
+    _sx=e.touches[0].clientX; _sy=e.touches[0].clientY; _card=c;
+    _onBtn=!!(e.target.closest && e.target.closest('.tx-swipe-actions'));
   }, {passive:true});
   document.addEventListener('touchmove', function(e){
-    if(!_activeCard) return;
-    var dx=e.touches[0].clientX-_touchStartX, dy=Math.abs(e.touches[0].clientY-_touchStartY);
-    if(Math.abs(dy)>Math.abs(dx)*1.2){ _activeCard=null; return; }
-    var inner=_activeCard.querySelector('.tx-card-inner');
-    if(!inner) return;
-    var w=swipeW(_activeCard);
-    var base=(_activeCard===_openedCard)?-w:0;
-    var next=Math.max(-(w+80), Math.min(0, base+dx));
-    inner.style.transform='translateX('+next+'px)';
+    if(!_card || _onBtn) return; // 从按钮起手不拖拽
+    var dx=e.touches[0].clientX-_sx, dy=Math.abs(e.touches[0].clientY-_sy);
+    if(dy>Math.abs(dx)*1.2){ _card=null; return; }
+    var inner=_card.querySelector('.tx-card-inner'); if(!inner) return;
+    var w=swipeW(_card), base=(_card===_opened)?-w:0;
+    inner.style.transform='translateX('+Math.max(-(w+80), Math.min(0, base+dx))+'px)';
   }, {passive:true});
   document.addEventListener('touchend', function(e){
-    if(!_activeCard) return;
-    var dx=e.changedTouches[0].clientX-_touchStartX;
-    var inner=_activeCard.querySelector('.tx-card-inner');
-    if(!inner){ _activeCard=null; return; }
-    var w=swipeW(_activeCard);
-    if(dx < -_threshold){ // 左滑 → 展开，位移量=按钮实际宽度
-      if(_openedCard && _openedCard!==_activeCard){ var p=_openedCard.querySelector('.tx-card-inner'); if(p) p.style.transform=''; }
-      inner.style.transform='translateX(-'+w+'px)';
-      _openedCard=_activeCard;
-    } else if(dx > _threshold){ // 右滑 → 收起
-      inner.style.transform='translateX(0)';
-      if(_activeCard===_openedCard) _openedCard=null;
+    if(!_card) return;
+    var t=e.changedTouches[0], dx=t.clientX-_sx, dy=Math.abs(t.clientY-_sy);
+    var inner=_card.querySelector('.tx-card-inner'); if(!inner){ _card=null; return; }
+    var w=swipeW(_card), idx=+_card.getAttribute('data-tx-idx');
+    // 真实落点（绕过 iOS ghost-click：click 会派发到 touchstart 时元素）
+    var el=document.elementFromPoint(t.clientX, t.clientY);
+    var eb=el&&el.closest?el.closest('.tx-sa-edit'):null;
+    var db=el&&el.closest?el.closest('.tx-sa-del'):null;
+    if(eb){ e.preventDefault(); openTradeEdit(idx); _card=null; return; }
+    if(db){ e.preventDefault(); deleteTrade(idx); _card=null; return; }
+    if(dx < -_th){ // 左滑 → 展开编辑/删除
+      if(_opened && _opened!==_card){ var p=_opened.querySelector('.tx-card-inner'); if(p) p.style.transform=''; }
+      inner.style.transform='translateX(-'+w+'px)'; _opened=_card;
+    } else if(dx > _th){ // 右滑 → 收起
+      inner.style.transform='translateX(0)'; if(_card===_opened) _opened=null;
+    } else if(!_onBtn && Math.abs(dx)<=12 && dy<=12 && !(e.target.closest&&e.target.closest('.tx-conf')) && !(e.target.closest&&e.target.closest('.tx-swipe-actions'))){
+      // 轻点卡片主体（非按钮、非状态徽标）→ 直接进编辑页（最可靠路径）
+      e.preventDefault(); openTradeEdit(idx);
+    } else { // 中途拖动未过阈值 → 吸附回最近状态
+      if(_card===_opened || dx < -_th/2){ inner.style.transform='translateX(-'+w+'px)'; _opened=_card; }
+      else { inner.style.transform='translateX(0)'; if(_card===_opened) _opened=null; }
     }
-    // 否则（轻点，位移≈0）保持原状，不收起，让按钮 click 正常触发
-    _activeCard=null;
-  }, {passive:true});
+    _card=null;
+  }, {passive:false});
 })();
 
 // ---------- 记一笔：关闭详情弹窗再打开（避免嵌套遮罩） ----------

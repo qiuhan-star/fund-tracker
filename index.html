@@ -3984,6 +3984,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
   /* ===== 编辑交易弹窗 ===== */
   #tradeEditMask { align-items:flex-end; padding:0; }
+  #tradeEditMask.show { display:flex !important; /* 覆盖 .sm-mask.show{display:block}，保证 align-items:flex-end 底部弹出生效 */ }
   #tradeEditMask .sm-modal { position:relative; }
   #tradeEditSheet.sm-modal { width:100%!important; max-width:412px!important; margin:0 auto!important; height:auto!important; min-height:auto!important; max-height:92vh!important; border-radius:24px 24px 0 0!important; border:none!important; display:flex!important; flex-direction:column!important; overflow:hidden!important; box-shadow:var(--shadow)!important; }
   #tradeEditSheet .tq-handle { display:block; }

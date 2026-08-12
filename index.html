@@ -1352,7 +1352,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .tq-more-row .v { color:var(--text-3); }
 .tq-note-wrap { margin:10px 0; }
 .tq-note-wrap .lab { font-size:13px; color:var(--text-2); margin-bottom:6px; }
-#tq-note { width:100%; min-height:64px; border:1px solid var(--border); border-radius:10px; padding:10px; font-size:14px; background:var(--surface); color:var(--text); resize:vertical; }
+#tq-note, #te-note { width:100%; min-height:64px; border:1px solid var(--border); border-radius:10px; padding:10px; font-size:14px; background:var(--surface); color:var(--text); resize:vertical; font-family:inherit; box-sizing:border-box; -webkit-appearance:none; appearance:none; }
+#tq-note:focus, #te-note:focus { border-color:var(--accent); outline:none; }
 .tq-foot { position:absolute; bottom:0; left:0; right:0; padding:12px 20px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, transparent 0%, var(--surface) 25%); }
 .tq-foot .btn { width:100%; padding:14px; border-radius:14px; font-size:16px; font-weight:700; }
 #tradeQuickMask .sm-modal { position:relative; }

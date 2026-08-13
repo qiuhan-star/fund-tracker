@@ -7008,7 +7008,7 @@ function buildLiquidatedView(){
       const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
       const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
       if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } }
-      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); for(let i=0;i<lots.length&&sellSh>0;i++){ const take=Math.min(sellSh,lots[i].sh); realized+=(nav-lots[i].cp)*take; cost-=lots[i].cp*take; shares-=take; lots[i].sh-=take; sellSh-=take; } lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }
+      else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; realized+=(nav-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }   // 平均成本法（与支付宝一致）
       else if(ty==='dividend'){ div+=amt; if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }
       else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }
       else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }

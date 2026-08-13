@@ -3981,7 +3981,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .tx-conf.pend{ background:rgba(255,149,0,.14); color:var(--warn); }
   .tx-conf.cancel{ background:rgba(255,59,48,.14); color:var(--danger); }
   .tag-pend{ display:inline-flex; align-items:center; font-size:10px; padding:1px 5px; border-radius:999px; background:rgba(255,149,0,.14); color:var(--warn); font-weight:600; vertical-align:middle; margin-left:3px; line-height:1.3; }
-  #dhLatestTradeK .tag-pend{ margin-left:6px; vertical-align:baseline; }
+  #dhLatestTradeK{ position:relative; }
+  #dhLatestTradeK .lt-lbl{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
+  #dhLatestTradeK .tag-pend{ position:absolute; }
   .pend-txt{ font-size:12px; font-weight:600; color:var(--warn); margin-left:4px; vertical-align:middle; }
   .lt-date{ font-weight:700; }
   .highlight-flash{ animation:hlFlash 1.5s ease-out; }
@@ -7956,7 +7958,7 @@ function headerHtml(f){
   const _lt=latestTradeOf(f.name);
   const _netTxt=_tr.length?M(_net):'—';
   const _ltIdx=_lt?trades.indexOf(_lt):-1;
-  const _latestLabel='最新交易'+(_lt && _lt.confirm==='pending'?' <span class="tag-pend">待确认</span>':'');
+  const _latestLabel='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">待确认</span>':'');
   const _latestTxt=_lt?'<span class="lt-date">'+_lt.date+'</span>':'—';
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>

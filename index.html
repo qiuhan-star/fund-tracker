@@ -5734,13 +5734,15 @@ function renderStatusLine(){
 }
 // 持仓估值格：盘中显示实时估值(带新鲜度)，休市/收盘回退到已确认「收」涨跌幅并标注该收盘日期(非"预估")
 function estCellHtml(f){
-  const nc=navCache[f.name]||{}; const mkt=isMarketOpen(new Date()); const age=freshAgeShort();
-  if(mkt && nc.gszzl!=null){
-    // 盘中态只显示百分比估值，子行冗余（估值时间/新鲜度用户不需要）—— 空 div 占位保持行高
-    return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 est-fresh"></div>`;
+  // 估算涨跌列固定显示盘中估算：交易时段为实时估值；收盘后显示当日冻结估值(15:00收盘值)，不再翻成官方确认值（官方涨跌幅由「官方涨跌」列承担）
+  const nc=navCache[f.name]||{}; const mkt=isMarketOpen(new Date());
+  if(nc.gszzl!=null){
+    const live=mkt;
+    const sub=live?'':(nc.gztime?nc.gztime.slice(11,16):'今日估算');
+    return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 ${live?'est-fresh':'est-stale'}">${sub}</div>`;
   }
   if(nc.navChg!=null){
-    return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-stale">${mkt?'无盘中估值':(nc.navChgDate?nc.navChgDate.slice(5):'已确认')}</div>`;
+    return `<div class="dt-big ${nc.navChg>=0?'pos':'neg'}">${nc.navChg>=0?'+':''}${nc.navChg.toFixed(2)}%</div><div class="dt-sub2 est-nodata">${nc.navChgDate?nc.navChgDate.slice(5):'已确认'}</div>`;
   }
   return `<div class="dt-big zero">—</div><div class="dt-sub2 est-nodata">${mkt?'无估算':'无预估'}</div>`;
 }
@@ -5924,7 +5926,7 @@ function denseRowsHtml(list){
   const todayStr=fmtDate(new Date()); // 今晚已更新净值的判定基准：收盘日期==今天
   return list.map(f=>{
     const nc=navCache[f.name]||{};
-    // 估算涨跌：盘中估值为实时预估(带新鲜度徽标)，休市/收盘回退到已确认「收」涨跌幅并标注该收盘日期(非"预估")
+    // 估算涨跌：estCellHtml 固定显示盘中估值(交易时段实时、收盘后冻结当日15:00值)，官方确认涨跌幅由「官方涨跌」列单独承担
     const estCell=estCellHtml(f);
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');

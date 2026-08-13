@@ -4143,6 +4143,15 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .te-foot .btn { flex:1; padding:14px; border-radius:14px; font-size:16px; font-weight:700; }
   /* 隐藏 te-type 原生下拉框：UI 已由上方分段控件接管，此 select 仅作值容器给 saveTradeEdit/teSetType 读写 */
   #tradeEditMask #te-type { display:none !important; }
+  .tq-amt-seg { display:flex; border-radius:10px; background:var(--surface-2,#f0f0f3); padding:2px; margin:12px 0 10px; }
+  .tq-amt-seg button { flex:1; height:34px; border:none; border-radius:8px; background:transparent; color:var(--text-2); font-size:13px; font-weight:500; cursor:pointer; transition:all .2s; font-family:inherit; }
+  .tq-amt-seg button.active { background:var(--bg); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .te-amt-fields .tq-amount { margin-top:0; }
+  .te-derived { font-size:12px; color:var(--text-3); padding:4px 0 8px; }
+  .te-convert-target { margin:8px 0 10px; }
+  .te-convert-target .lab { font-size:13px; color:var(--text-2); margin-bottom:6px; font-weight:500; }
+  .te-convert-target .inp input { width:100%; padding:12px 14px; border:1px solid var(--border-2); border-radius:10px; font-size:15px; background:var(--bg); color:var(--text); font-family:inherit; outline:0; box-sizing:border-box; }
+  .te-convert-target .inp input:focus { border-color:var(--accent); }
 
   /* ===== 移动端交易卡片重设计 ===== */
   .tr-ios .tx-list{ margin:0; gap:12px; display:flex; flex-direction:column; }
@@ -4291,11 +4300,41 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <button type="button" data-v="convert" onclick="tqSetType('convert')">转换</button>
         </div>
         <select id="tq-type"></select>
-        <div class="tq-amount">
-          <div class="lab">金额（元）</div>
-          <div class="inp"><span class="cur">¥</span><input id="tq-amount" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="tqRecalcEst()"></div>
-          <div class="hint" id="tqAmtHint">预估可买入 <b>—</b> 份 · 参考净值 —</div>
+
+        <!-- 转换目标基金 -->
+        <div id="tqConvertTarget" class="te-convert-target" style="display:none">
+          <div class="lab">转入基金</div>
+          <div class="tq-amount" style="margin-top:0">
+            <div class="inp"><input id="tq-convert-target" list="tqConvertList" placeholder="选择或输入目标基金名称" autocomplete="off"></div>
+            <datalist id="tqConvertList"></datalist>
+          </div>
         </div>
+
+        <!-- 金额/份额切换 -->
+        <div class="tq-amt-seg" id="tq-amt-seg">
+          <button type="button" class="active" data-mode="amount" onclick="tqSetAmtMode('amount')">按金额填</button>
+          <button type="button" data-mode="shares" onclick="tqSetAmtMode('shares')">按份额填</button>
+        </div>
+
+        <!-- 按金额填 -->
+        <div id="tqFieldsAmount" class="te-amt-fields">
+          <div class="tq-amount">
+            <div class="lab">金额（元）</div>
+            <div class="inp"><span class="cur">¥</span><input id="tq-amount" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="tqRecalcEst()"></div>
+          </div>
+        </div>
+
+        <!-- 按份额填 -->
+        <div id="tqFieldsShares" class="te-amt-fields" style="display:none">
+          <div class="tq-amount">
+            <div class="lab">份额</div>
+            <div class="inp"><span class="cur" style="font-size:13px;font-weight:400">份</span><input id="tq-shares" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="tqRecalcEst()"></div>
+          </div>
+        </div>
+
+        <!-- 自动换算提示 -->
+        <div class="te-derived" id="tqDerived">填金额或份额后，输入净值可自动换算</div>
+
         <div class="tq-fields">
           <div class="tq-field"><span class="lab">账户</span><span class="val"><select id="tq-acc"></select><span class="chev">›</span></span></div>
           <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="tq-datetime" type="datetime-local"><span class="chev">›</span></span></div>
@@ -4313,16 +4352,12 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <div class="tq-more-body" id="tqMoreFields">
             <div class="tq-more-row"><span>净值（可选）</span><span class="v"><input id="tq-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="tqRecalcEst()"></span></div>
             <div class="tq-more-row"><span>费用（元）</span><span class="v"><input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
-            <div class="tq-more-row"><span>确认份额（可选）</span><span class="v"><input id="tq-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="自动估算"></span></div>
+            <div class="tq-more-row"><span>确认份额（可选）</span><span class="v"><input id="tq-shares-more" class="num" type="number" step="any" inputmode="decimal" placeholder="自动估算"></span></div>
           </div>
         </div>
         <div class="tq-note-wrap">
           <div class="lab">备注（可选）</div>
           <textarea id="tq-note" rows="2" placeholder="如：转换来源、截图留存等"></textarea>
-        </div>
-        <div class="tq-field" style="background:transparent;border:none;padding:8px 0">
-          <span class="lab">预估份额</span>
-          <span class="val" id="tqEstShares" style="font-weight:500">— <span style="font-weight:400;color:var(--text-3)">填金额与净值后自动估算</span></span>
         </div>
       </div>
       <div class="tq-foot">
@@ -4347,10 +4382,41 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <button type="button" data-v="convert" onclick="teSetType('convert')">转换</button>
         </div>
         <select id="te-type"></select>
-        <div class="tq-amount">
-          <div class="lab">金额（元）</div>
-          <div class="inp"><span class="cur">¥</span><input id="te-amount" type="number" step="any" inputmode="decimal" placeholder="0.00"></div>
+
+        <!-- 转换目标基金 -->
+        <div id="teConvertTarget" class="te-convert-target" style="display:none">
+          <div class="lab">转入基金</div>
+          <div class="tq-amount" style="margin-top:0">
+            <div class="inp"><input id="te-convert-target" list="teConvertList" placeholder="选择或输入目标基金名称" autocomplete="off"></div>
+            <datalist id="teConvertList"></datalist>
+          </div>
         </div>
+
+        <!-- 金额/份额切换 -->
+        <div class="tq-amt-seg" id="te-amt-seg">
+          <button type="button" class="active" data-mode="amount" onclick="teSetAmtMode('amount')">按金额填</button>
+          <button type="button" data-mode="shares" onclick="teSetAmtMode('shares')">按份额填</button>
+        </div>
+
+        <!-- 按金额填 -->
+        <div id="teFieldsAmount" class="te-amt-fields">
+          <div class="tq-amount">
+            <div class="lab">金额（元）</div>
+            <div class="inp"><span class="cur">¥</span><input id="te-amount" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="teUpdateDerived()"></div>
+          </div>
+        </div>
+
+        <!-- 按份额填 -->
+        <div id="teFieldsShares" class="te-amt-fields" style="display:none">
+          <div class="tq-amount">
+            <div class="lab">份额</div>
+            <div class="inp"><span class="cur" style="font-size:13px;font-weight:400">份</span><input id="te-shares" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="teUpdateDerived()"></div>
+          </div>
+        </div>
+
+        <!-- 自动换算提示 -->
+        <div class="te-derived" id="teDerived">填金额或份额后，输入净值可自动换算</div>
+
         <div class="tq-fields">
           <div class="tq-field"><span class="lab">账户</span><span class="val"><select id="te-acc"></select><span class="chev">›</span></span></div>
           <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="te-datetime" type="datetime-local"><span class="chev">›</span></span></div>
@@ -4367,9 +4433,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div class="tq-more" id="teMoreWrap">
           <div class="tq-more-head" onclick="teToggleMore()"><span>更多选项 <span class="tq-more-hint">净值、费用、份额</span></span><span id="teMoreChev" class="tq-more-chev">▾</span></div>
           <div class="tq-more-body" id="teMoreFields">
-            <div class="tq-more-row"><span>净值</span><span class="v"><input id="te-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1"></span></div>
+            <div class="tq-more-row"><span>净值</span><span class="v"><input id="te-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="teUpdateDerived()"></span></div>
             <div class="tq-more-row"><span>费用（元）</span><span class="v"><input id="te-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
-            <div class="tq-more-row"><span>份额</span><span class="v"><input id="te-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="可选"></span></div>
+            <div class="tq-more-row" id="teSharesRow"><span>份额</span><span class="v"><input id="te-shares-more" class="num" type="number" step="any" inputmode="decimal" placeholder="自动换算"></span></div>
             <div class="tq-more-row"><span>净值确认日</span><span class="v"><input id="te-confirmDate" type="date"></span></div>
           </div>
         </div>
@@ -8894,14 +8960,24 @@ function openTradeEdit(idx){
   _editTradeIdx=idx;
   var t=trades[idx];
   var g=function(id){return document.getElementById(id);};
+  _teAmtMode='amount';
   try{
     // 填充基金名（只读）
     var fn=g('te-fund-name'); if(fn) fn.textContent=t.name||'';
     // 填充类型
     var ty=g('te-type'); if(ty){ ty.innerHTML=TRADE_TYPES.map(function(v){return '<option value="'+v[0]+'">'+v[1]+'</option>';}).join(''); ty.value=t.type||'buy'; }
     var seg=g('te-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===(t.type||'buy')); });
+    // 显示/隐藏转换目标基金
+    var tc=g('teConvertTarget'); if(tc) tc.style.display=(t.type==='convert'||t.type==='convert_out')?'':'none';
+    // 填充转换目标基金
+    var tgt=g('te-convert-target'); if(tgt) tgt.value=t.convertTarget||'';
+    // 默认按金额模式
+    teSetAmtMode('amount');
     // 填充金额
     var am=g('te-amount'); if(am) am.value=t.amount||'';
+    // 填充份额（主字段 + 更多选项）
+    var sh=g('te-shares'); if(sh) sh.value=(t.shares!=null&&t.shares!=='')?t.shares:'';
+    var shm=g('te-shares-more'); if(shm) shm.value=(t.shares!=null&&t.shares!=='')?t.shares:'';
     // 填充账户
     var accSel=g('te-acc'); if(accSel){ accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(function(a){return '<option value="'+esc(a)+'" '+(a===accOf(t)?'selected':'')+'>'+esc(a)+'</option>';}).join(''); }
     // 填充日期时间
@@ -8912,7 +8988,6 @@ function openTradeEdit(idx){
     // 填充更多选项
     var nav=g('te-nav'); if(nav) nav.value=(t.nav!=null&&t.nav!=='')?t.nav:'';
     var fee=g('te-fee'); if(fee) fee.value=t.fee||'';
-    var sh=g('te-shares'); if(sh) sh.value=(t.shares!=null&&t.shares!=='')?t.shares:'';
     var cd=g('te-confirmDate'); if(cd) cd.value=t.confirmDate||'';
     var note=g('te-note'); if(note) note.value=t.note||'';
     // 折叠更多选项
@@ -8921,15 +8996,48 @@ function openTradeEdit(idx){
   }catch(err){
     console.error('openTradeEdit populate error:', err);
   }
-  // 显示弹窗（无论字段填充是否成功都确保打开）
+  // 填充转换基金列表
+  var cl=g('teConvertList'); if(cl){
+    var names=(_allHoldings.length?_allHoldings:fundsView).map(function(f){return f.name;}).filter(Boolean);
+    cl.innerHTML=[...new Set(names)].map(function(n){return '<option value="'+esc(n)+'">';}).join('');
+  }
+  // 显示弹窗
   var mask=g('tradeEditMask'); if(mask) mask.classList.add('show');
-  // 自动聚焦金额输入
+  teUpdateDerived();
   setTimeout(function(){ try{ var _el=g('te-amount'); if(_el) _el.focus(); }catch(e){} },350);
 }
 function closeTradeEdit(){ var m=document.getElementById('tradeEditMask'); if(m) m.classList.remove('show'); _editTradeIdx=-1; }
+var _teAmtMode='amount';
+function teSetAmtMode(mode){
+  _teAmtMode=mode;
+  var seg=document.getElementById('te-amt-seg'); if(!seg) return;
+  seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active',b.dataset.mode===mode); });
+  var a=document.getElementById('teFieldsAmount'), s=document.getElementById('teFieldsShares');
+  if(a) a.style.display=mode==='amount'?'':'none';
+  if(s) s.style.display=mode==='shares'?'':'none';
+  // 同步份额到更多选项
+  var sh=document.getElementById('te-shares'), shm=document.getElementById('te-shares-more');
+  if(shm && sh) shm.value=sh.value;
+  teUpdateDerived();
+}
+function teUpdateDerived(){
+  var g=function(id){return document.getElementById(id);};
+  var nav=+(g('te-nav')?.value||0), amt=+(g('te-amount')?.value||0), sh=+(g('te-shares')?.value||0);
+  var el=g('teDerived'); if(!el) return;
+  if(nav>0 && amt>0 && sh===0){
+    el.innerHTML='预估份额：<b>'+fmt(amt/nav)+'</b> 份';
+  } else if(nav>0 && sh>0 && amt===0){
+    el.innerHTML='预估金额：<b>'+M(sh*nav)+'</b>';
+  } else if(nav>0 && amt>0 && sh>0){
+    el.innerHTML=fmt(sh)+' 份 × '+navFmt(nav)+' = '+M(sh*nav)+'（金额 ¥'+M(amt)+'）';
+  } else {
+    el.innerHTML='填金额或份额后，输入净值可自动换算';
+  }
+}
 function teSetType(v){
   var sel=document.getElementById('te-type'); if(sel) sel.value=v;
   var seg=document.getElementById('te-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); });
+  var tc=document.getElementById('teConvertTarget'); if(tc) tc.style.display=(v==='convert'||v==='convert_out')?'':'none';
 }
 function teSetConfirm(v){
   var hid=document.getElementById('te-confirm'); if(hid) hid.value=v;
@@ -8944,26 +9052,38 @@ function saveTradeEdit(){
   var i=_editTradeIdx; if(i<0||!trades[i]) return;
   var g=function(id){return document.getElementById(id);};
   var dtRaw=g('te-datetime').value; var date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
-  var amount=+g('te-amount').value||0; if(!amount){ toast('请填写金额'); return; }
+  var amount=+(g('te-amount')?.value||0);
+  var nav=+(g('te-nav')?.value||0);
+  var sharesRaw=g('te-shares')?.value||g('te-shares-more')?.value||'';
+  var shares=(sharesRaw===''||sharesRaw==null)?null:+sharesRaw;
+  if(!amount && shares==null){ toast('请填写金额或份额'); return; }
+  // 有净值时自动换算缺失值
+  if(nav>0 && !amount && shares!=null){ amount=+(shares*nav); }
+  if(nav>0 && amount>0 && shares==null){ shares=amount/nav; }
   var t=trades[i];
   t.type=g('te-type').value||'buy';
   t.amount=amount;
+  t.shares=shares;
   t.account=g('te-acc').value||effAccount('本人账户');
   t.date=date;
   t.time=dtRaw.length>11?dtRaw.slice(11):'15:00';
   t.confirm=g('te-confirm').value||'confirmed';
-  var navRaw=g('te-nav').value; t.nav=(navRaw===''||navRaw==null)?null:+navRaw;
+  t.nav=(nav>0)?nav:null;
   t.fee=+g('te-fee').value||0;
-  var shRaw=g('te-shares').value; t.shares=(shRaw===''||shRaw==null)?null:+shRaw;
   t.confirmDate=g('te-confirmDate').value||'';
   t.note=(g('te-note').value||'').trim();
+  // 转换目标基金
+  if(t.type==='convert'||t.type==='convert_out'){
+    t.convertTarget=(g('te-convert-target')?.value||'').trim()||'';
+  }
   t.locked=true;
   silentSave(); compute();
   closeTradeEdit();
   var nm=t.name;
   if(currentView==='detail'){ try{ renderDetailLive(nm); refreshDetailTradesByName(nm); }catch(e){} }
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
-  toast('已保存 · '+typeLabel(t.type)+' '+M(t.amount));
+  var dispLabel=amount?M(amount):(shares!=null?fmt(shares)+'份':'');
+  toast('已保存 · '+typeLabel(t.type)+' '+dispLabel);
 }
 function deleteTradeEdit(){
   var i=_editTradeIdx; if(i<0||!trades[i]) return;
@@ -8983,6 +9103,15 @@ function tqToggleMore(){
 function tqSetType(v){
   const sel=document.getElementById('tq-type'); if(sel) sel.value=v;
   const seg=document.getElementById('tq-type-seg'); if(seg) seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); });
+  var tc=document.getElementById('tqConvertTarget'); if(tc) tc.style.display=(v==='convert'||v==='convert_out')?'':'none';
+  if(v==='convert'||v==='convert_out'){
+    var cl=document.getElementById('tqConvertList');
+    if(cl && !cl.dataset.filled){
+      var names=(_allHoldings.length?_allHoldings:fundsView).map(function(f){return f.name;}).filter(Boolean);
+      cl.innerHTML=[...new Set(names)].map(function(n){return '<option value="'+esc(n)+'">';}).join('');
+      cl.dataset.filled='1';
+    }
+  }
 }
 function tradeQuickSave(){
   const g=id=>document.getElementById(id);
@@ -8990,26 +9119,36 @@ function tradeQuickSave(){
   const name=(disp && disp.classList.contains('show') ? disp.textContent : (g('tq-fund').value||'')).trim();
   if(!name){ toast('请选择或填写基金名称'); return; }
   const dtRaw=g('tq-datetime').value; const date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
-  const amount=+g('tq-amount').value||0; if(!amount){ toast('请填写金额'); g('tq-amount').focus(); return; }
+  const amount=+(g('tq-amount')?.value||0);
+  const nav=+(g('tq-nav')?.value||0);
+  const shRaw=(g('tq-shares')?.value||g('tq-shares-more')?.value||'');
+  const shares=(shRaw===''||shRaw==null)?null:+shRaw;
+  if(!amount && shares==null){ toast('请填写金额或份额'); return; }
+  if(nav>0 && !amount && shares!=null){ amount=+(shares*nav); }
+  if(nav>0 && amount>0 && shares==null){ shares=amount/nav; }
   const acc=g('tq-acc').value||effAccount('本人账户');
   const type=g('tq-type').value||'buy';
   const time=dtRaw && dtRaw.length>11 ? dtRaw.slice(11) : '15:00';
-  const navRaw=g('tq-nav').value, nav=(navRaw===''||navRaw==null)?null:+navRaw;
   const fee=+g('tq-fee').value||0;
-  const shRaw=g('tq-shares').value, shares=(shRaw===''||shRaw==null)?null:+shRaw;
   const confirm=g('tq-confirm').value||'confirmed';
   const note=(g('tq-note').value||'').trim();
-  if(type==='sell'){ sellPreviewConfirm(name, acc, amount, nav, fee, shares, date, function(ok){ if(!ok) return; tqCommit(); }); return; }
-  const _sum = typeLabel(type)+' · '+name+'\n金额 ¥'+M(amount)+'\n'+date+(time?(' '+time):'')+'\n账户 '+acc+(nav!=null&&nav!==''?('\n净值 '+navFmt(nav)):'')+(fee?('\n费用 ¥'+M(fee)):'')+(confirm==='pending'?('\n状态 待确认'):'')+(note?('\n备注 '+note):'');
+  const convertTarget=(type==='convert'||type==='convert_out')?(g('tq-convert-target')?.value||'').trim():'';
+  var _amount=amount, _shares=shares;
+  if(type==='sell'){
+    sellPreviewConfirm(name, acc, _amount, nav>0?nav:null, fee, _shares, date, function(ok){ if(!ok) return; tqCommit(); });
+    return;
+  }
+  const _sum = typeLabel(type)+' · '+name+'\n'+(amount?('金额 ¥'+M(amount)):(shares!=null?fmt(shares)+' 份':''))+'\n'+date+(time?(' '+time):'')+'\n账户 '+acc+(nav>0?('\n净值 '+navFmt(nav)):'')+(fee?('\n费用 ¥'+M(fee)):'')+(confirm==='pending'?('\n状态 待确认'):'')+(note?('\n备注 '+note):'');
   ftConfirm('确定保存这笔交易？\n\n'+_sum, function(ok){ if(!ok) return; tqCommit(); });
   function tqCommit(){
-  trades.push({name,account:acc,date,time,type,amount,nav,fee,shares,confirm,note,locked:true});
+  trades.push({name,account:acc,date,time,type,amount:_amount,nav:nav>0?nav:null,fee,shares:_shares,confirm,note,convertTarget:convertTarget||'',locked:true});
   silentSave(); compute(); recordSnapshot();
   closeTradePicker();
   draftClear('ft_draft_tq', DRAFT_TQ_IDS); const _tq=document.getElementById('tqDraftPill'); if(_tq) _tq.classList.remove('show');
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
   if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} }
-  toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+M(amount));
+  var dispLabel=_amount?M(_amount):(_shares!=null?fmt(_shares)+'份':'');
+  toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+dispLabel);
   }
 }
 
@@ -9149,8 +9288,36 @@ window.collapseDetailTx=function(){
     list.dataset.collapsed='1';
   });
 };
+var _tqAmtMode='amount';
+function tqSetAmtMode(mode){
+  _tqAmtMode=mode;
+  var seg=document.getElementById('tq-amt-seg'); if(!seg) return;
+  seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active',b.dataset.mode===mode); });
+  var a=document.getElementById('tqFieldsAmount'), s=document.getElementById('tqFieldsShares');
+  if(a) a.style.display=mode==='amount'?'':'none';
+  if(s) s.style.display=mode==='shares'?'':'none';
+  tqRecalcEst();
+}
 function tqSetConfirm(v){ const pills=document.querySelectorAll('#tradeQuickMask .tq-pill'); pills.forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); }); const h=document.getElementById('tq-confirm'); if(h) h.value=v; }
-function tqRecalcEst(){ try{ const amt=+document.getElementById('tq-amount').value||0; const nav=+document.getElementById('tq-nav').value||0; const el=document.getElementById('tqEstShares'); if(!el) return; if(amt>0 && nav>0){ const sh=amt/nav; el.innerHTML=fmt(sh)+' 份 <span class="sub">'+M(amt)+' ÷ '+navFmt(nav)+'</span>'; } else if(amt>0 && !nav){ el.innerHTML='— <span class="sub">净值留空则 T+1 入账后估算</span>'; } else { el.innerHTML='— <span class="sub">填金额与净值后自动估算</span>'; } }catch(e){} }
+function tqRecalcEst(){
+  try{
+    const amt=+document.getElementById('tq-amount')?.value||0;
+    const nav=+document.getElementById('tq-nav')?.value||0;
+    const sh=+document.getElementById('tq-shares')?.value||0;
+    const el=document.getElementById('tqDerived'); if(!el) return;
+    if(nav>0 && amt>0 && sh===0){
+      el.innerHTML='预估份额：<b>'+fmt(amt/nav)+'</b> 份';
+    } else if(nav>0 && sh>0 && amt===0){
+      el.innerHTML='预估金额：<b>'+M(sh*nav)+'</b>';
+    } else if(nav>0 && amt>0 && sh>0){
+      el.innerHTML=fmt(sh)+' 份 × '+navFmt(nav)+' = '+M(sh*nav)+'（金额 ¥'+M(amt)+'）';
+    } else if(amt>0 && !nav){
+      el.innerHTML='填净值后可自动换算份额';
+    } else {
+      el.innerHTML='填金额或份额后，输入净值可自动换算';
+    }
+  }catch(e){}
+}
 
 // ---------- 草稿自动保存（移动端防丢失） ----------
 const DRAFT_DR_IDS=['dr-fund','dr-acc','dr-type','dr-date','dr-time','dr-amount','dr-nav','dr-fee','dr-shares','dr-confirm','dr-note'];

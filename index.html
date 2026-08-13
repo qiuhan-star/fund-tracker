@@ -10578,7 +10578,7 @@ function ehUpdateDerived(){
   if(mv>0){
     const cost=mv-profit, ret=cost>0?profit/cost*100:0;
     let parts=[];
-    if(shares>0&&mv>0) parts.push('最新净值：<b>'+fmt(shares>0?mv/shares:0)+'</b>');
+    if(shares>0&&mv>0) parts.push('最新净值：<b>'+navFmt(shares>0?mv/shares:0)+'</b>');
     parts.push('持仓成本：<b>'+M(cost)+'</b> 元');
     parts.push('持有收益率：<b>'+(ret>=0?'+':'')+ret.toFixed(2)+'%</b>');
     if(hit) hit.innerHTML=parts.join(' · ');

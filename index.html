@@ -9244,11 +9244,11 @@ function tradeQuickSave(){
   const name=(disp && disp.classList.contains('show') ? disp.textContent : (g('tq-fund').value||'')).trim();
   if(!name){ toast('请选择或填写基金名称'); return; }
   const dtRaw=g('tq-datetime').value; const date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
-  const amount=+(g('tq-amount')?.value||0);
+  let amount=+(g('tq-amount')?.value||0);
   const navInput=+(g('tq-nav')?.value||0);
   const nav=navInput>0?navInput:((navCache[name]&&navCache[name].nav>0)?navCache[name].nav:0);
   const shRaw=(g('tq-shares')?.value||g('tq-shares-more')?.value||'');
-  const shares=(shRaw===''||shRaw==null)?null:+shRaw;
+  let shares=(shRaw===''||shRaw==null)?null:+shRaw;
   if(!amount && shares==null){ toast('请填写金额或份额'); return; }
   if(nav>0 && !amount && shares!=null){ amount=+(shares*nav); }
   if(nav>0 && amount>0 && shares==null){ shares=+(amount/nav); }

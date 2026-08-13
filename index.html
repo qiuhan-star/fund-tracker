@@ -7331,7 +7331,6 @@ function buildFundsView(){
       f.mv=mo.mv; f.profit=mo.profit; f.cost=f.mv-f.profit; f.ret=f.cost>0?f.profit/f.cost*100:0;
       if(mo.shares!=null){ f.shares=mo.shares; f.costPx=f.shares>0?f.cost/f.shares:0; }
       if(mo.cost!=null){ f.cost=mo.cost; f.ret=f.cost>0?f.profit/f.cost*100:0; }
-      f.manualOverride=true;
     }
     return f;
   });

@@ -5029,7 +5029,7 @@ function getOverrideKey(acc,name){ return (acc||'本人账户')+'||'+(name||'');
 function getManualOverride(acc,name){ return manualOverrides[getOverrideKey(acc,name)]; }
 function setManualOverride(acc,name,data){
   const k=getOverrideKey(acc,name);
-  if(data && data.mv!=null && data.profit!=null){ manualOverrides[k]={mv:data.mv, profit:data.profit, shares:data.shares!=null?data.shares:null, cost:data.cost!=null?data.cost:null, enabled:true}; }
+  if(data && data.mv!=null && data.profit!=null){ manualOverrides[k]={mv:data.mv, profit:data.profit, shares:data.shares!=null?data.shares:null, cost:data.cost!=null?data.cost:null, costPrice:data.costPrice!=null?data.costPrice:null, enabled:true}; }
   else { delete manualOverrides[k]; }
   saveManualOverrides(); compute();
 }
@@ -7681,6 +7681,7 @@ function buildFundsView(){
     const mo=getManualOverride(f.account,f.name);
     if(mo && mo.enabled && mo.mv!=null && mo.profit!=null){
       f.mv=mo.mv; f.profit=mo.profit; f.cost=f.mv-f.profit; f.ret=f.cost>0?f.profit/f.cost*100:0;
+      if(mo.costPrice!=null && mo.shares!=null && mo.shares>0){ f.cost=mo.shares*mo.costPrice; f.profit=f.mv-f.cost; f.ret=f.cost>0?f.profit/f.cost*100:0; f.costPx=mo.costPrice; }
       if(mo.shares!=null){ f.shares=mo.shares; f.costPx=f.shares>0?f.cost/f.shares:0; }
       if(mo.cost!=null){ f.cost=mo.cost; f.ret=f.cost>0?f.profit/f.cost*100:0; }
     }
@@ -10701,11 +10702,13 @@ function openEditHoldingsModal(nameEnc,accEnc){
   if(mvEl) mvEl.value=mo?mo.mv:'';
   if(profitEl) profitEl.value=mo?mo.profit:'';
   // 如果已有份额，同步到份额模式
-  const shEl=document.getElementById('ehShares'), mv2El=document.getElementById('ehMv2'), profit2El=document.getElementById('ehProfit2');
+  const shEl=document.getElementById('ehShares'), mv2El=document.getElementById('ehMv2'), profit2El=document.getElementById('ehProfit2'), cpEl=document.getElementById('ehCostPrice');
   if(shEl) shEl.value='';
   if(mv2El) mv2El.value='';
   if(profit2El) profit2El.value='';
+  if(cpEl) cpEl.value='';
   if(mo && mo.shares!=null) shEl.value=mo.shares;
+  if(mo && mo.costPrice!=null) cpEl.value=mo.costPrice;
   ehUpdateDerived();
   const m=document.getElementById('ehMask'); if(m) m.classList.add('show');
 }
@@ -10730,22 +10733,33 @@ function ehToggleSign(){
 function closeEditHoldingsModal(){ const m=document.getElementById('ehMask'); if(m) m.classList.remove('show'); }
 function ehGetFields(){
   if(_ehMode==='shares'){
-    const sh=+(document.getElementById('ehShares')?.value||0), mv=+(document.getElementById('ehMv2')?.value||0), profit=+(document.getElementById('ehProfit2')?.value||0);
-    return {shares:sh, mv, profit};
+    const sh=+(document.getElementById('ehShares')?.value||0), mv=+(document.getElementById('ehMv2')?.value||0), profit=+(document.getElementById('ehProfit2')?.value||0), cp=+(document.getElementById('ehCostPrice')?.value||0);
+    return {shares:sh, mv, profit, costPrice:cp};
   }
   const mv=+(document.getElementById('ehMv')?.value||0), profit=+(document.getElementById('ehProfit')?.value||0);
-  return {shares:0, mv, profit};
+  return {shares:0, mv, profit, costPrice:0};
 }
 function ehUpdateDerived(){
-  const {shares, mv, profit}=ehGetFields();
+  const {shares, mv, profit, costPrice}=ehGetFields();
   const hit=document.getElementById('ehDerived');
   const profitId=_ehMode==='shares'?'ehProfit2':'ehProfit';
   const profitEl=document.getElementById(profitId);
   if(profitEl) profitEl.classList.toggle('neg',profit<0);
   if(mv>0){
-    const cost=mv-profit, ret=cost>0?profit/cost*100:0;
+    let cost, effectiveProfit=profit;
+    // 优先使用持仓成本价计算
+    if(costPrice>0 && shares>0){
+      cost=shares*costPrice;
+      const autoProfit=mv-cost;
+      effectiveProfit=autoProfit;
+      if(profitEl && profitEl!==document.activeElement) profitEl.value=autoProfit.toFixed(2);
+    } else {
+      cost=mv-profit;
+    }
+    const ret=cost>0?effectiveProfit/cost*100:0;
     let parts=[];
     if(shares>0&&mv>0) parts.push('最新净值：<b>'+navFmt(shares>0?mv/shares:0)+'</b>');
+    if(costPrice>0&&shares>0) parts.push('持仓成本价：<b>'+navFmt(costPrice)+'</b>');
     parts.push('持仓成本：<b>'+M(cost)+'</b> 元');
     parts.push('持有收益率：<b>'+(ret>=0?'+':'')+ret.toFixed(2)+'%</b>');
     if(hit) hit.innerHTML=parts.join(' · ');
@@ -10754,9 +10768,9 @@ function ehUpdateDerived(){
   }
 }
 function ehSave(){
-  const {shares, mv, profit}=ehGetFields();
+  const {shares, mv, profit, costPrice}=ehGetFields();
   if(mv<=0){ toast('请填写持有金额'); return; }
-  setManualOverride(_ehFundAcc,_ehFundName,{mv,profit,shares:shares>0?shares:null});
+  setManualOverride(_ehFundAcc,_ehFundName,{mv,profit,shares:shares>0?shares:null,costPrice:costPrice>0?costPrice:null});
   toast('持仓已手动更新');
   closeEditHoldingsModal();
   // 刷新详情页：先重建 fundsView 让手动覆盖值生效，再更新 UI
@@ -12663,6 +12677,12 @@ function renderSyncCfg(){
         <div class="eh-field">
           <label>持有金额（元）</label>
           <input id="ehMv2" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+        </div>
+        <div class="eh-field">
+          <label>持仓成本价（元）</label>
+          <div class="eh-input-wrap">
+            <input id="ehCostPrice" type="text" inputmode="decimal" placeholder="可选，填后自动算持有收益" oninput="ehUpdateDerived()" style="flex:1">
+          </div>
         </div>
         <div class="eh-field">
           <label>持有收益（元）</label>

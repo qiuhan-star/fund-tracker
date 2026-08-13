@@ -7954,7 +7954,8 @@ function headerHtml(f){
   const _lt=latestTradeOf(f.name);
   const _netTxt=_tr.length?M(_net):'—';
   const _ltIdx=_lt?trades.indexOf(_lt):-1;
-  const _latestTxt=_lt?('<span class="lt-date">'+_lt.date+'</span>'+(_lt.confirm==='pending'?' <span class="tag-pend">待确认</span>':'')):'—';
+  const _latestLabel='最新交易'+(_lt && _lt.confirm==='pending'?' <span class="tag-pend">待确认</span>':'');
+  const _latestTxt=_lt?'<span class="lt-date">'+_lt.date+'</span>':'—';
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
@@ -7969,7 +7970,7 @@ function headerHtml(f){
       <div class="dh-subgrid" style="margin-top:10px;padding-top:10px">
         <div class="dh-subitem"><div class="k">净投入</div><div class="v" id="dhNet" style="color:var(--text)">${_netTxt}</div></div>
         <div class="dh-subitem"><div class="k">交易笔数</div><div class="v" id="dhTradeCount" style="color:var(--text)">${_tradeCount} 笔</div></div>
-        <div class="dh-subitem"><div class="k">最新交易</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
+        <div class="dh-subitem"><div class="k" id="dhLatestTradeK">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
       </div>
       <div class="dh-actions">
         <button class="dh-action" onclick="openDetailTrades()"><span class="ico">≡</span><span>交易记录</span></button>

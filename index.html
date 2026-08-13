@@ -6953,44 +6953,6 @@ function renderTrade(){
   restoreFocus();
 }
 
-function miniTimeline(f){
-  const tr=(f.trades||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
-  if(!tr.length) return '<p class="hint">暂无交易记录。</p>';
-  const dates=tr.map(t=>t.date), min=dates[0], max=dates[dates.length-1]||min;
-  const W=820,H=46,pad=36;
-  const x=d=> pad+(max===min?(W-2*pad)/2:(new Date(d)-new Date(min))/(new Date(max)-new Date(min))*(W-2*pad));
-  let dots='';
-  tr.forEach(t=>{
-    const cx=x(t.date), col=(t.type==='buy'||t.type==='dca'||t.type==='activity')?TH().up:TH().down;
-    dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${typeLabel(t.type)} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
-    dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':t.type==='dca'?'D':t.type==='activity'?'A':'S'}</text>`;
-  });
-  const labels=min===max?`<text x="${W/2}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="middle">${min}</text>`
-    :`<text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text><text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text>`;
-  return `<svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}${labels}</svg>`;
-}
-
-function renderTimelines(){
-  const box=document.getElementById('timelines'); if(!box) return; box.innerHTML='';
-  const withTr=fundsView.filter(f=>f.trades&&f.trades.length);
-  if(!withTr.length){ box.innerHTML='<p class="hint">还没有交易流水。在上方记一笔，这里会画出买卖点时间轴。</p>'; return; }
-  withTr.forEach(f=>{
-    const tr=[...f.trades].sort((a,b)=>a.date.localeCompare(b.date));
-    const dates=tr.map(t=>t.date), min=dates[0], max=dates[dates.length-1]||min;
-    const W=880,H=48,pad=36;
-    const x=d=> pad+(max===min?(W-2*pad)/2:(new Date(d)-new Date(min))/(new Date(max)-new Date(min))*(W-2*pad));
-    let dots='';
-    tr.forEach(t=>{
-      const cx=x(t.date), col=(t.type==='buy'||t.type==='dca'||t.type==='activity')?TH().up:TH().down;
-      dots+=`<circle cx="${cx}" cy="${H/2}" r="6" fill="${col}"><title>${t.date} ${typeLabel(t.type)} ¥${fmt(t.amount)} @${t.nav||'?'}</title></circle>`;
-      dots+=`<text x="${cx}" y="${H/2-12}" text-anchor="middle" font-size="9" fill="${col}">${t.type==='buy'?'B':t.type==='dca'?'D':t.type==='activity'?'A':'S'}</text>`;
-    });
-    const labels=min===max?`<text x="${W/2}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="middle">${min}（同日）</text>`
-      :`<text x="${pad}" y="${H-4}" font-size="10" fill="#8a8f99">${min}</text><text x="${W-pad}" y="${H-4}" font-size="10" fill="#8a8f99" text-anchor="end">${max}</text>`;
-    box.innerHTML+=`<div style="margin-bottom:12px"><div style="font-size: 14px;font-weight:500;margin-bottom:2px">${f.name}</div><svg class="tl" viewBox="0 0 ${W} ${H}" role="img"><line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#e3e6ea" stroke-width="1"/>${dots}${labels}</svg></div>`;
-  });
-}
-
 // ---------- 计算 ----------
 let liqSort='realized';
 function buildLiquidatedView(){
@@ -7284,7 +7246,7 @@ function buildFundsView(){
       });
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
       // 例外：若已有卖出且净份额=0（已清仓），不再回退快照，让它进「清仓」Tab
-      const hasSell = tr.some(function(t){ return t.confirm!=='cancelled' && (t.type==='sell' || t.type==='convert_out'); });
+      const hasSell = tr.some(function(t){ return t.confirm!=='cancelled' && t.confirm!=='pending' && (t.type==='sell' || t.type==='convert_out'); });
       // 清仓修正（修复浮点残留）：按金额记录时净值波动会让净份额残留极小非零值（如买1000元/卖1000.79元→剩0.04份≈0.04元）。
       // 这类基金实际已清仓，但 shares>0 会被误判为持有。有卖出/转换转出记录的基金，若「残留市值 < 1 元」或「净值缺失且残留不足 1 份」则强制归零 → 正确进「清仓」Tab。
       if(hasSell && shares>0){
@@ -7377,9 +7339,9 @@ function renderThemeHeat(){
 // 用于板块配置/盈亏视图排除「已赎回 90%+ 但还剩零头份额」的基金（这类份额>0，首页持仓列表的 shares===0 过滤挡不掉）。
 function isLiquidated(f){
   const tr=f.trades||[];
-  if(!tr.some(function(t){ return t.confirm!=='cancelled' && (t.type==='sell' || t.type==='convert_out'); })) return false; // 没卖过 → 不算清仓
+  if(!tr.some(function(t){ return t.confirm!=='cancelled' && t.confirm!=='pending' && (t.type==='sell' || t.type==='convert_out'); })) return false; // 没卖过 → 不算清仓
   let totalBuy=0, totalSell=0;
-  tr.forEach(function(t){ if(t.confirm==='cancelled') return; const ty=t.type||'buy', amt=+t.amount||0;
+  tr.forEach(function(t){ if(t.confirm==='cancelled'||t.confirm==='pending') return; const ty=t.type||'buy', amt=+t.amount||0;
     if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity') totalBuy+=amt+(+t.fee||0);
     else if(ty==='sell'||ty==='convert_out') totalSell+=amt; });
   const EPS=1e-6, shares=f.shares||0;
@@ -7955,7 +7917,7 @@ function headerHtml(f){
   })();
   const _tr=(trades||[]).filter(t=>t.name===f.name);
   const _tradeCount=_tr.length;
-  const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
+  const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   const _lt=latestTradeOf(f.name);
   const _netTxt=_tr.length?M(_net):'—';
   const _ltIdx=_lt?trades.indexOf(_lt):-1;
@@ -8016,7 +7978,7 @@ function updateDetailHeader(f){
     _ltK.style.height='20px';
     _ltK.style.position='relative';
   }
-  const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
+  const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   set('dhNet', _tr.length?M(_net):'—');
 }
 function latestTradeOf(name){
@@ -8128,7 +8090,7 @@ function renderDetailTabPane(f){
     pane.innerHTML='<div id="detailIntraday"></div>';
     renderIntraday(f);
   } else {
-    pane.innerHTML='<div class="card profit-curve-card" style="margin-top:12px"><div class="sec-head"><h2 style="margin:0;font-size:16px">累计盈亏曲线</h2><span class="hint">交易记录 × 历史净值</span></div><div id="fundProfitCurve" class="fund-profit-curve"></div></div>';
+    pane.innerHTML='<div class="card profit-curve-card" style="margin-top:12px"><div class="sec-head"><h2 style="margin:0;font-size: 14px">累计盈亏曲线 <span class="tag">天天基金</span></h2><span class="hint">交易记录 × 历史净值</span></div><div id="fundProfitCurve" class="fund-profit-curve"></div></div>';
     renderFundProfitCurve(f);
   }
 }
@@ -8143,7 +8105,7 @@ function detailProfitPanelHtml(f){
   const _hold=(f.profit==null||f.pending)?'待补全':((f.profit>=0?'+':'')+M(f.profit));
   const _holdCls=(f.profit==null||f.pending)?'zero':(f.profit>=0?'pos':'neg');
   return `<div class="card profit-panel">
-    <div class="sec-head"><h2 style="margin:0;font-size: 16px">累计盈亏</h2><span class="hint">持有收益 + 已实现盈亏</span></div>
+    <div class="sec-head"><h2 style="margin:0;font-size: 14px">累计盈亏</h2><span class="hint">持有收益 + 已实现盈亏</span></div>
     <div class="profit-main"><span class="amt ${totalCls}">${total==null?'待补全':(total>=0?'+':'')+M(total)}</span><span class="pct ${_pctCls}">${_pct}</span></div>
     <div class="profit-grid">
       <div class="profit-cell"><div class="k">持有收益</div><div class="v ${_holdCls}">${_hold}</div></div>

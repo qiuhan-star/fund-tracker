@@ -8006,7 +8006,7 @@ function updateDetailHeader(f){
   const _ltV=document.getElementById('dhLatestTrade');
   if(_ltK && _ltV){
     const _ltIdx=_lt?trades.indexOf(_lt):-1;
-    _ltK.innerHTML='最新交易'+(_lt && _lt.confirm==='pending'?' <span class="tag-pend">待确认</span>':'');
+    _ltK.innerHTML='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">待确认</span>':'');
     _ltV.innerHTML=_lt?'<span class="lt-date">'+_lt.date+'</span>':'—';
     _ltV.style.cursor=_lt?'pointer':'default';
     _ltV.style.overflow='visible';

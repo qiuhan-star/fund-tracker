@@ -11180,7 +11180,20 @@ async function cloudPullBeforeBoot(){
   var _set=Storage.prototype.setItem;
   Storage.prototype.setItem=function(k,v){ _set.call(this,k,v); try{ if(typeof k==='string' && k.indexOf('ft_')===0 && k!=='ft_sync_dirty' && k!=='ft_sync_lastpush' && k!=='ft_sync_lastpull' && k!=='ft_sync_cfg' && k!=='ft_sync_on' && k!=='ft_sync_conflict'){ if(!_syncSuppress) touchSync(); } }catch(e){} };
 })();
-function onSyncToggle(){ var el=document.getElementById('smSyncOn'); var on=el?el.checked:false; localStorage.setItem('ft_sync_on',on?'1':'0'); var cfg=document.getElementById('syncCfg'); if(cfg) cfg.style.display=on?'block':'none'; if(on){ renderSyncCfg(); scheduleCloudPush(); } }
+function localHasData(){ try{ var raw=localStorage.getItem('ft_data'); if(!raw) return false; var d=JSON.parse(raw); if(d&&((d.trades&&d.trades.length)||(d.snaps&&d.snaps.length))) return true; return false; }catch(e){ return false; } }
+function onSyncToggle(){ var el=document.getElementById('smSyncOn'); var on=el?el.checked:false; var cfg=document.getElementById('syncCfg');
+  if(on){
+    // 开启同步前：若本机已有数据，先确认避免误覆盖云端
+    if(localHasData()){
+      ftConfirm('开启云同步会立即把【本机当前数据】上传到云端，覆盖云端原有内容。\n\n若云端已有其他设备的数据、你不想丢失，请先点「立即下载」再开启。\n\n确定要用本机数据覆盖云端并开启同步？', function(ok){
+        if(!ok){ el.checked=false; localStorage.setItem('ft_sync_on','0'); if(cfg) cfg.style.display='none'; return; }
+        localStorage.setItem('ft_sync_on','1'); if(cfg) cfg.style.display='block'; renderSyncCfg(); cloudPush(true); // 强制先上传一次本机数据
+      });
+      return;
+    }
+  }
+  localStorage.setItem('ft_sync_on',on?'1':'0'); if(cfg) cfg.style.display=on?'block':'none'; if(on){ renderSyncCfg(); scheduleCloudPush(); }
+}
 function toggleSyncPat(){ var el=document.getElementById('smSyncPat'); if(el) el.type=(el.type==='password')?'text':'password'; }
 function setSyncConflict(c){ localStorage.setItem('ft_sync_conflict',c); var seg=document.getElementById('smSyncConflict'); if(seg) Array.prototype.forEach.call(seg.children,function(b){ b.classList.toggle('on',(b.getAttribute('data-c')||'')===c); }); }
 function renderSyncCfg(){

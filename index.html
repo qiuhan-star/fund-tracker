@@ -8725,17 +8725,12 @@ function drawFundProfitCurve(box, fullPts, approx){
   // 末端圆点
   var lx=X(n-1), ly=Y(pts[n-1].profit);
   var endDot='<circle class="fp-dot" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="4.5" fill="'+BLUE+'"/>';
-  // 末端数值标签
+  // 左上角累计盈亏数值（支付宝风格）
   var valTxt=(pts[n-1].profit>=0?'+':'')+M(pts[n-1].profit);
   var isPos=pts[n-1].profit>=0;
-  var badgeColor=isPos?'#FF4D4F':'#52C41A';
-  var badgeBg=isPos?'#FFF1F0':'#F6FFED';
-  var badgeBorder=badgeColor;
-  var boxW=Math.max(60, valTxt.length*8+18);
-  var bx=lx-boxW-8; if(bx<padL) bx=lx+8; var by=ly-32; if(by<padT) by=ly+14;
-  if(bx+boxW>W-padR) bx=W-padR-boxW;
-  if(by<0) by=0;
-  var badge='<g><rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+boxW.toFixed(1)+'" height="24" rx="4" fill="'+badgeBg+'" stroke="'+badgeBorder+'" stroke-width="1"/><text x="'+(bx+boxW/2).toFixed(1)+'" y="'+(by+16).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="'+badgeColor+'">'+valTxt+'</text></g>';
+  var valColor=isPos?'#FF4D4F':'#52C41A';
+  var topVal='<text x="'+padL+'" y="'+(padT+14)+'" font-size="12" fill="'+th.text3+'">累计盈亏</text>'
+    +'<text x="'+padL+'" y="'+(padT+36)+'" font-size="22" font-weight="700" fill="'+valColor+'">'+valTxt+'</text>';
   // 十字交互线
   var cross='<g class="fp-cross" id="fpCross"><line id="fpCxLine" y1="'+padT+'" y2="'+(H-padB)+'" stroke="'+BLUE+'" stroke-width="1" stroke-dasharray="3 3" opacity=".4" vector-effect="non-scaling-stroke"/><circle id="fpCxDot" r="4.5" fill="#fff" stroke="'+BLUE+'" stroke-width="2"/></g>';
   // X轴日期（3-4个均匀分布）
@@ -8750,7 +8745,7 @@ function drawFundProfitCurve(box, fullPts, approx){
   }
   // 样式
   var style='<style id="fpStyle">.fp-wrap{position:relative;width:100%}.fp-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:fpDraw 1.2s cubic-bezier(.37,.01,.14,1) forwards}@keyframes fpDraw{to{stroke-dashoffset:0}}.fp-dot{opacity:0;animation:fpDotPop .4s cubic-bezier(.2,.8,.3,1.2) .9s forwards}@keyframes fpDotPop{0%{transform:scale(0);opacity:0;transform-origin:center}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}.fp-cross{opacity:0;transition:opacity .12s}.fp-cross.on{opacity:1}.fp-tip{position:absolute;pointer-events:none;background:rgba(31,35,41,.92);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.5;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:5}.fp-tip.on{opacity:1}.fp-tip b{color:#7fb2ff}</style>';
-  var svg='<svg id="fpSvg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:260px;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif"><defs>'+areaDef+'</defs>'+grid+area+mainLine+endDot+badge+cross+dates+'</svg>';
+  var svg='<svg id="fpSvg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:260px;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif"><defs>'+areaDef+'</defs>'+grid+area+mainLine+endDot+topVal+cross+dates+'</svg>';
   var tip='<div class="fp-tip" id="fpTip"></div>';
   var html=style+'<div class="fp-wrap" id="fpWrap">'+svg+tip+'</div>';
   html+='<p class="hint" style="margin:8px 2px 4px">'+(approx?'＊近似曲线：仅用各交易日净值连线，无完整历史净值时仅供参考。':'累计盈亏 = 持仓市值 − 累计投入本金（含已实现盈亏）；曲线随交易记录与每日净值实时计算。')+'</p>';

@@ -7971,7 +7971,7 @@ function headerHtml(f){
       <div class="dh-subgrid" style="margin-top:10px;padding-top:10px">
         <div class="dh-subitem"><div class="k">净投入</div><div class="v" id="dhNet" style="color:var(--text)">${_netTxt}</div></div>
         <div class="dh-subitem"><div class="k">交易笔数</div><div class="v" id="dhTradeCount" style="color:var(--text)">${_tradeCount} 笔</div></div>
-        <div class="dh-subitem"><div class="k" id="dhLatestTradeK">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
+        <div class="dh-subitem" style="text-align:center"><div class="k" id="dhLatestTradeK">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
       </div>
       <div class="dh-actions">
         <button class="dh-action" onclick="openDetailTrades()"><span class="ico">≡</span><span>交易记录</span></button>
@@ -8009,6 +8009,7 @@ function updateDetailHeader(f){
     _ltV.style.overflow='visible';
     _ltV.style.textOverflow='clip';
     _ltV.onclick=_ltIdx>=0?function(){scrollToLatestTrade(_ltIdx);}:null;
+    if(_ltK.parentElement) _ltK.parentElement.style.textAlign='center';
   }
   const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   set('dhNet', _tr.length?M(_net):'—');

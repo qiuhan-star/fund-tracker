@@ -60,7 +60,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,
       <div class="cell highlight" style="text-align:center">
         <div class="cell-label" id="dhLatestTradeK" style="position:relative;height:20px">
           <span class="lt-lbl" style="position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap">最新交易</span>
-          <span class="old-pill" style="position:absolute;left:calc(50% + 32px);transform:translateX(-50%)">待确认</span>
+          <span class="old-pill" id="pendBadge" style="position:absolute;left:calc(50% + 28px);transform:translateX(-50%)">待确认</span>
         </div>
         <div class="cell-value">2026-08-13</div>
       </div>
@@ -68,6 +68,18 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,
     <div style="font-size:11px;color:#999;margin-top:10px;padding-top:8px;border-top:1px solid #eee">
       ✓ 标签行带橙色药丸徽标 · 内容居中 · 三列平衡
     </div>
+  </div>
+
+  <!-- 位置调节器 -->
+  <div class="card">
+    <div class="preview-title">调节「待确认」水平位置</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+      <input type="range" id="pendOffset" min="20" max="60" value="28" style="flex:1" oninput="adjustPend()">
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#999;margin-top:4px">
+      <span>靠左（贴近最新交易）</span><span id="pendVal">28px</span><span>靠右</span>
+    </div>
+    <div style="font-size:11px;color:#4a90d9;margin-top:8px">拖动滑块到满意位置，把右边显示的数值告诉我，我帮你写死到代码里。</div>
   </div>
 
   <!-- 完整详情页头部模拟 -->
@@ -117,7 +129,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,
         <div class="cell" style="text-align:center;border-left:1px solid #e5e5ea">
           <div class="cell-label" style="position:relative;height:20px">
             <span style="position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap">最新交易</span>
-            <span class="old-pill" style="position:absolute;left:calc(50% + 32px);transform:translateX(-50%)">待确认</span>
+            <span class="old-pill" id="pendBadge2" style="position:absolute;left:calc(50% + 28px);transform:translateX(-50%)">待确认</span>
           </div>
           <div class="cell-value">2026-08-13</div>
         </div>

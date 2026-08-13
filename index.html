@@ -8128,7 +8128,7 @@ function renderDetailTabPane(f){
     pane.innerHTML='<div id="detailIntraday"></div>';
     renderIntraday(f);
   } else {
-    pane.innerHTML=detailProfitPanelHtml(f)+'<div class="card profit-curve-card" style="margin-top:12px"><div class="sec-head"><h2 style="margin:0;font-size:16px">累计盈亏曲线</h2><span class="hint">交易记录 × 历史净值</span></div><div id="fundProfitCurve" class="fund-profit-curve"></div></div>';
+    pane.innerHTML='<div class="card profit-curve-card" style="margin-top:12px"><div class="sec-head"><h2 style="margin:0;font-size:16px">累计盈亏曲线</h2><span class="hint">交易记录 × 历史净值</span></div><div id="fundProfitCurve" class="fund-profit-curve"></div></div>';
     renderFundProfitCurve(f);
   }
 }

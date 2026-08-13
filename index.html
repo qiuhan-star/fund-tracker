@@ -8582,7 +8582,7 @@ function fundProfitSparse(myTr){
 }
 function drawFundProfitCurve(box, pts, nodeDates, approx){
   const th=TH();
-  const W=1000,H=240,padL=58,padR=70,padT=20,padB=30;
+  const W=1000,H=240,padL=54,padR=66,padT=26,padB=28;
   let pmin=Math.min.apply(null,pts.map(p=>p.profit));
   let pmax=Math.max.apply(null,pts.map(p=>p.profit));
   if(pmin>0) pmin=0; if(pmax<0) pmax=0;
@@ -8591,39 +8591,68 @@ function drawFundProfitCurve(box, pts, nodeDates, approx){
   const n=pts.length;
   const X=i=> n===1? (padL+(W-padL-padR)/2) : padL+(i/(n-1))*(W-padL-padR);
   const Y=v=> H-padB-((v-pmin)/pr)*(H-padT-padB);
-  const BLUE='#1A6FE8', BLUE2='#3B82F6', BLUE3='#1453C8';
+  const BLUE='#2563EB';
   const fmtAxis=v=>{ const a=Math.abs(v); if(a>=10000) return (v/10000).toFixed(1)+'万'; if(a>=1000) return (v/1000).toFixed(1)+'k'; return ''+Math.round(v); };
   const yz=Y(0);
   const P=pts.map((p,i)=>({x:X(i),y:Y(p.profit)}));
-  let lineD=(function(P){ if(P.length<2) return P.length?('M'+P[0].x.toFixed(1)+' '+P[0].y.toFixed(1)):''; let d='M'+P[0].x.toFixed(1)+' '+P[0].y.toFixed(1); for(let i=1;i<P.length;i++) d+=' L'+P[i].x.toFixed(1)+' '+P[i].y.toFixed(1); return d; })(P);
+  // 单调三次贝塞尔插值（避免 overshoot，适合金融数据）
+  function smoothPath(pts){
+    if(pts.length<2) return pts.length?'M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1):'';
+    if(pts.length===2) return 'M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1)+' L'+pts[1].x.toFixed(1)+' '+pts[1].y.toFixed(1);
+    const n=pts.length, dx=[], dy=[], s=[];
+    for(let i=0;i<n-1;i++){ dx[i]=pts[i+1].x-pts[i].x; dy[i]=pts[i+1].y-pts[i].y; s[i]=dy[i]/dx[i]; }
+    let d='M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
+    for(let i=0;i<n-1;i++){
+      const t=dx[i]*0.3;
+      let cp1x,cp1y,cp2x,cp2y;
+      if(i===0){ cp1x=pts[i].x+t; cp1y=pts[i].y+s[i]*t; }
+      else if(s[i]*s[i-1]<=0){ cp1x=pts[i].x+t; cp1y=pts[i].y; }
+      else{ cp1x=pts[i].x+t; cp1y=pts[i].y+(s[i-1]+s[i])/2*t; }
+      if(i===n-2){ cp2x=pts[i+1].x-t; cp2y=pts[i+1].y-s[i]*t; }
+      else if(s[i]*s[i+1]<=0){ cp2x=pts[i+1].x-t; cp2y=pts[i+1].y; }
+      else{ cp2x=pts[i+1].x-t; cp2y=pts[i+1].y-(s[i]+s[i+1])/2*t; }
+      d+=' C'+cp1x.toFixed(1)+' '+cp1y.toFixed(1)+' '+cp2x.toFixed(1)+' '+cp2y.toFixed(1)+' '+pts[i+1].x.toFixed(1)+' '+pts[i+1].y.toFixed(1);
+    }
+    return d;
+  }
+  const lineD=smoothPath(P);
   const areaD=lineD+' L'+X(n-1).toFixed(1)+' '+yz.toFixed(1)+' L'+X(0).toFixed(1)+' '+yz.toFixed(1)+' Z';
-  let defs='<defs>'
-    +'<linearGradient id="fpStroke" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="'+BLUE2+'"/><stop offset=".55" stop-color="'+BLUE+'"/><stop offset="1" stop-color="'+BLUE3+'"/></linearGradient>'
-    +'<linearGradient id="fpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+BLUE+'" stop-opacity=".22"/><stop offset="1" stop-color="'+BLUE+'" stop-opacity="0"/></linearGradient>'
-    +'<filter id="fpGlow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    +'<filter id="fpShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1A6FE8" flood-opacity=".25"/></filter>'
-    +'</defs>';
+  // 网格线（3条水平 + 零线）
   let grid='';
   [0,.5,1].forEach(function(f){
     const y=(padT+(H-padT-padB)*f).toFixed(1); const val=pmax-(pmax-pmin)*f;
-    grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="'+th.grid+'" stroke-width="1" stroke-dasharray="2 4"/>';
+    grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="'+th.text3+'" stroke-opacity=".15" stroke-width="1" vector-effect="non-scaling-stroke"/>';
     grid+='<text x="'+(padL-7)+'" y="'+(+y+4)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+fmtAxis(val)+'</text>';
   });
-  const zero='<line x1="'+padL+'" y1="'+yz.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yz.toFixed(1)+'" stroke="'+th.text3+'" stroke-width="1" stroke-dasharray="5 4"/>';
-  const area='<path class="fp-area" d="'+areaD+'" fill="url(#fpArea)"/>';
-  const glowLine='<path class="fp-anim" pathLength="1" d="'+lineD+'" fill="none" stroke="url(#fpStroke)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".35" filter="url(#fpGlow)" vector-effect="non-scaling-stroke"/>';
-  const mainLine='<path class="fp-anim" pathLength="1" d="'+lineD+'" fill="none" stroke="url(#fpStroke)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+  if(pmin<0 && pmax>0){
+    grid+='<line x1="'+padL+'" y1="'+yz.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yz.toFixed(1)+'" stroke="'+th.text3+'" stroke-opacity=".3" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+  }
+  // 面积填充（极淡）
+  const area='<path d="'+areaD+'" fill="'+BLUE+'" fill-opacity=".06" />';
+  // 主线条（纯色，无发光，无渐变）
+  const mainLine='<path class="fp-anim" pathLength="1" d="'+lineD+'" fill="none" stroke="'+BLUE+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+  // 末端圆点
   const lx=X(n-1), ly=Y(pts[n-1].profit);
+  const endDot='<circle class="fp-dot" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="4" fill="'+BLUE+'"/>';
+  // 末端数值标签（支付宝风格：红色圆角标签）
   const valTxt=(pts[n-1].profit>=0?'+':'')+M(pts[n-1].profit);
-  const boxW=Math.max(66, valTxt.length*8+20);
-  let bx=lx-boxW-10; if(bx<padL) bx=lx+10; let by=ly-30; if(by<padT) by=ly+14;
-  const pulse='<circle class="fp-pulse" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="5" fill="none" stroke="'+BLUE+'" stroke-width="1.5"/>';
-  const core='<circle class="fp-core" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="4.5" fill="'+BLUE+'" stroke="#fff" stroke-width="2"/>';
-  const badge='<g class="fp-badge" transform="translate('+bx.toFixed(1)+','+by.toFixed(1)+')"><rect width="'+boxW.toFixed(1)+'" height="24" rx="6" fill="#FFE6E6" stroke="#FF4D4F" stroke-width="1" filter="url(#fpShadow)"/><text x="'+(boxW/2).toFixed(1)+'" y="16" text-anchor="middle" font-size="12.5" font-weight="700" fill="#E54D42">'+valTxt+'</text></g>';
-  const cross='<g class="fp-cross" id="fpCross"><line id="fpCxLine" y1="'+padT+'" y2="'+(H-padB)+'" stroke="'+BLUE+'" stroke-width="1" stroke-dasharray="3 3" opacity=".5" vector-effect="non-scaling-stroke"/><circle id="fpCxDot" r="4" fill="#fff" stroke="'+BLUE+'" stroke-width="2"/></g>';
-  const dates='<text x="'+padL+'" y="'+(H-9)+'" text-anchor="start" font-size="11" fill="'+th.text3+'">'+pts[0].d+'</text><text x="'+(W-padR)+'" y="'+(H-9)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+pts[n-1].d+'</text>';
-  const style='<style id="fpStyle">.fp-wrap{position:relative;width:100%}.fp-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:fpDraw 1.35s cubic-bezier(.45,.05,.2,1) forwards}@keyframes fpDraw{to{stroke-dashoffset:0}}.fp-area{opacity:0;animation:fpFade 1.1s ease .4s forwards}@keyframes fpFade{to{opacity:1}}.fp-core{opacity:0;transform-box:fill-box;transform-origin:center;animation:fpPop .55s cubic-bezier(.2,.8,.3,1.3) 1.15s forwards}@keyframes fpPop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}.fp-pulse{opacity:0;animation:fpPulse 1.9s ease-out 1.5s infinite}@keyframes fpPulse{0%{r:5;opacity:.45}100%{r:15;opacity:0}}.fp-badge{opacity:0;animation:fpBadge .55s ease 1.25s forwards}@keyframes fpBadge{from{opacity:0}to{opacity:1}}.fp-cross{opacity:0;transition:opacity .12s}.fp-cross.on{opacity:1}.fp-tip{position:absolute;pointer-events:none;background:rgba(31,35,41,.92);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.5;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:5}.fp-tip.on{opacity:1}.fp-tip b{color:#7fb2ff}</style>';
-  const svg='<svg id="fpSvg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:240px;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif">'+defs+grid+zero+area+glowLine+mainLine+pulse+core+badge+cross+dates+'</svg>';
+  const isPos=pts[n-1].profit>=0;
+  const badgeColor=isPos?'#FF4D4F':'#52C41A';
+  const badgeBg=isPos?'#FFF1F0':'#F6FFED';
+  const badgeBorder=badgeColor;
+  const boxW=Math.max(58, valTxt.length*8+16);
+  let bx=lx-boxW-8; if(bx<padL) bx=lx+8; let by=ly-30; if(by<padT) by=ly+14;
+  // 避免标签超出画布
+  if(bx+boxW>W-padR) bx=W-padR-boxW;
+  if(by<0) by=0;
+  const badge='<g><rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+boxW.toFixed(1)+'" height="22" rx="4" fill="'+badgeBg+'" stroke="'+badgeBorder+'" stroke-width="1"/><text x="'+(bx+boxW/2).toFixed(1)+'" y="'+(by+15).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="'+badgeColor+'">'+valTxt+'</text></g>';
+  // 十字交互线
+  const cross='<g class="fp-cross" id="fpCross"><line id="fpCxLine" y1="'+padT+'" y2="'+(H-padB)+'" stroke="'+BLUE+'" stroke-width="1" stroke-dasharray="3 3" opacity=".4" vector-effect="non-scaling-stroke"/><circle id="fpCxDot" r="4" fill="#fff" stroke="'+BLUE+'" stroke-width="2"/></g>';
+  // 日期
+  const dates='<text x="'+padL+'" y="'+(H-6)+'" text-anchor="start" font-size="11" fill="'+th.text3+'">'+pts[0].d+'</text><text x="'+(W-padR)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+pts[n-1].d+'</text>';
+  // 样式
+  const style='<style id="fpStyle">.fp-wrap{position:relative;width:100%}.fp-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:fpDraw 1.2s cubic-bezier(.37,.01,.14,1) forwards}@keyframes fpDraw{to{stroke-dashoffset:0}}.fp-dot{opacity:0;animation:fpDotPop .4s cubic-bezier(.2,.8,.3,1.2) .9s forwards}@keyframes fpDotPop{0%{transform:scale(0);opacity:0;transform-origin:center}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}.fp-cross{opacity:0;transition:opacity .12s}.fp-cross.on{opacity:1}.fp-tip{position:absolute;pointer-events:none;background:rgba(31,35,41,.92);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.5;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:5}.fp-tip.on{opacity:1}.fp-tip b{color:#7fb2ff}</style>';
+  const svg='<svg id="fpSvg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:240px;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif">'+grid+area+mainLine+endDot+badge+cross+dates+'</svg>';
   const tip='<div class="fp-tip" id="fpTip"></div>';
   let html=style+'<div class="fp-wrap" id="fpWrap">'+svg+tip+'</div>';
   html+='<p class="hint" style="margin:8px 2px 4px">'+(approx?'＊近似曲线：仅用各交易日净值连线，无完整历史净值时仅供参考。':'累计盈亏 = 持仓市值 − 累计投入本金（含已实现盈亏）；曲线随交易记录与每日净值实时计算。')+'</p>';

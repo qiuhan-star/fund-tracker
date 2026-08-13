@@ -1399,6 +1399,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
 /* ===== 详情页 流水折叠 ===== */
 .tx-expand { display:block; width:calc(100% - 32px); margin:12px 16px 20px; padding:12px; text-align:center; color:var(--text-2); background:var(--surface); border:1px solid var(--border); border-radius:12px; font-size:14px; }
+/* 累计盈亏曲线时段选择器 */
+.fp-period { display:flex; gap:0; margin:10px 0 6px; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.fp-p-btn { flex:1; border:none; background:var(--surface); color:var(--text-2); font-size:12px; font-weight:500; padding:7px 0; cursor:pointer; font-family:inherit; transition:all .15s; border-right:1px solid var(--border); }
+.fp-p-btn:last-child { border-right:none; }
+.fp-p-btn.on { background:var(--accent); color:#fff; font-weight:600; }
 .tx-more { display:none; }
 /* 交易记录卡片折叠：通过类名隐藏，保持卡片容器一致，避免展开后宽度变化 */
 .tx-list .tx-card.tx-hidden { display:none; }
@@ -8569,7 +8574,7 @@ function renderDetailTabPane(f){
     pane.innerHTML='<div id="detailIntraday"></div>';
     renderIntraday(f);
   } else {
-    pane.innerHTML='<div class="card profit-curve-card" style="margin-top:12px"><div class="sec-head"><h2 style="margin:0;font-size: 14px">累计盈亏曲线 <span class="tag">天天基金</span></h2><span class="hint">交易记录 × 历史净值</span></div><div id="fundProfitCurve" class="fund-profit-curve"></div></div>';
+    pane.innerHTML='<div class="card profit-curve-card" style="margin-top:12px"><div class="sec-head"><h2 style="margin:0;font-size: 14px">累计盈亏曲线</h2><span class="hint">交易记录 × 历史净值</span></div><div class="fp-period" id="fpPeriod"><button class="fp-p-btn on" data-p="all" onclick="setFundProfitPeriod(\'all\')">全部</button><button class="fp-p-btn" data-p="1y" onclick="setFundProfitPeriod(\'1y\')">1年</button><button class="fp-p-btn" data-p="6m" onclick="setFundProfitPeriod(\'6m\')">6个月</button><button class="fp-p-btn" data-p="3m" onclick="setFundProfitPeriod(\'3m\')">3个月</button><button class="fp-p-btn" data-p="1m" onclick="setFundProfitPeriod(\'1m\')">1个月</button></div><div id="fundProfitCurve" class="fund-profit-curve"></div></div>';
     renderFundProfitCurve(f);
   }
 }
@@ -8595,7 +8600,26 @@ function detailProfitPanelHtml(f){
   </div>`;
 }
 
-// ---------- 单只基金「累计盈亏」曲线（交易流水 × 历史净值，蚂蚁基金风格） ----------
+// ---------- 单只基金「累计盈亏」曲线（交易流水 × 历史净值，含时段选择） ----------
+var _fundProfitFullData=null, _fundProfitPeriod='all', _fundProfitApprox=false;
+function setFundProfitPeriod(p){
+  _fundProfitPeriod=p;
+  document.querySelectorAll('#fpPeriod .fp-p-btn').forEach(function(b){ b.classList.toggle('on', b.dataset.p===p); });
+  if(!_fundProfitFullData) return;
+  var box=document.getElementById('fundProfitCurve'); if(!box) return;
+  drawFundProfitCurve(box, _fundProfitFullData, _fundProfitApprox);
+}
+function filterPtsByPeriod(pts, period){
+  if(period==='all'||!pts.length) return pts;
+  var now=new Date(), cutoff=new Date(now);
+  if(period==='1y') cutoff.setFullYear(cutoff.getFullYear()-1);
+  else if(period==='6m') cutoff.setMonth(cutoff.getMonth()-6);
+  else if(period==='3m') cutoff.setMonth(cutoff.getMonth()-3);
+  else if(period==='1m') cutoff.setMonth(cutoff.getMonth()-1);
+  var cs=fmtDate(cutoff);
+  for(var i=0;i<pts.length;i++) if(pts[i].d>=cs) return pts.slice(i);
+  return pts;
+}
 async function renderFundProfitCurve(f){
   const box=document.getElementById('fundProfitCurve'); if(!box) return;
   const myTr=trades.filter(t=>t.name===f.name && (t.type||'fund')!=='stock').slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
@@ -8607,7 +8631,8 @@ async function renderFundProfitCurve(f){
   let hist=null; try{ hist=await fetchNavHistory(code); }catch(e){}
   if(!hist||!hist.length){
     box.innerHTML='<p class="hint" style="margin:6px 0 0">历史净值获取失败（天天基金接口未返回，可能被拦截/离线）。已改用各交易日的净值作近似稀疏曲线。</p>';
-    drawFundProfitCurve(box, fundProfitSparse(myTr), myTr.map(t=>t.date), true);
+    _fundProfitFullData=fundProfitSparse(myTr); _fundProfitApprox=true;
+    drawFundProfitCurve(box, _fundProfitFullData, true);
     return;
   }
   const navArr=hist.map(p=>({d:fmtDate(p.t), nav:p.nav})).filter(p=>p.d>=firstDate).sort(function(a,b){return a.d.localeCompare(b.d);});
@@ -8623,7 +8648,8 @@ async function renderFundProfitCurve(f){
     if(shares>1e-6){ const mv=shares*nv.nav; pts.push({d:nv.d, profit:+(mv-principal).toFixed(2)}); }
   });
   if(!pts.length){ box.innerHTML='<p class="hint" style="margin:6px 0 0">该基金买入后份额一直为 0，无法绘制。</p>'; return; }
-  drawFundProfitCurve(box, pts, myTr.map(t=>t.date), false);
+  _fundProfitFullData=pts; _fundProfitApprox=false;
+  drawFundProfitCurve(box, pts, false);
 }
 function fundProfitSparse(myTr){
   let shares=0, principal=0; const pts=[];
@@ -8636,31 +8662,34 @@ function fundProfitSparse(myTr){
   });
   return pts;
 }
-function drawFundProfitCurve(box, pts, nodeDates, approx){
-  const th=TH();
-  const W=1000,H=240,padL=54,padR=66,padT=26,padB=28;
-  let pmin=Math.min.apply(null,pts.map(p=>p.profit));
-  let pmax=Math.max.apply(null,pts.map(p=>p.profit));
+function drawFundProfitCurve(box, fullPts, approx){
+  // 按当前时段过滤
+  var pts=filterPtsByPeriod(fullPts, _fundProfitPeriod);
+  if(pts.length<2){ box.innerHTML='<p class="hint" style="margin:6px 0 0">该时段数据点不足，请选择更大范围。</p>'; return; }
+  var th=TH();
+  var W=1000,H=260,padL=50,padR=62,padT=28,padB=30;
+  var pmin=Math.min.apply(null,pts.map(function(p){return p.profit;}));
+  var pmax=Math.max.apply(null,pts.map(function(p){return p.profit;}));
   if(pmin>0) pmin=0; if(pmax<0) pmax=0;
-  if(pmax-pmin<1){ const m=(pmin+pmax)/2; pmin=m-1; pmax=m+1; }
-  const pr=(pmax-pmin)||1;
-  const n=pts.length;
-  const X=i=> n===1? (padL+(W-padL-padR)/2) : padL+(i/(n-1))*(W-padL-padR);
-  const Y=v=> H-padB-((v-pmin)/pr)*(H-padT-padB);
-  const BLUE='#2563EB';
-  const fmtAxis=v=>{ const a=Math.abs(v); if(a>=10000) return (v/10000).toFixed(1)+'万'; if(a>=1000) return (v/1000).toFixed(1)+'k'; return ''+Math.round(v); };
-  const yz=Y(0);
-  const P=pts.map((p,i)=>({x:X(i),y:Y(p.profit)}));
-  // 单调三次贝塞尔插值（避免 overshoot，适合金融数据）
+  if(pmax-pmin<1){ var m=(pmin+pmax)/2; pmin=m-1; pmax=m+1; }
+  var pr=(pmax-pmin)||1;
+  var n=pts.length;
+  var X=function(i){ return n===1? (padL+(W-padL-padR)/2) : padL+(i/(n-1))*(W-padL-padR); };
+  var Y=function(v){ return H-padB-((v-pmin)/pr)*(H-padT-padB); };
+  var BLUE='#2563EB';
+  var fmtAxis=function(v){ var a=Math.abs(v); if(a>=10000) return (v/10000).toFixed(1)+'万'; if(a>=1000) return (v/1000).toFixed(1)+'k'; return ''+Math.round(v); };
+  var yz=Y(0);
+  var P=pts.map(function(p,i){ return {x:X(i),y:Y(p.profit)}; });
+  // 单调三次贝塞尔插值
   function smoothPath(pts){
     if(pts.length<2) return pts.length?'M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1):'';
     if(pts.length===2) return 'M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1)+' L'+pts[1].x.toFixed(1)+' '+pts[1].y.toFixed(1);
-    const n=pts.length, dx=[], dy=[], s=[];
-    for(let i=0;i<n-1;i++){ dx[i]=pts[i+1].x-pts[i].x; dy[i]=pts[i+1].y-pts[i].y; s[i]=dy[i]/dx[i]; }
-    let d='M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
-    for(let i=0;i<n-1;i++){
-      const t=dx[i]*0.3;
-      let cp1x,cp1y,cp2x,cp2y;
+    var n=pts.length, dx=[], dy=[], s=[];
+    for(var i=0;i<n-1;i++){ dx[i]=pts[i+1].x-pts[i].x; dy[i]=pts[i+1].y-pts[i].y; s[i]=dy[i]/dx[i]; }
+    var d='M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
+    for(var i=0;i<n-1;i++){
+      var t=dx[i]*0.3;
+      var cp1x,cp1y,cp2x,cp2y;
       if(i===0){ cp1x=pts[i].x+t; cp1y=pts[i].y+s[i]*t; }
       else if(s[i]*s[i-1]<=0){ cp1x=pts[i].x+t; cp1y=pts[i].y; }
       else{ cp1x=pts[i].x+t; cp1y=pts[i].y+(s[i-1]+s[i])/2*t; }
@@ -8671,60 +8700,68 @@ function drawFundProfitCurve(box, pts, nodeDates, approx){
     }
     return d;
   }
-  const lineD=smoothPath(P);
-  const areaD=lineD+' L'+X(n-1).toFixed(1)+' '+yz.toFixed(1)+' L'+X(0).toFixed(1)+' '+yz.toFixed(1)+' Z';
-  // 网格线（3条水平 + 零线）
-  let grid='';
-  [0,.5,1].forEach(function(f){
-    const y=(padT+(H-padT-padB)*f).toFixed(1); const val=pmax-(pmax-pmin)*f;
-    grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="'+th.text3+'" stroke-opacity=".15" stroke-width="1" vector-effect="non-scaling-stroke"/>';
-    grid+='<text x="'+(padL-7)+'" y="'+(+y+4)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+fmtAxis(val)+'</text>';
+  var lineD=smoothPath(P);
+  var areaD=lineD+' L'+X(n-1).toFixed(1)+' '+yz.toFixed(1)+' L'+X(0).toFixed(1)+' '+yz.toFixed(1)+' Z';
+  // 网格线（5条水平均匀分布 + 零线）
+  var grid='';
+  [0,0.25,0.5,0.75,1].forEach(function(f){
+    var y=(padT+(H-padT-padB)*f).toFixed(1); var val=pmax-(pmax-pmin)*f;
+    grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="'+th.text3+'" stroke-opacity=".12" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+    grid+='<text x="'+(padL-7)+'" y="'+(+y+4)+'" text-anchor="end" font-size="12" fill="'+th.text3+'">'+fmtAxis(val)+'</text>';
   });
   if(pmin<0 && pmax>0){
-    grid+='<line x1="'+padL+'" y1="'+yz.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yz.toFixed(1)+'" stroke="'+th.text3+'" stroke-opacity=".3" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+    grid+='<line x1="'+padL+'" y1="'+yz.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yz.toFixed(1)+'" stroke="'+th.text3+'" stroke-opacity=".35" stroke-width="1" vector-effect="non-scaling-stroke"/>';
   }
-  // 面积填充（极淡）
-  const area='<path d="'+areaD+'" fill="'+BLUE+'" fill-opacity=".06" />';
-  // 主线条（纯色，无发光，无渐变）
-  const mainLine='<path class="fp-anim" pathLength="1" d="'+lineD+'" fill="none" stroke="'+BLUE+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+  // 面积填充渐变
+  var areaDef='<linearGradient id="fpAreaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+BLUE+'" stop-opacity=".16"/><stop offset="1" stop-color="'+BLUE+'" stop-opacity="0"/></linearGradient>';
+  var area='<path d="'+areaD+'" fill="url(#fpAreaG)"/>';
+  // 主线条
+  var mainLine='<path class="fp-anim" pathLength="1" d="'+lineD+'" fill="none" stroke="'+BLUE+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
   // 末端圆点
-  const lx=X(n-1), ly=Y(pts[n-1].profit);
-  const endDot='<circle class="fp-dot" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="4" fill="'+BLUE+'"/>';
-  // 末端数值标签（支付宝风格：红色圆角标签）
-  const valTxt=(pts[n-1].profit>=0?'+':'')+M(pts[n-1].profit);
-  const isPos=pts[n-1].profit>=0;
-  const badgeColor=isPos?'#FF4D4F':'#52C41A';
-  const badgeBg=isPos?'#FFF1F0':'#F6FFED';
-  const badgeBorder=badgeColor;
-  const boxW=Math.max(58, valTxt.length*8+16);
-  let bx=lx-boxW-8; if(bx<padL) bx=lx+8; let by=ly-30; if(by<padT) by=ly+14;
-  // 避免标签超出画布
+  var lx=X(n-1), ly=Y(pts[n-1].profit);
+  var endDot='<circle class="fp-dot" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="4.5" fill="'+BLUE+'"/>';
+  // 末端数值标签
+  var valTxt=(pts[n-1].profit>=0?'+':'')+M(pts[n-1].profit);
+  var isPos=pts[n-1].profit>=0;
+  var badgeColor=isPos?'#FF4D4F':'#52C41A';
+  var badgeBg=isPos?'#FFF1F0':'#F6FFED';
+  var badgeBorder=badgeColor;
+  var boxW=Math.max(60, valTxt.length*8+18);
+  var bx=lx-boxW-8; if(bx<padL) bx=lx+8; var by=ly-32; if(by<padT) by=ly+14;
   if(bx+boxW>W-padR) bx=W-padR-boxW;
   if(by<0) by=0;
-  const badge='<g><rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+boxW.toFixed(1)+'" height="22" rx="4" fill="'+badgeBg+'" stroke="'+badgeBorder+'" stroke-width="1"/><text x="'+(bx+boxW/2).toFixed(1)+'" y="'+(by+15).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="'+badgeColor+'">'+valTxt+'</text></g>';
+  var badge='<g><rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+boxW.toFixed(1)+'" height="24" rx="4" fill="'+badgeBg+'" stroke="'+badgeBorder+'" stroke-width="1"/><text x="'+(bx+boxW/2).toFixed(1)+'" y="'+(by+16).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="'+badgeColor+'">'+valTxt+'</text></g>';
   // 十字交互线
-  const cross='<g class="fp-cross" id="fpCross"><line id="fpCxLine" y1="'+padT+'" y2="'+(H-padB)+'" stroke="'+BLUE+'" stroke-width="1" stroke-dasharray="3 3" opacity=".4" vector-effect="non-scaling-stroke"/><circle id="fpCxDot" r="4" fill="#fff" stroke="'+BLUE+'" stroke-width="2"/></g>';
-  // 日期
-  const dates='<text x="'+padL+'" y="'+(H-6)+'" text-anchor="start" font-size="11" fill="'+th.text3+'">'+pts[0].d+'</text><text x="'+(W-padR)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+pts[n-1].d+'</text>';
+  var cross='<g class="fp-cross" id="fpCross"><line id="fpCxLine" y1="'+padT+'" y2="'+(H-padB)+'" stroke="'+BLUE+'" stroke-width="1" stroke-dasharray="3 3" opacity=".4" vector-effect="non-scaling-stroke"/><circle id="fpCxDot" r="4.5" fill="#fff" stroke="'+BLUE+'" stroke-width="2"/></g>';
+  // X轴日期（3-4个均匀分布）
+  var dates='';
+  var dateCount=Math.min(4, n);
+  var dateStep=Math.max(1, Math.floor((n-1)/(dateCount-1)));
+  for(var di=0; di<dateCount; di++){
+    var idx=Math.min(di*dateStep, n-1);
+    var dtx=X(idx), dty=H-6;
+    var xa=di===0?'start':(di===dateCount-1?'end':'middle');
+    dates+='<text x="'+dtx.toFixed(1)+'" y="'+dty+'" text-anchor="'+xa+'" font-size="12" fill="'+th.text3+'">'+pts[idx].d+'</text>';
+  }
   // 样式
-  const style='<style id="fpStyle">.fp-wrap{position:relative;width:100%}.fp-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:fpDraw 1.2s cubic-bezier(.37,.01,.14,1) forwards}@keyframes fpDraw{to{stroke-dashoffset:0}}.fp-dot{opacity:0;animation:fpDotPop .4s cubic-bezier(.2,.8,.3,1.2) .9s forwards}@keyframes fpDotPop{0%{transform:scale(0);opacity:0;transform-origin:center}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}.fp-cross{opacity:0;transition:opacity .12s}.fp-cross.on{opacity:1}.fp-tip{position:absolute;pointer-events:none;background:rgba(31,35,41,.92);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.5;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:5}.fp-tip.on{opacity:1}.fp-tip b{color:#7fb2ff}</style>';
-  const svg='<svg id="fpSvg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:240px;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif">'+grid+area+mainLine+endDot+badge+cross+dates+'</svg>';
-  const tip='<div class="fp-tip" id="fpTip"></div>';
-  let html=style+'<div class="fp-wrap" id="fpWrap">'+svg+tip+'</div>';
+  var style='<style id="fpStyle">.fp-wrap{position:relative;width:100%}.fp-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:fpDraw 1.2s cubic-bezier(.37,.01,.14,1) forwards}@keyframes fpDraw{to{stroke-dashoffset:0}}.fp-dot{opacity:0;animation:fpDotPop .4s cubic-bezier(.2,.8,.3,1.2) .9s forwards}@keyframes fpDotPop{0%{transform:scale(0);opacity:0;transform-origin:center}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}.fp-cross{opacity:0;transition:opacity .12s}.fp-cross.on{opacity:1}.fp-tip{position:absolute;pointer-events:none;background:rgba(31,35,41,.92);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.5;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:5}.fp-tip.on{opacity:1}.fp-tip b{color:#7fb2ff}</style>';
+  var svg='<svg id="fpSvg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:260px;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif"><defs>'+areaDef+'</defs>'+grid+area+mainLine+endDot+badge+cross+dates+'</svg>';
+  var tip='<div class="fp-tip" id="fpTip"></div>';
+  var html=style+'<div class="fp-wrap" id="fpWrap">'+svg+tip+'</div>';
   html+='<p class="hint" style="margin:8px 2px 4px">'+(approx?'＊近似曲线：仅用各交易日净值连线，无完整历史净值时仅供参考。':'累计盈亏 = 持仓市值 − 累计投入本金（含已实现盈亏）；曲线随交易记录与每日净值实时计算。')+'</p>';
   box.innerHTML=html;
   try{
-    const wrap=document.getElementById('fpWrap'), svgEl=document.getElementById('fpSvg'), tipEl=document.getElementById('fpTip');
-    const cxLine=document.getElementById('fpCxLine'), cxDot=document.getElementById('fpCxDot'), crossEl=document.getElementById('fpCross');
+    var wrap=document.getElementById('fpWrap'), svgEl=document.getElementById('fpSvg'), tipEl=document.getElementById('fpTip');
+    var cxLine=document.getElementById('fpCxLine'), cxDot=document.getElementById('fpCxDot'), crossEl=document.getElementById('fpCross');
     wrap.addEventListener('mousemove',function(e){
-      const r=svgEl.getBoundingClientRect();
-      let fracX=(e.clientX-r.left)/r.width; fracX=Math.max(0,Math.min(1,fracX));
-      let ux=fracX*W;
-      let i=Math.round((ux-padL)/(W-padL-padR)*(n-1)); i=Math.max(0,Math.min(n-1,i));
-      const xv=X(i), yv=Y(pts[i].profit);
+      var r=svgEl.getBoundingClientRect();
+      var fracX=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+      var ux=fracX*W;
+      var i=Math.max(0,Math.min(n-1,Math.round((ux-padL)/(W-padL-padR)*(n-1))));
+      var xv=X(i), yv=Y(pts[i].profit);
       crossEl.classList.add('on'); cxLine.setAttribute('x1',xv); cxLine.setAttribute('x2',xv);
       cxDot.setAttribute('cx',xv); cxDot.setAttribute('cy',yv);
-      const px=xv/W*r.width, py=yv/H*r.height;
+      var px=xv/W*r.width, py=yv/H*r.height;
       tipEl.style.left=px+'px'; tipEl.style.top=py+'px'; tipEl.classList.add('on');
       tipEl.innerHTML='<b>'+pts[i].d+'</b><br/>累计盈亏 '+((pts[i].profit>=0?'+':'')+M(pts[i].profit));
     });

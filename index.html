@@ -3983,7 +3983,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .tag-pend{ display:inline-flex; align-items:center; font-size:10px; padding:1px 5px; border-radius:999px; background:rgba(255,149,0,.14); color:var(--warn); font-weight:600; vertical-align:middle; line-height:1.3; }
   #dhLatestTradeK{ position:relative; height:20px; }
   #dhLatestTradeK .lt-lbl{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
-  #dhLatestTradeK .tag-pend{ position:absolute; left:50%; }
+  #dhLatestTradeK .tag-pend{ position:absolute; left:calc(50% + 28px); transform:translateX(-50%); }
   .pend-txt{ font-size:12px; font-weight:600; color:var(--warn); margin-left:4px; vertical-align:middle; }
   .lt-date{ font-weight:700; }
   .highlight-flash{ animation:hlFlash 1.5s ease-out; }
@@ -8014,27 +8014,9 @@ function updateDetailHeader(f){
     _ltV.onclick=_ltIdx>=0?function(){scrollToLatestTrade(_ltIdx);}:null;
     _ltK.style.height='20px';
     _ltK.style.position='relative';
-    positionPendingBadge(_ltK);
   }
   const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   set('dhNet', _tr.length?M(_net):'—');
-}
-function positionPendingBadge(kEl){
-  if(!kEl) return;
-  const lbl=kEl.querySelector('.lt-lbl');
-  const badge=kEl.querySelector('.tag-pend');
-  if(!badge){ if(lbl) lbl.style.left='50%'; return; }
-  if(lbl){
-    // 让「最新交易」严格居中
-    lbl.style.left='50%';
-    lbl.style.transform='translateX(-50%)';
-  }
-  // 待确认徽标放在「最新交易」右侧（用绝对定位，不参与居中计算）
-  setTimeout(function(){
-    const lblW=lbl?lbl.getBoundingClientRect().width:0;
-    badge.style.left='calc(50% + '+(lblW/2+4)+'px)';
-    badge.style.transform='translateX(-50%)';
-  },0);
 }
 function latestTradeOf(name){
   // 过滤掉撤单的交易，只取已确认和待确认的

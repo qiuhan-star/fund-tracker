@@ -1398,6 +1398,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .trade-section .tx-act-btn:active { background:var(--bg); }
 .trade-section .tx-act-del { color:var(--danger); border-color:rgba(220,38,38,.25); }
 .trade-section .tx-act-del:active { background:rgba(220,38,38,.08); }
+.trade-section .tx-act-copy { color:var(--accent); border-color:rgba(24,95,165,.28); }
+.trade-section .tx-act-copy:active { background:rgba(24,95,165,.08); }
 .trade-section .tx-note { font-size:12px; color:var(--text-3); margin-top:4px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .trade-section .tx-expand { width: 100%; margin: 10px 0 4px; }
 @media (min-width: 768px) {
@@ -4278,14 +4280,15 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       </div>
       <label class="fld"><span>备注</span><textarea id="dr-note" rows="2" placeholder="可选备注"></textarea></label>
     <div class="drawer-foot">
-      <button class="btn secondary" onclick="showCopyLast()">复制上一条</button>
+      <button class="btn secondary" onclick="copyTrade(trades.length-1)">复制最近一笔</button>
       <button class="btn ghost" onclick="closeDrawer()">取消</button>
       <button class="btn primary" onclick="drawerSave()">保存并记账</button>
     </div>
   </aside>
   <div id="copyLastModal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(17,24,39,.45);z-index:9999;align-items:center;justify-content:center;padding:16px;">
     <div style="background:#fff;color:#1f2937;border-radius:14px;max-width:400px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25);">
-      <div style="background:#185fa5;color:#fff;padding:14px 18px;font-size:15px;font-weight:500;border-radius:14px 14px 0 0;">复制上一条交易 · 勾选要带过来的字段</div>
+      <div style="background:#185fa5;color:#fff;padding:14px 18px;font-size:15px;font-weight:500;border-radius:14px 14px 0 0;">复制交易 · 勾选要带过来的字段</div>
+      <div style="background:#185fa5;color:#dbeafe;padding:0 18px 14px;font-size:12px;">来源：<span id="cpSrcName"></span></div>
       <div style="padding:14px 18px;">
         <div style="font-size:13px;font-weight:500;color:#6b7280;margin:0 0 6px;">基础信息（通常不变）</div>
         <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-fund" checked style="width:16px;height:16px;accent-color:#185fa5;"> 基金名称</label>
@@ -4303,7 +4306,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <div style="display:flex;gap:8px;padding:12px 18px 16px;border-top:1px solid #eee;">
         <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="toggleCopyAll()">全选 / 全不选</button>
         <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="document.getElementById('copyLastModal').style.display='none'">取消</button>
-        <button style="flex:1.4;padding:8px;border:1px solid #185fa5;border-radius:8px;background:#185fa5;color:#fff;font-size:13px;cursor:pointer;" onclick="applyCopyLast()">确定复制</button>
+        <button style="flex:1.4;padding:8px;border:1px solid #185fa5;border-radius:8px;background:#185fa5;color:#fff;font-size:13px;cursor:pointer;" onclick="applyCopyTrade()">确定复制</button>
       </div>
     </div>
   </div>
@@ -8147,7 +8150,7 @@ function buildTradeSection(f){
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
         const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'净值待确认';
         const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'份额待确认';
-        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="event.stopPropagation();openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-del" type="button" onclick="event.stopPropagation();deleteTrade(${i})">删除</button></div></div></div>`;
+        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="event.stopPropagation();openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-copy" type="button" onclick="event.stopPropagation();copyTrade(${i})">复制</button><button class="tx-act-btn tx-act-del" type="button" onclick="event.stopPropagation();deleteTrade(${i})">删除</button></div></div></div>`;
       });
       h+=`</div>`;
     } else {
@@ -8176,7 +8179,7 @@ function buildTradeSection(f){
             <td class="num">${t.fee?M(t.fee):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
             <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'份额待确认'}</td>
-            <td><button class="lk" title="编辑" onclick="event.stopPropagation();openTradeEdit(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
+            <td><button class="lk" title="编辑" onclick="event.stopPropagation();openTradeEdit(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="lk" title="复制" onclick="event.stopPropagation();copyTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></td>
           </tr>`;
       });
       h+=`</tbody></table></div><div style="margin-top:12px"><div style="font-size: 14px;font-weight:600;margin:0 0 6px">买卖点</div>${miniTimeline(f)}</div>`;
@@ -8414,6 +8417,7 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
     if(isNaN(idx)) return;
     // 只处理未被 inline onclick 捕获的点击（用已有标记避免重复执行）
     if(e.target.closest('.tx-act-edit')){ try{ openTradeEdit(idx); }catch(err){} return; }
+    if(e.target.closest('.tx-act-copy')){ try{ copyTrade(idx); }catch(err){} return; }
     if(e.target.closest('.tx-act-del')){ try{ deleteTrade(idx); }catch(err){} return; }
     if(e.target.closest('.tx-conf')){ try{ event.stopPropagation(); }catch(_){} return; }
     if(e.target.closest('.tx-card-inner')){ try{ openTradeEdit(idx); }catch(err){} }
@@ -8592,10 +8596,15 @@ function openDrawer(){
   draftRestore('ft_draft_drawer', DRAFT_DR_IDS, 'drDraftPill');
 }
 function closeDrawer(e){ if(e&&e.target&&!e.target.classList.contains('drawer-mask')) return; const m=document.getElementById('drawerMask'); if(m) m.style.display='none'; const d=document.getElementById('drawer'); if(d){ d.classList.remove('open'); d.setAttribute('aria-hidden','true'); } }
-function showCopyLast(){
-  if(!trades || !trades.length){ toast('还没有交易可复制'); return; }
+var _copySrcIdx=-1;
+function copyTrade(i){
+  if(!trades || !trades[i]){ toast('没有可复制的交易'); return; }
+  _copySrcIdx=i;
   const m=document.getElementById('copyLastModal');
-  if(m) m.style.display='flex';
+  if(m){
+    const mt=document.getElementById('cpSrcName'); if(mt) mt.textContent=(trades[i].name||'')+' · '+(trades[i].date||'');
+    m.style.display='flex';
+  }
 }
 function toggleCopyAll(){
   const m=document.getElementById('copyLastModal'); if(!m) return;
@@ -8603,10 +8612,10 @@ function toggleCopyAll(){
   let allChecked=true; boxes.forEach(b=>{ if(!b.checked) allChecked=false; });
   boxes.forEach(b=>{ b.checked=!allChecked; });
 }
-function applyCopyLast(){
+function applyCopyTrade(){
   const m=document.getElementById('copyLastModal'); if(m) m.style.display='none';
-  if(!trades || !trades.length){ toast('还没有交易可复制'); return; }
-  const t=trades[trades.length-1];
+  if(!trades || _copySrcIdx<0 || !trades[_copySrcIdx]){ toast('没有可复制的交易'); return; }
+  const t=trades[_copySrcIdx];
   const pick=id=>{ const el=document.getElementById(id); return el?el.checked:false; };
   try{ if(typeof draftClear==='function') draftClear('ft_draft_drawer', DRAFT_DR_IDS); }catch(e){}
   openDrawer();
@@ -8625,7 +8634,7 @@ function applyCopyLast(){
   if(pick('cp-shares')) set('dr-shares', t.shares!=null?t.shares:'');
   if(pick('cp-note')) set('dr-note', t.note||'');
   try{ if(typeof autoFee==='function') autoFee('dr'); }catch(e){}
-  toast('已复制上一条：'+(t.name||'')+'（未勾的留空，可现填）');
+  toast('已复制：'+(t.name||'')+'（未勾的留空，可现填）');
 }
 
 function drawerSave(){

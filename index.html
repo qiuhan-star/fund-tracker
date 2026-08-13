@@ -139,9 +139,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .adk { display: flex; gap: 10px; border: 1px solid var(--border-3); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background:var(--surface); }.adk-badge { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; height: fit-content; white-space: nowrap; }.adk.high { border-left: 3px solid var(--danger); }.adk.high .adk-badge { background: var(--up-bg); color: #d23b3b; }.adk.medium { border-left: 3px solid var(--warn); }.adk.medium .adk-badge { background: var(--warn-bg); color: #b9791a; }.adk.low { border-left: 3px solid var(--accent); }.adk.low .adk-badge { background: var(--accent-soft); color: var(--accent); }.adk-title { font-size: 14px; font-weight: 600; margin: 0 0 4px; }.adk-body { font-size: 14px; color: var(--text-2); line-height: 1.65; margin: 0 0 8px; }.adk ul { margin: 0 0 6px; padding-left: 18px; font-size: 14px; color: var(--text-2); line-height: 1.7; }.adk-alt { font-size: 14px; color: var(--text-2); background: var(--surface-2); border-radius: 8px; padding: 7px 10px; line-height: 1.6; }.adk-alt b { color: var(--text-2); }/* 分阶段计划 */
   .plan { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; margin-top: 6px; }.plan h3 { font-size: 14px; margin: 0 0 10px; font-weight: 600; }.pl { display: flex; gap: 10px; margin-bottom: 10px; }.pl:last-child { margin-bottom: 0; }.pl-m { flex: 0 0 auto; width: 64px; font-size: 14px; font-weight: 600; color: var(--accent); padding-top: 1px; }.pl-c { font-size: 14px; color: var(--text-2); line-height: 1.65; }.hint { font-size: 14px; color: var(--text-3); line-height: 1.7; }.privacy { color: var(--text-2); font-size: 14px; margin: 8px 0 0; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; line-height: 1.6; }.legend { display: flex; flex-wrap: wrap; gap: 9px; font-size: 14px; margin-top: 8px; }.legend span { display: flex; align-items: center; gap: 5px; }.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }/* 饼图可点击图例（下钻筛选） */
   .pie-leg { cursor: pointer; padding:7px 10px; min-height:36px; display:inline-flex; align-items:center; border-radius: 6px; transition: background .15s, color .15s; user-select: none; max-width:100%; min-width:0; overflow-wrap:anywhere; }@media (hover: hover) { .pie-leg:hover {  background: var(--surface-3);  } }
-.pie-leg.on { background: var(--accent); color: #fff; }.pie-leg.on i { box-shadow: 0 0 0 1px rgba(255,255,255,.6); }/* ===== 快捷记账抽屉 ===== */
-  .fab { position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 80; width: 54px; height: 54px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 28px; line-height: 1; font-weight: 600; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.22); transition: transform .15s, box-shadow .15s; }@media (hover: hover) { .fab:hover {  transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,.28);  } }@media (max-width: 768px) { .fab { display: none; } }
-.fab:active { transform: translateY(0); }.drawer-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 90; }.drawer { position: fixed; top: 0; right: 0; height: 100%; width: 340px; max-width: 88vw; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 28px rgba(0,0,0,.14); z-index: 95; transform: translateX(100%); transition: transform .22s ease; display: flex; flex-direction: column; }.drawer.open { transform: translateX(0); }.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-2); }.drawer-head h3 { margin: 0; font-size: 15px; }.drawer-x { border: none; background: none; font-size: 18px; cursor: pointer; color: var(--text-2); padding: 4px 8px; border-radius: 6px; }@media (hover: hover) { .drawer-x:hover {  background: var(--bg);  } }
+.pie-leg.on { background: var(--accent); color: #fff; }.pie-leg.on i { box-shadow: 0 0 0 1px rgba(255,255,255,.6); }/* ===== 快捷记账抽屉 ===== */.drawer-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 90; }.drawer { position: fixed; top: 0; right: 0; height: 100%; width: 340px; max-width: 88vw; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 28px rgba(0,0,0,.14); z-index: 95; transform: translateX(100%); transition: transform .22s ease; display: flex; flex-direction: column; }.drawer.open { transform: translateX(0); }.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-2); }.drawer-head h3 { margin: 0; font-size: 15px; }.drawer-x { border: none; background: none; font-size: 18px; cursor: pointer; color: var(--text-2); padding: 4px 8px; border-radius: 6px; }@media (hover: hover) { .drawer-x:hover {  background: var(--bg);  } }
 .drawer-body { padding: 16px 18px; overflow-y: auto; flex: 1; }.drawer-body .fld { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; font-size: 14px; color: var(--text-2); }.drawer-body .fld > span { font-weight: 600; color: var(--text); }.drawer-body .fld input, .drawer-body .fld select { border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 9px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); }.drawer-body .fld input:focus, .drawer-body .fld select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-on); }.drawer-body .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }.fee-hint { grid-column: 1 / -1; font-size: 12px; color: var(--text-3); margin: -8px 0 6px; line-height: 1.4; }.drawer-foot { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border-2); }.drawer-foot .btn { flex: 1; }.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }@media (hover: hover) { .btn.primary:hover {  filter: brightness(1.05);  } }
 .btn.ghost { background: var(--surface-2); color: var(--text-2); border-color: var(--border-strong); }.btn.secondary { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; font-weight: 600; }.tl { width: 100%; }/* ===== 债券板块 ===== */
   .sub2 { font-size: 12px; color: var(--text-3); margin: 3px 0 0; }.thermo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }.yield-box { background: var(--surface-3); border: 1px solid var(--border-3); border-radius: 10px; padding: 12px; }.yield-box .lbl { font-size: 12px; color: var(--text-3); }.yield-input { display: flex; align-items: baseline; gap: 4px; margin: 6px 0; }.yield-input input { width: 92px; border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 8px; font-size: 24px; font-weight: 600; font-family: inherit; color: var(--text); }.yield-input .pct { font-size: 18px; color: var(--text-2); }.thermo-status { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 14px; font-weight: 600; }.ts-low { background: var(--up-bg); color: #d23b3b; }.ts-mid { background: var(--accent-soft); color: var(--accent); }.ts-high { background: var(--warn-bg); color: #b9791a; }.cmp-bar { height: 26px; border-radius: 8px; background: var(--border-3); position: relative; overflow: hidden; margin: 8px 0 4px; }.cmp-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; }.cmp-bar .target { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--accent); }.cmp-legend { display: flex; gap: 16px; font-size: 14px; color: var(--text-2); margin-top: 4px; }.cmp-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: 0; }.roadmap { opacity: .72; }.roadmap .rh { display: flex; align-items: center; gap: 8px; }.pill { font-size: 12px; padding: 1px 8px; border-radius: 4px; background: var(--border-3); color: var(--text-3); white-space:nowrap; }.adv-toggle { cursor: pointer; color: var(--accent); font-size: 14px; font-weight: 600; margin-top: 14px; user-select: none; }@media (hover: hover) { .adv-toggle:hover {  text-decoration: underline;  } }
@@ -396,7 +394,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .ov-trend { display: none; }
   #sectorHint { font-size: 12px; line-height: 1.5; margin-bottom: 8px; }
   }
-@media print { :root {--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}body {background:var(--surface);}.wrap {max-width:none;padding:0;}.more-menu,.main-tabs,.scope-bar,.back-link,.detail-head button,.sec-tools,.fab,.drawer,.drawer-mask {display:none!important;}.card {box-shadow:none;border:1px solid #ddd;break-inside:avoid;}.hint {display:none!important;}td input,td select {border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}.mcard {border:1px solid #eee;}.sub {margin-bottom:6px;}#updated {display:none;}
+@media print { :root {--bg:#fff;--surface:#fff;--surface-2:#f7f8fa;--surface-3:#fafbfc;--border:#ddd;--border-2:#eee;--border-3:#eee;--border-strong:#ccc;--text:#1f2329;--text-2:#5a6270;--text-3:#8a8f99;--accent:#2f6fed;--accent-strong:#2560d4;--accent-on:#1677ff;--accent-text:#2f6bd6;--accent-soft:#eaf1fd;--up:#c0392b;--down:#27ae60;--danger:#e24b4b;--warn:#e0a800;--up-bg:#fdeaea;--down-bg:#eafaf0;--warn-bg:#fffdf5;--good-bg:#f5fdf7;--danger-bg:#fdf5f5;}body {background:var(--surface);}.wrap {max-width:none;padding:0;}.more-menu,.main-tabs,.scope-bar,.back-link,.detail-head button,.sec-tools,.drawer,.drawer-mask {display:none!important;}.card {box-shadow:none;border:1px solid #ddd;break-inside:avoid;}.hint {display:none!important;}td input,td select {border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;padding:0;color:var(--text);}.mcard {border:1px solid #eee;}.sub {margin-bottom:6px;}#updated {display:none;}
    }
 /* ===== 资产总额仪表盘重构：1+2+2 全宽高密度（mobile-first，桌面自适应） ===== */
 .dash-wrap{ width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; }
@@ -1168,7 +1166,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .idx-chip:active, .cat-chip:active, .more-menu .drop button:active, .float-menu .fm-opt:active,
 .col-toggle:active, .back-link:active, .rank-row:active, .sm-x:active, .sm-act:active, .sm-ghost:active,
 .tp-item:active, .at-table tbody tr:active, .dense-table tbody tr:active, .liq-row:active,
-.adv-toggle:active, .bk-btn:active, .fab:active, .scope-seg button:active, .float-menu .fm-save:active {
+.adv-toggle:active, .bk-btn:active, .scope-seg button:active, .float-menu .fm-save:active {
   filter: brightness(.94);
 }
 
@@ -3878,9 +3876,17 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="idx-head-right"><span class="hint" style="font-size:11px;color:var(--text-3)">实时·腾讯</span> <button class="btn sm" id="idxSparkToggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button> <button class="btn sm" onclick="loadIdxAndRender()">🔄 刷新</button></span></div>
         <div id="idxGrid"></div>
       </div>
-      <!-- 美股夜盘自选看板（腾讯实时个股/ETF，夜盘 21:30–次日04:00 自动刷新） -->
-      <div class="card">
-        <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">美股夜盘 · 自选</h2><span class="uswk-head-right"><span class="hint" id="usWatchSess" style="font-size:11px;color:var(--text-3)">—</span><span class="uswk-dot" id="usWatchDot"></span><button class="btn sm" onclick="usWatchFetch()">🔄 刷新</button></span></div>
+      <!-- 美股夜盘自选看板（点击展开；腾讯实时个股/ETF，夜盘 21:30–次日04:00 自动刷新） -->
+      <div class="us-entry" id="usEntry" onclick="toggleUSWatch()">
+        <div class="us-entry-ic">🌙</div>
+        <div class="us-entry-body">
+          <div class="us-entry-title">美股夜盘 <span class="uswk-dot" id="usWatchDot"></span></div>
+          <div class="us-entry-sub" id="usWatchSess">自选美股 · 看盘前盘中涨跌</div>
+        </div>
+        <div class="us-entry-chev" id="usEntryChev">›</div>
+      </div>
+      <div class="card us-watch-panel" id="usWatchPanel" style="display:none">
+        <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">自选美股</h2><button class="btn sm" onclick="usWatchFetch()">🔄 刷新</button></div>
         <div class="uswk-adder">
           <input id="usWatchIn" placeholder="加美股/ETF，如 NVDA、QQQ、BABA" onkeydown="if(event.key==='Enter')usWatchAdd()">
           <button class="btn sm" onclick="usWatchAdd()">添加</button>
@@ -4293,7 +4299,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   </div>
 
   <!-- 快捷记账抽屉 -->
-  <button class="fab" id="quickFab" onclick="openDrawer()" title="快捷记账">＋</button>
   <div class="drawer-mask" id="drawerMask" onclick="closeDrawer(event)"></div>
   <aside class="drawer" id="drawer" aria-hidden="true">
     <div class="drawer-head">
@@ -4956,9 +4961,8 @@ function usWatchLoad(){ try{ var a=JSON.parse(localStorage.getItem(US_WATCH_KEY)
 function usWatchSave(){ try{ localStorage.setItem(US_WATCH_KEY, JSON.stringify(_usWatchList)); }catch(e){} }
 function usWatchOpen(){ return mktOpenWindow('usDJI'); }
 function usWatchSessLabel(){
-  var o=usWatchOpen(), dot=document.getElementById('usWatchDot'), txt=document.getElementById('usWatchSess');
+  var o=usWatchOpen(), dot=document.getElementById('usWatchDot');
   if(dot) dot.className='uswk-dot'+(o?' open':'');
-  if(txt) txt.innerHTML=o?'夜盘 <b style="color:var(--up)">交易中</b>':'美股已收盘';
 }
 function usWatchRender(){
   var g=document.getElementById('usWatchGrid'); if(!g) return;
@@ -5014,11 +5018,27 @@ function usWatchFetch(){
   sc.src='https://qt.gtimg.cn/q='+codes.join(',');
   document.body.appendChild(sc);
 }
-function initUSWatch(){
-  if(!_usWatchReady){ _usWatchReady=true; usWatchRender(); }
-  usWatchSessLabel(); usWatchFetch();
+var _usWatchFetched=false;
+function startUSWatchTimer(){
   if(_usWatchTimer) clearInterval(_usWatchTimer);
   _usWatchTimer=setInterval(function(){ usWatchSessLabel(); if(usWatchOpen()) usWatchFetch(); }, 12000);
+}
+function stopUSWatchTimer(){ if(_usWatchTimer){ clearInterval(_usWatchTimer); _usWatchTimer=null; } }
+function toggleUSWatch(){
+  var p=document.getElementById('usWatchPanel');
+  var open = (p.style.display!=='none');
+  if(open){
+    p.style.display='none'; var c=document.getElementById('usEntryChev'); if(c) c.textContent='›'; stopUSWatchTimer();
+  } else {
+    p.style.display='block'; var c=document.getElementById('usEntryChev'); if(c) c.textContent='▾';
+    usWatchSessLabel();
+    if(!_usWatchFetched){ usWatchFetch(); _usWatchFetched=true; }
+    startUSWatchTimer();
+  }
+}
+function initUSWatch(){
+  if(!_usWatchReady){ _usWatchReady=true; usWatchRender(); }
+  usWatchSessLabel();
 }
 
 function switchTab(i){
@@ -12912,6 +12932,14 @@ function renderSyncCfg(){
 .uswk-up{color:var(--up)}.uswk-down{color:var(--down)}.uswk-zero{color:var(--text-3)}
 .uswk-foot{font-size:10px;color:var(--text-3);text-align:center;padding:0 14px 12px}
 @media(max-width:520px){.uswk-grid{grid-template-columns:repeat(2,1fr)}.uswk-card .uw-px{font-size:18px}}
+/* 美股夜盘入口行（截图参考：月亮图标 + 标题 + 副标题 + ›） */
+.us-entry{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin:0 0 12px;cursor:pointer}
+.us-entry:active{background:#f7f8fa}
+.us-entry-ic{width:34px;height:34px;border-radius:50%;background:#eef3ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+.us-entry-body{flex:1;min-width:0}
+.us-entry-title{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px}
+.us-entry-sub{font-size:12px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.us-entry-chev{color:var(--text-3);font-size:20px;flex:0 0 auto;line-height:1;transition:transform .15s}
 @media(max-width:680px){.idx-grid{grid-template-columns:repeat(2,1fr)}.idx-card{height:124px;min-height:124px}}
 @media(min-width:681px){.idx-list2{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}.idx-list2 .idx-card{height:118px}}
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }

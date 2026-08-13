@@ -13195,9 +13195,42 @@ function uwRow(it){
     +'<div class="swipe-inner">'
       +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
       +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="y1">近1年 '+it.y1+'</span><button type="button" class="buy-flag'+(it.buy?' on':'')+'" data-key="'+escAttr(it.isBond?(it.code||''):(it.name||''))+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="toggleWatchBuy(this);event.stopPropagation()" title="准备买入？点亮后进入买入决策测算" aria-label="待买开关">🛒</button></div>'
+      +'<div class="r3" onclick="openWatchNote('+JSON.stringify(it.key)+','+(it.isBond?1:0)+');event.stopPropagation()"><span class="pin">📝</span><span class="ntxt'+(it.note?'':' empty')+'">'+(it.note?escHtml(it.note):'添加备注…')+'</span></div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
   +'</div>';
+}
+
+function openWatchNote(key, isBond){
+  var note='';
+  if(isBond){ var bw=loadBondWatch(); var f=bw.find(function(x){return x.code===key;}); if(f) note=f.note||''; }
+  else { var w=loadWatch(); var x=w.find(function(y){return y.name===key;}); if(x) note=x.note||''; }
+  var ov=document.getElementById('wtNoteOverlay'); if(ov) ov.remove();
+  var el=document.createElement('div'); el.id='wtNoteOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;z-index:2100';
+  el.innerHTML='<div style="background:var(--surface);color:var(--text);width:100%;max-width:600px;margin:0 auto;border-radius:16px 16px 0 0;padding:18px 20px calc(28px + env(safe-area-inset-bottom))">'
+    +'<h3 style="margin:0 0 4px;font-size:17px;font-weight:700">备注 · 为什么加自选</h3>'
+    +'<p style="margin:0 0 12px;font-size:13px;color:var(--text-3)">记录买入理由 / 观察点，方便日后回看。</p>'
+    +'<textarea id="wtNoteArea" rows="4" style="width:100%;box-sizing:border-box;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-2);color:var(--text);font-size:14px;line-height:1.5;padding:10px;font-family:inherit;resize:vertical;outline:none">'+escHtml(note)+'</textarea>'
+    +'<div style="display:flex;gap:10px;margin-top:14px">'
+    +'<button id="wtNoteDel" style="flex:0 0 auto;padding:12px 16px;border:0;border-radius:12px;background:var(--surface-2);color:var(--up,#d93025);font-size:15px;font-weight:600;font-family:inherit">清除</button>'
+    +'<button id="wtNoteSave" style="flex:1;padding:12px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;font-family:inherit">保存</button>'
+    +'</div></div>';
+  el.onclick=function(e){ if(e.target===el) closeWatchNote(); };
+  document.body.appendChild(el);
+  var ta=document.getElementById('wtNoteArea'); if(ta){ ta.focus(); try{ ta.setSelectionRange(ta.value.length, ta.value.length); }catch(_){} }
+  document.getElementById('wtNoteSave').onclick=function(){ saveWatchNote(key, isBond, document.getElementById('wtNoteArea').value); };
+  document.getElementById('wtNoteDel').onclick=function(){ saveWatchNote(key, isBond, ''); };
+}
+function closeWatchNote(){ var ov=document.getElementById('wtNoteOverlay'); if(ov) ov.remove(); }
+function saveWatchNote(key, isBond, text){
+  text=(text||'').trim();
+  if(isBond){ var bw=loadBondWatch(); var f=bw.find(function(x){return x.code===key;}); if(f){ f.note=text; saveBondWatch(); } }
+  else { var w=loadWatch(); var x=w.find(function(y){return y.name===key;}); if(x){ x.note=text; try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} } }
+  closeWatchNote();
+  if(typeof renderWatchTab==='function') renderWatchTab();
+  if(typeof renderWatch==='function') renderWatch();
+  toast(text?'备注已保存':'备注已清除');
 }
 var _tessLoading=null;
 var _tessCDN=null;
@@ -13318,10 +13351,10 @@ function renderWatchTab(){
   const items=[];
   fWatch.forEach(function(x){
     const held=_allHoldings.find(function(f){ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
-    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name, buy: !!x.buy});
+    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name, buy: !!x.buy, note:(x.note||'')});
   });
   bWatch.forEach(function(f){
-    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code, buy: !!f.buy});
+    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code, buy: !!f.buy, note:(f.note||'')});
   });
 
   // 是否买：债券部分复用 bondAnalysis；基金侧按分类查同类重复
@@ -13363,6 +13396,10 @@ function renderWatchTab(){
     +'.wrow .r2{display:flex;align-items:baseline;justify-content:space-between;padding:5px 16px 12px;font-size:12px;color:var(--text-3)}'
     +'.wrow .r2 .acc-tag{color:var(--text-2)}'
     +'.wrow .r2 .y1{font-variant-numeric:tabular-nums}'
+    +'.wrow .r3{display:flex;align-items:flex-start;gap:4px;padding:0 16px 12px;font-size:12px;color:var(--text-3);line-height:1.45;cursor:pointer}'
+    +'.wrow .r3 .pin{flex:0 0 auto;font-size:10px;opacity:.6;margin-top:3px}'
+    +'.wrow .r3 .ntxt{flex:1;min-width:0;word-break:break-word}'
+    +'.wrow .r3 .ntxt.empty{opacity:.5}'
     +'.wrow .swipe-actions{position:absolute;top:0;right:0;height:100%;display:flex;z-index:0}'
     +'.wrow .swipe-actions .sa{display:flex;align-items:center;justify-content:center;width:72px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;-webkit-user-select:none;user-select:none}'
     +'.wrow .swipe-actions .sa.act{background:var(--accent)}'

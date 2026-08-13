@@ -9681,17 +9681,6 @@ async function refresh(){
   await (async function(){
     const today=new Date(); today.setHours(0,0,0,0);
     let filled=0;
-    // 工具：把 "YYYY-MM-DD HH:MM[:SS]" 拆成 {date,time(HH:MM)}；"00:00" 视为无时间
-    const splitDT=(s)=>{ s=String(s||'').trim(); const m=s.match(/^(\d{4}[-/]\d{1,2}[-/]\d{1,2})(?:[ T](\d{1,2}:\d{2}(?::\d{2})?))?/); return m?{date:m[1].replace(/\//g,'-'),time:(m[2]&&m[2].slice(0,5)!=='00:00'?m[2].slice(0,5):'')}:{date:String(s||'').replace(/\//g,'-'),time:''}; };
-    // 工具：由买入日+时间推导净值确认日（T+1；15:00 后 T+2；跳过周六日）
-    const deriveCD=(dateStr,timeStr)=>{ if(!dateStr) return ''; let ds=String(dateStr).replace(/\//g,'-'), ts=timeStr||''; const m=ds.match(/ (\d{1,2}:\d{2})/); if(!ts&&m){ ts=m[1]; ds=ds.slice(0,m.index).trim(); } let d=new Date(ds.replace(/-/g,'/')); if(isNaN(d)) return ''; d.setDate(d.getDate()+1); if(ts>='15:00') d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1); return fmtDate(d); };
-    // 历史兼容：t.date 内嵌时间拆到 t.time；并自动补净值确认日期（无需联网）
-    trades.forEach(t=>{
-      if(t.confirm==='cancelled') return;
-      if(!['buy','reinvest','convert'].includes(t.type||'buy')) return;
-      if(t.date && !t.time){ const sp=splitDT(t.date); if(sp.time){ t.time=sp.time; t.date=sp.date; filled++; } }
-      if(!t.confirmDate){ const cd=deriveCD(t.date,t.time); if(cd){ t.confirmDate=cd; filled++; } }
-    });
     const cands=trades.filter(t=>{
       if(t.confirm==='cancelled') return false;
       if(!['buy','reinvest','convert'].includes(t.type||'buy')) return false;
@@ -10379,9 +10368,7 @@ function parseCSV(text, defaultAcc, forceAcc){
     }
     const name=col.name>=0?c[col.name]:''; if(!name) continue;
     if(/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(name)) continue; // 跳过模板里的说明行/示例行/注释行，避免被当成真实交易导入
-    const _rawDate=col.date>=0?c[col.date]:'';
-    const _dt=(function(s){ s=String(s||'').trim(); const m=s.match(/^(\d{4}[-/]\d{1,2}[-/]\d{1,2})(?:[ T](\d{1,2}:\d{2}(?::\d{2})?))?/); return m?{date:m[1].replace(/\//g,'-'),time:(m[2]&&m[2].slice(0,5)!=='00:00'?m[2].slice(0,5):'')}:{date:String(s||'').replace(/\//g,'-'),time:''}; })(_rawDate);
-    let date=_dt.date, time=_dt.time;
+    const date=col.date>=0?c[col.date]:'';
     const type=col.type>=0?guessType(c[col.type]):'buy';
     const amount=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
     const nav=col.nav>=0?parseFloat(String(c[col.nav]).replace(/[^\d.\-]/g,''))||0:0;
@@ -10393,7 +10380,7 @@ function parseCSV(text, defaultAcc, forceAcc){
     const confirm = col.confirm>=0 ? mapConfirm(c[col.confirm]) : 'confirmed';
     const note = col.note>=0 ? String(c[col.note]||'').trim() : '';
     const confirmDate = col.confirmDate>=0 ? String(c[col.confirmDate]||'').trim() : '';
-    const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({name,date,time,type,amount,nav,fee,account,shares:sh,confirm,note,cat:catV,confirmDate:confirmDate});
+    const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({name,date,type,amount,nav,fee,account,shares:sh,confirm,note,cat:catV,confirmDate:confirmDate});
   }
   // 注册导入中出现的未知账户，避免塌缩进「本人账户」或成孤儿账户（下拉/口径筛选都找不到）
   const _accSeen={}; added.forEach(t=>{ const a=normalizeAccount(t.account); if(a && !_accSeen[a]){ _accSeen[a]=1; registerImportAccount(a); } });
@@ -10438,8 +10425,6 @@ function parsePaste(text, defaultAcc, forceAcc){
   function pushRow(name,date,type,amount,nav,fee,shares,account,confirm,note,cat,confirmDate){
     if(!name) return;
     if(/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(name)) return; // 跳过模板说明行/示例行/注释行
-    const _dt=(function(s){ s=String(s||'').trim(); const m=s.match(/^(\d{4}[-/]\d{1,2}[-/]\d{1,2})(?:[ T](\d{1,2}:\d{2}(?::\d{2})?))?/); return m?{date:m[1].replace(/\//g,'-'),time:(m[2]&&m[2].slice(0,5)!=='00:00'?m[2].slice(0,5):'')}:{date:String(s||'').replace(/\//g,'-'),time:''}; })(date);
-    const dt=_dt.date, tm=_dt.time;
     const tType=type?guessType(type):'buy';
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
     const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;
@@ -10447,7 +10432,7 @@ function parsePaste(text, defaultAcc, forceAcc){
     const sh=parseFloat(String(shares).replace(/[^\d.\-]/g,''))||0;
     const acc=normalizeAccount(account?account:(defaultAcc||''));
     if(!(amt||nv||sh)) return;
-    added.push({name:name,date:dt,time:tm,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||'',confirmDate:confirmDate||''});
+    added.push({name:name,date:date,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||'',confirmDate:confirmDate||''});
   }
   for(let i=start;i<rawLines.length;i++){
     const raw=rawLines[i];

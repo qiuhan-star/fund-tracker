@@ -1374,6 +1374,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .tq-field .val { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color:var(--text); }
 .tq-field .val select, .tq-field .val input { border:none; background:transparent; color:var(--text); font:inherit; font-size:14px; text-align:right; outline:none; }
 .tq-field .chev { color:var(--text-3); }
+.tq-time-hint { font-size:11px; color:var(--text-3); white-space:nowrap; }
 .tq-pills { display:flex; gap:8px; }
 .tq-pill { border:1px solid var(--border); background:var(--surface); color:var(--text-2); padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; }
 .tq-pill.active { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
@@ -4347,7 +4348,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
         <div class="tq-fields">
           <div class="tq-field"><span class="lab">账户</span><span class="val"><select id="tq-acc"></select><span class="chev">›</span></span></div>
-          <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="tq-datetime" type="datetime-local"><span class="chev">›</span></span></div>
+          <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="tq-datetime" type="datetime-local" onchange="updateTimeIndicators()" oninput="updateTimeIndicators()"><span class="tq-time-hint" id="tq-time-hint"></span><span class="chev">›</span></span></div>
           <div class="tq-field" style="flex-wrap:wrap">
             <span class="lab">确认状态</span>
             <div class="tq-pills">
@@ -4429,7 +4430,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 
         <div class="tq-fields">
           <div class="tq-field"><span class="lab">账户</span><span class="val"><select id="te-acc"></select><span class="chev">›</span></span></div>
-          <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="te-datetime" type="datetime-local"><span class="chev">›</span></span></div>
+          <div class="tq-field"><span class="lab">交易时间</span><span class="val"><input id="te-datetime" type="datetime-local" onchange="updateTimeIndicators()" oninput="updateTimeIndicators()"><span class="tq-time-hint" id="te-time-hint"></span><span class="chev">›</span></span></div>
           <div class="tq-field" style="flex-wrap:wrap">
             <span class="lab">确认状态</span>
             <div class="tq-pills">
@@ -7686,6 +7687,10 @@ function buildFundsView(){
       const nav=liveNav!=null?liveNav:(snap?snap.nav||null:null);
       f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
     }
+    // 买入待确认金额计入持有金额（支付宝逻辑：买入待确认部分已扣款，计入总资产）
+    const _pendingBuy = tr.filter(t => t.confirm==='pending' && (t.type==='buy'||t.type==='dca'||t.type==='convert'))
+      .reduce((s,t) => s + (+t.amount||0) + (+t.fee||0), 0);
+    if(_pendingBuy > 0) f.mv = (f.mv||0) + _pendingBuy;
     f.asset=guessAsset(name); f.market=guessMarket(name); f.currency=(snap&&snap.currency)||'CNY';
     // 手动持仓覆盖：若用户手动录入了持有金额和持有收益，覆盖计算值
     const mo=getManualOverride(f.account,f.name);
@@ -9027,7 +9032,7 @@ function addTradeMenu(){
   if(dl) dl.innerHTML=[...new Set(list.map(f=>f.name))].map(n=>`<option value="${esc(n)}">`).join('');
   const accSel=document.getElementById('tq-acc');
   if(accSel){ const cur=accSel.value||effAccount('本人账户'); accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
-  const dt=document.getElementById('tq-datetime'); if(dt && !dt.value){ var d=new Date(), pad=function(n){return String(n).padStart(2,'0');}; var _def=(function(){try{return localStorage.getItem('ft_default_time')||'1500';}catch(e){return '1500';}})(); var _t=_def==='now'?(pad(d.getHours())+':'+pad(d.getMinutes())):'15:00'; dt.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+_t; }
+  const dt=document.getElementById('tq-datetime'); if(dt && !dt.value){ var d=new Date(), pad=function(n){return String(n).padStart(2,'0');}; var _def=(function(){try{return localStorage.getItem('ft_default_time')||'now';}catch(e){return 'now';}})(); var _t=_def==='now'?(pad(d.getHours())+':'+pad(d.getMinutes())):'15:00'; dt.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+_t; updateTimeIndicators(); }
   const ty=document.getElementById('tq-type'); if(ty && !ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
   const disp=document.getElementById('tq-fund-name'); if(disp) disp.classList.remove('show');
   const fin=document.getElementById('tq-fund'); if(fin) fin.classList.remove('hide');
@@ -9104,7 +9109,7 @@ function openTradeEdit(idx){
     // 填充账户
     var accSel=g('te-acc'); if(accSel){ accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(function(a){return '<option value="'+esc(a)+'" '+(a===accOf(t)?'selected':'')+'>'+esc(a)+'</option>';}).join(''); }
     // 填充日期时间
-    var dt=g('te-datetime'); if(dt){ dt.value=(t.date||'')+'T'+(t.time||'15:00'); }
+    var dt=g('te-datetime'); if(dt){ dt.value=(t.date||'')+'T'+(t.time||'15:00'); updateTimeIndicators(); }
     // 填充确认状态
     var cf=g('te-confirm'); if(cf) cf.value=t.confirm||'confirmed';
     var pills=document.querySelectorAll('#tradeEditMask .tq-pill'); pills.forEach(function(p){ p.classList.toggle('active', p.dataset.v===(t.confirm||'confirmed')); });
@@ -9176,13 +9181,15 @@ function saveTradeEdit(){
   var g=function(id){return document.getElementById(id);};
   var dtRaw=g('te-datetime').value; var date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
   var amount=+(g('te-amount')?.value||0);
-  var nav=+(g('te-nav')?.value||0);
+  var tName=trades[i].name||'';
+  var navInput=+(g('te-nav')?.value||0);
+  var nav=navInput>0?navInput:((navCache[tName]&&navCache[tName].nav>0)?navCache[tName].nav:0);
   var sharesRaw=g('te-shares')?.value||g('te-shares-more')?.value||'';
   var shares=(sharesRaw===''||sharesRaw==null)?null:+sharesRaw;
   if(!amount && shares==null){ toast('请填写金额或份额'); return; }
   // 有净值时自动换算缺失值
   if(nav>0 && !amount && shares!=null){ amount=+(shares*nav); }
-  if(nav>0 && amount>0 && shares==null){ shares=amount/nav; }
+  if(nav>0 && amount>0 && shares==null){ shares=+(amount/nav); }
   var t=trades[i];
   t.type=g('te-type').value||'buy';
   t.amount=amount;
@@ -9243,12 +9250,13 @@ function tradeQuickSave(){
   if(!name){ toast('请选择或填写基金名称'); return; }
   const dtRaw=g('tq-datetime').value; const date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
   const amount=+(g('tq-amount')?.value||0);
-  const nav=+(g('tq-nav')?.value||0);
+  const navInput=+(g('tq-nav')?.value||0);
+  const nav=navInput>0?navInput:((navCache[name]&&navCache[name].nav>0)?navCache[name].nav:0);
   const shRaw=(g('tq-shares')?.value||g('tq-shares-more')?.value||'');
   const shares=(shRaw===''||shRaw==null)?null:+shRaw;
   if(!amount && shares==null){ toast('请填写金额或份额'); return; }
   if(nav>0 && !amount && shares!=null){ amount=+(shares*nav); }
-  if(nav>0 && amount>0 && shares==null){ shares=amount/nav; }
+  if(nav>0 && amount>0 && shares==null){ shares=+(amount/nav); }
   const acc=g('tq-acc').value||effAccount('本人账户');
   const type=g('tq-type').value||'buy';
   const time=dtRaw && dtRaw.length>11 ? dtRaw.slice(11) : '15:00';
@@ -9422,6 +9430,17 @@ function tqSetAmtMode(mode){
   tqRecalcEst();
 }
 function tqSetConfirm(v){ const pills=document.querySelectorAll('#tradeQuickMask .tq-pill'); pills.forEach(function(b){ b.classList.toggle('active', b.dataset.v===v); }); const h=document.getElementById('tq-confirm'); if(h) h.value=v; }
+function updateTimeIndicators(){
+  ['tq','te'].forEach(function(pfx){
+    const el=document.getElementById(pfx+'-datetime');
+    const hint=document.getElementById(pfx+'-time-hint');
+    if(!el||!hint) return;
+    const v=el.value;
+    if(!v||v.length<16){ hint.textContent=''; return; }
+    const t=v.slice(11,16);
+    if(t>='15:00'){ hint.textContent='15:00后 · 次日净值'; }else{ hint.textContent='15:00前 · 当日净值'; }
+  });
+}
 function tqRecalcEst(){
   try{
     const amt=+document.getElementById('tq-amount')?.value||0;

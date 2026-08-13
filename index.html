@@ -7998,14 +7998,16 @@ function updateDetailHeader(f){
   const _tr=(trades||[]).filter(t=>t.name===f.name);
   set('dhTradeCount', _tr.length+' 笔');
   const _lt=latestTradeOf(f.name);
-  const _ltEl=document.getElementById('dhLatestTrade');
-  if(_ltEl){
+  const _ltK=document.getElementById('dhLatestTradeK');
+  const _ltV=document.getElementById('dhLatestTrade');
+  if(_ltK && _ltV){
     const _ltIdx=_lt?trades.indexOf(_lt):-1;
-    _ltEl.innerHTML=_lt?('<span class="lt-date">'+_lt.date+'</span>'+(_lt.confirm==='pending'?' <span class="tag-pend">待确认</span>':'')):'—';
-    _ltEl.style.cursor=_lt?'pointer':'default';
-    _ltEl.style.overflow='visible';
-    _ltEl.style.textOverflow='clip';
-    _ltEl.onclick=_ltIdx>=0?function(){scrollToLatestTrade(_ltIdx);}:null;
+    _ltK.innerHTML='最新交易'+(_lt && _lt.confirm==='pending'?' <span class="tag-pend">待确认</span>':'');
+    _ltV.innerHTML=_lt?'<span class="lt-date">'+_lt.date+'</span>':'—';
+    _ltV.style.cursor=_lt?'pointer':'default';
+    _ltV.style.overflow='visible';
+    _ltV.style.textOverflow='clip';
+    _ltV.onclick=_ltIdx>=0?function(){scrollToLatestTrade(_ltIdx);}:null;
   }
   const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   set('dhNet', _tr.length?M(_net):'—');

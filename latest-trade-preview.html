@@ -57,33 +57,28 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,
         <div class="cell-label">交易笔数</div>
         <div class="cell-value">50 笔</div>
       </div>
-      <div class="cell highlight">
-        <div class="cell-label">最新交易</div>
-        <div class="cell-value">
-          <span style="font-weight:700">2026-08-13</span>
-          <span class="value-pend">待确认</span>
-        </div>
+      <div class="cell highlight" style="text-align:center">
+        <div class="cell-label">最新交易 <span class="old-pill">待确认</span></div>
+        <div class="cell-value">2026-08-13</div>
       </div>
     </div>
     <div style="font-size:11px;color:#999;margin-top:10px;padding-top:8px;border-top:1px solid #eee">
-      ✓ 标签行干净 · 日期 + 橙色文字同行 · 不会被截断
+      ✓ 标签行带橙色徽标 · 内容居中 · 视觉平衡
     </div>
   </div>
 
-  <!-- 两种旧方案对比 -->
+  <!-- 方案对比 -->
   <div class="card">
-    <div class="preview-title">历史方案对比</div>
+    <div class="preview-title">之前尝试过的方案</div>
 
-    <div class="label" style="font-weight:600;color:#666;margin-bottom:6px">方案 1：标签行带药丸徽标</div>
-    <div style="display:flex;align-items:center;gap:6px;padding:6px 0">
-      <span class="old-label">最新交易 <span class="old-pill">待确认</span></span>
-    </div>
-    <div class="old-value">2026-08-13</div>
-    <div style="font-size:11px;color:#e67e00;margin-top:4px">⚠ 标签行左右不平衡</div>
+    <div class="label" style="font-weight:600;color:#666;margin-bottom:6px">方案 A：日期 + 橙色文字同行</div>
+    <div class="cell-label">最新交易</div>
+    <div class="old-value">2026-08-13 <span class="value-pend">待确认</span></div>
+    <div style="font-size:11px;color:#999;margin-top:4px">⚠ 标签行干净但日期行信息拥挤</div>
 
     <div style="border-top:1px dashed #eee;margin:12px 0"></div>
 
-    <div class="label" style="font-weight:600;color:#666;margin-bottom:6px">方案 2：日期下方轻量状态</div>
+    <div class="label" style="font-weight:600;color:#666;margin-bottom:6px">方案 B：日期下方轻量状态</div>
     <div class="cell-label">最新交易</div>
     <div class="old-value">2026-08-13</div>
     <div style="font-size:11px;font-weight:600;color:#e67e00;margin-top:1px">待确认</div>

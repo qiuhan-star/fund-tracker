@@ -1452,6 +1452,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .dh-subitem .k { font-size:12px; color:var(--text-3); margin-bottom:5px; white-space:nowrap; }
 .dh-subitem .v { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dh-actions { display:flex; gap:6px; margin-top:14px; padding-top:12px; border-top:1px solid var(--border-2); }
+.dh-more-toggle { display:flex; align-items:center; gap:4px; margin-top:14px; padding-top:10px; border-top:1px solid var(--border-2); cursor:pointer; font-size:12px; color:var(--text-3); font-weight:600; user-select:none; }
+.dh-more-toggle:hover { color:var(--text-2); }
+.dh-more-arrow { font-size:9px; transition:transform .2s; }
+.dh-more-body { margin-top:10px; }
+.dh-more-body .dh-subgrid { margin-top:0; border-top:none; padding-top:0; }
 .dh-action { flex:1; min-width:0; border:none; background:transparent; color:var(--text-2); font-family:inherit; font-size:13px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:8px 4px; border-radius:10px; cursor:pointer; }
 .dh-action:active { background:var(--surface-2); }
 .dh-action .ico { width:26px; height:26px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; background:var(--surface-2); color:var(--accent); font-weight:700; }
@@ -8335,26 +8340,68 @@ function headerHtml(f){
   const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   const _netLiq=_tr.filter(function(t){ return t.confirm!=='pending' && (t.confirm!=='cancelled'); }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); return s; },0);
   const _netTxt=_tr.length?(_liq?M(_netLiq):M(_net)):'—';
-  const _netLabel=_liq?'累计投入':'净投入';
+  const _netLabel=_liq?'累计投入':'累计投入';
   const _lt=latestTradeOf(f.name);
   const _ltIdx=_lt?trades.indexOf(_lt):-1;
   const _latestLabel='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">待确认</span>':'');
   const _latestTxt=_lt?'<span class="lt-date">'+_lt.date+'</span>':'—';
+  // 清仓: 显示已实现收益
+  if(_liq){
+    return `<div class="card detail-head">
+      <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
+      <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
+      <div class="dh-summary">
+        <div class="dh-sec">已清仓（已实现）</div>
+        <div class="dh-summary-amount" id="dhMv">已清仓</div>
+        <div class="dh-subgrid">
+          <div class="dh-subitem"><div class="k">已实现收益</div><div class="v ${_liqRealized>=0?'pos':'neg'}" id="dhDayGain">${(_liqRealized>=0?'+':'')+M(_liqRealized)}</div></div>
+          <div class="dh-subitem"><div class="k">总收益率</div><div class="v ${_liqRealized>=0?'pos':'neg'}" id="dhProfit">${(_liqRealized>=0?'+':'')+_liqRet.toFixed(2)+'%'}</div></div>
+          <div class="dh-subitem"><div class="k">累计投入</div><div class="v" id="dhRet" style="color:var(--text)">${M(f.invested||0)}</div></div>
+        </div>
+        <div class="dh-subgrid" style="margin-top:10px;padding-top:10px">
+          <div class="dh-subitem"><div class="k">交易笔数</div><div class="v" id="dhTradeCount" style="color:var(--text)">${_tradeCount+' 笔'}</div></div>
+          <div class="dh-subitem"><div class="k">持有份额</div><div class="v" id="dhShares" style="color:var(--text)">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
+          <div class="dh-subitem" style="text-align:center"><div class="k" id="dhLatestTradeK">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
+        </div>
+        <div class="dh-actions">
+          <button class="dh-action" onclick="openDetailTrades()"><span class="ico">≡</span><span>交易记录</span></button>
+          <button class="dh-action" onclick="openEditHoldingsModal('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account)}')"><span class="ico">✎</span><span>修改持仓</span></button>
+          <button class="dh-action" onclick="openDcaModal('${encodeURIComponent(f.name)}')"><span class="ico">↻</span><span>我的定投</span></button>
+          <button class="dh-action" onclick="detailScrollAlert()"><span class="ico">!</span><span>提醒设置</span></button>
+        </div>
+      </div>
+      <div class="dh-sync">
+        <span id="dhSyncText">${syncText}</span>
+        <button class="btn sm" onclick="refresh().then(function(){try{if(typeof updateDetailHeader==='function'&&detailName){const f=findFund(detailName,detailAcc);if(f){updateDetailHeader(f);renderDetailTabs(f);}}const el=document.getElementById('dhSyncText');if(el){const ts=localStorage.getItem('ft_lastSync');if(ts){const diff=Math.floor((Date.now()-(+ts))/1000);el.textContent='净值数据 · '+(diff<60?'刚刚更新':Math.floor(diff/60)+' 分钟前更新');}}}catch(e){}})">↻ 刷新净值</button>
+      </div>
+      </div>`;
+  }
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
     <div class="dh-summary">
-      <div class="dh-sec">${_liq?'已清仓（已实现）':'金额（元）'}</div>
-      <div class="dh-summary-amount" id="dhMv">${_liq?'已清仓':(f.mv!=null?M(f.mv):'待补全')}</div>
+      <div class="dh-sec">金额（元）</div>
+      <div class="dh-summary-amount" id="dhMv">${f.mv!=null?M(f.mv):'待补全'}</div>
       <div class="dh-subgrid">
-        <div class="dh-subitem"><div class="k" id="dhDayGainK">${_liq?'已实现收益':dayGainLabel(navCache[f.name]||{})}</div><div class="v ${_liq?(_liqRealized>=0?'pos':'neg'):dayCls}" id="dhDayGain">${_liq?((_liqRealized>=0?'+':'')+M(_liqRealized)):detailDayGainText(f)}</div></div>
-        <div class="dh-subitem"><div class="k">${_liq?'总收益率':'持有收益'}</div><div class="v ${_liq?(_liqRealized>=0?'pos':'neg'):pcls}" id="dhProfit">${_liq?((_liqRealized>=0?'+':'')+_liqRet.toFixed(2)+'%'):(f.profit!=null?(f.profit>=0?'+':'')+M(f.profit):'待补全')}</div></div>
-        <div class="dh-subitem"><div class="k" id="dhRetK">${_liq?'累计投入':'持有收益率'}</div><div class="v" id="dhRet" style="color:var(--text)">${_liq?M(f.invested||0):((f.ret!=null)?(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%':'待补全')}</div></div>
+        <div class="dh-subitem"><div class="k" id="dhDayGainK">${dayGainLabel(navCache[f.name]||{})}</div><div class="v ${dayCls}" id="dhDayGain">${detailDayGainText(f)}</div></div>
+        <div class="dh-subitem"><div class="k">持有收益</div><div class="v ${pcls}" id="dhProfit">${f.profit!=null?(f.profit>=0?'+':'')+M(f.profit):'待补全'}</div></div>
+        <div class="dh-subitem"><div class="k" id="dhRetK">持有收益率</div><div class="v" id="dhRet" style="color:var(--text)">${(f.ret!=null)?(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%':'待补全'}</div></div>
       </div>
-      <div class="dh-subgrid" style="margin-top:10px;padding-top:10px">
-        <div class="dh-subitem"><div class="k">${_netLabel}</div><div class="v" id="dhNet" style="color:var(--text)">${_netTxt}</div></div>
-        <div class="dh-subitem"><div class="k">持有份额</div><div class="v" id="dhShares" style="color:var(--text)">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
-        <div class="dh-subitem" style="text-align:center"><div class="k" id="dhLatestTradeK">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
+      <div class="dh-more-toggle" onclick="dhToggleMore()">
+        <span class="dh-more-arrow" id="dhMoreArrow">▼</span>
+        <span>更多数据</span>
+      </div>
+      <div class="dh-more-body" id="dhMoreBody">
+        <div class="dh-subgrid">
+          <div class="dh-subitem"><div class="k">持仓成本</div><div class="v" id="dhCost" style="color:var(--text)">${f.cost!=null?M(f.cost):'—'}</div></div>
+          <div class="dh-subitem"><div class="k">持有份额</div><div class="v" id="dhShares" style="color:var(--text)">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
+          <div class="dh-subitem"><div class="k">最新净值</div><div class="v" id="dhNav" style="color:var(--text)">${f.nav!=null?navFmt(f.nav):'—'}</div></div>
+        </div>
+        <div class="dh-subgrid">
+          <div class="dh-subitem"><div class="k">${_netLabel}</div><div class="v" id="dhNet" style="color:var(--text)">${_netTxt}</div></div>
+          <div class="dh-subitem"><div class="k">交易笔数</div><div class="v" id="dhTradeCount" style="color:var(--text)">${_tradeCount+' 笔'}</div></div>
+          <div class="dh-subitem" style="text-align:center;position:relative"><div class="k" id="dhLatestTradeK" style="position:relative">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
+        </div>
       </div>
       <div class="dh-actions">
         <button class="dh-action" onclick="openDetailTrades()"><span class="ico">≡</span><span>交易记录</span></button>
@@ -8376,13 +8423,14 @@ function updateDetailHeader(f){
   set('dhMv',_liq?'已清仓':(f.mv!=null?M(f.mv):'待补全'));
   set('dhCost',M(f.cost));
   set('dhShares', f.shares!=null&&f.shares>0?fmt(f.shares):'—');
+  set('dhNav', f.nav!=null?navFmt(f.nav):'—');
   const day=document.getElementById('dhDayGain'); if(day){ const v=_liq?_liqRealized:dayGainOf(f); day.textContent=_liq?((_liqRealized>=0?'+':'')+M(_liqRealized)):(v==null?'—':((v>=0?'+':'')+M(v))); day.classList.remove('pos','neg','zero'); day.classList.add(v==null?'zero':(v>0?'pos':v<0?'neg':'zero')); }
   const kl=document.getElementById('dhDayGainK'); if(kl) kl.textContent=_liq?'已实现收益':dayGainLabel(navCache[f.name]||{});
   const e=document.getElementById('dhRet'); if(e){ const _r=_liq?M(f.invested||0):((f.ret!=null)?(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%':'待补全'); e.textContent=_r; e.classList.remove('pos','neg','zero'); e.classList.add(_liq?'zero':(f.ret>0?'pos':(f.ret<0?'neg':'zero'))); }
   const rk=document.getElementById('dhRetK'); if(rk) rk.textContent=_liq?'累计投入':'持有收益率';
   const e2=document.getElementById('dhProfit'); if(e2){ const _p=_liq?((_liqRealized>=0?'+':'')+_liqRet.toFixed(2)+'%'):(f.profit!=null?(f.profit>=0?'+':'')+M(f.profit):'待补全'); e2.textContent=_p; e2.classList.remove('pos','neg','zero'); e2.classList.add(_liq?(_liqRealized>=0?'pos':'neg'):(f.profit>0?'pos':(f.profit<0?'neg':'zero'))); }
   const e3=document.getElementById('dhRealized'); if(e3){e3.textContent=(f.realized>=0?'+':'')+M(f.realized||0); e3.classList.remove('pos','neg'); e3.classList.add(f.realized>=0?'pos':'neg');}
-  // 下方「净投入 / 交易笔数 / 最新交易」由交易流水实时算出，必须随增删改刷新
+  // 下方「累计投入 / 交易笔数 / 最新交易」由交易流水实时算出，必须随增删改刷新
   const _tr=(trades||[]).filter(t=>t.name===f.name);
   set('dhTradeCount', _tr.length+' 笔');
   const _lt=latestTradeOf(f.name);
@@ -8402,7 +8450,15 @@ function updateDetailHeader(f){
   const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   const _netLiq=_tr.filter(function(t){ return t.confirm!=='pending' && t.confirm!=='cancelled'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); return s; },0);
   set('dhNet', _tr.length?(_liq?M(_netLiq):M(_net)):'—');
-  const _k=document.getElementById('dhNet')?.previousElementSibling; if(_k) _k.textContent=_liq?'累计投入':'净投入';
+  const _k=document.getElementById('dhNet')?.previousElementSibling; if(_k) _k.textContent='累计投入';
+}
+function dhToggleMore(){
+  const body=document.getElementById('dhMoreBody');
+  const arrow=document.getElementById('dhMoreArrow');
+  if(!body) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  if(arrow) arrow.textContent=open?'▶':'▼';
 }
 function latestTradeOf(name){
   // 过滤掉撤单的交易，只取已确认和待确认的

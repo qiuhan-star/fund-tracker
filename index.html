@@ -8128,7 +8128,8 @@ function renderDetailTabPane(f){
     pane.innerHTML='<div id="detailIntraday"></div>';
     renderIntraday(f);
   } else {
-    pane.innerHTML=detailProfitPanelHtml(f);
+    pane.innerHTML=detailProfitPanelHtml(f)+'<div class="card profit-curve-card" style="margin-top:12px"><div class="sec-head"><h2 style="margin:0;font-size:16px">累计盈亏曲线</h2><span class="hint">交易记录 × 历史净值</span></div><div id="fundProfitCurve" class="fund-profit-curve"></div></div>';
+    renderFundProfitCurve(f);
   }
 }
 
@@ -8153,6 +8154,99 @@ function detailProfitPanelHtml(f){
   </div>`;
 }
 
+// ---------- 单只基金「累计盈亏」曲线（交易流水 × 历史净值，蚂蚁基金风格） ----------
+async function renderFundProfitCurve(f){
+  const box=document.getElementById('fundProfitCurve'); if(!box) return;
+  const myTr=trades.filter(t=>t.name===f.name && (t.type||'fund')!=='stock').slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+  if(!myTr.length){ box.innerHTML='<p class="hint" style="margin:6px 0 0">该基金暂无交易记录，无法绘制累计盈亏曲线。</p>'; return; }
+  const firstDate=myTr[0].date;
+  box.innerHTML='<p class="hint" style="margin:6px 0 0">正在根据交易记录与历史净值计算累计盈亏曲线…</p>';
+  let code=null; try{ code=await resolveCode(f.name); }catch(e){}
+  if(!code){ box.innerHTML='<p class="hint" style="margin:6px 0 0">未匹配到基金代码，无法加载历史净值。</p>'; return; }
+  let hist=null; try{ hist=await fetchNavHistory(code); }catch(e){}
+  if(!hist||!hist.length){
+    box.innerHTML='<p class="hint" style="margin:6px 0 0">历史净值获取失败（天天基金接口未返回，可能被拦截/离线）。已改用各交易日的净值作近似稀疏曲线。</p>';
+    drawFundProfitCurve(box, fundProfitSparse(myTr), myTr.map(t=>t.date), true);
+    return;
+  }
+  const navArr=hist.map(p=>({d:fmtDate(p.t), nav:p.nav})).filter(p=>p.d>=firstDate).sort(function(a,b){return a.d.localeCompare(b.d);});
+  if(!navArr.length){ box.innerHTML='<p class="hint" style="margin:6px 0 0">历史净值未覆盖你的交易区间，无法绘制。</p>'; return; }
+  let evIdx=0, shares=0, principal=0;
+  const pts=[];
+  navArr.forEach(function(nv){
+    while(evIdx<myTr.length && myTr[evIdx].date<=nv.d){
+      const t=myTr[evIdx], ty=t.type||'buy', amt=+t.amount||0, navAt=(+t.nav>0)?+t.nav:nv.nav, sh=(+t.amount||0)/navAt;
+      if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ shares+=sh; principal+=amt; } else if(ty==='sell'||ty==='convert_out'){ shares-=sh; principal-=amt; }
+      evIdx++;
+    }
+    if(shares>1e-6){ const mv=shares*nv.nav; pts.push({d:nv.d, profit:+(mv-principal).toFixed(2)}); }
+  });
+  if(!pts.length){ box.innerHTML='<p class="hint" style="margin:6px 0 0">该基金买入后份额一直为 0，无法绘制。</p>'; return; }
+  drawFundProfitCurve(box, pts, myTr.map(t=>t.date), false);
+}
+function fundProfitSparse(myTr){
+  let shares=0, principal=0; const pts=[];
+  myTr.forEach(function(t){
+    const ty=t.type||'buy', amt=+t.amount||0, navAt=(+t.nav>0)?+t.nav:null;
+    if(navAt==null) return;
+    const sh=amt/navAt;
+    if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ shares+=sh; principal+=amt; } else if(ty==='sell'||ty==='convert_out'){ shares-=sh; principal-=amt; }
+    pts.push({d:t.date, profit:+(shares*navAt-principal).toFixed(2)});
+  });
+  return pts;
+}
+function drawFundProfitCurve(box, pts, nodeDates, approx){
+  const th=TH();
+  const W=1000,H=240,padL=58,padR=72,padT=20,padB=30;
+  let pmin=Math.min.apply(null,pts.map(p=>p.profit));
+  let pmax=Math.max.apply(null,pts.map(p=>p.profit));
+  if(pmin>0) pmin=0; if(pmax<0) pmax=0;
+  if(pmax-pmin<1){ const m=(pmin+pmax)/2; pmin=m-1; pmax=m+1; }
+  const pr=(pmax-pmin)||1;
+  const n=pts.length;
+  const X=i=> n===1? (padL+(W-padL-padR)/2) : padL+(i/(n-1))*(W-padL-padR);
+  const Y=v=> H-padB-((v-pmin)/pr)*(H-padT-padB);
+  const BLUE='#1A6FE8';
+  const fmtAxis=v=>{ const a=Math.abs(v); if(a>=10000) return (v/10000).toFixed(1)+'万'; if(a>=1000) return (v/1000).toFixed(1)+'k'; return ''+Math.round(v); };
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:240px;display:block;font-family:-apple-system,\'PingFang SC\',sans-serif">';
+  [0,.5,1].forEach(function(f){
+    const y=(padT+(H-padT-padB)*f).toFixed(1);
+    const val=pmax-(pmax-pmin)*f;
+    svg+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="'+th.grid+'" stroke-width="1"/>';
+    svg+='<text x="'+(padL-6)+'" y="'+(+y+4)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+fmtAxis(val)+'</text>';
+  });
+  const yz=Y(0);
+  svg+='<line x1="'+padL+'" y1="'+yz.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yz.toFixed(1)+'" stroke="#bbbbbb" stroke-width="1" stroke-dasharray="4 4"/>';
+  let area='M'+X(0).toFixed(1)+' '+yz.toFixed(1)+' ';
+  pts.forEach(function(p,i){ area+='L'+X(i).toFixed(1)+' '+Y(p.profit).toFixed(1)+' '; });
+  area+='L'+X(n-1).toFixed(1)+' '+yz.toFixed(1)+' Z';
+  svg+='<path d="'+area+'" fill="'+BLUE+'" fill-opacity="0.06"/>';
+  let path='';
+  pts.forEach(function(p,i){ path+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(p.profit).toFixed(1)+' '; });
+  svg+='<path d="'+path+'" fill="none" stroke="'+BLUE+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+  if(nodeDates){
+    nodeDates.forEach(function(d){
+      let li=-1; for(let k=0;k<pts.length;k++){ if(pts[k].d<=d) li=k; else break; }
+      if(li<0) return;
+      svg+='<circle cx="'+X(li).toFixed(1)+'" cy="'+Y(pts[li].profit).toFixed(1)+'" r="2.6" fill="#ffffff" stroke="'+BLUE+'" stroke-width="1.6"/>';
+    });
+  }
+  const last=pts[n-1]; const lx=X(n-1), ly=Y(last.profit);
+  const valTxt=(last.profit>=0?'+':'')+M(last.profit);
+  const boxW=Math.max(64, valTxt.length*8+18);
+  let bx=lx-boxW-8; if(bx<padL) bx=lx+8;
+  let by=ly-26; if(by<padT) by=ly+10;
+  svg+='<rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+boxW.toFixed(1)+'" height="22" rx="4" fill="#FFE6E6" stroke="#FF4D4F" stroke-width="1"/>';
+  svg+='<text x="'+(bx+boxW/2).toFixed(1)+'" y="'+(by+15).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="600" fill="#E54D42">'+valTxt+'</text>';
+  svg+='<circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="3.4" fill="'+BLUE+'"/>';
+  svg+='<text x="'+padL+'" y="'+(H-10)+'" text-anchor="start" font-size="11" fill="'+th.text3+'">'+pts[0].d+'</text>';
+  svg+='<text x="'+(W-padR)+'" y="'+(H-10)+'" text-anchor="end" font-size="11" fill="'+th.text3+'">'+pts[n-1].d+'</text>';
+  svg+='</svg>';
+  let html=svg;
+  if(approx) html+='<p class="hint" style="margin:4px 0 0">＊近似曲线：仅用各交易日净值连线，无完整历史净值时仅供参考。</p>';
+  else html+='<p class="hint" style="margin:4px 0 0">累计盈亏 = 持仓市值 − 累计投入本金（含已实现盈亏）；曲线随交易记录与每日净值实时计算。</p>';
+  box.innerHTML=html;
+}
 function renderDetailTrades(f){
   const box=document.getElementById('detailTradeModalBody') || document.getElementById('detailTrades'); if(!box) return;
   const html=buildTradeSection(f);

@@ -3980,10 +3980,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .tx-conf{ display:inline-flex; align-items:center; font-size:12px; padding:4px 9px; border-radius:999px; background:var(--surface-2); color:var(--text-2); cursor:pointer; user-select:none; }
   .tx-conf.pend{ background:rgba(255,149,0,.14); color:var(--warn); }
   .tx-conf.cancel{ background:rgba(255,59,48,.14); color:var(--danger); }
-  .tag-pend{ display:inline-flex; align-items:center; font-size:10px; padding:1px 5px; border-radius:999px; background:rgba(255,149,0,.14); color:var(--warn); font-weight:600; vertical-align:middle; margin-left:3px; line-height:1.3; }
-  #dhLatestTradeK{ position:relative; }
-  #dhLatestTradeK .lt-lbl{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
-  #dhLatestTradeK .tag-pend{ position:absolute; }
+  .tag-pend{ display:inline-flex; align-items:center; font-size:10px; padding:1px 5px; border-radius:999px; background:rgba(255,149,0,.14); color:var(--warn); font-weight:600; vertical-align:middle; line-height:1.3; }
+  #dhLatestTradeK{ display:flex; justify-content:center; align-items:center; gap:4px; }
+  #dhLatestTradeK .lt-lbl{ display:inline-block; }
   .pend-txt{ font-size:12px; font-weight:600; color:var(--warn); margin-left:4px; vertical-align:middle; }
   .lt-date{ font-weight:700; }
   .highlight-flash{ animation:hlFlash 1.5s ease-out; }
@@ -8012,7 +8011,7 @@ function updateDetailHeader(f){
     _ltV.style.overflow='visible';
     _ltV.style.textOverflow='clip';
     _ltV.onclick=_ltIdx>=0?function(){scrollToLatestTrade(_ltIdx);}:null;
-    if(_ltK.parentElement) _ltK.parentElement.style.textAlign='center';
+    if(_ltK.parentElement){ _ltK.parentElement.style.textAlign='center'; }
   }
   const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   set('dhNet', _tr.length?M(_net):'—');

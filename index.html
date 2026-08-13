@@ -3884,23 +3884,99 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="idx-head-right"><span class="hint" style="font-size:11px;color:var(--text-3)">实时·腾讯</span> <button class="btn sm" id="idxSparkToggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button> <button class="btn sm" onclick="loadIdxAndRender()">🔄 刷新</button></span></div>
         <div id="idxGrid"></div>
       </div>
-      <!-- 美股夜盘自选看板（点击展开；腾讯实时个股/ETF，夜盘 21:30–次日04:00 自动刷新） -->
+      <!-- 美股夜盘 · QDII 基金估值看板（点击展开；腾讯实时指数，夜盘 21:30–次日04:00 自动刷新） -->
       <div class="us-entry" id="usEntry" onclick="toggleUSWatch()">
         <div class="us-entry-ic">🌙</div>
         <div class="us-entry-body">
           <div class="us-entry-title">美股夜盘 <span class="uswk-dot" id="usWatchDot"></span></div>
-          <div class="us-entry-sub" id="usWatchSess">自选美股 · 看盘前盘中涨跌</div>
+          <div class="us-entry-sub" id="usWatchSess">美股基金夜盘估值 · 看盘前盘中涨跌</div>
         </div>
         <div class="us-entry-chev" id="usEntryChev">›</div>
       </div>
       <div class="card us-watch-panel" id="usWatchPanel" style="display:none">
-        <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">自选美股</h2><button class="btn sm" onclick="usWatchFetch()">🔄 刷新</button></div>
-        <div class="uswk-adder">
-          <input id="usWatchIn" placeholder="加美股/ETF，如 NVDA、QQQ、BABA" onkeydown="if(event.key==='Enter')usWatchAdd()">
-          <button class="btn sm" onclick="usWatchAdd()">添加</button>
+        <style>
+          .us-top{position:sticky;top:0;z-index:5;background:var(--card,#fff);padding:10px 14px 8px;border-bottom:1px solid var(--border-2,#ececf0)}
+          .us-top-row1{display:flex;align-items:center;gap:8px}
+          .us-moon{font-size:20px}
+          .us-title{font-size:18px;font-weight:700;margin:0}
+          .us-rf{margin-left:auto;border:1px solid var(--border-2,#ececf0);background:var(--surface-2,#f5f6f8);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--accent,#2d6cdf);font-weight:600;cursor:pointer}
+          .us-top-row2{margin-top:6px;font-size:12px;color:var(--text-3,#8a8f99)}
+          .us-top-row2 b.up{color:var(--up,#e5453b)}
+          .us-digest{margin:12px 14px 4px;background:linear-gradient(135deg,#eef4ff,#f7f0ff);border:1px solid #e3ecff;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.55}
+          .us-dig-lab{color:var(--accent,#2d6cdf);font-weight:700;margin-right:4px}
+          .us-digest b.up{color:var(--up,#e5453b)} .us-digest b.down{color:var(--down,#15a86a)}
+          .us-idx{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 14px}
+          .us-idx-c{background:var(--surface-2,#f5f6f8);border:1px solid var(--border-2,#ececf0);border-radius:10px;padding:8px 4px;text-align:center}
+          .us-idx-c .nm{font-size:11px;color:var(--text-3,#8a8f99)}
+          .us-idx-c .pc{font-size:14px;font-weight:700;margin-top:3px}
+          .us-ctrls{margin:10px 14px 4px}
+          .us-srch{width:100%;border:1px solid var(--border-2,#ececf0);border-radius:10px;padding:9px 12px;font-size:13px;background:var(--surface-2,#f5f6f8);color:var(--text,#1d1d1f)}
+          .us-srch:focus{outline:none;border-color:var(--accent,#2d6cdf)}
+          .us-chips{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+          .us-chip{flex:none;border:1px solid var(--border-2,#ececf0);background:var(--card,#fff);border-radius:16px;padding:5px 13px;font-size:12px;color:var(--text-3,#8a8f99);font-weight:600;cursor:pointer;white-space:nowrap}
+          .us-chip.on{background:var(--accent,#2d6cdf);border-color:var(--accent,#2d6cdf);color:#fff}
+          .us-sec{margin:14px 14px 0}
+          .us-sec-hd{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--text,#1d1d1f);margin:6px 0 2px}
+          .us-sec-n{color:var(--text-3,#8a8f99);font-weight:600;font-size:12px}
+          .us-list{display:flex;flex-direction:column}
+          .us-fund{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border-2,#ececf0)}
+          .us-av{width:34px;height:34px;border-radius:9px;background:var(--chip,#eef2ff);color:var(--accent,#2d6cdf);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+          .us-mid{flex:1;min-width:0}
+          .us-nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+          .us-del{border:0;background:transparent;color:var(--text-3,#8a8f99);font-size:16px;line-height:1;cursor:pointer;padding:0 2px}
+          .us-meta{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;align-items:center}
+          .us-tag{font-size:10px;padding:1px 6px;border-radius:5px;background:var(--surface-2,#f5f6f8);color:var(--text-3,#8a8f99);white-space:nowrap}
+          .us-tag.t1{background:#eaf3ff;color:var(--accent,#2d6cdf)}
+          .us-tag.hold{background:#e8f7ee;color:var(--down,#15a86a);font-weight:700}
+          .us-tag.fire{background:#ffeceb;color:var(--up,#e5453b);font-weight:700}
+          .us-tag.lag{background:#f0f0f3;color:#6b6f76}
+          .us-rt{text-align:right;flex:none;min-width:66px}
+          .us-pc{font-size:16px;font-weight:700}
+          .us-pc.up{color:var(--up,#e5453b)} .us-pc.down{color:var(--down,#15a86a)}
+          .us-amt{font-size:11px;color:var(--text-3,#8a8f99);margin-top:1px}
+          .us-amt.up{color:var(--up,#e5453b)}
+          .us-adder{display:flex;gap:8px;margin-top:10px}
+          .us-adder input{flex:1;border:1px solid var(--border-2,#ececf0);border-radius:10px;padding:8px 12px;font-size:13px;background:var(--surface-2,#f5f6f8)}
+          .us-foot{font-size:11px;color:var(--text-3,#8a8f99);margin:14px 14px 0;line-height:1.6}
+          .up{color:var(--up,#e5453b)} .down{color:var(--down,#15a86a)}
+        </style>
+        <div class="us-top">
+          <div class="us-top-row1">
+            <span class="us-moon">🌙</span><h2 class="us-title">美股夜盘</h2>
+            <button class="us-rf" onclick="qdiiUsFetch()">🔄 刷新</button>
+          </div>
+          <div class="us-top-row2" id="usSess">加载中…</div>
         </div>
-        <div class="uswk-grid" id="usWatchGrid"></div>
-        <div class="uswk-foot">数据：腾讯财经 qt.gtimg.cn 实时行情 · 红涨绿跌（A股习惯）· 夜盘 21:30–04:00（北京时）自动刷新</div>
+        <div class="us-digest" id="usDigest"><span class="us-dig-lab">今夜看点</span>加载中…</div>
+        <div class="us-idx">
+          <div class="us-idx-c"><div class="nm">纳斯达克</div><div class="pc" id="usIxIxic">—</div></div>
+          <div class="us-idx-c"><div class="nm">标普500</div><div class="pc" id="usIxSpx">—</div></div>
+          <div class="us-idx-c"><div class="nm">道琼斯</div><div class="pc" id="usIxDow">—</div></div>
+          <div class="us-idx-c"><div class="nm">美元汇率</div><div class="pc" id="usIxFx">—</div></div>
+        </div>
+        <div class="us-ctrls">
+          <input class="us-srch" id="usSrch" placeholder="搜索基金名称 / 代码">
+          <div class="us-chips" id="usChips">
+            <div class="us-chip on" data-c="all">全部</div>
+            <div class="us-chip" data-c="科技">科技</div>
+            <div class="us-chip" data-c="宽基">宽基</div>
+            <div class="us-chip" data-c="医药">医药</div>
+            <div class="us-chip" data-c="商品">商品</div>
+          </div>
+        </div>
+        <div class="us-sec" id="usHoldSec">
+          <div class="us-sec-hd">我的持仓 <span class="us-sec-n" id="usHoldN"></span></div>
+          <div class="us-list" id="usHoldList"></div>
+        </div>
+        <div class="us-sec">
+          <div class="us-sec-hd">市场热门 <span class="us-sec-n" id="usHotN"></span></div>
+          <div class="us-list" id="usHotList"></div>
+          <div class="us-adder">
+            <input id="usHotIn" placeholder="加基金代码，如 270042" onkeydown="if(event.key==='Enter')usHotAdd()">
+            <button class="btn sm" onclick="usHotAdd()">添加</button>
+          </div>
+        </div>
+        <div class="us-foot">「参考涨跌 / 估算盈亏」为根据美股对应指数变动估算的隔日净值参考，非实际净值；QDII 因净值滞后（T+1/T+2）、汇率与跟踪误差，实际以基金公司公布净值为准。🔥异动 = 预估涨跌 ≥ 3%。</div>
       </div>
       <!-- 板块涨跌榜（新浪实时） -->
       <div class="card">
@@ -4961,92 +5037,188 @@ function switchXirrTab(tab, btn){
   else { panDca.classList.remove('on'); panXirr.classList.add('on'); renderXirr(); calcXIRR(); }
 }
 
-// ===== 美股夜盘自选看板（腾讯实时个股/ETF，复用 mktOpenWindow 判定夜盘） =====
-var US_WATCH_KEY='ft_us_watch';
-var US_WATCH_SEED=['AAPL','NVDA','TSLA','QQQ','SPY','MSFT','GOOGL','AMZN','META'];
-var _usWatchList=[], _usWatchSparks={}, _usWatchTimer=null, _usWatchReady=false;
-function usWatchLoad(){ try{ var a=JSON.parse(localStorage.getItem(US_WATCH_KEY)||'null'); if(Array.isArray(a)&&a.length) return a; }catch(e){} return US_WATCH_SEED.slice(); }
-function usWatchSave(){ try{ localStorage.setItem(US_WATCH_KEY, JSON.stringify(_usWatchList)); }catch(e){} }
-function usWatchOpen(){ return mktOpenWindow('usDJI'); }
-function usWatchSessLabel(){
-  var o=usWatchOpen(), dot=document.getElementById('usWatchDot');
-  if(dot) dot.className='uswk-dot'+(o?' open':'');
+// ===== 美股夜盘 · QDII 基金估值看板（v2：指数 + 我的持仓 + 市场热门） =====
+var US_HOT_KEY='ft_us_hot';
+var QDII_IDX={ixic:null,spx:null,dow:null,fx:null};
+var _usWatchTimer=null, _usWatchFetched=false, _usWatchReady=false;
+
+var US_HOT_SEED=[
+  {name:'华夏全球科技先锋',code:'024239',cat:'海外科技',lag:'T+1'},
+  {name:'浦银安盛全球科技',code:'014002',cat:'全球科技',lag:'T+1'},
+  {name:'广发全球科技',code:'011420',cat:'全球科技',lag:'T+1'},
+  {name:'易方达标普信息科技',code:'161128',cat:'美股科技',lag:'T+1'},
+  {name:'国泰纳斯达克100',code:'513100',cat:'纳斯达克',lag:''},
+  {name:'博时标普500ETF',code:'513500',cat:'标普500',lag:''},
+  {name:'天弘标普500',code:'007721',cat:'标普500',lag:'T+1'},
+  {name:'易方达纳斯达克100',code:'270042',cat:'纳斯达克',lag:'T+1'}
+];
+function _esc(s){ s=String(s==null?'':s); return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function usHotLoad(){ try{ var a=JSON.parse(localStorage.getItem(US_HOT_KEY)||'null'); if(Array.isArray(a)) return a; }catch(e){} return US_HOT_SEED.slice(); }
+function usHotSave(a){ try{ localStorage.setItem(US_HOT_KEY, JSON.stringify(a)); }catch(e){} }
+function usHotAdd(){
+  var inp=document.getElementById('usHotIn'); if(!inp) return;
+  var v=inp.value.trim().replace(/[^0-9A-Za-z]/g,''); if(!v) return;
+  var list=usHotLoad();
+  if(list.some(function(x){ return x.code===v; })){ inp.value=''; return; }
+  list.push({name:v, code:v, cat:'美股', lag:''});
+  usHotSave(list); inp.value=''; qdiiUsRender();
 }
-function usWatchRender(){
-  var g=document.getElementById('usWatchGrid'); if(!g) return;
-  _usWatchList=usWatchLoad(); g.innerHTML='';
-  if(!_usWatchList.length){ g.innerHTML='<div class="uswk-foot" style="padding-top:14px">自选为空，上面加一只（如 QQQ）开始盯夜盘</div>'; return; }
-  _usWatchList.forEach(function(tk){
-    var el=document.createElement('div'); el.className='uswk-card';
-    el.innerHTML='<button class="uw-del" onclick="usWatchDel(\''+tk+'\')" title="移除">×</button>'
-      +'<div style="min-width:0"><div class="uw-tk">'+tk+'</div><div class="uw-nm" id="uw_nm_'+tk+'">加载中…</div></div>'
-      +'<div class="uw-px uswk-zero" id="uw_px_'+tk+'">—</div>'
-      +'<div class="uw-pct uswk-zero" id="uw_pc_'+tk+'">—</div>'
-      +'<div class="uw-row"><span>高 <b id="uw_hi_'+tk+'">—</b></span><span>低 <b id="uw_lo_'+tk+'">—</b></span></div>'
-      +'<svg class="uw-spk" id="uw_sp_'+tk+'" viewBox="0 0 100 22" preserveAspectRatio="none"></svg>';
-    g.appendChild(el);
+function usHotDel(code){ usHotSave(usHotLoad().filter(function(x){ return x.code!==code; })); qdiiUsRender(); }
+// 基准指数：科技/纳斯达克→ixic；标普→spx；道琼→dow；默认 spx
+function qdiiBench(name){
+  if(/纳斯达克|科技|信息科技|芯片|半导体|纳指|AI/i.test(name)) return 'ixic';
+  if(/道琼/i.test(name)) return 'dow';
+  if(/标普|宽基/i.test(name)) return 'spx';
+  return 'spx';
+}
+function qdiiChip(name){
+  if(/纳斯达克|科技|信息科技|芯片|半导体|纳指|AI/i.test(name)) return '科技';
+  if(/医药|医疗|生物/i.test(name)) return '医药';
+  if(/黄金|原油|商品|资源|大宗/i.test(name)) return '商品';
+  return '宽基';
+}
+function qdiiPct(bench){ var o=QDII_IDX[bench]; return (o&&!isNaN(o.pct))?o.pct:null; }
+function fmtPct(v){ if(v==null) return '—'; return (v>0?'+':'')+v.toFixed(2)+'%'; }
+function fmtAmt(v){ if(v==null) return ''; return (v>0?'估算 +¥':'估算 -¥')+Math.abs(Math.round(v)); }
+function usSessionInfo(){
+  var open=mktOpenWindow('usDJI');
+  var now=new Date(); var t=now.getHours()*60+now.getMinutes();
+  var label, cd='';
+  if(open){
+    var mins=4*60 - t; if(mins<0) mins+=1440; var h=Math.floor(mins/60), m=mins%60;
+    label='美股交易中'; cd='距收盘 '+h+'h'+(m<10?'0':'')+m+'m';
+  } else if(t>=960 && t<1290){
+    var mins2=1290-t; var h2=Math.floor(mins2/60), m2=mins2%60;
+    label='美股盘前'; cd='距开盘 '+h2+'h'+(m2<10?'0':'')+m2+'m';
+  } else { label='美股已收盘'; cd='夜盘 21:30 开盘'; }
+  return {open:open, label:label, cd:cd};
+}
+function qdiiHeld(){
+  if(typeof fundsView==='undefined'||!fundsView) return [];
+  return fundsView.filter(function(f){
+    var nm=f.name||'';
+    if(typeof marketRegion==='function' && marketRegion(nm)==='海外') return true;
+    if(f.cat==='海外') return true;
+    if(f.tags && f.tags.indexOf('QDII')>=0) return true;
+    return false;
   });
 }
-function usWatchAdd(){
-  var inp=document.getElementById('usWatchIn'); if(!inp) return;
-  var v=inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''); if(!v) return;
-  _usWatchList=usWatchLoad();
-  if(_usWatchList.indexOf(v)>=0){ inp.value=''; return; }
-  _usWatchList.push(v); usWatchSave(); inp.value=''; usWatchRender(); usWatchFetch();
+function qdiiUsRender(){
+  var setIdx=function(id,v){ var el=document.getElementById(id); if(!el) return; el.textContent=fmtPct(v); el.className='pc '+(v>0?'up':v<0?'down':''); };
+  setIdx('usIxIxic', qdiiPct('ixic'));
+  setIdx('usIxSpx', qdiiPct('spx'));
+  setIdx('usIxDow', qdiiPct('dow'));
+  var fxe=document.getElementById('usIxFx'); if(fxe){ var fp=QDII_IDX.fx?QDII_IDX.fx.pct:null; fxe.textContent=fmtPct(fp); fxe.className='pc '+(fp>0?'up':fp<0?'down':''); }
+  var held=qdiiHeld();
+  var hl=document.getElementById('usHoldList');
+  if(hl){
+    hl.innerHTML='';
+    if(!held.length){ hl.innerHTML='<div class="us-foot" style="padding:6px 2px">你暂无美股/QDII 持仓，下面看看市场热门。</div>'; }
+    held.forEach(function(f){
+      var bench=qdiiBench(f.name||''); var pct=qdiiPct(bench); var mv=(f.mv||0);
+      var estY=(pct==null)?null:mv*pct/100;
+      var el=document.createElement('div'); el.className='us-fund'; el.dataset.cat=qdiiChip(f.name||'');
+      el.innerHTML='<div class="us-av">'+_esc((f.name||'?').slice(0,2))+'</div>'
+        +'<div class="us-mid"><div class="us-nm">'+_esc(f.name||'?')+'</div>'
+        +'<div class="us-meta"><span class="us-tag t1">'+_esc(f.cat||'海外')+'</span>'+(f.code?'<span class="us-tag">'+_esc(f.code)+'</span>':'')+'<span class="us-tag hold">我的持仓</span></div></div>'
+        +'<div class="us-rt"><div class="us-pc '+(pct>0?'up':pct<0?'down':'')+'">'+fmtPct(pct)+'</div><div class="us-amt '+(estY>0?'up':'')+'">'+(estY==null?'':fmtAmt(estY))+'</div></div>';
+      hl.appendChild(el);
+    });
+    var hn=document.getElementById('usHoldN'); if(hn) hn.textContent='('+held.length+')';
+  }
+  var hot=usHotLoad();
+  var hotl=document.getElementById('usHotList');
+  if(hotl){
+    hotl.innerHTML='';
+    hot.forEach(function(f){
+      var nm=f.name||f.code||'?'; var bench=qdiiBench(nm); var pct=qdiiPct(bench);
+      var fire=(pct!=null&&Math.abs(pct)>=3)?'<span class="us-tag fire">🔥异动</span>':'';
+      var lag=f.lag?'<span class="us-tag lag">'+_esc(f.lag)+'</span>':'';
+      var el=document.createElement('div'); el.className='us-fund'; el.dataset.cat=qdiiChip(nm);
+      el.innerHTML='<div class="us-av">'+_esc(nm.slice(0,2))+'</div>'
+        +'<div class="us-mid"><div class="us-nm">'+_esc(nm)+'<button class="us-del" onclick="usHotDel(\''+_esc(f.code)+'\')" title="移除">×</button></div>'
+        +'<div class="us-meta"><span class="us-tag t1">'+_esc(f.cat||'美股')+'</span><span class="us-tag">'+_esc(f.code)+'</span>'+fire+lag+'</div></div>'
+        +'<div class="us-rt"><div class="us-pc '+(pct>0?'up':pct<0?'down':'')+'">'+fmtPct(pct)+'</div><div class="us-amt">参考涨跌</div></div>';
+      hotl.appendChild(el);
+    });
+    var hn2=document.getElementById('usHotN'); if(hn2) hn2.textContent='('+hot.length+')';
+  }
+  qdiiDigest(held);
+  qdiiApplyFilter();
 }
-function usWatchDel(tk){ _usWatchList=usWatchLoad().filter(function(x){ return x!==tk; }); usWatchSave(); usWatchRender(); }
-function usWatchSpark(tk){
-  var arr=_usWatchSparks[tk], svg=document.getElementById('uw_sp_'+tk); if(!svg||!arr||arr.length<2) return;
-  var mn=Math.min.apply(null,arr), mx=Math.max.apply(null,arr), rng=(mx-mn)||1;
-  var pts=arr.map(function(v,i){ var x=(100*i/(arr.length-1)).toFixed(1); var y=(22-2-((v-mn)/rng)*(22-4)).toFixed(1); return x+','+y; }).join(' ');
-  var up=arr[arr.length-1]>=arr[0];
-  svg.innerHTML='<polyline points="'+pts+'" fill="none" stroke="'+(up?'var(--up)':'var(--down)')+'" stroke-width="1.3"/>';
+function qdiiDigest(held){
+  var el=document.getElementById('usDigest'); if(!el) return;
+  var names={ixic:'纳斯达克',spx:'标普500',dow:'道琼斯'};
+  var arr=[['ixic',QDII_IDX.ixic],['spx',QDII_IDX.spx],['dow',QDII_IDX.dow]].filter(function(x){ return x[1]&&!isNaN(x[1].pct); });
+  if(!arr.length){ el.innerHTML='<span class="us-dig-lab">今夜看点</span>加载中…'; return; }
+  arr.sort(function(a,b){ return Math.abs(b[1].pct)-Math.abs(a[1].pct); });
+  var lead=arr[0]; var leadName=names[lead[0]]; var leadUp=lead[1].pct>0;
+  var totalY=0; (held||[]).forEach(function(f){ var p=qdiiPct(qdiiBench(f.name||'')); if(p!=null) totalY+=(f.mv||0)*p/100; });
+  var tail='';
+  if(held&&held.length){ tail='你持仓的 '+held.length+' 只基金今夜估算合计 <b class="'+(totalY>=0?'up':'down')+'">'+(totalY>=0?'+':'-')+'¥'+Math.abs(Math.round(totalY))+'</b>。'; }
+  else { tail='你暂无美股持仓，看看下面的市场热门 QDII。'; }
+  var ix=QDII_IDX.ixic?QDII_IDX.ixic.pct:null;
+  el.innerHTML='<span class="us-dig-lab">今夜看点</span>'+leadName+(leadUp?'领涨':'领跌')+'，'+(lead[1].pct>0?'+':'')+lead[1].pct.toFixed(2)+'%；科技类 QDII 普遍 '+fmtPct(ix)+' 以上。'+tail;
 }
-function usWatchApply(tk, raw){
-  if(!raw){ var pc=document.getElementById('uw_pc_'+tk); if(pc) pc.textContent='获取失败'; return; }
+function qdiiApplyFilter(){
+  var sr=document.getElementById('usSrch'); var q=sr?(sr.value||'').trim().toLowerCase():'';
+  var onChip=document.querySelector('#usChips .us-chip.on'); var cat=onChip?onChip.dataset.c:'all';
+  document.querySelectorAll('#usWatchPanel .us-fund').forEach(function(f){
+    var c=f.dataset.cat, txt=f.textContent.toLowerCase();
+    var okC=(cat==='all'||c===cat); var okQ=(!q||txt.indexOf(q)>=0);
+    f.style.display=(okC&&okQ)?'flex':'none';
+  });
+}
+function qdiiUsApply(code, raw){
+  if(!raw) return;
   var p=raw.split('~');
-  var price=parseFloat(p[3]), pct=parseFloat(p[32]), hi=parseFloat(p[33]), lo=parseFloat(p[34]);
-  var name=(p[1]&&p[1].trim())||p[46]||tk;
-  var nm=document.getElementById('uw_nm_'+tk); if(nm) nm.textContent=name;
-  var px=document.getElementById('uw_px_'+tk);
-  if(!isNaN(price)){ px.textContent=price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); px.className='uw-px '+(pct>0?'uswk-up':pct<0?'uswk-down':'uswk-zero'); }
-  var pc=document.getElementById('uw_pc_'+tk);
-  if(!isNaN(pct)){ pc.textContent=(pct>0?'▲ +':'')+pct.toFixed(2)+'%'; pc.className='uw-pct '+(pct>0?'uswk-up':pct<0?'uswk-down':'uswk-zero'); }
-  var hiEl=document.getElementById('uw_hi_'+tk), loEl=document.getElementById('uw_lo_'+tk);
-  if(!isNaN(hi)) hiEl.textContent=hi.toFixed(2);
-  if(!isNaN(lo)) loEl.textContent=lo.toFixed(2);
-  if(!isNaN(price)){ var sp=_usWatchSparks[tk]=_usWatchSparks[tk]||[]; sp.push(price); if(sp.length>50) sp.shift(); usWatchSpark(tk); }
+  if(code==='fxUSDCNY'){ QDII_IDX.fx={rate:parseFloat(p[3]), pct:parseFloat(p[13])}; }
+  else { var pct=parseFloat(p[32]); if(code==='usIXIC') QDII_IDX.ixic={pct:pct}; else if(code==='usSPX') QDII_IDX.spx={pct:pct}; else if(code==='usDJI') QDII_IDX.dow={pct:pct}; }
 }
-function usWatchFetch(){
-  if(!_usWatchList.length) return;
-  var codes=_usWatchList.map(function(t){ return 'us'+t; });
+function qdiiUsFetch(){
+  var codes=['usDJI','usIXIC','usSPX','fxUSDCNY'];
   var sc=document.createElement('script');
-  sc.onload=function(){ codes.forEach(function(c,i){ try{ usWatchApply(_usWatchList[i], window['v_'+c]); }catch(e){} }); sc.remove(); };
-  sc.onerror=function(){ _usWatchList.forEach(function(t){ var pc=document.getElementById('uw_pc_'+t); if(pc) pc.textContent='网络失败'; }); sc.remove(); };
+  sc.onload=function(){
+    codes.forEach(function(c){ try{ qdiiUsApply(c, window['v_'+c]); }catch(e){} });
+    sc.remove(); qdiiUsRender();
+    var s=usSessionInfo(); var se=document.getElementById('usSess');
+    if(se) se.innerHTML='<b class="'+(s.open?'up':'')+'">'+s.label+'</b> · '+s.cd+' · 更新 '+new Date().toTimeString().slice(0,5);
+  };
+  sc.onerror=function(){ sc.remove(); };
   sc.src='https://qt.gtimg.cn/q='+codes.join(',');
   document.body.appendChild(sc);
 }
-var _usWatchFetched=false;
-function startUSWatchTimer(){
-  if(_usWatchTimer) clearInterval(_usWatchTimer);
-  _usWatchTimer=setInterval(function(){ usWatchSessLabel(); if(usWatchOpen()) usWatchFetch(); }, 12000);
+function usWatchSessLabel(){
+  var s=usSessionInfo(); var dot=document.getElementById('usWatchDot');
+  if(dot) dot.className='uswk-dot'+(s.open?' open':'');
+  var sub=document.getElementById('usWatchSess');
+  if(sub) sub.textContent='美股基金夜盘估值 · '+(s.open?'交易中':'已收盘');
 }
+function startUSWatchTimer(){ if(_usWatchTimer) clearInterval(_usWatchTimer); _usWatchTimer=setInterval(function(){ usWatchSessLabel(); qdiiUsFetch(); }, 15000); }
 function stopUSWatchTimer(){ if(_usWatchTimer){ clearInterval(_usWatchTimer); _usWatchTimer=null; } }
 function toggleUSWatch(){
-  var p=document.getElementById('usWatchPanel');
-  var open = (p.style.display!=='none');
-  if(open){
-    p.style.display='none'; var c=document.getElementById('usEntryChev'); if(c) c.textContent='›'; stopUSWatchTimer();
-  } else {
+  var p=document.getElementById('usWatchPanel'); if(!p) return;
+  var open=(p.style.display!=='none');
+  if(open){ p.style.display='none'; var c=document.getElementById('usEntryChev'); if(c) c.textContent='›'; stopUSWatchTimer(); }
+  else {
     p.style.display='block'; var c=document.getElementById('usEntryChev'); if(c) c.textContent='▾';
     usWatchSessLabel();
-    if(!_usWatchFetched){ usWatchFetch(); _usWatchFetched=true; }
+    if(!_usWatchFetched){ qdiiUsRender(); qdiiUsFetch(); _usWatchFetched=true; } else { qdiiUsFetch(); }
     startUSWatchTimer();
   }
 }
 function initUSWatch(){
-  if(!_usWatchReady){ _usWatchReady=true; usWatchRender(); }
+  qdiiBind();
   usWatchSessLabel();
+  if(!_usWatchFetched && !(QDII_IDX.ixic||QDII_IDX.spx||QDII_IDX.dow)){ qdiiUsFetch(); _usWatchFetched=true; }
+}
+function qdiiBind(){
+  var chips=document.getElementById('usChips');
+  if(chips && !chips.dataset.b){ chips.dataset.b='1';
+    chips.querySelectorAll('.us-chip').forEach(function(ch){ ch.onclick=function(){ chips.querySelectorAll('.us-chip').forEach(function(x){ x.classList.remove('on'); }); ch.classList.add('on'); qdiiApplyFilter(); }; });
+  }
+  var sr=document.getElementById('usSrch');
+  if(sr && !sr.dataset.b){ sr.dataset.b='1'; sr.oninput=function(){ qdiiApplyFilter(); }; }
 }
 
 function switchTab(i){

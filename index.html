@@ -3878,6 +3878,16 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">大盘指数</h2><span class="idx-head-right"><span class="hint" style="font-size:11px;color:var(--text-3)">实时·腾讯</span> <button class="btn sm" id="idxSparkToggle" onclick="toggleIdxSpark()">隐藏趋势 ▲</button> <button class="btn sm" onclick="loadIdxAndRender()">🔄 刷新</button></span></div>
         <div id="idxGrid"></div>
       </div>
+      <!-- 美股夜盘自选看板（腾讯实时个股/ETF，夜盘 21:30–次日04:00 自动刷新） -->
+      <div class="card">
+        <div class="sec-head" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px 0"><h2 style="margin:0;font-size:15px;color:var(--text)">美股夜盘 · 自选</h2><span class="uswk-head-right"><span class="hint" id="usWatchSess" style="font-size:11px;color:var(--text-3)">—</span><span class="uswk-dot" id="usWatchDot"></span><button class="btn sm" onclick="usWatchFetch()">🔄 刷新</button></span></div>
+        <div class="uswk-adder">
+          <input id="usWatchIn" placeholder="加美股/ETF，如 NVDA、QQQ、BABA" onkeydown="if(event.key==='Enter')usWatchAdd()">
+          <button class="btn sm" onclick="usWatchAdd()">添加</button>
+        </div>
+        <div class="uswk-grid" id="usWatchGrid"></div>
+        <div class="uswk-foot">数据：腾讯财经 qt.gtimg.cn 实时行情 · 红涨绿跌（A股习惯）· 夜盘 21:30–04:00（北京时）自动刷新</div>
+      </div>
       <!-- 板块涨跌榜（新浪实时） -->
       <div class="card">
         <div class="sec-head">
@@ -4938,6 +4948,79 @@ function switchXirrTab(tab, btn){
   else { panDca.classList.remove('on'); panXirr.classList.add('on'); renderXirr(); calcXIRR(); }
 }
 
+// ===== 美股夜盘自选看板（腾讯实时个股/ETF，复用 mktOpenWindow 判定夜盘） =====
+var US_WATCH_KEY='ft_us_watch';
+var US_WATCH_SEED=['AAPL','NVDA','TSLA','QQQ','SPY','MSFT','GOOGL','AMZN','META'];
+var _usWatchList=[], _usWatchSparks={}, _usWatchTimer=null, _usWatchReady=false;
+function usWatchLoad(){ try{ var a=JSON.parse(localStorage.getItem(US_WATCH_KEY)||'null'); if(Array.isArray(a)&&a.length) return a; }catch(e){} return US_WATCH_SEED.slice(); }
+function usWatchSave(){ try{ localStorage.setItem(US_WATCH_KEY, JSON.stringify(_usWatchList)); }catch(e){} }
+function usWatchOpen(){ return mktOpenWindow('usDJI'); }
+function usWatchSessLabel(){
+  var o=usWatchOpen(), dot=document.getElementById('usWatchDot'), txt=document.getElementById('usWatchSess');
+  if(dot) dot.className='uswk-dot'+(o?' open':'');
+  if(txt) txt.innerHTML=o?'夜盘 <b style="color:var(--up)">交易中</b>':'美股已收盘';
+}
+function usWatchRender(){
+  var g=document.getElementById('usWatchGrid'); if(!g) return;
+  _usWatchList=usWatchLoad(); g.innerHTML='';
+  if(!_usWatchList.length){ g.innerHTML='<div class="uswk-foot" style="padding-top:14px">自选为空，上面加一只（如 QQQ）开始盯夜盘</div>'; return; }
+  _usWatchList.forEach(function(tk){
+    var el=document.createElement('div'); el.className='uswk-card';
+    el.innerHTML='<button class="uw-del" onclick="usWatchDel(\''+tk+'\')" title="移除">×</button>'
+      +'<div style="min-width:0"><div class="uw-tk">'+tk+'</div><div class="uw-nm" id="uw_nm_'+tk+'">加载中…</div></div>'
+      +'<div class="uw-px uswk-zero" id="uw_px_'+tk+'">—</div>'
+      +'<div class="uw-pct uswk-zero" id="uw_pc_'+tk+'">—</div>'
+      +'<div class="uw-row"><span>高 <b id="uw_hi_'+tk+'">—</b></span><span>低 <b id="uw_lo_'+tk+'">—</b></span></div>'
+      +'<svg class="uw-spk" id="uw_sp_'+tk+'" viewBox="0 0 100 22" preserveAspectRatio="none"></svg>';
+    g.appendChild(el);
+  });
+}
+function usWatchAdd(){
+  var inp=document.getElementById('usWatchIn'); if(!inp) return;
+  var v=inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''); if(!v) return;
+  _usWatchList=usWatchLoad();
+  if(_usWatchList.indexOf(v)>=0){ inp.value=''; return; }
+  _usWatchList.push(v); usWatchSave(); inp.value=''; usWatchRender(); usWatchFetch();
+}
+function usWatchDel(tk){ _usWatchList=usWatchLoad().filter(function(x){ return x!==tk; }); usWatchSave(); usWatchRender(); }
+function usWatchSpark(tk){
+  var arr=_usWatchSparks[tk], svg=document.getElementById('uw_sp_'+tk); if(!svg||!arr||arr.length<2) return;
+  var mn=Math.min.apply(null,arr), mx=Math.max.apply(null,arr), rng=(mx-mn)||1;
+  var pts=arr.map(function(v,i){ var x=(100*i/(arr.length-1)).toFixed(1); var y=(22-2-((v-mn)/rng)*(22-4)).toFixed(1); return x+','+y; }).join(' ');
+  var up=arr[arr.length-1]>=arr[0];
+  svg.innerHTML='<polyline points="'+pts+'" fill="none" stroke="'+(up?'var(--up)':'var(--down)')+'" stroke-width="1.3"/>';
+}
+function usWatchApply(tk, raw){
+  if(!raw){ var pc=document.getElementById('uw_pc_'+tk); if(pc) pc.textContent='获取失败'; return; }
+  var p=raw.split('~');
+  var price=parseFloat(p[3]), pct=parseFloat(p[32]), hi=parseFloat(p[33]), lo=parseFloat(p[34]);
+  var name=(p[1]&&p[1].trim())||p[46]||tk;
+  var nm=document.getElementById('uw_nm_'+tk); if(nm) nm.textContent=name;
+  var px=document.getElementById('uw_px_'+tk);
+  if(!isNaN(price)){ px.textContent=price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); px.className='uw-px '+(pct>0?'uswk-up':pct<0?'uswk-down':'uswk-zero'); }
+  var pc=document.getElementById('uw_pc_'+tk);
+  if(!isNaN(pct)){ pc.textContent=(pct>0?'▲ +':'')+pct.toFixed(2)+'%'; pc.className='uw-pct '+(pct>0?'uswk-up':pct<0?'uswk-down':'uswk-zero'); }
+  var hiEl=document.getElementById('uw_hi_'+tk), loEl=document.getElementById('uw_lo_'+tk);
+  if(!isNaN(hi)) hiEl.textContent=hi.toFixed(2);
+  if(!isNaN(lo)) loEl.textContent=lo.toFixed(2);
+  if(!isNaN(price)){ var sp=_usWatchSparks[tk]=_usWatchSparks[tk]||[]; sp.push(price); if(sp.length>50) sp.shift(); usWatchSpark(tk); }
+}
+function usWatchFetch(){
+  if(!_usWatchList.length) return;
+  var codes=_usWatchList.map(function(t){ return 'us'+t; });
+  var sc=document.createElement('script');
+  sc.onload=function(){ codes.forEach(function(c,i){ try{ usWatchApply(_usWatchList[i], window['v_'+c]); }catch(e){} }); sc.remove(); };
+  sc.onerror=function(){ _usWatchList.forEach(function(t){ var pc=document.getElementById('uw_pc_'+t); if(pc) pc.textContent='网络失败'; }); sc.remove(); };
+  sc.src='https://qt.gtimg.cn/q='+codes.join(',');
+  document.body.appendChild(sc);
+}
+function initUSWatch(){
+  if(!_usWatchReady){ _usWatchReady=true; usWatchRender(); }
+  usWatchSessLabel(); usWatchFetch();
+  if(_usWatchTimer) clearInterval(_usWatchTimer);
+  _usWatchTimer=setInterval(function(){ usWatchSessLabel(); if(usWatchOpen()) usWatchFetch(); }, 12000);
+}
+
 function switchTab(i){
   activeTab=i;
   [0,1,2,3,4,5].forEach(k=>{ const m=document.getElementById('mt'+k), p=document.getElementById('tp'+k); if(m)m.classList.toggle('on',k===i); if(p)p.classList.toggle('active',k===i); });
@@ -4948,7 +5031,7 @@ function switchTab(i){
   if(i===1){ renderPie(); renderBar(); renderSector(); renderGrowth(); renderThemeHeat(); renderRisk(); const pan=document.getElementById('xirrPanelXirr'); if(pan&&pan.classList.contains('on')){ renderXirr(); calcXIRR(); }else calcDCA(); }
   if(i===2){ renderLiquidated(); }
   if(i===3){ renderWatchTab(); }
-  if(i===5){ loadMarketData(); renderWatch(); refreshWatchQuotes(); }
+  if(i===5){ loadMarketData(); renderWatch(); refreshWatchQuotes(); initUSWatch(); }
 }
 
 // ---------- 市场风向 Tab（核心指数=真实腾讯源；资金流/榜单=示例，待接真实接口） ----------
@@ -11421,7 +11504,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_bond_watch','ft_review','ft_notes','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_acc_note','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw','ft_manual_overrides'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_us_watch','ft_bond_watch','ft_review','ft_notes','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_acc_note','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw','ft_manual_overrides'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }
@@ -12808,6 +12891,27 @@ function renderSyncCfg(){
 .idx-card .idx-row span{white-space:nowrap}
 .idx-grid2.idx-collapsed .idx-spk{display:none}
 .idx-card .idx-spk{cursor:pointer}
+/* ===== 美股夜盘自选看板（复用 idx-card 视觉语言：圆角/分组/等宽数字/红涨绿跌） ===== */
+.uswk-head-right{display:inline-flex;align-items:center;gap:8px}
+.uswk-dot{width:8px;height:8px;border-radius:50%;background:var(--text-3);flex:0 0 auto;transition:background .2s}
+.uswk-dot.open{background:var(--up);box-shadow:0 0 0 3px rgba(229,69,59,.15)}
+.uswk-adder{display:flex;gap:8px;padding:8px 14px 2px}
+.uswk-adder input{flex:1;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.uswk-adder input:focus{border-color:var(--accent)}
+.uswk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:8px 14px 14px}
+.uswk-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:9px 10px;position:relative;overflow:hidden;min-width:0;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:2px}
+.uswk-card .uw-tk{font-size:14px;font-weight:700;letter-spacing:.3px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uswk-card .uw-nm{font-size:10px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.uswk-card .uw-px{font-size:20px;font-weight:800;line-height:1.1;letter-spacing:-.3px;margin-top:3px}
+.uswk-card .uw-pct{font-size:12px;font-weight:600}
+.uswk-card .uw-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);border-top:1px dashed var(--border-3);padding-top:3px;margin-top:2px}
+.uswk-card .uw-row b{color:var(--text);font-weight:600}
+.uswk-card .uw-spk{height:22px;margin-top:2px}
+.uswk-card .uw-del{position:absolute;top:5px;right:7px;border:none;background:none;color:var(--text-3);font-size:15px;line-height:1;padding:2px 4px;cursor:pointer}
+.uswk-card .uw-del:hover{color:var(--up)}
+.uswk-up{color:var(--up)}.uswk-down{color:var(--down)}.uswk-zero{color:var(--text-3)}
+.uswk-foot{font-size:10px;color:var(--text-3);text-align:center;padding:0 14px 12px}
+@media(max-width:520px){.uswk-grid{grid-template-columns:repeat(2,1fr)}.uswk-card .uw-px{font-size:18px}}
 @media(max-width:680px){.idx-grid{grid-template-columns:repeat(2,1fr)}.idx-card{height:124px;min-height:124px}}
 @media(min-width:681px){.idx-list2{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}.idx-list2 .idx-card{height:118px}}
 .bond-drawer{ position:fixed; inset:0; z-index:1200; display:none; }

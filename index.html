@@ -13429,6 +13429,7 @@ function renderWatchTab(){
     +'.wrow .swipe-actions .sa.del{background:var(--up,#d93025)}'
     +'@keyframes wtSwipeHint{0%,100%{transform:translateX(0)}22%{transform:translateX(-34px)}44%{transform:translateX(0)}}'
     +'.wrow.hint .swipe-inner{animation:wtSwipeHint 1.7s ease .6s 2}'
+    +'.wrow.lp-active .swipe-inner{background:#eaf3ff}'
     +'.wt-calc-card{padding:12px 14px}'
     +'.wt-calc-card .calc-row{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:12px 16px;border-bottom:.5px solid var(--border-2)}.wt-calc-card .calc-row:last-of-type{border-bottom:0}'
     +'.wt-calc-card .calc-row .lbl{font-size:13px;color:var(--text)}'
@@ -13588,28 +13589,96 @@ function wtAttachSwipe(){
   const rows=document.querySelectorAll('#tp3 .wrow');
   rows.forEach(function(row){
     const inner=row.querySelector('.swipe-inner'); if(!inner) return;
-    let startX=null, cur=0, open=false;
-    row.addEventListener('touchstart',function(e){ startX=e.touches[0].clientX; },{passive:true});
+    let startX=null, startY=null, cur=0, open=false, lpTimer=null, lpFired=false;
+    row.addEventListener('touchstart',function(e){
+      startX=e.touches[0].clientX; startY=e.touches[0].clientY; lpFired=false;
+      row.classList.remove('lp-active');
+      lpTimer=setTimeout(function(){
+        lpTimer=null; lpFired=true; row.classList.add('lp-active');
+        openWatchCopy(row.getAttribute('data-code'), row.getAttribute('data-name'));
+      },500);
+    },{passive:true});
     row.addEventListener('touchmove',function(e){
       if(startX==null) return;
-      const dx=e.touches[0].clientX-startX;
+      const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
+      if(Math.abs(dx)>10||Math.abs(dy)>10){ if(lpTimer){clearTimeout(lpTimer);lpTimer=null;} row.classList.remove('lp-active'); }
       if(dx<0){ cur=Math.max(-144,dx); inner.style.transition='none'; inner.style.transform='translateX('+cur+'px)'; }
     },{passive:true});
     row.addEventListener('touchend',function(){
+      if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+      row.classList.remove('lp-active');
       if(cur<-72){ open=true; inner.style.transition='transform .2s'; inner.style.transform='translateX(-144px)'; }
       else { open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; }
-      startX=null; cur=0;
+      startX=null; startY=null; cur=0;
     });
     row.addEventListener('click',function(e){
+      if(lpFired){ lpFired=false; e.preventDefault(); e.stopPropagation(); return; }
       if(e.target.closest('.swipe-actions')) return;
       if(e.target.closest('.r3')) return;
       if(open){ open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; return; }
       wtRowMenu(row);
     });
+    row.addEventListener('contextmenu',function(e){
+      e.preventDefault();
+      openWatchCopy(row.getAttribute('data-code'), row.getAttribute('data-name'));
+    });
   });
   if(!localStorage.getItem('ft_watch_swipe_hint')){
     setTimeout(function(){ try{ localStorage.setItem('ft_watch_swipe_hint','1'); }catch(e){} }, 4200);
   }
+}
+
+// 长按 / 右键复制：基金名称 或 代码（含 iOS Safari 兜底）
+var _wtCopyMask=null;
+function openWatchCopy(code,name){
+  code=code||''; name=name||'';
+  if(!_wtCopyMask){
+    const mask=document.createElement('div'); mask.id='wtCopyMask';
+    mask.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:2100;opacity:0;transition:opacity .2s';
+    mask.innerHTML='<div id="wtCopySheet" style="width:100%;max-width:600px;margin:0 auto;background:var(--surface);border-radius:16px 16px 0 0;overflow:hidden;transform:translateY(100%);transition:transform .25s cubic-bezier(.2,.8,.2,1)">'
+      +'<div style="padding:16px;text-align:center;border-bottom:1px solid var(--border-2)"><div id="wtCopyName" style="font-size:16px;font-weight:700"></div><div id="wtCopyCode" style="font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;margin-top:2px"></div></div>'
+      +'<button class="wt-menu-btn" id="wtCopyBtnName">复制名称</button>'
+      +'<button class="wt-menu-btn" id="wtCopyBtnCode">复制代码</button>'
+      +'<button class="wt-menu-btn cancel" id="wtCopyBtnCancel">取消</button>'
+      +'</div>';
+    document.body.appendChild(mask);
+    mask.addEventListener('click',function(e){ if(e.target===mask) closeWatchCopy(); });
+    document.getElementById('wtCopyBtnCancel').addEventListener('click',closeWatchCopy);
+    document.getElementById('wtCopyBtnName').addEventListener('click',function(){ doWatchCopy(name,'名称'); });
+    document.getElementById('wtCopyBtnCode').addEventListener('click',function(){
+      if(!code){ toast('该基金无代码，无法复制'); closeWatchCopy(); return; }
+      doWatchCopy(code,'代码');
+    });
+    _wtCopyMask=mask;
+  }
+  document.getElementById('wtCopyName').textContent=name||code;
+  document.getElementById('wtCopyCode').textContent=code?code:'（无代码）';
+  _wtCopyMask.style.display='flex';
+  requestAnimationFrame(function(){ _wtCopyMask.style.opacity='1'; var sh=document.getElementById('wtCopySheet'); if(sh) sh.style.transform='translateY(0)'; });
+}
+function closeWatchCopy(){
+  if(!_wtCopyMask) return;
+  _wtCopyMask.style.opacity='0';
+  var sh=document.getElementById('wtCopySheet'); if(sh) sh.style.transform='translateY(100%)';
+  setTimeout(function(){ if(_wtCopyMask) _wtCopyMask.style.display='none'; },220);
+}
+function doWatchCopy(text,label){
+  copyText(text).then(function(ok){ toast(ok?('已复制'+label+'：'+text):'复制失败，请长按文本手动复制'); });
+  closeWatchCopy();
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(t).then(function(){return true;}).catch(function(){return fbCopy(t);});
+  }
+  return Promise.resolve(fbCopy(t));
+}
+function fbCopy(t){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=t; ta.style.position='fixed'; ta.style.top='-9999px'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok=document.execCommand('copy'); ta.remove(); return ok;
+  }catch(e){ return false; }
 }
 
 

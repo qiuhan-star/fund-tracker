@@ -10385,8 +10385,9 @@ function ehSave(){
   setManualOverride(_ehFundAcc,_ehFundName,{mv,profit});
   toast('持仓已手动更新');
   closeEditHoldingsModal();
-  // 刷新详情页
-  try{ if(typeof updateDetailHeader==='function'&&typeof detailName!=='undefined'&&detailName===_ehFundName){
+  // 刷新详情页：先重建 fundsView 让手动覆盖值生效，再更新 UI
+  try{ if(typeof detailName!=='undefined'&&detailName===_ehFundName){
+    buildFundsView();
     const f=findFund(_ehFundName,_ehFundAcc); if(f){ updateDetailHeader(f); renderDetailTabs(f); }
   } }catch(e){}
 }
@@ -10394,7 +10395,9 @@ function ehClearOverride(){
   clearManualOverride(_ehFundAcc,_ehFundName);
   toast('已恢复为自动计算');
   closeEditHoldingsModal();
-  try{ if(typeof updateDetailHeader==='function'&&typeof detailName!=='undefined'&&detailName===_ehFundName){
+  // 刷新详情页：先重建 fundsView 让重算值生效，再更新 UI
+  try{ if(typeof detailName!=='undefined'&&detailName===_ehFundName){
+    buildFundsView();
     const f=findFund(_ehFundName,_ehFundAcc); if(f){ updateDetailHeader(f); renderDetailTabs(f); }
   } }catch(e){}
 }
@@ -13215,7 +13218,7 @@ function uwRow(it){
     +'<div class="swipe-inner">'
       +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span></div>'
       +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="y1">近1年 '+it.y1+'</span><button type="button" class="buy-flag'+(it.buy?' on':'')+'" data-key="'+escAttr(it.isBond?(it.code||''):(it.name||''))+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="toggleWatchBuy(this);event.stopPropagation()" title="准备买入？点亮后进入买入决策测算" aria-label="待买开关">🛒</button></div>'
-      +'<div class="r3" onclick="openWatchNote('+JSON.stringify(it.key)+','+(it.isBond?1:0)+');event.stopPropagation()"><span class="pin">📝</span><span class="ntxt'+(it.note?'':' empty')+'">'+(it.note?escHtml(it.note):'添加备注…')+'</span></div>'
+      +'<div class="r3" onclick="openWatchNote('+JSON.stringify(it.key)+','+(it.isBond?1:0)+');event.stopPropagation();event.preventDefault();return false"><span class="pin">📝</span><span class="ntxt'+(it.note?'':' empty')+'">'+(it.note?escHtml(it.note):'添加备注…')+'</span></div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
   +'</div>';
@@ -13599,6 +13602,7 @@ function wtAttachSwipe(){
     });
     row.addEventListener('click',function(e){
       if(e.target.closest('.swipe-actions')) return;
+      if(e.target.closest('.r3')) return;
       if(open){ open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; return; }
       wtRowMenu(row);
     });

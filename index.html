@@ -4086,6 +4086,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     </div>
   </div>
 
+  <div class="sheet-mask" id="alertMask" onclick="closeAlertSheet()"></div>
+  <div class="sheet" id="alertSheet">
+    <div class="sheet-card rv-sheet-card">
+      <div class="rv-sheet-head"><span class="t">提醒设置</span><button class="rv-sheet-x" onclick="closeAlertSheet()" aria-label="关闭">×</button></div>
+      <div id="alertSheetBody"></div>
+    </div>
+  </div>
+
   <!-- 交易选择器弹窗 -->
   <div id="tradePicker"></div>
   <div id="allTradesModal"></div>
@@ -6971,7 +6979,7 @@ function buildLiquidatedView(){
       const sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0);
       if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ totalBuy+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } }
       else if(ty==='sell'||ty==='convert_out'){ totalSell+=amt; sellFee+=fee; if(shares>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; realized+=(nav-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } sellNavW+=nav*sh; sellShW+=sh; }   // 平均成本法（与支付宝一致）
-      else if(ty==='dividend'){ div+=amt; if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }
+      else if(ty==='dividend'){ div+=amt; realized+=amt; }   // 现金分红：成本不变，仅计入已实现收益
       else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }
       else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }
       if(shares<0) shares=0; if(cost<0) cost=0;
@@ -7238,7 +7246,7 @@ function buildFundsView(){
         if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
         if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
         else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; const sellPx=nav>0?nav:lastNav; realized+=(sellPx-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }   // 平均成本法（与支付宝一致）：卖出按加权平均成本扣减，剩余持仓成本单价不变
-        else if(ty==='dividend'){ if(cost>0){ const fac=(cost-amt)/cost; lots.forEach(l=>l.cp*=fac); } cost=Math.max(0,cost-amt); realized+=amt; }   // 现金分红：降成本、份额不变，计入已实现
+        else if(ty==='dividend'){ realized+=amt; }   // 现金分红：成本不变，仅计入已实现收益（与支付宝一致：分红不影响持仓成本）
         else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
         else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }             // 份额拆分：份额×比例、成本不变
         if(shares<0) shares=0; if(cost<0) cost=0;
@@ -7883,9 +7891,17 @@ function detailEditHolding(){
   toast('持仓由交易流水自动计算，可在交易记录里新增 / 修改笔数');
 }
 function detailScrollAlert(){
-  var card=document.getElementById('detailAlertCard');
-  if(card){ card.scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  var body=document.getElementById('alertSheetBody');
+  if(body){ openAlertSheet(); return; }
   toast('提醒设置暂未生成，稍后再试');
+}
+function openAlertSheet(){
+  var m=document.getElementById('alertMask'), s=document.getElementById('alertSheet');
+  if(m) m.classList.add('show'); if(s) s.classList.add('show');
+}
+function closeAlertSheet(){
+  var m=document.getElementById('alertMask'), s=document.getElementById('alertSheet');
+  if(m) m.classList.remove('show'); if(s) s.classList.remove('show');
 }
 function detailAddWatch(){
   if(!detailName) return;
@@ -8112,7 +8128,7 @@ function detailProfitPanelHtml(f){
       <div class="profit-cell"><div class="k">已实现盈亏</div><div class="v ${f.realized>=0?'pos':'neg'}">${f.realized>=0?'+':''}${M(f.realized||0)}</div></div>
       <div class="profit-cell"><div class="k">${dayGainLabel(navCache[f.name]||{})}</div><div class="v ${dayCls}">${day==null?'—':((day>=0?'+':'')+M(day))}</div></div>
     </div>
-    <div class="profit-explain">累计盈亏 = 持有收益 + 已实现盈亏。持有收益是当前持仓的浮动盈亏，已实现盈亏是卖出后落袋的结果，今日收益按最新净值估算。</div>
+    <div class="profit-explain">累计盈亏 = 持有收益 + 已实现盈亏。持有收益是当前持仓的浮动盈亏，已实现盈亏是卖出和分红落袋后的结果，今日收益按最新净值估算。</div>
   </div>`;
 }
 
@@ -8394,31 +8410,8 @@ function liveSection(f){
       </div>
     </div>`;
   }
-  const al=alerts[f.name]||{};
-  const curRet=(f.ret!=null?f.ret:0);
-  h+=`<div class="card" id="detailAlertCard"><h2>止盈 / 止损预警线 <span class="tp-badge" id="tpBadge">监控中</span></h2>
-    <p class="hint">设置后，首页列表会按当前收益率高亮提醒（刷新后生效）。下方标尺实时显示你当前处于哪个区间。</p>
-    <div class="tp-status">当前收益率 <b class="${curRet>=0?'pos':'neg'}" id="tpCur">${curRet>=0?'+':''}${curRet.toFixed(1)}%</b> · 距止盈线还有 <b id="tpRemain">—</b></div>
-    <div class="tp-scalewrap" id="tpScalewrap" style="display:none">
-      <div class="tp-end left">止损线<b id="tpSlVal">—</b></div>
-      <div class="tp-end right">止盈线<b id="tpTpVal">—</b></div>
-      <div class="tp-track"><div class="tp-marker" id="tpMarker" data-y="" style="left:50%"></div></div>
-    </div>
-    <div class="tp-targets" id="tpTargets" style="display:none">
-      <div class="tp-target tp">止盈目标净值<b id="tpNav">—</b></div>
-      <div class="tp-target sl">止损净值<b id="slNav">—</b></div>
-    </div>
-    <div class="tp-presets">
-      <p class="pr">止盈快捷设置</p>
-      <span>${[10,15,20,25].map(v=>`<button class="chip${al.tp===v?' on':''}" onclick="tpSet('${encodeURIComponent(f.name)}','tp',${v},this)">+${v}%</button>`).join('')}</span>
-      <p class="pr" style="margin-top:10px">止损快捷设置</p>
-      <span>${[10,15,20].map(v=>`<button class="chip${al.sl===-v?' on':''}" onclick="tpSet('${encodeURIComponent(f.name)}','sl',${v},this)">-${v}%</button>`).join('')}</span>
-      <div class="tp-edit">
-        <label>止盈 +<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.tp!=null?al.tp:''}" placeholder="如 20" oninput="tpInput('${encodeURIComponent(f.name)}','tp',this.value)">%</label>
-        <label>止损 −<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.sl!=null?al.sl:''}" placeholder="如 15" oninput="tpInput('${encodeURIComponent(f.name)}','sl',this.value)">%</label>
-      </div>
-    </div>
-  </div>`;
+  (function(){ var ab=document.getElementById('alertSheetBody'); if(ab){ ab.innerHTML=buildAlertCardHtml(f); } })();
+
 
   h+=`</div>`;
   setTimeout(function(){ try{ tpRedraw(encodeURIComponent(f.name)); }catch(e){ console.error(e); } },0);
@@ -11109,6 +11102,34 @@ function simulateAddPosition(enc){
 
 function tpSet(enc,field,val,el){ setAlert(enc,field,String(val)); if(el&&el.parentElement){ el.parentElement.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); el.classList.add('on'); } tpRedraw(enc); }
 function tpInput(enc,field,val){ setAlert(enc,field,val); tpRedraw(enc); }
+function buildAlertCardHtml(f){
+  const al=alerts[f.name]||{};
+  const curRet=(f.ret!=null?f.ret:0);
+  return `<div class="card" id="detailAlertCard"><h2>止盈 / 止损预警线 <span class="tp-badge" id="tpBadge">监控中</span></h2>
+    <p class="hint">设置后，首页列表会按当前收益率高亮提醒（刷新后生效）。下方标尺实时显示你当前处于哪个区间。</p>
+    <div class="tp-status">当前收益率 <b class="${curRet>=0?'pos':'neg'}" id="tpCur">${curRet>=0?'+':''}${curRet.toFixed(1)}%</b> · 距止盈线还有 <b id="tpRemain">—</b></div>
+    <div class="tp-scalewrap" id="tpScalewrap" style="display:none">
+      <div class="tp-end left">止损线<b id="tpSlVal">—</b></div>
+      <div class="tp-end right">止盈线<b id="tpTpVal">—</b></div>
+      <div class="tp-track"><div class="tp-marker" id="tpMarker" data-y="" style="left:50%"></div></div>
+    </div>
+    <div class="tp-targets" id="tpTargets" style="display:none">
+      <div class="tp-target tp">止盈目标净值<b id="tpNav">—</b></div>
+      <div class="tp-target sl">止损净值<b id="slNav">—</b></div>
+    </div>
+    <div class="tp-presets">
+      <p class="pr">止盈快捷设置</p>
+      <span>${[10,15,20,25].map(v=>`<button class="chip${al.tp===v?' on':''}" onclick="tpSet('${encodeURIComponent(f.name)}','tp',${v},this)">+${v}%</button>`).join('')}</span>
+      <p class="pr" style="margin-top:10px">止损快捷设置</p>
+      <span>${[10,15,20].map(v=>`<button class="chip${al.sl===-v?' on':''}" onclick="tpSet('${encodeURIComponent(f.name)}','sl',${v},this)">-${v}%</button>`).join('')}</span>
+      <div class="tp-edit">
+        <label>止盈 +<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.tp!=null?al.tp:''}" placeholder="如 20" oninput="tpInput('${encodeURIComponent(f.name)}','tp',this.value)">%</label>
+        <label>止损 −<input class="al-input" type="number" step="any" inputmode="decimal" value="${al.sl!=null?al.sl:''}" placeholder="如 15" oninput="tpInput('${encodeURIComponent(f.name)}','sl',this.value)">%</label>
+      </div>
+    </div>
+  </div>`;
+}
+
 function tpRedraw(enc){
   const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return;
   const al=alerts[f.name]||{}, tp=al.tp, sl=al.sl;

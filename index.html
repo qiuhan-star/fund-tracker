@@ -530,6 +530,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .eh-btn-reset { background:var(--bg); color:var(--text-3); border:1px solid var(--border); }
 .eh-btn-reset:active { background:rgba(0,0,0,.05); }
 .eh-tag { display:inline-block; font-size:11px; background:#e8edf8; color:#4A7BF7; border-radius:4px; padding:2px 6px; margin-left:6px; }
+.eh-seg-wrap { display:flex; border-radius:10px; background:var(--surface-2,#f0f0f3); padding:2px; margin-bottom:14px; }
+.eh-seg-btn { flex:1; height:34px; border:none; border-radius:8px; background:transparent; color:var(--text-2); font-size:13px; font-weight:500; cursor:pointer; transition:all .2s; }
+.eh-seg-btn.on { background:var(--bg); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,.08); }
 .dca-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
 .dca-paused { opacity:.6; }
 .dca-card-top { display:flex; align-items:center; gap:10px; }
@@ -10516,22 +10519,40 @@ function openDcaModal(name){
 }
 function closeDcaModal(){ const m=document.getElementById('dcaMask'); if(m) m.classList.remove('show'); }
 // ===== 修改持仓弹窗 =====
-let _ehFundName='', _ehFundAcc='';
+let _ehFundName='', _ehFundAcc='', _ehMode='amount';
 function openEditHoldingsModal(nameEnc,accEnc){
   const name=decodeURIComponent(nameEnc), acc=decodeURIComponent(accEnc);
-  _ehFundName=name; _ehFundAcc=acc;
+  _ehFundName=name; _ehFundAcc=acc; _ehMode='amount';
   const f=findFund(name,acc);
   const mo=getManualOverride(acc,name);
-  const mvEl=document.getElementById('ehMv'), profitEl=document.getElementById('ehProfit'), nameEl=document.getElementById('ehFundName'), resetEl=document.getElementById('ehResetBtn');
+  const nameEl=document.getElementById('ehFundName'), resetEl=document.getElementById('ehResetBtn');
   if(nameEl) nameEl.textContent=name+(f&&f.account?' · '+effAccount(f.account):'');
+  if(resetEl) resetEl.style.display=mo?'':'none';
+  // 切换到按金额模式（默认），回显已有值
+  ehSetMode('amount');
+  const mvEl=document.getElementById('ehMv'), profitEl=document.getElementById('ehProfit');
   if(mvEl) mvEl.value=mo?mo.mv:'';
   if(profitEl) profitEl.value=mo?mo.profit:'';
-  if(resetEl) resetEl.style.display=mo?'':'none';
+  // 如果已有份额，同步到份额模式
+  const shEl=document.getElementById('ehShares'), mv2El=document.getElementById('ehMv2'), profit2El=document.getElementById('ehProfit2');
+  if(shEl) shEl.value='';
+  if(mv2El) mv2El.value='';
+  if(profit2El) profit2El.value='';
+  if(mo && mo.shares!=null) shEl.value=mo.shares;
   ehUpdateDerived();
   const m=document.getElementById('ehMask'); if(m) m.classList.add('show');
 }
+function ehSetMode(mode){
+  _ehMode=mode;
+  document.querySelectorAll('.eh-seg-btn').forEach(function(b){ b.classList.toggle('on',b.dataset.mode===mode); });
+  const a=document.getElementById('ehFieldsAmount'), s=document.getElementById('ehFieldsShares');
+  if(a) a.style.display=mode==='amount'?'':'none';
+  if(s) s.style.display=mode==='shares'?'':'none';
+  ehUpdateDerived();
+}
 function ehToggleSign(){
-  const el=document.getElementById('ehProfit'); if(!el) return;
+  const id=_ehMode==='shares'?'ehProfit2':'ehProfit';
+  const el=document.getElementById(id); if(!el) return;
   const v=el.value.trim();
   if(v.startsWith('-')){ el.value=v.slice(1); }
   else if(v!==''){ el.value='-'+v; }
@@ -10540,21 +10561,35 @@ function ehToggleSign(){
   ehUpdateDerived();
 }
 function closeEditHoldingsModal(){ const m=document.getElementById('ehMask'); if(m) m.classList.remove('show'); }
-function ehUpdateDerived(){
+function ehGetFields(){
+  if(_ehMode==='shares'){
+    const sh=+(document.getElementById('ehShares')?.value||0), mv=+(document.getElementById('ehMv2')?.value||0), profit=+(document.getElementById('ehProfit2')?.value||0);
+    return {shares:sh, mv, profit};
+  }
   const mv=+(document.getElementById('ehMv')?.value||0), profit=+(document.getElementById('ehProfit')?.value||0);
-  const hit=document.getElementById('ehDerived'), profitEl=document.getElementById('ehProfit');
+  return {shares:0, mv, profit};
+}
+function ehUpdateDerived(){
+  const {shares, mv, profit}=ehGetFields();
+  const hit=document.getElementById('ehDerived');
+  const profitId=_ehMode==='shares'?'ehProfit2':'ehProfit';
+  const profitEl=document.getElementById(profitId);
   if(profitEl) profitEl.classList.toggle('neg',profit<0);
   if(mv>0){
     const cost=mv-profit, ret=cost>0?profit/cost*100:0;
-    if(hit) hit.innerHTML='持仓成本：<b>'+M(cost)+'</b> 元 · 持有收益率：<b>'+(ret>=0?'+':'')+ret.toFixed(2)+'%</b>';
+    let parts=[];
+    if(shares>0&&mv>0) parts.push('最新净值：<b>'+fmt(shares>0?mv/shares:0)+'</b>');
+    parts.push('持仓成本：<b>'+M(cost)+'</b> 元');
+    parts.push('持有收益率：<b>'+(ret>=0?'+':'')+ret.toFixed(2)+'%</b>');
+    if(hit) hit.innerHTML=parts.join(' · ');
   } else {
     if(hit) hit.innerHTML='填写持有金额和持有收益后，自动计算持仓成本和持有收益率';
   }
 }
 function ehSave(){
-  const mv=+(document.getElementById('ehMv')?.value||0), profit=+(document.getElementById('ehProfit')?.value||0);
+  const {shares, mv, profit}=ehGetFields();
   if(mv<=0){ toast('请填写持有金额'); return; }
-  setManualOverride(_ehFundAcc,_ehFundName,{mv,profit});
+  setManualOverride(_ehFundAcc,_ehFundName,{mv,profit,shares:shares>0?shares:null});
   toast('持仓已手动更新');
   closeEditHoldingsModal();
   // 刷新详情页：先重建 fundsView 让手动覆盖值生效，再更新 UI
@@ -12434,16 +12469,40 @@ function renderSyncCfg(){
     <div class="eh-body">
       <div class="eh-fund-name" id="ehFundName"></div>
 
-      <div class="eh-field">
-        <label>持有金额（元）</label>
-        <input id="ehMv" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+      <div class="eh-seg-wrap">
+        <button class="eh-seg-btn on" data-mode="amount" onclick="ehSetMode('amount')">按金额填</button>
+        <button class="eh-seg-btn" data-mode="shares" onclick="ehSetMode('shares')">按份额填</button>
       </div>
 
-      <div class="eh-field">
-        <label>持有收益（元）</label>
-        <div class="eh-input-wrap">
-          <button class="eh-sign" onclick="ehToggleSign()">±</button>
-          <input id="ehProfit" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+      <div id="ehFieldsAmount">
+        <div class="eh-field">
+          <label>持有金额（元）</label>
+          <input id="ehMv" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+        </div>
+        <div class="eh-field">
+          <label>持有收益（元）</label>
+          <div class="eh-input-wrap">
+            <button class="eh-sign" onclick="ehToggleSign()">±</button>
+            <input id="ehProfit" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+          </div>
+        </div>
+      </div>
+
+      <div id="ehFieldsShares" style="display:none">
+        <div class="eh-field">
+          <label>持有份额</label>
+          <input id="ehShares" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+        </div>
+        <div class="eh-field">
+          <label>持有金额（元）</label>
+          <input id="ehMv2" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+        </div>
+        <div class="eh-field">
+          <label>持有收益（元）</label>
+          <div class="eh-input-wrap">
+            <button class="eh-sign" onclick="ehToggleSign()">±</button>
+            <input id="ehProfit2" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+          </div>
         </div>
       </div>
 

@@ -9032,7 +9032,7 @@ function addTradeMenu(){
   if(dl) dl.innerHTML=[...new Set(list.map(f=>f.name))].map(n=>`<option value="${esc(n)}">`).join('');
   const accSel=document.getElementById('tq-acc');
   if(accSel){ const cur=accSel.value||effAccount('本人账户'); accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
-  const dt=document.getElementById('tq-datetime'); if(dt && !dt.value){ var d=new Date(), pad=function(n){return String(n).padStart(2,'0');}; var _def=(function(){try{return localStorage.getItem('ft_default_time')||'now';}catch(e){return 'now';}})(); var _t=_def==='now'?(pad(d.getHours())+':'+pad(d.getMinutes())):'15:00'; dt.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+_t; updateTimeIndicators(); }
+  const dt=document.getElementById('tq-datetime'); if(dt && !dt.value){ var d=new Date(), pad=function(n){return String(n).padStart(2,'0');}; var _def=(function(){try{return localStorage.getItem('ft_default_time')||'1500';}catch(e){return '1500';}})(); var _t=_def==='now'?(pad(d.getHours())+':'+pad(d.getMinutes())):'15:00'; dt.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+_t; updateTimeIndicators(); }
   const ty=document.getElementById('tq-type'); if(ty && !ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
   const disp=document.getElementById('tq-fund-name'); if(disp) disp.classList.remove('show');
   const fin=document.getElementById('tq-fund'); if(fin) fin.classList.remove('hide');
@@ -9438,7 +9438,7 @@ function updateTimeIndicators(){
     const v=el.value;
     if(!v||v.length<16){ hint.textContent=''; return; }
     const t=v.slice(11,16);
-    if(t>='15:00'){ hint.textContent='15:00后 · 次日净值'; }else{ hint.textContent='15:00前 · 当日净值'; }
+    if(t>'15:00'){ hint.textContent='15:00后 · 次日净值'; }else{ hint.textContent='15:00前 · 当日净值'; }
   });
 }
 function tqRecalcEst(){
@@ -10518,7 +10518,7 @@ async function refresh(){
     // 工具：把 "YYYY-MM-DD HH:MM[:SS]" 拆成 {date,time(HH:MM)}；"00:00" 视为无时间
     const splitDT=(s)=>{ s=String(s||'').trim(); const m=s.match(/^(\d{4}[-/]\d{1,2}[-/]\d{1,2})(?:[ T](\d{1,2}:\d{2}(?::\d{2})?))?/); return m?{date:m[1].replace(/\//g,'-'),time:(m[2]&&m[2].slice(0,5)!=='00:00'?m[2].slice(0,5):'')}:{date:String(s||'').replace(/\//g,'-'),time:''}; };
     // 工具：由买入日+时间推导净值确认日（T+1；15:00 后 T+2；跳过周六日）
-    const deriveCD=(dateStr,timeStr)=>{ if(!dateStr) return ''; let ds=String(dateStr).replace(/\//g,'-'), ts=timeStr||''; const m=ds.match(/ (\d{1,2}:\d{2})/); if(!ts&&m){ ts=m[1]; ds=ds.slice(0,m.index).trim(); } let d=new Date(ds.replace(/-/g,'/')); if(isNaN(d)) return ''; d.setDate(d.getDate()+1); if(ts>='15:00') d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1); return fmtDate(d); };
+    const deriveCD=(dateStr,timeStr)=>{ if(!dateStr) return ''; let ds=String(dateStr).replace(/\//g,'-'), ts=timeStr||''; const m=ds.match(/ (\d{1,2}:\d{2})/); if(!ts&&m){ ts=m[1]; ds=ds.slice(0,m.index).trim(); } let d=new Date(ds.replace(/-/g,'/')); if(isNaN(d)) return ''; d.setDate(d.getDate()+1); if(ts>'15:00') d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1); return fmtDate(d); };
     // 历史兼容：t.date 内嵌时间拆到 t.time；并自动补净值确认日期（无需联网）
     trades.forEach(t=>{
       if(t.confirm==='cancelled') return;
@@ -10536,7 +10536,7 @@ async function refresh(){
       if(!amt&&!sh) return false;                // 金额+份额都无，无法反推
       let sd=new Date(String(t.date).replace(/-/g,'/'));
       if(isNaN(sd)) return false;
-      if(t.time&&t.time>='15:00') sd.setDate(sd.getDate()+1);
+      if(t.time&&t.time>'15:00') sd.setDate(sd.getDate()+1);
       sd.setHours(0,0,0,0);
       if(!(sd<=today)) return false;             // 未到结算日
       return true;
@@ -10551,7 +10551,7 @@ async function refresh(){
           const hist=await fetchNavHistory(code);
           if(hist&&hist.length){
             let sd=new Date(String(t.date).replace(/-/g,'/'));
-            if(t.time&&t.time>='15:00') sd.setDate(sd.getDate()+1);
+            if(t.time&&t.time>'15:00') sd.setDate(sd.getDate()+1);
             sd.setHours(0,0,0,0);
             let best=null; for(const p of hist){ if(p.t<=sd&&p.nav!=null) best=p.nav; }
             if(best!=null) nav=best;

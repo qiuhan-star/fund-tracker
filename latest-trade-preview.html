@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>最新交易 - 效果预览</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:#f2f2f7; padding:20px; }
+.container { max-width:420px; margin:0 auto; }
+
+/* 卡片 */
+.card { background:#fff; border-radius:14px; padding:16px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+
+/* 效果标题 */
+.preview-title { font-size:13px; font-weight:600; color:#666; margin-bottom:8px; }
+
+/* 最新方案（推荐） */
+.label { font-size:12px; color:#8e8e93; margin-bottom:6px; }
+.value-row { display:flex; align-items:baseline; gap:6px; }
+.value-date { font-size:17px; font-weight:700; color:#1c1c1e; }
+.value-pend { font-size:12px; font-weight:600; color:#e67e00; }
+
+/* 前两个方案 */
+.old-label { font-size:12px; color:#8e8e93; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.old-pill { display:inline-flex; align-items:center; font-size:10px; padding:1px 6px; border-radius:999px; background:rgba(255,149,0,.14); color:#e67e00; font-weight:600; line-height:1.3; }
+.old-value { font-size:17px; font-weight:700; color:#1c1c1e; }
+.old-pend-inline { font-size:12px; font-weight:600; color:#e67e00; margin-left:4px; }
+
+/* 展开网格 */
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin-top:8px; padding-top:8px; border-top:1px solid #e5e5ea; }
+.cell { min-width:0; }
+.cell-label { font-size:12px; color:#8e8e93; margin-bottom:5px; white-space:nowrap; }
+.cell-value { font-size:17px; font-weight:700; color:#1c1c1e; white-space:nowrap; overflow:visible; }
+
+/* 高亮框 */
+.highlight { border:2px solid #4a90d9; border-radius:8px; padding:6px 8px; position:relative; }
+.highlight::after { content:'当前方案'; position:absolute; top:-10px; right:8px; font-size:10px; background:#4a90d9; color:#fff; padding:1px 6px; border-radius:4px; }
+
+/* 对比标签 */
+.vs { text-align:center; font-size:12px; font-weight:600; color:#999; margin:12px 0; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 当前方案 -->
+  <div class="card">
+    <div class="preview-title">当前方案 ✓</div>
+    <div class="grid" style="border-top:none;padding-top:0;margin-top:0">
+      <div class="cell">
+        <div class="cell-label">净投入</div>
+        <div class="cell-value">¥11,951.14</div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">交易笔数</div>
+        <div class="cell-value">50 笔</div>
+      </div>
+      <div class="cell highlight">
+        <div class="cell-label">最新交易</div>
+        <div class="cell-value">
+          <span style="font-weight:700">2026-08-13</span>
+          <span class="value-pend">待确认</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#999;margin-top:10px;padding-top:8px;border-top:1px solid #eee">
+      ✓ 标签行干净 · 日期 + 橙色文字同行 · 不会被截断
+    </div>
+  </div>
+
+  <!-- 两种旧方案对比 -->
+  <div class="card">
+    <div class="preview-title">历史方案对比</div>
+
+    <div class="label" style="font-weight:600;color:#666;margin-bottom:6px">方案 1：标签行带药丸徽标</div>
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0">
+      <span class="old-label">最新交易 <span class="old-pill">待确认</span></span>
+    </div>
+    <div class="old-value">2026-08-13</div>
+    <div style="font-size:11px;color:#e67e00;margin-top:4px">⚠ 标签行左右不平衡</div>
+
+    <div style="border-top:1px dashed #eee;margin:12px 0"></div>
+
+    <div class="label" style="font-weight:600;color:#666;margin-bottom:6px">方案 2：日期下方轻量状态</div>
+    <div class="cell-label">最新交易</div>
+    <div class="old-value">2026-08-13</div>
+    <div style="font-size:11px;font-weight:600;color:#e67e00;margin-top:1px">待确认</div>
+    <div style="font-size:11px;color:#999;margin-top:4px">⚠ 行高略增，三列不对齐</div>
+  </div>
+
+  <!-- 完整详情页头部模拟 -->
+  <div class="card" style="border-radius:14px;overflow:hidden;padding:0">
+    <div style="background:#4a90d9;padding:12px 16px;color:#fff;font-size:16px;font-weight:600">
+      ← 返回首页
+    </div>
+    <div style="padding:16px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <h1 style="font-size:18px;font-weight:700;margin:0">汇添富中证芯片产业指数增强C</h1>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="font-size:12px;color:#8e8e93">芯片</span>
+        <span style="font-size:12px;color:#8e8e93">本人账户</span>
+        <span style="font-size:12px;padding:1px 6px;border-radius:4px;border:1px solid #8e8e93;color:#8e8e93">¥CNY</span>
+      </div>
+
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-size:12px;color:#8e8e93;margin-bottom:4px">金额（元）</div>
+        <div style="font-size:30px;font-weight:760;color:#1c1c1e">¥13,988.91</div>
+      </div>
+
+      <div class="grid">
+        <div class="cell" style="text-align:center">
+          <div class="cell-label">今日收益</div>
+          <div class="cell-value" style="color:#e74c3c">-¥155.59</div>
+        </div>
+        <div class="cell" style="text-align:center">
+          <div class="cell-label">持有收益</div>
+          <div class="cell-value" style="color:#27ae60">-¥790.26</div>
+        </div>
+        <div class="cell" style="text-align:center">
+          <div class="cell-label">持有收益率</div>
+          <div class="cell-value" style="color:#27ae60">-5.35%</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="cell" style="text-align:center">
+          <div class="cell-label">净投入</div>
+          <div class="cell-value">¥11,951.14</div>
+        </div>
+        <div class="cell" style="text-align:center">
+          <div class="cell-label">交易笔数</div>
+          <div class="cell-value">50 笔</div>
+        </div>
+        <div class="cell" style="text-align:center;border-left:1px solid #e5e5ea">
+          <div class="cell-label" style="justify-content:center">最新交易</div>
+          <div class="cell-value" style="justify-content:center">
+            <span>2026-08-13</span>
+            <span class="value-pend">待确认</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;font-size:11px;color:#999;margin-top:8px">
+    打开手机浏览器或缩放窗口查看移动端效果
+  </div>
+</div>
+
+</body>
+</html>

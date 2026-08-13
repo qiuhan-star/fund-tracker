@@ -4278,10 +4278,35 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       </div>
       <label class="fld"><span>备注</span><textarea id="dr-note" rows="2" placeholder="可选备注"></textarea></label>
     <div class="drawer-foot">
+      <button class="btn secondary" onclick="showCopyLast()">复制上一条</button>
       <button class="btn ghost" onclick="closeDrawer()">取消</button>
       <button class="btn primary" onclick="drawerSave()">保存并记账</button>
     </div>
   </aside>
+  <div id="copyLastModal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(17,24,39,.45);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;color:#1f2937;border-radius:14px;max-width:400px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25);">
+      <div style="background:#185fa5;color:#fff;padding:14px 18px;font-size:15px;font-weight:500;border-radius:14px 14px 0 0;">复制上一条交易 · 勾选要带过来的字段</div>
+      <div style="padding:14px 18px;">
+        <div style="font-size:13px;font-weight:500;color:#6b7280;margin:0 0 6px;">基础信息（通常不变）</div>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-fund" checked style="width:16px;height:16px;accent-color:#185fa5;"> 基金名称</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-acc" checked style="width:16px;height:16px;accent-color:#185fa5;"> 账户</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-type" checked style="width:16px;height:16px;accent-color:#185fa5;"> 业务类型（买入 / 赎回…）</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0 10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-fee" checked style="width:16px;height:16px;accent-color:#185fa5;"> 费率</label>
+        <div style="font-size:13px;font-weight:500;color:#6b7280;margin:6px 0;padding-top:10px;border-top:1px solid #eee;">交易明细（每笔不同）</div>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-date" style="width:16px;height:16px;accent-color:#185fa5;"> 买入日期（不勾则自动填今天）</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-time" checked style="width:16px;height:16px;accent-color:#185fa5;"> 买入时间</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-amount" checked style="width:16px;height:16px;accent-color:#185fa5;"> 金额</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-nav" style="width:16px;height:16px;accent-color:#185fa5;"> 净值（不勾则 T+1 自动补）</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-shares" style="width:16px;height:16px;accent-color:#185fa5;"> 份额</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-note" style="width:16px;height:16px;accent-color:#185fa5;"> 备注</label>
+      </div>
+      <div style="display:flex;gap:8px;padding:12px 18px 16px;border-top:1px solid #eee;">
+        <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="toggleCopyAll()">全选 / 全不选</button>
+        <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="document.getElementById('copyLastModal').style.display='none'">取消</button>
+        <button style="flex:1.4;padding:8px;border:1px solid #185fa5;border-radius:8px;background:#185fa5;color:#fff;font-size:13px;cursor:pointer;" onclick="applyCopyLast()">确定复制</button>
+      </div>
+    </div>
+  </div>
 
 <script>
 // ---------- 示例数据 ----------
@@ -8567,6 +8592,42 @@ function openDrawer(){
   draftRestore('ft_draft_drawer', DRAFT_DR_IDS, 'drDraftPill');
 }
 function closeDrawer(e){ if(e&&e.target&&!e.target.classList.contains('drawer-mask')) return; const m=document.getElementById('drawerMask'); if(m) m.style.display='none'; const d=document.getElementById('drawer'); if(d){ d.classList.remove('open'); d.setAttribute('aria-hidden','true'); } }
+function showCopyLast(){
+  if(!trades || !trades.length){ toast('还没有交易可复制'); return; }
+  const m=document.getElementById('copyLastModal');
+  if(m) m.style.display='flex';
+}
+function toggleCopyAll(){
+  const m=document.getElementById('copyLastModal'); if(!m) return;
+  const boxes=m.querySelectorAll('input[type=checkbox]');
+  let allChecked=true; boxes.forEach(b=>{ if(!b.checked) allChecked=false; });
+  boxes.forEach(b=>{ b.checked=!allChecked; });
+}
+function applyCopyLast(){
+  const m=document.getElementById('copyLastModal'); if(m) m.style.display='none';
+  if(!trades || !trades.length){ toast('还没有交易可复制'); return; }
+  const t=trades[trades.length-1];
+  const pick=id=>{ const el=document.getElementById(id); return el?el.checked:false; };
+  try{ if(typeof draftClear==='function') draftClear('ft_draft_drawer', DRAFT_DR_IDS); }catch(e){}
+  openDrawer();
+  const _dp=document.getElementById('drDraftPill'); if(_dp) _dp.classList.remove('show');
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?'':v); };
+  if(pick('cp-fund')) set('dr-fund', t.name||'');
+  if(pick('cp-acc')) set('dr-acc', t.account||'');
+  if(pick('cp-type')) set('dr-type', t.type||'buy');
+  if(pick('cp-fee')) set('dr-fee', t.fee!=null?t.fee:'');
+  const dt=document.getElementById('dr-date');
+  if(pick('cp-date')){ set('dr-date', t.date||''); }
+  else if(dt){ dt.value=new Date().toISOString().slice(0,10); }
+  if(pick('cp-time')) set('dr-time', t.time||'');
+  if(pick('cp-amount')) set('dr-amount', t.amount!=null?t.amount:'');
+  if(pick('cp-nav')) set('dr-nav', t.nav!=null?t.nav:'');
+  if(pick('cp-shares')) set('dr-shares', t.shares!=null?t.shares:'');
+  if(pick('cp-note')) set('dr-note', t.note||'');
+  try{ if(typeof autoFee==='function') autoFee('dr'); }catch(e){}
+  toast('已复制上一条：'+(t.name||'')+'（未勾的留空，可现填）');
+}
+
 function drawerSave(){
   const g=id=>document.getElementById(id);
   const name=(g('dr-fund').value||'').trim();

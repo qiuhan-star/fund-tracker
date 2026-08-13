@@ -7947,9 +7947,9 @@ function headerHtml(f){
   const _tr=(trades||[]).filter(t=>t.name===f.name);
   const _tradeCount=_tr.length;
   const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
-  const _latest=_tr.length?_tr.map(function(t){return t.date||'';}).sort().slice(-1)[0]:'';
+  const _lt=latestTradeOf(f.name);
   const _netTxt=_tr.length?M(_net):'—';
-  const _latestTxt=_latest?_latest:'—';
+  const _latestTxt=_lt?(_lt.date+(_lt.confirm==='pending'?'（待确认）':'')):'—';
   return `<div class="card detail-head">
     <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
@@ -7991,10 +7991,16 @@ function updateDetailHeader(f){
   // 下方「净投入 / 交易笔数 / 最新交易」由交易流水实时算出，必须随增删改刷新
   const _tr=(trades||[]).filter(t=>t.name===f.name);
   set('dhTradeCount', _tr.length+' 笔');
-  const _latest=_tr.length?_tr.map(t=>t.date||'').sort().slice(-1)[0]:'';
-  set('dhLatestTrade', _latest||'—');
+  const _lt=latestTradeOf(f.name);
+  set('dhLatestTrade', _lt?(_lt.date+(_lt.confirm==='pending'?'（待确认）':'')):'—');
   const _net=_tr.reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   set('dhNet', _tr.length?M(_net):'—');
+}
+function latestTradeOf(name){
+  const _tr=(trades||[]).filter(t=>t.name===name);
+  if(!_tr.length) return null;
+  const _s=_tr.slice().sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
+  return _s[_s.length-1];
 }
 function genericDetail(f){
   const tr=(trades||[]).filter(t=>t.name===f.name);

@@ -6371,7 +6371,7 @@ function renderPie(){
 function drillToCat(c){ filterCat(c); switchTab(0); }
 function setPnlTab(t){ try{localStorage.setItem('ft_pnl_tab', t);}catch(e){} renderBar(); }
 function renderBar(){
-  const all=[...fundsView];
+  const all=fundsView.filter(f=> !(isLiquidated(f) || (f.shares===0 && !f.isBond && !(f.mv>0))));
   const posList=all.filter(f=>(f.ret||0)>0);
   const negList=all.filter(f=>(f.ret||0)<0);
   let tab='all';

@@ -8387,16 +8387,16 @@ function headerHtml(f){
         <div class="dh-subitem"><div class="k">持有收益</div><div class="v ${pcls}" id="dhProfit">${f.profit!=null?(f.profit>=0?'+':'')+M(f.profit):'待补全'}</div></div>
         <div class="dh-subitem"><div class="k" id="dhRetK">持有收益率</div><div class="v" id="dhRet" style="color:var(--text)">${(f.ret!=null)?(f.ret>=0?'+':'')+f.ret.toFixed(2)+'%':'待补全'}</div></div>
       </div>
+      <div class="dh-subgrid">
+        <div class="dh-subitem"><div class="k">持有份额</div><div class="v" id="dhShares" style="color:var(--text)">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
+        <div class="dh-subitem"><div class="k">持仓成本</div><div class="v" id="dhCost" style="color:var(--text)">${f.cost!=null?M(f.cost):'—'}</div></div>
+        <div class="dh-subitem"><div class="k">最新净值</div><div class="v" id="dhNav" style="color:var(--text)">${f.nav!=null?navFmt(f.nav):'—'}</div></div>
+      </div>
       <div class="dh-more-toggle" onclick="dhToggleMore()">
         <span class="dh-more-arrow" id="dhMoreArrow">▼</span>
         <span>更多数据</span>
       </div>
       <div class="dh-more-body" id="dhMoreBody">
-        <div class="dh-subgrid">
-          <div class="dh-subitem"><div class="k">持仓成本</div><div class="v" id="dhCost" style="color:var(--text)">${f.cost!=null?M(f.cost):'—'}</div></div>
-          <div class="dh-subitem"><div class="k">持有份额</div><div class="v" id="dhShares" style="color:var(--text)">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
-          <div class="dh-subitem"><div class="k">最新净值</div><div class="v" id="dhNav" style="color:var(--text)">${f.nav!=null?navFmt(f.nav):'—'}</div></div>
-        </div>
         <div class="dh-subgrid">
           <div class="dh-subitem"><div class="k">${_netLabel}</div><div class="v" id="dhNet" style="color:var(--text)">${_netTxt}</div></div>
           <div class="dh-subitem"><div class="k">交易笔数</div><div class="v" id="dhTradeCount" style="color:var(--text)">${_tradeCount+' 笔'}</div></div>

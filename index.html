@@ -8286,7 +8286,7 @@ function headerHtml(f){
       </div>
       <div class="dh-subgrid" style="margin-top:10px;padding-top:10px">
         <div class="dh-subitem"><div class="k">${_netLabel}</div><div class="v" id="dhNet" style="color:var(--text)">${_netTxt}</div></div>
-        <div class="dh-subitem"><div class="k">交易笔数</div><div class="v" id="dhTradeCount" style="color:var(--text)">${_tradeCount} 笔</div></div>
+        <div class="dh-subitem"><div class="k">持有份额</div><div class="v" id="dhShares" style="color:var(--text)">${f.shares!=null&&f.shares>0?fmt(f.shares):'—'}</div></div>
         <div class="dh-subitem" style="text-align:center"><div class="k" id="dhLatestTradeK">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
       </div>
       <div class="dh-actions">

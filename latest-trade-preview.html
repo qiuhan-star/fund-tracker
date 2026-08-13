@@ -142,5 +142,17 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,
   </div>
 </div>
 
+<script>
+function adjustPend(){
+  var v=document.getElementById('pendOffset').value;
+  var badge=document.getElementById('pendBadge');
+  var badge2=document.getElementById('pendBadge2');
+  var val=document.getElementById('pendVal');
+  if(badge) badge.style.left='calc(50% + '+v+'px)';
+  if(badge2) badge2.style.left='calc(50% + '+v+'px)';
+  if(val) val.textContent=v+'px';
+}
+</script>
+
 </body>
 </html>

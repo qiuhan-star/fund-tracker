@@ -15174,8 +15174,11 @@ function wtAttachSwipe(){
       if(lpFired){ lpFired=false; e.preventDefault(); e.stopPropagation(); return; }
       if(e.target.closest('.swipe-actions')) return;
       if(e.target.closest('.r3')) return;
+      if(e.target.closest('.buy-flag')) return;
       if(open){ open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; return; }
-      wtRowMenu(row);
+      const code=row.getAttribute('data-code'), name=row.getAttribute('data-name'), isBond=row.getAttribute('data-bond')==='1';
+      if(isBond) return;
+      if(code) goDetail(encodeURIComponent(name),'');
     });
     row.addEventListener('contextmenu',function(e){
       e.preventDefault();

@@ -7785,6 +7785,7 @@ function sgBadge(sgzt, minsg, shzt){
   return html;
 }
 
+let _navlessNames=[]; const histFailed=new Set(); const codeFailed=new Set(); let _histLoading=false;
 function buildFundsView(){
   // 交易默认锁定（旧数据未标记的补 locked=true）
   trades.forEach(t=>{ if(t.locked===undefined) t.locked=true; });
@@ -7803,11 +7804,14 @@ function buildFundsView(){
     if(tr.length){
       let shares=0,cost=0,firstDate=null,realized=0,lots=[],lastNav=0,invested=0;  // lots：严格 FIFO 批次 {sh,cp}；lastNav：缺净值成交的近似净值；invested：累计买入/活动金额（份额或净值缺失时用于反推/兜底）
       const liveNav=(navCache[name]&&navCache[name].nav>0)?navCache[name].nav:0;  // 联网实时净值回退：CSV 该笔净值为空时，用它反推份额（避免黄金等「金额有、净值空」的基金算不出份额）
+      const code=codeCache[name]; let _fundNeedsHist=false;
       const sortedTr=tr.filter(t=>(t.confirm||'confirmed')==='confirmed').sort((a,b)=>a.date.localeCompare(b.date));
       sortedTr.forEach(t=>{
         const ty=t.type||'buy', amt=+t.amount||0, nav=+t.nav||0, fee=+t.fee||0;
         // 份额：手动份额优先 → 否则金额÷净值 → 净值缺失且金额>0 时，用「该日期之前最近一次买入净值」近似（转换常不带净值）
-        let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:(liveNav>0?amt/liveNav:0));
+        const histNav=(code&&histCache[code])?histNavByDate(code,t.date):null;
+        let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:(histNav>0?amt/histNav:(liveNav>0?amt/liveNav:0)));
+        if(nav===0 && !(t.shares!=null&&+t.shares>0) && histNav==null) _fundNeedsHist=true;
         if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
         // 份额自动写回：仅在「无任何外部数据来源（CSV 导入等）时根据 t.amount + 该笔 t.nav 反推」的情形才写回。
         // 不再写回 liveNav（实时联网最新净值）反推的份额 — 黄金等基金净值每日波动，用今天的净值反推 T-1 买入的份额会偏离真实值。
@@ -7826,9 +7830,11 @@ function buildFundsView(){
         if(t.confirm==='confirmed' && sh>0 && _needSh && (t.shares==null || t.shares==='' || +t.shares===0) && nav>0){
           t.shares=+sh.toFixed(4);
         }
-        // 如果已经确认了，但净值为空，仅用 lastNav（同基金上次确认净值）兜底；不再用 liveNav 写回交易记录
-        if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && sh>0 && lastNav>0){
-          t.nav=lastNav;
+        // 缺净值时：优先用「交易日期对应的真实历史净值」回填（正确持久化）；否则仅当 lastNav 是真实历史净值（≠实时 liveNav）才兜底；绝不用今天实时净值污染存储
+        if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && sh>0){
+          const _hn=(code&&histCache[code])?histNavByDate(code,t.date):null;
+          if(_hn>0){ t.nav=_hn; }
+          else if(lastNav>0 && lastNav!==liveNav){ t.nav=lastNav; }
         }
         if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
         else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; const sellPx=nav>0?nav:lastNav; realized+=(sellPx-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }   // 平均成本法（与支付宝一致）：卖出按加权平均扣减，剩余持仓成本单价不变
@@ -7838,6 +7844,7 @@ function buildFundsView(){
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||t.date<firstDate) firstDate=t.date;
       });
+      if(_fundNeedsHist && !codeFailed.has(name) && !(code&&histFailed.has(code))) _navlessNames.push(name);
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
       // 例外：若已有卖出且净份额=0（已清仓），不再回退快照，让它进「清仓」Tab
       const hasSell = tr.some(function(t){ return t.confirm!=='cancelled' && t.confirm!=='pending' && (t.type==='sell' || t.type==='convert_out'); });
@@ -8084,7 +8091,7 @@ function migrateConvertTarget(){
     }
   });
 }
-function compute(){ autoConfirmPendingTrades(); migrateConvertTarget(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); }
+function compute(){ autoConfirmPendingTrades(); migrateConvertTarget(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); ensureNavlessHist(); }
 // 每日资产快照：盘后/刷新时落一条结存（同一天去重只更新），支撑历史收益曲线与回撤
 function scopeTotals(scope){
   const list=_allHoldings.filter(f=> scope==='all'?true:(scope==='managed'? !accIsPersonal(f.account) : accIsPersonal(f.account)));
@@ -10388,6 +10395,42 @@ function fetchNavHistory(code){
     document.body.appendChild(s);
   });
 }
+
+function histNavByDate(code, dateStr){
+  const arr=histCache[code]; if(!arr||!arr.length) return null;
+  if(!dateStr||dateStr.length<10) return null;
+  const y=+dateStr.slice(0,4), m=+dateStr.slice(5,7)-1, d=+dateStr.slice(8,10);
+  if(isNaN(y)||isNaN(m)||isNaN(d)) return null;
+  const target=new Date(y,m,d).getTime();
+  let best=null;
+  for(let k=0;k<arr.length;k++){ const ts=arr[k].t.getTime(); if(ts<=target){ if(best===null||ts>best.t.getTime()) best=arr[k]; } }
+  return best?best.nav:arr[0].nav;
+}
+let _histQ=Promise.resolve();
+function fetchNavHistorySerial(code){
+  const run=()=>fetchNavHistory(code);
+  const p=_histQ.then(run,run);
+  _histQ=p.catch(()=>{});
+  return p;
+}
+async function ensureNavlessHist(){
+  if(_histLoading) return;
+  const names=[...new Set(_navlessNames)];
+  if(!names.length) return;
+  _navlessNames=[];
+  _histLoading=true;
+  let loadedAny=false;
+  for(const nm of names){
+    if(codeFailed.has(nm)) continue;
+    let code=codeCache[nm];
+    if(!code){ code=await resolveCode(nm); if(!code){ codeFailed.add(nm); continue; } }
+    if(histFailed.has(code)) continue;
+    if(!histCache[code]){ const arr=await fetchNavHistorySerial(code); if(arr&&arr.length) loadedAny=true; else histFailed.add(code); }
+    else loadedAny=true;
+  }
+  _histLoading=false;
+  if(loadedAny) compute();
+}
 const HIST_BUY_PRE_DAYS=10;
 let histRange='buy';
 function setHistRange(d){ histRange=d; const f=fundsView.find(x=>x.name===detailName); if(f) renderNavHistory(f); }
@@ -10400,7 +10443,7 @@ async function renderNavHistory(f){
   box.innerHTML=`<div class="card"><div class="sec-head"><h2 style="margin:0;font-size: 14px">历史净值走势 <span class="tag">天天基金</span></h2><span class="hist-ranges">${['buy',30,90,180,'1y','3y','5y',0].map(d=>{const lbl=d==='buy'?(startDate?('买入前后'+spanDays+'天'):'买入前后'):(d==='1y'?'1年':(d==='3y'?'3年':(d==='5y'?'5年':(d===0?'全部':d+'天'))));const on=histRange===d?' on':'';const arg=(d==='buy'||d==='1y'||d==='3y'||d==='5y')?"'"+d+"'":d;return '<button class="mini-btn'+on+'" onclick="setHistRange('+arg+')">'+lbl+'</button>';}).join('')}</span></div><canvas id="histChart" style="width:100%;height:240px;display:block"></canvas><p class="hint" style="margin:4px 0 0;display:flex;gap:14px;flex-wrap:wrap;align-items:center"><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px;vertical-align:-1px"></span>买入</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ea580c;margin-right:4px;vertical-align:-1px"></span>卖出</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#7c3aed;margin-right:4px;vertical-align:-1px"></span>转换转入</span><span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #64748b;margin-right:4px;vertical-align:3px"></span>成本线</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;border:2px solid #27ae60;margin-right:4px;vertical-align:-1px"></span>绿圈=低于成本线·买便宜/卖盈利</span><span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;border:2px solid #e24b4b;margin-right:4px;vertical-align:-1px"></span>红圈=高于成本线·买贵/割肉</span></p><p class="hint" id="histAgg" style="margin:4px 0 0;color:var(--warn);line-height:1.6"></p><p class="hint" id="histNote" style="margin:6px 0 0">正在加载历史净值…</p></div>`;
   const code=await resolveCode(f.name);
   if(!code){ const n=document.getElementById('histNote'); if(n) n.textContent='未匹配到基金代码，无法加载历史净值。'; const c=document.getElementById('histChart'); if(c) c.style.display='none'; return; }
-  const all=await fetchNavHistory(code);
+  const all=await fetchNavHistorySerial(code);
   if(!all||!all.length){ const n=document.getElementById('histNote'); if(n) n.textContent='历史净值获取失败（天天基金接口未返回，可能被拦截/离线）。'; const c=document.getElementById('histChart'); if(c) c.style.display='none'; return; }
   drawHist(all, f);
 }

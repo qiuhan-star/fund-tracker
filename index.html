@@ -1056,6 +1056,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .table-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
   .table-scroll table:not(.market-table) { min-width: 640px !important; }
   .table-scroll table:not(.market-table) th, .table-scroll table:not(.market-table) td { white-space: nowrap !important; }
+  /* 首页持仓表：放行强制最小宽度，改为按内容自适应 —— 手机首屏即可完整显示「当日收益」等右侧列（不再被屏幕右边截断），更宽列仍可横向滑动查看 */
+  .table-scroll table.dense-table:not(.market-table) { min-width: 0 !important; }
 
   /* 14. 债基明细/对比/自选表：强制横向滚动 */
   .tbl-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding-bottom: 4px !important; }

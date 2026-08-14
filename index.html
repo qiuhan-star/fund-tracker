@@ -538,6 +538,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .eh-btn-reset { background:var(--bg); color:var(--text-3); border:1px solid var(--border); }
 .eh-btn-reset:active { background:rgba(0,0,0,.05); }
 .eh-snap-tip { font-size:12px; color:var(--text-2); line-height:1.6; margin:0 0 10px; padding:8px 10px; background:var(--surface-2,#f0f0f3); border-radius:8px; }
+.eh-ocr-actions { display:flex; gap:8px; margin-bottom:10px; }
+.eh-ocr-status { margin:10px 0; padding:10px; background:var(--surface-2); border-radius:8px; }
+.eh-ocr-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:6px; }
+.eh-ocr-bar-fill { height:100%; background:linear-gradient(90deg, #4A7BF7, #16a34a); width:0%; transition:width .2s; }
+.eh-ocr-text { font-size:12px; color:var(--text-2); }
+.eh-ocr-preview { position:relative; margin-top:10px; border:1px solid var(--border-2); border-radius:8px; overflow:hidden; background:var(--surface-2); }
+.eh-ocr-preview img { width:100%; display:block; max-height:280px; object-fit:contain; }
+.eh-ocr-remove { position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; border:none; font-size:14px; cursor:pointer; }
 .eh-tag { display:inline-block; font-size:11px; background:#e8edf8; color:#4A7BF7; border-radius:4px; padding:2px 6px; margin-left:6px; }
 .eh-seg-wrap { display:flex; border-radius:10px; background:var(--surface-2,#f0f0f3); padding:2px; margin-bottom:14px; }
 .eh-seg-btn { flex:1; height:34px; border:none; border-radius:8px; background:transparent; color:var(--text-2); font-size:13px; font-weight:500; cursor:pointer; transition:all .2s; }
@@ -13024,17 +13032,48 @@ function renderSyncCfg(){
         <div class="eh-hit" id="ehDerived">填写持有金额和持有收益后，自动计算持仓成本和持有收益率</div>
       </div>
 
-      <!-- 快照导入模式：粘贴支付宝截图文字 -->
+      <!-- 快照导入模式：上传截图 或 粘贴支付宝截图文字 -->
       <div id="ehSnapshotMode" style="display:none">
-        <p class="eh-snap-tip">📌 打开支付宝 → 资产 → 点基金卡片 → 截图，复制页面文字后粘贴到下方。系统会自动识别金额、收益、份额、单位净值。</p>
-        <div class="eh-field">
-          <label>粘贴截图文字</label>
-          <textarea id="ehSnapText" placeholder="例如：&#10;持有金额 12,345.67&#10;持有收益 234.56&#10;持有份额 5,678.90&#10;单位净值 2.1234" style="width:100%;min-height:110px;padding:10px;border:1px solid var(--border-2);border-radius:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box" oninput="ehParseSnap()"></textarea>
+        <!-- 模式子切换：上传截图 / 粘贴文字 -->
+        <div class="eh-seg-wrap" style="margin-bottom:10px">
+          <button class="eh-seg-btn on" data-srctype="image" onclick="ehSetSnapType('image')">📷 截图识别</button>
+          <button class="eh-seg-btn" data-srctype="text" onclick="ehSetSnapType('text')">📋 粘贴文字</button>
         </div>
-        <div class="eh-hit" id="ehSnapResult" style="min-height:20px">未识别到数据，请粘贴包含「持有金额」「持有收益」「份额」等关键字的截图文字</div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <button class="eh-btn eh-btn-primary" onclick="ehFillFromSnap()" style="flex:1">识别并填入下方</button>
+
+        <!-- 截图识别模式 -->
+        <div id="ehSnapImageMode">
+          <p class="eh-snap-tip">📌 在支付宝「资产详情」页截图（建议展开到「持仓成本价/份额/净值」那一屏，识别率更高），点下方按钮上传或直接粘贴图片。系统会自动提取金额、收益、份额、成本价、单位净值。</p>
+          <div class="eh-ocr-actions">
+            <label class="eh-btn eh-btn-primary" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;flex:1;justify-content:center">
+              📁 选择截图
+              <input type="file" id="ehSnapImg" accept="image/*" style="display:none" onchange="ehOcrImage(this)">
+            </label>
+            <button class="eh-btn" onclick="ehSnapPaste()" style="flex:1">📋 粘贴图片</button>
+          </div>
+          <div id="ehOcrStatus" class="eh-ocr-status" style="display:none">
+            <div class="eh-ocr-bar"><div class="eh-ocr-bar-fill" id="ehOcrBarFill"></div></div>
+            <div class="eh-ocr-text" id="ehOcrText">准备识别…</div>
+          </div>
+          <div id="ehOcrPreview" class="eh-ocr-preview" style="display:none">
+            <img id="ehOcrImg" alt="预览">
+            <button class="eh-ocr-remove" onclick="ehOcrRemove()" aria-label="移除">✕</button>
+          </div>
         </div>
+
+        <!-- 粘贴文字模式 -->
+        <div id="ehSnapTextMode" style="display:none">
+          <p class="eh-snap-tip">从支付宝复制持仓页文字后粘贴到下方。系统会自动识别金额、收益、份额、单位净值。</p>
+          <div class="eh-field">
+            <label>粘贴截图文字</label>
+            <textarea id="ehSnapText" placeholder="例如：&#10;持有金额 12,345.67&#10;持有收益 234.56&#10;持有份额 5,678.90&#10;单位净值 2.1234" style="width:100%;min-height:110px;padding:10px;border:1px solid var(--border-2);border-radius:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box" oninput="ehParseSnap()"></textarea>
+          </div>
+          <div class="eh-hit" id="ehSnapResult" style="min-height:20px">未识别到数据，请粘贴包含「持有金额」「持有收益」「份额」等关键字的截图文字</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="eh-btn eh-btn-primary" onclick="ehFillFromSnap()" style="flex:1">识别并填入下方</button>
+          </div>
+        </div>
+
+        <!-- 通用：填入结果区 -->
         <div id="ehSnapFillArea" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-2)">
           <div class="eh-field">
             <label>持有金额（元）</label>
@@ -13050,6 +13089,10 @@ function renderSyncCfg(){
           <div class="eh-field">
             <label>持有份额</label>
             <input id="ehSnapShares" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateSnapDerived()">
+          </div>
+          <div class="eh-field">
+            <label>持仓成本价（元）·可选</label>
+            <input id="ehSnapCost" type="text" inputmode="decimal" placeholder="可选" oninput="ehUpdateSnapDerived()">
           </div>
           <div class="eh-hit" id="ehSnapDerived" style="font-size:11px;color:var(--text-3)">填写后自动计算持仓成本和收益率</div>
         </div>

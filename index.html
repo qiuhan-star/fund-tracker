@@ -9079,7 +9079,15 @@ function buildTradeSection(f){
         h+=`<tr class="tr-locked${_canc?' cancelled':''}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">
             <td>${esc(accOf(t))}</td>
             <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
-            <td>${typeLabel(t.type)}${t.convertTarget && (t.type==='convert_out'||t.type==='convert')?('<br><span style="font-size:11px;color:var(--text-3)">→ '+esc(t.convertTarget)+'</span>'):''}</td>
+            <td>${typeLabel(t.type)}${(t.type==='convert_out'||t.type==='convert')?function(){
+              const ct=t.convertTarget;
+              if(ct) return '<br><span style="font-size:11px;color:var(--text-3)">'+(t.type==='convert_out'?'→ '+esc(ct):'← '+esc(ct))+'</span>';
+              if(t.pairId){
+                const pair=(trades||[]).find(x=>x!==t && x.pairId===t.pairId);
+                if(pair) return '<br><span style="font-size:11px;color:var(--text-3)">'+(t.type==='convert_out'?'→ '+esc(pair.name):'← '+esc(pair.name))+'</span>';
+              }
+              return '';
+            }():''}</td>
             <td>${_confBadge}</td>
             <td class="num">${M(t.amount)}</td>
             <td class="num">${t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'<span class="pending-nav">净值待确认</span>'}</td>
@@ -9396,7 +9404,7 @@ function addTradeForForm(enc){
 }
 function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); renderDetailLive(encodeURIComponent(trades[i].name)); refreshDetailTradesByName(trades[i].name); } }
 function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); refreshDetailTradesByName(trades[i].name); } }
-function delTrade(i){ if(!trades[i]) return; ftConfirm('确定删除这笔交易？', function(ok){ if(!ok) return; removeTrade(i); }); }
+function delTrade(i){ if(!trades[i]) return; softDeleteTrade(i); }
 var deleteTrade=delTrade;
 function addTradeMenu(){
   const list=(_allHoldings.length?_allHoldings:fundsView).slice().sort((a,b)=>b.mv-a.mv);
@@ -9640,17 +9648,8 @@ function saveTradeEdit(){
 }
 function deleteTradeEdit(){
   var i=_editTradeIdx; if(i<0||!trades[i]) return;
-  var delT=trades[i], delPairName='';
-  if(delT.pairId && (delT.type==='convert_out'||delT.type==='convert') && delT.convertTarget && delT.convertTarget!==delT.name){
-    delPairName=delT.convertTarget;
-  }
-  ftConfirm('确定删除这笔交易？', function(ok){
-    if(!ok) return;
-    var nm=trades[i].name; removeTrade(i); closeTradeEdit(); if(currentView==='detail'){ try{ renderDetailLive(nm); }catch(e){} }
-    if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
-    if(delPairName){ try{ refreshDetailTradesByName(delPairName); refreshDetailHeaderByName(delPairName); }catch(e){} }
-    toast('已删除');
-  });
+  closeTradeEdit();
+  softDeleteTrade(i);
 }
 
 function tqToggleMore(){

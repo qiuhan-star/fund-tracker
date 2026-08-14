@@ -208,43 +208,6 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   :root[data-widget-theme="dark"] .tag-nosnap { background:#3a2a0a; color:#f59e0b; border-color:#5a3a0a; }
 }
 .dt-name .tag-snap, .dt-name .tag-nosnap { font-size:10px; padding:0 4px; }
-/* ===== 快照管理页面 ===== */
-.snap-page { max-width:700px; margin:0 auto; padding:0 14px 90px; }
-.snap-stats { display:flex; gap:10px; margin:10px 0 14px; }
-.snap-stat { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; text-align:center; }
-.snap-stat .num { font-size:22px; font-weight:700; color:var(--text); }
-.snap-stat .lab { font-size:12px; color:var(--text-3); margin-top:3px; }
-.snap-stat .num.green { color:#16a34a; }
-.snap-stat .num.orange { color:#ea580c; }
-.snap-list { display:flex; flex-direction:column; gap:0; }
-.snap-item { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; }
-.snap-item-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-.snap-item-name { font-size:15px; font-weight:600; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.snap-item-acc { font-size:12px; color:var(--text-3); margin-left:8px; flex-shrink:0; }
-.snap-item-body { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.snap-item-field { flex:1; min-width:80px; }
-.snap-item-field label { display:block; font-size:11px; color:var(--text-3); margin-bottom:2px; }
-.snap-item-field input { width:100%; box-sizing:border-box; border:1px solid var(--border-2); border-radius:8px; padding:7px 10px; font-size:14px; background:var(--bg); color:var(--text); outline:none; font-family:inherit; }
-.snap-item-field input:focus { border-color:var(--accent); }
-.snap-item-actions { display:flex; gap:6px; margin-top:10px; justify-content:flex-end; }
-.snap-item .snap-badge { font-size:11px; padding:2px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
-.snap-item .snap-badge.ok { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
-.snap-item .snap-badge.pending { background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; cursor:pointer; }
-.snap-item .snap-badge.old { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
-.snap-item .snap-time { font-size:11px; color:var(--text-3); margin-left:6px; }
-.snap-empty { text-align:center; padding:50px 20px; color:var(--text-3); }
-.snap-empty .ico { font-size:48px; }
-.snap-empty .ttl { font-size:17px; font-weight:600; color:var(--text); margin-top:12px; }
-.snap-empty .desc { font-size:13px; margin-top:8px; line-height:1.6; }
-.snap-empty .btn { margin-top:16px; display:inline-flex; align-items:center; gap:6px; border:0; background:var(--accent); color:#fff; font-size:14px; font-weight:600; padding:10px 20px; border-radius:10px; cursor:pointer; font-family:inherit; }
-@supports (color: color-mix(in srgb, red, transparent)) {
-  :root[data-widget-theme="dark"] .snap-stat { background:#1a1d24; border-color:#2a2e38; }
-  :root[data-widget-theme="dark"] .snap-item { background:#1a1d24; border-color:#2a2e38; }
-  :root[data-widget-theme="dark"] .snap-item .snap-badge.ok { background:#1a3a1a; color:#4ade80; border-color:#2a5a2a; }
-  :root[data-widget-theme="dark"] .snap-item .snap-badge.pending { background:#3a2a0a; color:#f59e0b; border-color:#5a3a0a; }
-  :root[data-widget-theme="dark"] .snap-item .snap-badge.old { background:#3a1a1a; color:#f87171; border-color:#5a2a2a; }
-  :root[data-widget-theme="dark"] .snap-item-field input { background:#1a1d24; border-color:#2a2e38; color:#e1e3e6; }
-}
 /* 分类编辑浮动菜单 */
   .float-menu { position: fixed; z-index: 9999; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; padding: 6px; box-shadow: 0 8px 28px rgba(0,0,0,.16); min-width: 150px; }.float-menu .fm-title { font-size: 12px; color: var(--text-3); padding: 3px 8px 6px; }.float-menu .fm-opt { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 6px 8px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--text); font-family: inherit; }@media (hover: hover) { .float-menu .fm-opt:hover {  background: var(--border-3);  } }
 .float-menu .fm-opt.on { color: var(--accent-on); font-weight: 600; }.float-menu .fm-sep { height: 1px; background: var(--border-3); margin: 5px 4px; }.float-menu .fm-input { display: block; width: calc(100% - 16px); margin: 2px 8px; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 14px; font-family: inherit; background: var(--bg); color: var(--text); box-sizing: border-box; outline: none; }.float-menu .fm-input:focus { border-color: var(--accent); }.float-menu .fm-save { display: block; width: calc(100% - 16px); margin: 2px 8px 4px; padding: 6px 8px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-on); font-family: inherit; }@media (hover: hover) { .float-menu .fm-save:hover {  filter: brightness(1.06);  } }

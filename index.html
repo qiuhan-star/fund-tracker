@@ -7840,7 +7840,7 @@ function buildFundsView(){
         // 待补全：有投入金额但份额/净值均缺失，且联网也查不到净值（离线 / 名称未匹配到代码）→ 成本认投入、市值待补全，避免被「份额=0 即隐藏」规则吞掉
         f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:0,cost:invested,mv:null,profit:null,ret:null,days:null,nav:null,costPx:null,trades:tr,realized:0,pending:true};
       } else {
-        const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:0);
+        const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:(lastNav>0?lastNav:0));
         const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
         f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized,invested};
       }

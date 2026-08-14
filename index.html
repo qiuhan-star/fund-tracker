@@ -11142,6 +11142,47 @@ function ehClearOverride(){
     buildFundsView();
     const f=findFund(_ehFundName,_ehFundAcc); if(f){ updateDetailHeader(f); renderDetailTabs(f); }
   } }catch(e){}
+  try{ renderHomeList(); }catch(e){}
+}
+// ===== 快照文字解析：从支付宝截图复制的文本中提取金额/收益/份额/净值 =====
+let _ehSnapParsed={};
+function ehParseSnap(){
+  const txt=document.getElementById('ehSnapText')?.value||'';
+  const result=document.getElementById('ehSnapResult');
+  if(!txt.trim()){ if(result){ result.textContent='未识别到数据，请粘贴包含「持有金额」「持有收益」「份额」等关键字的截图文字'; result.style.color='var(--text-3)'; } return; }
+  const numOf=function(line){ const m=line.match(/[-+]?[\d,]+\.?\d*/); return m?parseFloat(m[0].replace(/,/g,'')):null; };
+  const lines=txt.split(/[\n\r,;，；\t]+/).map(s=>s.trim()).filter(Boolean);
+  let mv=null, profit=null, shares=null, nav=null;
+  for(const line of lines){
+    if(mv==null && /持有金额|总金额|市值/.test(line)){ mv=numOf(line); continue; }
+    if(profit==null && /持有收益|累计收益|总收益/.test(line)){ profit=numOf(line); continue; }
+    if(shares==null && /持有份额|总份额|份额/.test(line)){ shares=numOf(line); continue; }
+    if(nav==null && /(单位净值|净值)/.test(line) && !/估算|涨跌|累计/.test(line)){ nav=numOf(line); continue; }
+  }
+  if(mv==null){ const m=txt.match(/持有金额[^\d\-+]*([\d,]+\.?\d*)/); if(m) mv=parseFloat(m[1].replace(/,/g,'')); }
+  if(profit==null){ const m=txt.match(/持有收益[^\d\-+]*([\d,]+\.?\d*)/); if(m) profit=parseFloat(m[1].replace(/,/g,'')); }
+  if(shares==null){ const m=txt.match(/(持有份额|总份额)[^\d\-+]*([\d,]+\.?\d*)/); if(m) shares=parseFloat(m[2].replace(/,/g,'')); }
+  if(nav==null){ const m=txt.match(/(单位净值|净值)[^\d\-+]*([\d,]+\.?\d*)/); if(m) nav=parseFloat(m[2].replace(/,/g,'')); }
+  const fmt=function(n){ return n==null?'—':n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:4}); };
+  const hasAny=mv!=null||profit!=null||shares!=null||nav!=null;
+  if(result){
+    result.innerHTML='<b>识别结果：</b> 金额 '+fmt(mv)+' · 收益 '+fmt(profit)+' · 份额 '+fmt(shares)+' · 净值 '+fmt(nav);
+    result.style.color=hasAny?'var(--accent)':'var(--danger)';
+  }
+  _ehSnapParsed={mv,profit,shares,nav};
+}
+function ehFillFromSnap(){
+  const p=_ehSnapParsed||{};
+  if(p.mv==null && p.profit==null && p.shares==null && p.nav==null){ toast('未识别到有效数据，请检查文本'); return; }
+  const mvEl=document.getElementById('ehSnapMv'), profitEl=document.getElementById('ehSnapProfit'), sharesEl=document.getElementById('ehSnapShares');
+  if(mvEl && p.mv!=null) mvEl.value=p.mv.toFixed(2);
+  if(profitEl && p.profit!=null) profitEl.value=p.profit.toFixed(2);
+  if(sharesEl && p.shares!=null) sharesEl.value=p.shares.toFixed(4);
+  if(mvEl && !mvEl.value && p.shares!=null && p.nav!=null){ mvEl.value=(p.shares*p.nav).toFixed(2); }
+  if(sharesEl && !sharesEl.value && p.mv!=null && p.nav!=null){ sharesEl.value=(p.mv/p.nav).toFixed(4); }
+  const fill=document.getElementById('ehSnapFillArea'); if(fill) fill.style.display='';
+  ehUpdateSnapDerived();
+  toast('已填入，可微调后保存');
 }
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=document.getElementById('ehMask'); if(m&&m.classList.contains('show')) closeEditHoldingsModal(); } });
 function dcaSetPeriod(p){

@@ -1007,9 +1007,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 分组视图 dense 表：固定名称列宽度，让「股票/债券/混合」各组的数据列跨组对齐（否则 table-layout:auto 按每组最长名字撑开，列会参差） */
   .dense-table th:first-child,
   .dense-table td:first-child {
-    width: 120px;
-    min-width: 120px;
-    max-width: 120px;
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
   }
   /* 名称列永不横向溢出压到相邻列：长名在列内换行（覆盖 .dense-table 的 white-space:nowrap），并 overflow:hidden 兜底 */
   .dense-table td:first-child { overflow: hidden; }
@@ -5934,10 +5934,10 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,day:true,mv:true,ret:true,hold:true,holdpct:true};
+let colVis={nav:false,day:true,mv:true,ret:true,hold:true,holdpct:true};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
 const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
 const COL_KEYS=['nav','day','ret','hold'];
 const DEFAULT_COL_ORDER=['day','ret','hold','nav'];

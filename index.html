@@ -8922,11 +8922,11 @@ function drawFundProfitCurve(box, fullPts, approx){
     if(v===0) return; // 零线单独画
     var y=Y(v).toFixed(1);
     grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="'+th.text3+'" stroke-opacity=".12" stroke-width="1" vector-effect="non-scaling-stroke"/>';
-    grid+='<text x="'+(padL-10)+'" y="'+(+y+4)+'" text-anchor="end" font-size="14" fill="'+th.text3+'">'+fmtAxis(v)+'</text>';
+    grid+='<text x="'+(padL-10)+'" y="'+(+y+4)+'" text-anchor="end" font-size="28" fill="'+th.text3+'">'+fmtAxis(v)+'</text>';
   });
   if(pmin<0 && pmax>0){
     grid+='<line x1="'+padL+'" y1="'+yz.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yz.toFixed(1)+'" stroke="'+th.text3+'" stroke-opacity=".35" stroke-width="1" vector-effect="non-scaling-stroke"/>';
-    grid+='<text x="'+(padL-10)+'" y="'+(yz.toFixed(1)+4)+'" text-anchor="end" font-size="14" fill="'+th.text3+'">0</text>';
+    grid+='<text x="'+(padL-10)+'" y="'+(yz.toFixed(1)+4)+'" text-anchor="end" font-size="28" fill="'+th.text3+'">0</text>';
   }
   // 面积填充渐变（极淡）
   var areaDef='<linearGradient id="fpAreaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+BLUE+'" stop-opacity=".1"/><stop offset="1" stop-color="'+BLUE+'" stop-opacity="0"/></linearGradient>';
@@ -8940,8 +8940,8 @@ function drawFundProfitCurve(box, fullPts, approx){
   var valTxt=(pts[n-1].profit>=0?'+':'')+M(pts[n-1].profit);
   var isPos=pts[n-1].profit>=0;
   var valColor=isPos?'#FF4D4F':'#52C41A';
-  var topVal='<text x="'+padL+'" y="'+(padT-4)+'" font-size="14" fill="'+th.text3+'">累计盈亏</text>'
-    +'<text x="'+padL+'" y="'+(padT+22)+'" font-size="26" font-weight="700" fill="'+valColor+'">'+valTxt+'</text>';
+  var topVal='<text x="'+padL+'" y="'+(padT-4)+'" font-size="28" fill="'+th.text3+'">累计盈亏</text>'
+    +'<text x="'+padL+'" y="'+(padT+22)+'" font-size="48" font-weight="700" fill="'+valColor+'">'+valTxt+'</text>';
   // 十字交互线
   var cross='<g class="fp-cross" id="fpCross"><line id="fpCxLine" y1="'+padT+'" y2="'+(H-padB)+'" stroke="'+BLUE+'" stroke-width="1" stroke-dasharray="3 3" opacity=".4" vector-effect="non-scaling-stroke"/><circle id="fpCxDot" r="4" fill="#fff" stroke="'+BLUE+'" stroke-width="2"/></g>';
   // X轴日期（3-4个均匀分布）
@@ -8952,7 +8952,7 @@ function drawFundProfitCurve(box, fullPts, approx){
     var idx=Math.min(di*dateStep, n-1);
     var dtx=X(idx), dty=H-6;
     var xa=di===0?'start':(di===dateCount-1?'end':'middle');
-    dates+='<text x="'+dtx.toFixed(1)+'" y="'+dty+'" text-anchor="'+xa+'" font-size="14" fill="'+th.text3+'">'+pts[idx].d+'</text>';
+    dates+='<text x="'+dtx.toFixed(1)+'" y="'+dty+'" text-anchor="'+xa+'" font-size="26" fill="'+th.text3+'">'+pts[idx].d+'</text>';
   }
   // 样式
   var style='<style id="fpStyle">.fp-wrap{position:relative;width:100%}.fp-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:fpDraw 1.1s cubic-bezier(.37,.01,.14,1) forwards}@keyframes fpDraw{to{stroke-dashoffset:0}}.fp-dot{opacity:0;animation:fpDotPop .35s cubic-bezier(.2,.8,.3,1.2) .85s forwards}@keyframes fpDotPop{0%{transform:scale(0);opacity:0;transform-origin:center}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}.fp-cross{opacity:0;transition:opacity .12s}.fp-cross.on{opacity:1}.fp-tip{position:absolute;pointer-events:none;background:rgba(31,35,41,.92);color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.5;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .12s;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:5}.fp-tip.on{opacity:1}.fp-tip b{color:#7fb2ff}</style>';

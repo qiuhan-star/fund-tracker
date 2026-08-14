@@ -9216,7 +9216,7 @@ function addFundSave(){
     else if(shares!=null){ const mvRaw=g('af-mv').value; mv=(mvRaw===''||mvRaw==null)?null:+mvRaw; }
   }else if(mode==='ocr' && _afOcrData.mv!=null){
     mv=_afOcrData.mv; shares=_afOcrData.shares; nav=_afOcrData.nav;
-    if(_afOcrData.code && (!raw.match(/^\d{6}$/))){ g('af-input').value=_afOcrData.code; }
+    if(_afOcrData.code){ code=_afOcrData.code; if(!raw || raw===_afOcrData.code){ if(_afOcrData.name){ g('af-input').value=_afOcrData.name; raw=_afOcrData.name; } } }
   }
   let name=raw, code='';
   if(afSelected && (afSelected.name===raw || afSelected.code===raw)){ name=afSelected.name; code=afSelected.code; }

@@ -9195,7 +9195,7 @@ function afOcrImage(input){
       const maxW=1200, scale=Math.min(1, maxW/img.width);
       canvas.width=img.width*scale; canvas.height=img.height*scale;
       ctx.drawImage(img,0,0,canvas.width,canvas.height);
-      const dataUrl=canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+      const dataUrl=canvas.toDataURL('image/jpeg',0.8);
       afOcrDo(dataUrl, status, result);
     };
     img.src=e.target.result;
@@ -9210,7 +9210,7 @@ function afOcrPaste(){
         item.getType(imgType).then(function(blob){
           const reader=new FileReader();
           reader.onload=function(e){
-            const imgData=e.target.result.split(',')[1];
+            const imgData=e.target.result;
             const status=document.getElementById('afOcrStatus'), result=document.getElementById('afOcrResult');
             if(status) status.innerHTML='加载 OCR 引擎…'; if(status) status.style.display='';
             if(result) result.innerHTML='';

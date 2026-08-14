@@ -5794,6 +5794,8 @@ function fillWatchQuotes(){
 function refreshWatchQuotes(){
   [].slice.call(document.querySelectorAll('.obs-quote, .watch-quote')).forEach(el=>{ el.textContent='…'; el.removeAttribute('data-done'); el.classList.remove('pos','neg'); });
   fillWatchQuotes();
+  // 更新快照状态提示条
+  updateSnapStatusBar();
 }
 function renderWatch(){
   const ul=document.getElementById('watch-list'); const empty=document.getElementById('watch-empty');
@@ -6351,6 +6353,8 @@ function renderHomeList(){
   ensureStreakLabels(list);
 
   fillWatchQuotes();
+  // 更新快照状态提示条
+  updateSnapStatusBar();
 }
 function bindTableScrollFade(){
   document.querySelectorAll('.table-scroll').forEach(function(el){
@@ -8633,6 +8637,23 @@ function snapClear(idx){
     buildFundsView();
     var fd=findFund(f.name,f.account); if(fd){ updateDetailHeader(fd); renderDetailTabs(fd); }
   } }catch(e){}
+}
+// 更新快照状态提示条（首页资产 Tab 显示待补充基金数量）
+function updateSnapStatusBar(){
+  var bar=document.getElementById('snapStatusBar'), txt=document.getElementById('snapStatusText');
+  if(!bar||!txt) return;
+  if(!fundsView||!fundsView.length){ bar.style.display='none'; return; }
+  var pending=0;
+  fundsView.forEach(function(f){
+    if(f.isBond||isLiquidated(f)) return;
+    if(f.snapshotStatus!=='snapshot' && f.trades && f.trades.length) pending++;
+  });
+  if(pending>0){
+    bar.style.display='flex';
+    txt.textContent='📸 '+pending+' 只基金待补充持仓快照，可点击录入';
+  } else {
+    bar.style.display='none';
+  }
 }
 function latestTradeOf(name){
   // 过滤掉撤单的交易，只取已确认和待确认的

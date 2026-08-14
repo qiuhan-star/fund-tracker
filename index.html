@@ -998,17 +998,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .dcode { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; }
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
-  .dense-table {
-	    white-space: nowrap;
-	    overflow: visible;
-	  }
-  /* 分组视图 dense 表：固定名称列宽度，让「股票/债券/混合」各组的数据列跨组对齐（否则 table-layout:auto 按每组最长名字撑开，列会参差） */
-  .dense-table th:first-child,
-  .dense-table td:first-child {
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
-  }
+  .dense-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .dense-table { min-width: 100%; table-layout: fixed; }
+  /* 名称列宽度：可显示约 12 个汉字 */
+  .dense-table th.col-name, .dense-table td.col-name { width: 180px; min-width: 180px; }
+  /* 当单位净值可见时，强制其列宽，避免被其他列挤压 */
+  .dense-table th.col-nav, .dense-table td.col-nav { width: 76px; min-width: 76px; }
+  .dense-table th.col-mv, .dense-table td.col-mv { width: 96px; min-width: 96px; }
+  .dense-table th.col-holdpct, .dense-table td.col-holdpct { width: 72px; min-width: 72px; }
   /* 名称列永不横向溢出压到相邻列：长名在列内换行（覆盖 .dense-table 的 white-space:nowrap），并 overflow:hidden 兜底 */
   .dense-table td:first-child { overflow: hidden; }
   .dense-table td:first-child .dt-name { white-space: normal; overflow-wrap: anywhere; }
@@ -5952,7 +5949,7 @@ function syncColSetChecks(){ renderColSet(); }
 function renderColSet(){
   const box=document.getElementById('colPop'); if(!box) return;
   box.innerHTML='<div class="ttl">显示哪些列</div>'+COL_KEYS.map(k=>
-    `<label><input type="checkbox" data-col="${k}" ${colVis[k]?'checked':''} onchange="toggleCol('${k}',this.checked)"><span class="col-name">${COL_DEFS[k]}</span></label>`
+    `<label><input type="checkbox" data-col="${k}" ${colVis[k]?'checked':''} onchange="toggleCol('${k}',this.checked)"><span class="col-name-text">${COL_DEFS[k]}</span></label>`
   ).join('')+'<div class="hint">顺序：直接拖动表头</div>';
 }
 // 拖动列头换列顺序：轻点列头=排序，按住拖动列头=换列（HTML5 原生 DnD 自动区分 click / drag，二者不冲突）
@@ -6465,7 +6462,7 @@ function denseHeadHtml(){
   let headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const cls = 'sortable'+(active?' sort-on':'')+(c.key==='name'?'':' col-drag');
+    const cls = 'sortable col-'+c.key+(active?' sort-on':'')+(c.key==='name'?'':' col-drag');
     const drag = c.key==='name' ? '' : ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"`;
     const tip = c.key==='name' ? '' : ` title="点击排序 · 拖动列头换列"`;
     return `<th class="${cls}" onclick="toggleSortHeader('${c.key}')"${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
@@ -6493,8 +6490,8 @@ function denseRowsHtml(list){
     const code=syncCode(f.name);
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}<span class="tag tag-${f.cat}" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类（点此手动覆盖）">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
-      else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
+      if(c.key==='name') tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}${noteDot(f.name)}<span class="tag tag-${f.cat}" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类（点此手动覆盖）">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
+      else if(c.key==='nav') tds+=`<td class="col-nav"><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='day'){
         // 当日涨跌：单列双态 — 估算中显示灰色时间，官方已出显示蓝色日期
         const nc2=navCache[f.name]||{};
@@ -6505,27 +6502,27 @@ function denseRowsHtml(list){
         const est=nc2.gszzl!=null?nc2.gszzl:null;
         const estTime=fmtGzTime(nc2.gztime||'');
         if(fresh && offChg!=null){
-          tds+=`<td class="${offChg>=0?'pos':'neg'} day-fresh"><div class="dt-big">${offChg>=0?'+':''}${offChg.toFixed(2)}%</div><div class="dt-sub2">${offDate.slice(5)}</div></td>`;
+          tds+=`<td class="col-day ${offChg>=0?'pos':'neg'} day-fresh"><div class="dt-big">${offChg>=0?'+':''}${offChg.toFixed(2)}%</div><div class="dt-sub2">${offDate.slice(5)}</div></td>`;
         } else if(est!=null){
           const sub=mkt?(estTime||'实时'):(estTime||'今日估算');
-          tds+=`<td class="${est>=0?'pos':'neg'}"><div class="dt-big">${est>=0?'+':''}${est.toFixed(2)}%</div><div class="dt-sub2 est-stale">${sub}</div></td>`;
+          tds+=`<td class="col-day ${est>=0?'pos':'neg'}"><div class="dt-big">${est>=0?'+':''}${est.toFixed(2)}%</div><div class="dt-sub2 est-stale">${sub}</div></td>`;
         } else if(offChg!=null){
-          tds+=`<td class="${offChg>=0?'pos':'neg'}"><div class="dt-big">${offChg>=0?'+':''}${offChg.toFixed(2)}%</div><div class="dt-sub2">${offDate.slice(5)}</div></td>`;
+          tds+=`<td class="col-day ${offChg>=0?'pos':'neg'}"><div class="dt-big">${offChg>=0?'+':''}${offChg.toFixed(2)}%</div><div class="dt-sub2">${offDate.slice(5)}</div></td>`;
         } else {
-          tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">${mkt?'无估算':'无数据'}</div></td>`;
+          tds+=`<td class="col-day"><div class="dt-big zero">—</div><div class="dt-sub2">${mkt?'无估算':'无数据'}</div></td>`;
         }
       }
-      else if(c.key==='hold'){ const _pc=(f.profit==null||f.pending)?'—':((f.profit>=0?'+':'')+M(f.profit)); const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.profit==null||f.pending)?'zero':(f.profit>=0?'pos':'neg'); tds+=`<td class="${_cc}"><div class="dt-big">${_pc}</div><div class="dt-sub2">${_rc}</div></td>`; }
-      else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="${_cc}"><div class="dt-big">${_rc}</div></td>`; }
-      else if(c.key==='mv')  tds+=`<td><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
+      else if(c.key==='hold'){ const _pc=(f.profit==null||f.pending)?'—':((f.profit>=0?'+':'')+M(f.profit)); const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.profit==null||f.pending)?'zero':(f.profit>=0?'pos':'neg'); tds+=`<td class="col-hold ${_cc}"><div class="dt-big">${_pc}</div><div class="dt-sub2">${_rc}</div></td>`; }
+      else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="col-holdpct ${_cc}"><div class="dt-big">${_rc}</div></td>`; }
+      else if(c.key==='mv')  tds+=`<td class="col-mv"><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：盘中优先用实时估算 gszzl；收盘后用基金公司确认的 navChg，与官方昨日收益对齐。
         const _chg=effectiveDayChg(nc);
         if(_chg!=null && f.mv!=null){
           const _amt=f.mv-f.mv/(1+_chg/100);
-          tds+=`<td class="${_amt>=0?'pos':'neg'}"><div class="dt-big">${_amt>=0?'+':''}${M(_amt)}</div><div class="dt-sub2">${_chg>=0?'+':''}${_chg.toFixed(2)}%</div></td>`;
+          tds+=`<td class="col-ret ${_amt>=0?'pos':'neg'}"><div class="dt-big">${_amt>=0?'+':''}${M(_amt)}</div><div class="dt-sub2">${_chg>=0?'+':''}${_chg.toFixed(2)}%</div></td>`;
         } else {
-          tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
+          tds+=`<td class="col-ret"><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
         }
       }
     });
@@ -6699,7 +6696,7 @@ function renderGrouped(list){
     const sep=`<tr class="grp-sep"><td colspan="${colspan}"><div class="grp-sep-in"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div></td></tr>`;
     return sep + denseRowsHtml(sub);
   }).join('');
-  return `<table class="dense-table"><thead><tr>${denseHeadHtml()}</tr></thead><tbody>${body}</tbody></table>`;
+  return `<div class="dense-table-wrap"><table class="dense-table"><thead><tr>${denseHeadHtml()}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 function goDetail(enc, acc){
   const f=findFund(decodeURIComponent(enc), acc);

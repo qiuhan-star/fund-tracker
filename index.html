@@ -9304,8 +9304,26 @@ async function afOcrDo(dataUrl, statusEl, resultEl){
     if(parsed.mv!=null){ document.getElementById('af-mv').value=parsed.mv.toFixed(2); }
     if(parsed.shares!=null){ document.getElementById('af-shares').value=parsed.shares.toFixed(2); }
     if(parsed.nav!=null){ document.getElementById('af-nav').value=parsed.nav.toFixed(4); }
-    if(statusEl) statusEl.innerHTML='✅ 识别完成，已自动填入';
-    setTimeout(function(){ if(statusEl) statusEl.style.display='none'; }, 2000);
+    // 根据 6 位代码反查基金全名（OCR 截图通常只有代码没有完整名称）
+    if(code){
+      if(statusEl) statusEl.innerHTML='✅ 识别完成，正在查询基金名称…';
+      try{
+        const base=await fetchFundBaseInfo(code);
+        if(base && base.SHORTNAME){
+          const fullName=base.NAME||base.SHORTNAME;
+          document.getElementById('af-input').value=fullName;
+          _afOcrData.name=fullName;
+          if(statusEl) statusEl.innerHTML='✅ 识别完成：'+fullName;
+        }else if(statusEl){
+          statusEl.innerHTML='✅ 识别完成（基金名查不到，已填代码 '+code+'，请手动改名）';
+        }
+      }catch(e){
+        if(statusEl) statusEl.innerHTML='✅ 识别完成（查名称失败，请手动确认）';
+      }
+    }else{
+      if(statusEl) statusEl.innerHTML='✅ 识别完成，已自动填入';
+    }
+    setTimeout(function(){ if(statusEl) statusEl.style.display='none'; }, 3000);
   }catch(e){
     if(statusEl) statusEl.innerHTML='❌ 识别失败：'+e.message;
   }

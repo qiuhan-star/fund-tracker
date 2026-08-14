@@ -10994,7 +10994,8 @@ function ehGetFields(){
     const mv=+(document.getElementById('ehSnapMv')?.value||0);
     const profit=+(document.getElementById('ehSnapProfit')?.value||0);
     const shares=+(document.getElementById('ehSnapShares')?.value||0);
-    return {shares, mv, profit, costPrice:0};
+    const costPrice=+(document.getElementById('ehSnapCost')?.value||0);
+    return {shares, mv, profit, costPrice};
   }
   // 手动模式
   if(_ehMode==='shares'){

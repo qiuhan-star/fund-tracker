@@ -4836,7 +4836,7 @@ function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); return f?f.account:effAccount('本人账户'); }
 let flashMap={}, todayGain=null;
-const DEFAULT_SORT={key:'est',dir:'desc'}; const SORT_VER='2';
+const DEFAULT_SORT={key:'day',dir:'desc'}; const SORT_VER='2';
 let holdSort=DEFAULT_SORT.key, holdSortDir=DEFAULT_SORT.dir, holdCatFilter='全部', holdSearch='', holdGroupBy='none';
 let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
 let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){ console.warn('分类覆盖数据损坏，已重置为默认', e); _cfgCorrupt=true; }
@@ -5923,13 +5923,13 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:true,est:true,day:true,mv:true,ret:true,hold:true,holdpct:true};
+let colVis={nav:true,day:true,mv:true,ret:true,hold:true,holdpct:true};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,est:o.est!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['est','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
-const COL_DEFS={nav:'单位净值',est:'估算涨跌',day:'官方涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
-const COL_KEYS=['nav','est','day','ret','hold'];
-const DEFAULT_COL_ORDER=['est','day','ret','hold','nav']; // 默认列顺序：估算涨跌→官方涨跌→当日收益→持有收益→单位净值（2026-08-10：总金额移出列表放名称下切换行；持有收益率并入持有收益列副行，单独列去掉）
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav!==false,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
+const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
+const COL_KEYS=['nav','day','ret','hold'];
+const DEFAULT_COL_ORDER=['day','ret','hold','nav'];
 const COL_ORDER_VER='6';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
@@ -6406,8 +6406,8 @@ function renderHomeList(){
     else if(holdSort==='nav'){ av=(navCache[a.name]&&navCache[a.name].nav)||0; bv=(navCache[b.name]&&navCache[b.name].nav)||0; }
     else if(holdSort==='est'){ av=(navCache[a.name]&&navCache[a.name].gszzl)||0; bv=(navCache[b.name]&&navCache[b.name].gszzl)||0; }
     else {
-      // 默认多级排序：当日收益→估算→官方→持仓金额→净值（名称兜底）
-      const _keys=['ret','hold','est','day','mv','nav','name'];
+      // 默认多级排序：当日收益→持有收益→当日涨跌→持仓金额→净值（名称兜底）
+	      const _keys=['ret','hold','day','mv','nav','name'];
       cmp=0;
       for(const _k of _keys){
         const _d=(_k==='name')?a.name.localeCompare(b.name,'zh-CN'):(sortKeyVal(a,_k)-sortKeyVal(b,_k));
@@ -6504,15 +6504,23 @@ function denseRowsHtml(list){
       else if(c.key==='nav') tds+=`<td><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='est') tds+=`<td>${estCell}</td>`;
       else if(c.key==='day'){
-        // 当日涨跌 = 收盘后最后确认的官方涨跌幅（navChg = NAVCHGRT），不再用两次刷新差值(flashMap)冒充
-        const dp=(navCache[f.name]&&navCache[f.name].navChg!=null)?navCache[f.name].navChg:null;
-        const dpDate=(navCache[f.name]&&navCache[f.name].navChgDate)?navCache[f.name].navChgDate:'';
-        const fresh=dpDate&&dpDate===todayStr; // 今晚刚更新的净值才标亮，区别于仍用昨日净值的滞后基金
-        if(dp!=null && f.mv!=null){
-          const amt=f.mv-f.mv/(1+dp/100);
-          tds+=`<td class="${dp>=0?'pos':'neg'}${fresh?' day-fresh':''}"><div class="dt-big">${dp>=0?'+':''}${dp.toFixed(2)}%</div><div class="dt-sub2">${dpDate?dpDate.slice(5):''}</div></td>`;
+        // 当日涨跌：单列双态 — 估算中显示灰色时间，官方已出显示蓝色日期
+        const nc2=navCache[f.name]||{};
+        const mkt=isMarketOpen(new Date());
+        const offChg=nc2.navChg!=null?nc2.navChg:null;
+        const offDate=nc2.navChgDate?nc2.navChgDate:'';
+        const fresh=offDate===todayStr;
+        const est=nc2.gszzl!=null?nc2.gszzl:null;
+        const estTime=nc2.gztime||'';
+        if(fresh && offChg!=null){
+          tds+=`<td class="${offChg>=0?'pos':'neg'} day-fresh"><div class="dt-big">${offChg>=0?'+':''}${offChg.toFixed(2)}%</div><div class="dt-sub2">${offDate.slice(5)}</div></td>`;
+        } else if(est!=null){
+          const sub=mkt?(estTime||'实时'):(estTime||'今日估算');
+          tds+=`<td class="${est>=0?'pos':'neg'}"><div class="dt-big">${est>=0?'+':''}${est.toFixed(2)}%</div><div class="dt-sub2 est-stale">${sub}</div></td>`;
+        } else if(offChg!=null){
+          tds+=`<td class="${offChg>=0?'pos':'neg'}"><div class="dt-big">${offChg>=0?'+':''}${offChg.toFixed(2)}%</div><div class="dt-sub2">${offDate.slice(5)}</div></td>`;
         } else {
-          tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">待刷新</div></td>`;
+          tds+=`<td><div class="dt-big zero">—</div><div class="dt-sub2">${mkt?'无估算':'无数据'}</div></td>`;
         }
       }
       else if(c.key==='hold'){ const _pc=(f.profit==null||f.pending)?'—':((f.profit>=0?'+':'')+M(f.profit)); const _rc=(f.ret==null||f.pending)?'—':((f.ret>=0?'+':'')+f.ret.toFixed(2)+'%'); const _cc=(f.profit==null||f.pending)?'zero':(f.profit>=0?'pos':'neg'); tds+=`<td class="${_cc}"><div class="dt-big">${_pc}</div><div class="dt-sub2">${_rc}</div></td>`; }
@@ -6567,7 +6575,7 @@ function weightedEstChg(){
 // 移动端横滑表格：列集合 / 表头 / 单元格 / 行 四个构建器，供「不分组」与「分组(资产大类/市场区域)」共用同一套皮肤，保证字体/列宽/样式完全一致
 function homeMobileCols(){
   const cols=[{key:'name',label:'基金名称'}];
-  const primary=['est','day','ret'];
+  const primary=['day','ret'];
   primary.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   colOrder.forEach(k=>{ if(colVis[k] && !primary.includes(k)) cols.push({key:k,label:COL_DEFS[k]}); });
   return cols;
@@ -6580,7 +6588,7 @@ function homeMobileHead(cols){
 }
 function homeMobileCellOf(fd,key){
   const nc=navCache[fd.name]||{};
-  if(key==='day'){ const d=(nc.navChg!=null)?nc.navChg:null; return d!=null?'<td class="cnum '+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+d.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
+  if(key==='day'){ const nc2=navCache[fd.name]||{}; const mkt=isMarketOpen(new Date()); const offChg=nc2.navChg!=null?nc2.navChg:null; const offDate=nc2.navChgDate?nc2.navChgDate:''; const fresh=offDate===fmtDate(new Date()); const est=nc2.gszzl!=null?nc2.gszzl:null; const estTime=nc2.gztime||''; if(fresh&&offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+' day-fresh">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; if(est!=null){ const sub=mkt?(estTime||'实时'):(estTime||'今日估算'); return '<td class="cnum '+(est>=0?'pos':'neg')+'">'+(est>=0?'+':'')+est.toFixed(2)+'%<div class="csub" style="margin-top:2px;color:var(--text-3)">'+sub+'</div></td>'; } if(offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+'">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; return '<td class="cnum zero">—</td>'; }
   if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+(fd.ret>=0?'+':'')+fd.ret.toFixed(2)+'%</td>':'<td class="cnum zero">—</td>'; }
@@ -6603,7 +6611,7 @@ function homeMobileRow(f, cols){
   return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
 }
 function renderHomeMobileTable(list){
-  // 手机端首屏固定显示「估算涨跌 / 官方涨跌 / 当日收益」，其余列仍渲染但位于右侧，靠横向滑动查看；名称列加宽截断
+  // 手机端首屏固定显示「当日涨跌 / 当日收益」，其余列仍渲染但位于右侧，靠横向滑动查看；名称列加宽截断
   const cols=homeMobileCols();
   const rows=list.map(f=>homeMobileRow(f,cols)).join('');
   return '<div class="home-ctable-wrap"><div class="home-ctable-scroll"><table class="home-ctable"><thead>'+homeMobileHead(cols)+'</thead><tbody>'+rows+'</tbody></table></div></div>';

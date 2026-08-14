@@ -11127,12 +11127,13 @@ function ehParseSnap(){
   let mv=null, profit=null, shares=null, nav=null;
   for(const line of lines){
     if(mv==null && /持有金额|总金额|市值/.test(line)){ mv=numOf(line); continue; }
-    if(profit==null && /持有收益|累计收益|总收益/.test(line)){ profit=numOf(line); continue; }
+    if(profit==null && /持有收益/.test(line)){ profit=numOf(line); continue; }
     if(shares==null && /持有份额|总份额|份额/.test(line)){ shares=numOf(line); continue; }
     if(nav==null && /(单位净值|净值)/.test(line) && !/估算|涨跌|累计/.test(line)){ nav=numOf(line); continue; }
   }
+  if(profit==null){ for(const line of lines){ if(/累计收益|总收益/.test(line)){ profit=numOf(line); break; } } }
   if(mv==null){ const m=txt.match(/持有金额[^\d\-+]*([\d,]+\.?\d*)/); if(m) mv=parseFloat(m[1].replace(/,/g,'')); }
-  if(profit==null){ const m=txt.match(/持有收益[^\d\-+]*([\d,]+\.?\d*)/); if(m) profit=parseFloat(m[1].replace(/,/g,'')); }
+  if(profit==null){ let m=txt.match(/持有收益[^\d\-+]*([\d,]+\.?\d*)/); if(!m) m=txt.match(/累计收益[^\d\-+]*([\d,]+\.?\d*)/); if(m) profit=parseFloat(m[1].replace(/,/g,'')); }
   if(shares==null){ const m=txt.match(/(持有份额|总份额)[^\d\-+]*([\d,]+\.?\d*)/); if(m) shares=parseFloat(m[2].replace(/,/g,'')); }
   if(nav==null){ const m=txt.match(/(单位净值|净值)[^\d\-+]*([\d,]+\.?\d*)/); if(m) nav=parseFloat(m[2].replace(/,/g,'')); }
   const fmt=function(n){ return n==null?'—':n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:4}); };

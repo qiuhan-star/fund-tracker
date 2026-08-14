@@ -5035,7 +5035,9 @@ function lsSafeSet(key,val){ try{ localStorage.setItem(key,val); return true; }c
 let _silentSaveTimer=null;
 function _silentSaveWrite(){
   _silentSaveTimer=null;
-  lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades,navCache,daily_snapshots:dailySnapshots,dcaPlans}));
+  // 过滤掉标记为已删除的交易（不持久化，卡内撤销期间仅存内存）
+  var saveTrades = (trades||[]).filter(function(t){ return !t._deleted; });
+  lsSafeSet('ft_data', JSON.stringify({schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),snaps,trades:saveTrades,navCache,daily_snapshots:dailySnapshots,dcaPlans}));
 }
 function silentSave(){
   // 账户重命名归一（轻量，立即执行，保持内存数据一致）
@@ -8016,7 +8018,20 @@ function autoConfirmPendingTrades(){
   });
   if(count>0) setTimeout(function(){ toast('已自动确认 '+count+' 笔交易'); }, 100);
 }
-function compute(){ autoConfirmPendingTrades(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); }
+// 迁移：补全现有转换记录中缺失的 convertTarget（通过 pairId 查找配对记录）
+function migrateConvertTarget(){
+  if(!trades||!trades.length) return;
+  trades.forEach(function(t){
+    if((t.type==='convert'||t.type==='convert_out') && !t.convertTarget && t.pairId){
+      const pair=trades.find(function(x){ return x!==t && x.pairId===t.pairId; });
+      if(pair){
+        t.convertTarget = (t.type==='convert_out') ? pair.name : (pair.type==='convert_out'?pair.name:'');
+        if(t.convertTarget) t.locked=true;
+      }
+    }
+  });
+}
+function compute(){ autoConfirmPendingTrades(); migrateConvertTarget(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); }
 // 每日资产快照：盘后/刷新时落一条结存（同一天去重只更新），支撑历史收益曲线与回撤
 function scopeTotals(scope){
   const list=_allHoldings.filter(f=> scope==='all'?true:(scope==='managed'? !accIsPersonal(f.account) : accIsPersonal(f.account)));

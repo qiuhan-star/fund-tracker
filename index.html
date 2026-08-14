@@ -8535,118 +8535,20 @@ function snapshotBadge(f){
   if(isLiquidated(f) || !f.trades || !f.trades.length) return '';
   return `<span class="tag tag-nosnap" onclick="event.stopPropagation();openEditHoldingsModal('${encodeURIComponent(f.name)}','${esc(f.account)}')" style="cursor:pointer">⚠ 待补充持仓</span>`;
 }
-// ===== 快照管理页面 =====
-function renderSnapshotPage(){
-  var cont=document.getElementById('tp4');
-  if(!cont) return;
-  if(!fundsView||!fundsView.length){ cont.innerHTML='<div class="snap-page"><div class="snap-empty"><div class="ico">📸</div><div class="ttl">暂无持仓数据</div><div class="desc">请先在「资产」页添加基金或记录交易，快照管理页面会自动列出所有基金供您维护持仓快照。</div></div></div>'; return; }
-  // 筛选出需要展示快照状态的基金（排除债基和已清仓无交易的）
-  var items=fundsView.filter(function(f){ return !f.isBond && !(isLiquidated(f) && (!f.trades||!f.trades.length)); });
-  // 统计
-  var snapCount=0, pendingCount=0, oldCount=0;
-  items.forEach(function(f){
-    if(f.snapshotStatus==='snapshot'){
-      snapCount++;
-      if(f.snapshotAt && Date.now()-f.snapshotAt>30*864e5) oldCount++;
-    } else if(!isLiquidated(f) && f.trades && f.trades.length) {
-      pendingCount++;
-    }
-  });
-  var h='<div class="snap-page">';
-  // 统计栏
-  h+='<div class="snap-stats">'+
-    '<div class="snap-stat"><div class="num green">'+snapCount+'</div><div class="lab">已快照</div></div>'+
-    '<div class="snap-stat"><div class="num orange">'+pendingCount+'</div><div class="lab">待补充</div></div>'+
-    '<div class="snap-stat"><div class="num'+(oldCount>0?' orange':'')+'">'+oldCount+'</div><div class="lab">超过30天</div></div>'+
-    '<div class="snap-stat"><div class="num">'+items.length+'</div><div class="lab">基金总数</div></div>'+
-  '</div>';
-  // 基金列表
-  if(!items.length){
-    h+='<div class="snap-empty"><div class="ico">📸</div><div class="ttl">所有基金已维护快照</div><div class="desc">所有持仓基金都已有快照数据，记录保持更新即可。</div></div>';
-  } else {
-    h+='<div class="snap-list">';
-    items.forEach(function(f,i){
-      var mo=getManualOverride(f.account,f.name);
-      var hasSnapshot=mo && mo.enabled && mo.mv!=null;
-      var days=hasSnapshot&&mo.updatedAt?Math.floor((Date.now()-mo.updatedAt)/864e5):null;
-      var badgeClass='pending', badgeText='待补充';
-      if(hasSnapshot){
-        if(days!==null && days>30){ badgeClass='old'; badgeText='📌 超过30天'; }
-        else { badgeClass='ok'; badgeText='📌 '+(days===0?'今天':days+'天前'); }
-      }
-      var mv=mo?mo.mv:'', profit=mo?mo.profit:'', shares=mo?mo.shares:'', costPrice=mo?mo.costPrice:'';
-      h+='<div class="snap-item">'+
-        '<div class="snap-item-header">'+
-          '<span class="snap-item-name">'+esc(f.name)+'</span>'+
-          '<span class="snap-item-acc">'+effAccount(f.account)+'</span>'+
-          '<span class="snap-badge '+badgeClass+'">'+badgeText+'</span>'+
-        '</div>'+
-        '<div class="snap-item-body">'+
-          '<div class="snap-item-field"><label>持有金额（元）</label><input id="snapMv'+i+'" type="text" inputmode="decimal" placeholder="0.00" value="'+(mv||'')+'"></div>'+
-          '<div class="snap-item-field"><label>持有收益（元）</label><input id="snapProfit'+i+'" type="text" inputmode="decimal" placeholder="0.00" value="'+(profit||'')+'"></div>'+
-          '<div class="snap-item-field"><label>持有份额</label><input id="snapShares'+i+'" type="text" inputmode="decimal" placeholder="可选" value="'+(shares||'')+'"></div>'+
-          '<div class="snap-item-field"><label>持仓成本价（元）</label><input id="snapCost'+i+'" type="text" inputmode="decimal" placeholder="可选" value="'+(costPrice||'')+'"></div>'+
-        '</div>'+
-        '<div class="snap-item-actions">'+
-          '<button class="btn sm" onclick="snapClear('+i+')">恢复自动计算</button>'+
-          '<button class="btn sm primary" onclick="snapSave('+i+')">保存快照</button>'+
-        '</div>'+
-      '</div>';
-    });
-    h+='</div>';
-  }
-  h+='<div style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-3);line-height:1.6">'+
-    '快照数据来自「修改持仓」手动录入。点击「保存快照」后，基金详情页的持有金额、收益率等将以快照数据为准显示。'+
-  '</div></div>';
-  cont.innerHTML=h;
-  // 存储基金索引供 snapSave/snapClear 使用
-  cont._snapItems=items;
-}
-// 快照保存
-function snapSave(idx){
-  var cont=document.getElementById('tp4');
-  if(!cont||!cont._snapItems||!cont._snapItems[idx]) return;
-  var f=cont._snapItems[idx];
-  var mv=+(document.getElementById('snapMv'+idx)?.value||0);
-  var profit=+(document.getElementById('snapProfit'+idx)?.value||0);
-  var shares=+(document.getElementById('snapShares'+idx)?.value||0);
-  var costPrice=+(document.getElementById('snapCost'+idx)?.value||0);
-  if(mv<=0){ toast('请填写持有金额'); return; }
-  setManualOverride(f.account,f.name,{mv:mv,profit:profit,shares:shares>0?shares:null,costPrice:costPrice>0?costPrice:null});
-  toast('快照已保存：'+esc(f.name));
-  renderSnapshotPage();
-  // 如果有打开详情页且是同一只基金，刷新
-  try{ if(typeof detailName!=='undefined'&&detailName===f.name){
-    buildFundsView();
-    var fd=findFund(f.name,f.account); if(fd){ updateDetailHeader(fd); renderDetailTabs(fd); }
-  } }catch(e){}
-}
-// 快照清除（恢复自动计算）
-function snapClear(idx){
-  var cont=document.getElementById('tp4');
-  if(!cont||!cont._snapItems||!cont._snapItems[idx]) return;
-  var f=cont._snapItems[idx];
-  clearManualOverride(f.account,f.name);
-  toast('已恢复自动计算：'+esc(f.name));
-  renderSnapshotPage();
-  try{ if(typeof detailName!=='undefined'&&detailName===f.name){
-    buildFundsView();
-    var fd=findFund(f.name,f.account); if(fd){ updateDetailHeader(fd); renderDetailTabs(fd); }
-  } }catch(e){}
-}
 // 更新快照状态提示条（首页资产 Tab 显示待补充基金数量）
 function updateSnapStatusBar(){
   var bar=document.getElementById('snapStatusBar'), txt=document.getElementById('snapStatusText');
   if(!bar||!txt) return;
   if(!fundsView||!fundsView.length){ bar.style.display='none'; return; }
-  var pending=0;
+  var pending=0, names=[];
   fundsView.forEach(function(f){
     if(f.isBond||isLiquidated(f)) return;
-    if(f.snapshotStatus!=='snapshot' && f.trades && f.trades.length) pending++;
+    if(f.snapshotStatus!=='snapshot' && f.trades && f.trades.length){ pending++; names.push(f); }
   });
   if(pending>0){
     bar.style.display='flex';
-    txt.textContent='📸 '+pending+' 只基金待补充持仓快照，可点击录入';
+    bar.onclick=function(){ if(names[0]) openEditHoldingsModal(encodeURIComponent(names[0].name), encodeURIComponent(names[0].account)); };
+    txt.textContent='📸 '+pending+' 只基金待补充持仓，可点此录入';
   } else {
     bar.style.display='none';
   }

@@ -4194,6 +4194,13 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .tx-add-btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:5px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; }
   .tx-add-btn:active{ opacity:.8; }
   .tx-convert{ font-size:12px; color:var(--text-2); margin-top:3px; padding:2px 8px; background:var(--surface-2); border-radius:4px; display:inline-block; }
+  /* 删除状态的卡片（卡片内撤销） */
+  .tx-deleted{ opacity:.7; }
+  .tx-deleted .tx-card-inner{ cursor:default; }
+  .tx-deleted-bar{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; }
+  .tx-deleted-bar span{ font-size:14px; color:var(--text-3); }
+  .tx-undo-btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:6px 16px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .tx-undo-btn:active{ opacity:.8; }
   /* 移除旧的 tx-ops 和 tx-status 在卡片内的显示 */
   .tr-ios .tx-card .tx-ops, .tr-ios .tx-card .tx-status{ display:none; }
 
@@ -8995,9 +9002,9 @@ function drawFundProfitCurve(box, fullPts, approx){
   try{
     var wrap=document.getElementById('fpWrap'), svgEl=document.getElementById('fpSvg'), tipEl=document.getElementById('fpTip');
     var cxLine=document.getElementById('fpCxLine'), cxDot=document.getElementById('fpCxDot'), crossEl=document.getElementById('fpCross');
-    wrap.addEventListener('mousemove',function(e){
+    function fpLocate(clientX){
       var r=svgEl.getBoundingClientRect();
-      var fracX=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+      var fracX=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
       var ux=fracX*W;
       var i=Math.max(0,Math.min(n-1,Math.round((ux-padL)/(W-padL-padR)*(n-1))));
       var xv=X(i), yv=Y(pts[i].profit);
@@ -9006,8 +9013,22 @@ function drawFundProfitCurve(box, fullPts, approx){
       var px=xv/W*r.width, py=yv/H*r.height;
       tipEl.style.left=px+'px'; tipEl.style.top=py+'px'; tipEl.classList.add('on');
       tipEl.innerHTML='<b>'+pts[i].d+'</b><br/>累计盈亏 '+((pts[i].profit>=0?'+':'')+M(pts[i].profit));
-    });
-    wrap.addEventListener('mouseleave',function(){ crossEl.classList.remove('on'); tipEl.classList.remove('on'); });
+    }
+    function fpClear(){ crossEl.classList.remove('on'); tipEl.classList.remove('on'); }
+    var fpHideTimer=null;
+    function fpCancelHide(){ if(fpHideTimer){ clearTimeout(fpHideTimer); fpHideTimer=null; } }
+    function fpScheduleHide(){ if(fpHideTimer) clearTimeout(fpHideTimer); fpHideTimer=setTimeout(fpClear, 1600); }
+    // 桌面：鼠标悬浮
+    wrap.addEventListener('mousemove',function(e){ fpCancelHide(); fpLocate(e.clientX); });
+    wrap.addEventListener('mouseleave',function(){ fpClear(); });
+    // 移动端：手指滑动吸附最近交易日 + tooltip（touchmove 阻止页面滚动，专注看图；松手 1.6s 后收起）
+    function fpTStart(e){ fpCancelHide(); if(e.cancelable) e.preventDefault(); if(e.touches&&e.touches.length) fpLocate(e.touches[0].clientX); }
+    function fpTMove(e){ if(e.cancelable) e.preventDefault(); if(e.touches&&e.touches.length) fpLocate(e.touches[0].clientX); }
+    function fpTEnd(){ fpScheduleHide(); }
+    wrap.addEventListener('touchstart', fpTStart, {passive:false});
+    wrap.addEventListener('touchmove', fpTMove, {passive:false});
+    wrap.addEventListener('touchend', fpTEnd, {passive:true});
+    wrap.addEventListener('touchcancel', fpTEnd, {passive:true});
   }catch(e){}
 }
 
@@ -9071,7 +9092,11 @@ function buildTradeSection(f){
           }
           return '';
         }():'';
+        if(t._deleted){
+          h+=`<div class="tx-card tx-deleted" data-tx-idx="${i}"><div class="tx-card-inner"><div class="tx-deleted-bar"><span>已删除</span><button class="tx-undo-btn" type="button" onclick="undoSoftDelete(${i})">撤销</button></div></div></div>`;
+        } else {
         h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${convertTxt}${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-copy" type="button" onclick="copyTrade(${i})">复制</button><button class="tx-act-btn tx-act-del" type="button" onclick="deleteTrade(${i})">删除</button></div></div></div>`;
+        }
       });
       h+=`</div>`;
     } else {

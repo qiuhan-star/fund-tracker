@@ -7867,7 +7867,38 @@ function detectCrossAccountDups(){
     }
   }catch(e){}
 }
-function compute(){ buildFundsView(); detectCrossAccountDups(); render(); silentSave(); }
+// 自动确认：当净值日期 >= 交易日期时，将 pending 状态的买入交易转为 confirmed
+function autoConfirmPendingTrades(){
+  let count=0;
+  const now=new Date();
+  const today=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
+  trades.forEach(function(t){
+    if(t.confirm!=='pending') return;
+    const ty=(t.type||'buy').toLowerCase();
+    // 仅对买入类交易自动确认
+    if(ty!=='buy'&&ty!=='dca'&&ty!=='convert'&&ty!=='reinvest'&&ty!=='activity') return;
+    const nc=navCache[t.name];
+    if(!nc) return;
+    // 取净值日期（优先 navChgDate，其次是 date）
+    const navDate=nc.navChgDate||nc.date;
+    if(!navDate) return;
+    // 净值日期必须 >= 交易日期
+    if(navDate < t.date) return;
+    // 同日情况下，排除估值（未收盘）或盘中估算 — 仅当为官方净值才自动确认
+    if(navDate===t.date && navDate!==today){
+      // 非今日的净值日期与交易日期相同 → 说明该日净值已公布，确认
+    }else if(navDate===today){
+      // 同日场景：仅当净值是官方值（非估值）才确认
+      const mkt=isMarketOpen(new Date());
+      if(mkt&&nc.gsz!=null) return; // 盘中估值 → 不确认
+      if(nc.gsz!=null&&isTodayTs(nc.gszTs)) return; // 估算新鲜 → 不确认
+    }
+    t.confirm='confirmed';
+    count++;
+  });
+  if(count>0) setTimeout(function(){ toast('已自动确认 '+count+' 笔交易'); }, 100);
+}
+function compute(){ autoConfirmPendingTrades(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); }
 // 每日资产快照：盘后/刷新时落一条结存（同一天去重只更新），支撑历史收益曲线与回撤
 function scopeTotals(scope){
   const list=_allHoldings.filter(f=> scope==='all'?true:(scope==='managed'? !accIsPersonal(f.account) : accIsPersonal(f.account)));

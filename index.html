@@ -6203,7 +6203,7 @@ function renderAccountSummary(){
 const TRADE_TYPES=[['buy','买入'],['sell','卖出'],['dividend','现金分红'],['reinvest','红利再投'],['split','拆分'],['convert','转换转入'],['convert_out','转换转出'],['dca','定投'],['activity','活动']];
 function typeLabel(t){ const m=TRADE_TYPES.find(x=>x[0]===t); return m?m[1]:(t||'买入'); }
 function navFmt(v){ return v!=null?(Math.round(v*10000)/10000).toFixed(4):'—'; }
-function updStr(f){ const _n=navCache[f.name]||{}; const _open=isMarketOpen(new Date()); if(_n.gztime) return (_open?'估 ':'')+_n.gztime.slice(11,16); const _d=_n.navChgDate||_n.date; if(_d) return (_open?'':'净值 ')+_d.slice(5); return '待刷新'; }
+function updStr(f){ const _n=navCache[f.name]||{}; const _open=isMarketOpen(new Date()); if(_n.gztime) return (_open?'估 ':'')+(_n.gztime.length>=16?_n.gztime.slice(11,16):_n.gztime); const _d=_n.navChgDate||_n.date; if(_d) return (_open?'':'净值 ')+_d.slice(5); return '待刷新'; }
 // 数据新鲜度：距上次成功刷新的时长（短文本）
 function freshAgeShort(){ const d=localStorage.getItem('ft_lastSync'); if(!d) return ''; const diff=Math.floor((Date.now()-(+d))/1000); if(diff<60) return '刚刚'; if(diff<3600) return '停留'+Math.floor(diff/60)+'分'; return '停留'+Math.floor(diff/3600)+'时'; }
 // 顶部状态条：市场时段 + 上次成功刷新时间 + 新鲜度/失败徽标
@@ -6265,7 +6265,7 @@ function estCellHtml(f){
   const nc=navCache[f.name]||{}; const mkt=isMarketOpen(new Date());
   if(nc.gszzl!=null){
     const live=mkt;
-    const sub=live?'':(nc.gztime?nc.gztime.slice(11,16):'今日估算');
+    const sub=live?'':(nc.gztime?(nc.gztime.length>=16?nc.gztime.slice(11,16):nc.gztime):'今日估算');
     return `<div class="dt-big ${nc.gszzl>=0?'pos':'neg'}">${nc.gszzl>=0?'+':''}${nc.gszzl.toFixed(2)}%</div><div class="dt-sub2 ${live?'est-fresh':'est-stale'}">${sub}</div>`;
   }
   if(nc.navChg!=null){
@@ -8690,7 +8690,7 @@ function genericDetail(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   const navVal=navCache[f.name]?navCache[f.name].nav:'';
   const _nc=navCache[f.name]||{}, _mkt=isMarketOpen(new Date());
-  const estRow=(_mkt&&_nc.gsz!=null)?`<tr><td>盘中估算</td><td>${mask4(_nc.gsz)} <span class="${_nc.gszzl>=0?'pos':'neg'}">${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>${_nc.gztime?` <span class="hint">@${_nc.gztime.slice(11,16)}</span>`:''}</td></tr>`:'';
+  const estRow=(_mkt&&_nc.gsz!=null)?`<tr><td>盘中估算</td><td>${mask4(_nc.gsz)} <span class="${_nc.gszzl>=0?'pos':'neg'}">${_nc.gszzl>=0?'+':''}${_nc.gszzl.toFixed(2)}%</span>${_nc.gztime?` <span class="hint">@${_nc.gztime.length>=16?_nc.gztime.slice(11,16):_nc.gztime}</span>`:''}</td></tr>`:'';
   const mvIn = si>=0 ? `<input data-fld="s-mv-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].mv}" oninput="snaps[${si}].mv=+this.value;compute();silentSave()">` : M(f.mv);
   const retIn = si>=0 ? `<input data-fld="s-ret-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()">` : (f.ret>=0?'+':'')+f.ret.toFixed(2)+'%';
   const navIn = si>=0 ? `<input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()">` : (navVal?mask4(navVal):'自动/未填');

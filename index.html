@@ -218,7 +218,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .hl.alert-tp { background: var(--warn-bg); box-shadow: inset 3px 0 0 var(--warn); }@media (hover: hover) { .hl.alert-tp:hover {  background: var(--warn-bg);  } }
 .hl.alert-sl { background: var(--up-bg); box-shadow: inset 3px 0 0 var(--danger); }@media (hover: hover) { .hl.alert-sl:hover {  background: var(--up-bg);  } }
 /* 持仓紧凑表格 */
-  .seg-group { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }.dense-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }  .dense-table th { padding: 9px 5px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 12px; }.dense-table th:first-child, .dense-table td:first-child { background: var(--surface); width: 148px; min-width: 148px; max-width: 148px; box-shadow: 2px 0 6px -4px rgba(0,0,0,.08); position: sticky; left: 0; }
+  .seg-group { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }.dense-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 14px; }  .dense-table th { padding: 9px 5px; color: var(--text-3); font-weight: 600; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-size: 12px; }.dense-table th:first-child, .dense-table td:first-child { background: var(--surface); width: 148px; min-width: 148px; max-width: 148px; box-shadow: 2px 0 6px -4px rgba(0,0,0,.08); position: sticky; left: 0; }
   .dense-table th:first-child { text-align: left; padding-left:16px; z-index: 3; }
   .dense-table td:first-child { z-index: 2; }.dense-table th.sort-on { color: var(--accent); }.dense-table th.sortable { cursor: pointer; user-select: none; transition: color .12s, background .12s; }@media (hover: hover) { .dense-table th.sortable:hover {  color: var(--accent-text); background: var(--surface-2);  } }
 .dense-table th .sort-ico { display: inline-block; margin-left: 3px; font-size: 12px; line-height: 1; color: var(--text-3); opacity: .5; font-weight: 700; }.dense-table th.sort-on .sort-ico.on { color: var(--accent); opacity: 1; }/* 拖动换列：轻点=排序，按住拖动=换列 */
@@ -302,7 +302,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .more-menu { position: relative; display: inline-block; }.more-menu .drop { position: absolute; right: 0; top: 100%; margin-top: 4px; background:var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.1); min-width: 160px; z-index: 50; display: none; padding: 6px 0; }.more-menu .drop.show { display: block; }.more-menu .drop button { display: block; width: 100%; text-align: left; border: none; background: none; padding: 8px 14px; font-size: 14px; cursor: pointer; font-family: inherit; color: var(--text); }@media (hover: hover) { .more-menu .drop button:hover {  background: var(--bg);  } }
 .more-menu .drop hr { border: none; border-top: 1px solid var(--border-2); margin: 4px 0; }.more-menu .drop .drop-hint { font-size: 12px; color: var(--text-3); line-height: 1.55; padding: 6px 14px 4px; margin: 0; }.col-toggle { border:1px solid var(--border-strong); background:var(--surface); color:var(--text-2); border-radius:7px; font-size: 12px; padding:3px 9px; cursor:pointer; font-family:inherit; white-space:nowrap; }@media (hover: hover) { .col-toggle:hover {  color:var(--accent); border-color:var(--accent);  } }
 .col-pop { position:absolute; z-index:30; background:var(--surface); border:1px solid var(--border); border-radius:9px; box-shadow:0 6px 20px rgba(0,0,0,.12); padding:6px; display:none; min-width:172px; top:100%; right:0; margin-top:5px; }.col-pop.show { display:block; }.col-pop .ttl { font-size: 12px; color:var(--text-3); padding:3px 7px 5px; }.col-pop label { display:flex; align-items:center; gap:8px; padding:6px 7px; font-size: 14px; cursor:pointer; border-radius:6px; }@media (hover: hover) { .col-pop label:hover {  background:var(--bg);  } }
-.col-pop input { accent-color:var(--accent); }.col-pop .hint { font-size: 12px; color:var(--text-3); padding:5px 7px 2px; line-height:1.5; }.dense-table thead th.th-col { cursor:default; }@keyframes flashUp { 0% { background: var(--up-bg); }100% { background: transparent; }  }
+.col-pop input { accent-color:var(--accent); }.col-pop .hint { font-size: 12px; color:var(--text-3); padding:5px 7px 2px; line-height:1.5; }.dense-table thead th.th-col { cursor:default; width:0; min-width:fit-content; }@keyframes flashUp { 0% { background: var(--up-bg); }100% { background: transparent; }  }
 @keyframes flashDown { 0% { background: var(--down-bg); }100% { background: transparent; }  }
 .flash.pos { animation: flashUp 1.8s ease-out; }.flash.neg { animation: flashDown 1.8s ease-out; }/* ===== 详情页 ===== */
   .back-link { display: inline-block; margin-bottom: 12px; color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 500; }@media (hover: hover) { .back-link:hover {  color: var(--accent-strong);  } }
@@ -999,11 +999,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-  }
+	    white-space: nowrap;
+	    overflow: visible;
+	  }
   /* 分组视图 dense 表：固定名称列宽度，让「股票/债券/混合」各组的数据列跨组对齐（否则 table-layout:auto 按每组最长名字撑开，列会参差） */
   .dense-table th:first-child,
   .dense-table td:first-child {
@@ -5940,8 +5938,8 @@ try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
 const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
 const COL_KEYS=['nav','day','ret','hold'];
-const DEFAULT_COL_ORDER=['day','ret','nav','hold'];
-const COL_ORDER_VER='7';
+const DEFAULT_COL_ORDER=['day','ret','hold','nav'];
+const COL_ORDER_VER='8';
 const COLVIS_VER='2';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();

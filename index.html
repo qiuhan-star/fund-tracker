@@ -11285,12 +11285,12 @@ function ehParseAlipayText(raw){
     const m=s.match(/[-]?\d{1,3}(?:,\d{3})*(?:\.\d+)?|[-]?\d+(?:\.\d+)?/);
     return m?parseFloat(m[0].replace(/,/g,'')):null;
   };
-  // 第一遍：标签同行有数字
+  // 第一遍：标签同行有数字。优先匹配「持有收益」，避免误抓「累计收益」
   for(const line of lines){
     if(result.mv==null && /金额.{0,3}元/.test(line) && !/收益|成本|净值/.test(line)){
       result.mv=grab(line.replace(/^.*?金额.{0,3}元/,''));
     }
-    if(result.profit==null && /持有收益|累计收益|总收益/.test(line)){
+    if(result.profit==null && /持有收益/.test(line)){
       result.profit=grab(line);
     }
     if(result.shares==null && /持有份额|总份额/.test(line)){
@@ -11303,6 +11303,12 @@ function ehParseAlipayText(raw){
       result.nav=grab(line);
     }
   }
+  // 第一遍兜底：持有收益没找到，尝试累计收益/总收益
+  if(result.profit==null){
+    for(const line of lines){
+      if(/累计收益|总收益/.test(line)){ result.profit=grab(line); break; }
+    }
+  }
   // 第二遍：标签在第 N 行，数字在第 N+1 行（合并"标签 + 数字"两行为虚拟行）
   for(let i=0; i<lines.length-1; i++){
     const merged=lines[i]+' '+lines[i+1];
@@ -11310,9 +11316,19 @@ function ehParseAlipayText(raw){
       const m=merged.match(/金额.{0,3}元[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
       if(m) result.mv=parseFloat(m[1].replace(/,/g,''));
     }
-    if(result.profit==null && /持有收益|累计收益|总收益/.test(merged)){
-      const m=merged.match(/(?:持有收益|累计收益|总收益)[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+    if(result.profit==null && /持有收益/.test(merged)){
+      const m=merged.match(/持有收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
       if(m) result.profit=parseFloat(m[1].replace(/,/g,''));
+    }
+  }
+  // 第二遍兜底：持有收益没找到，尝试累计收益
+  if(result.profit==null){
+    for(let i=0; i<lines.length-1; i++){
+      const merged=lines[i]+' '+lines[i+1];
+      if(/累计收益/.test(merged)){
+        const m=merged.match(/累计收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+        if(m){ result.profit=parseFloat(m[1].replace(/,/g,'')); break; }
+      }
     }
   }
   // 第三遍：全文本兜底
@@ -11321,9 +11337,11 @@ function ehParseAlipayText(raw){
     if(m) result.mv=parseFloat(m[1].replace(/,/g,''));
   }
   if(result.profit==null){
+    // 优先匹配持有收益，其次累计收益
+    let m=txt.match(/持有收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+    if(!m) m=txt.match(/累计收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
     // 兜底：处理中文破折号 — 当作负号
-    const fixed=txt.replace(/[—–]/g,'-');
-    const m=fixed.match(/(?:持有|累计)?收益.{0,3}元[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+    if(!m){ const fixed=txt.replace(/[—–]/g,'-'); m=fixed.match(/(?:持有|累计)?收益.{0,3}元[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/); }
     if(m) result.profit=parseFloat(m[1].replace(/,/g,''));
   }
   if(result.shares==null){

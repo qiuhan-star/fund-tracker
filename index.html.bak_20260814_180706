@@ -4191,7 +4191,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 交易记录头部「+ 记一笔」按钮 */
   .tx-add-btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:5px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; }
   .tx-add-btn:active{ opacity:.8; }
-  .tx-convert{ font-size:12px; color:var(--text-2); margin-top:3px; padding:2px 8px; background:var(--surface-2); border-radius:4px; display:inline-block; }
   /* 移除旧的 tx-ops 和 tx-status 在卡片内的显示 */
   .tr-ios .tx-card .tx-ops, .tr-ios .tx-card .tx-status{ display:none; }
 
@@ -9055,7 +9054,7 @@ function buildTradeSection(f){
         h+=`<tr class="tr-locked${_canc?' cancelled':''}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">
             <td>${esc(accOf(t))}</td>
             <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
-            <td>${typeLabel(t.type)}${t.convertTarget && (t.type==='convert_out'||t.type==='convert')?('<br><span style="font-size:11px;color:var(--text-3)">→ '+esc(t.convertTarget)+'</span>'):''}</td>
+            <td>${typeLabel(t.type)}</td>
             <td>${_confBadge}</td>
             <td class="num">${M(t.amount)}</td>
             <td class="num">${t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class="pending-nav">净值待确认</span>'}</td>

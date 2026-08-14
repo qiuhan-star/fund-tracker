@@ -200,7 +200,15 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 @media (hover: hover) { .hl.open:hover {  background: var(--surface-2);  } }
 .hl-head:active { background: var(--border-3); }.hl-main { flex: 1 1 auto; min-width: 0; }.hl-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.hl-sub { font-size: 12px; color: var(--text-3); margin-top: 5px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-variant-numeric: tabular-nums; }.hl-sep { color: var(--text-3); }.est { font-weight: 600; font-variant-numeric: tabular-nums; }.est.confirm { color: var(--text-2); background: var(--surface-3); padding: 0 4px; border-radius: 4px; }.nk { font-style: normal; font-size: 12px; line-height: 1; padding: 1px 5px; border-radius: 4px; margin-left: 4px; vertical-align: 1px; font-weight: 600; }.nk-est { background: var(--warn-bg); color: #e8820c; }.nk-off { background: var(--down-bg); color: #2f9e44; }.nk-man { background: var(--accent-soft); color: var(--accent-text); }.hist-ranges { display: inline-flex; gap: 4px; flex-wrap: wrap; }.mini-btn { font-size: 12px; border: 1px solid var(--border-strong); background:var(--surface); color: #5b6068; border-radius: 6px; padding: 1px 8px; cursor: pointer; line-height: 1.6; }.mini-btn.on { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }.nav-edit { cursor: pointer; border-bottom: 1px dashed var(--text-3); }.profile-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 18px; margin-top: 8px; }.pf-item { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; padding: 3px 0; border-bottom: 1px dashed var(--border-2); }.pf-k { color: var(--text-3); }.pf-v { color: var(--text); font-weight: 600; text-align: right; }.hk-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }.hk-table th, .hk-table td { padding: 5px 6px; border-bottom: 1px solid var(--border-2); text-align: right; white-space: nowrap; }.hk-table th { color: var(--text-3); font-weight: 600; }.hk-table th:nth-child(1) { text-align: center; }.hk-table th:nth-child(2) { text-align: left; }.hk-table th:nth-child(3), .hk-table th:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }.hk-table td.hk-rank { color: var(--text-3); text-align: center; }.hk-table td.hk-name { text-align: left; font-weight: 600; white-space: normal; }.hk-table td.hk-pct, .hk-table td.hk-chg { font-variant-numeric: tabular-nums; }.hk-table td.hk-chg.pos { color: var(--up); }.hk-table td.hk-chg.neg { color: var(--down); }@media (hover: hover) { .nav-edit:hover {  border-bottom-color: var(--accent-text); color: var(--accent-text);  } }
 .hl-num { flex: 0 0 auto; text-align: right; }.hl-mv { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }.hl-shares { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; margin-top: 2px; }.hl-ret { font-size: 14px; font-variant-numeric: tabular-nums; margin-top: 3px; }.hl-arrow { flex: 0 0 auto; font-size: 18px; color: var(--text-3); margin-left: 2px; line-height: 1; transition: color .15s; }@media (hover: hover) { .hl-row:hover .hl-arrow {  color: var(--text-3);  } }
-.tag-芯片 { background: var(--accent-soft); color: var(--accent-text); }.tag-医药 { background: var(--up-bg); color: var(--up); }.tag-QDII { background: #e6f7f1; color: #0f8a63; }.tag-海外 { background: #e6f0fb; color: #378add; }.tag-attr { background: var(--border-3); color: var(--text-2); }.tag-cur { background: #f4f1ff; color: #6d4bb7; }.tag-科技 { background: var(--accent-soft); color: #534ab7; }.tag-周期资源 { background: var(--warn-bg); color: #a9701a; }.tag-制造 { background: var(--accent-soft); color: #2f7fb8; }.tag-军工 { background: #fdeaea; color: #c0392b; }.tag-债基 { background: var(--down-bg); color: #3a8a4a; }.tag-混合 { background: var(--border-3); color: var(--text-2); }.tag-其他 { background: var(--border-3); color: var(--text-2); }/* 分类编辑浮动菜单 */
+.tag-芯片 { background: var(--accent-soft); color: var(--accent-text); }.tag-医药 { background: var(--up-bg); color: var(--up); }.tag-QDII { background: #e6f7f1; color: #0f8a63; }.tag-海外 { background: #e6f0fb; color: #378add; }.tag-attr { background: var(--border-3); color: var(--text-2); }.tag-cur { background: #f4f1ff; color: #6d4bb7; }.tag-科技 { background: var(--accent-soft); color: #534ab7; }.tag-周期资源 { background: var(--warn-bg); color: #a9701a; }.tag-制造 { background: var(--accent-soft); color: #2f7fb8; }.tag-军工 { background: #fdeaea; color: #c0392b; }.tag-债基 { background: var(--down-bg); color: #3a8a4a; }.tag-混合 { background: var(--border-3); color: var(--text-2); }.tag-其他 { background: var(--border-3); color: var(--text-2); }
+.tag-snap { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; font-size:11px; padding:1px 6px; border-radius:4px; vertical-align:middle; margin-left:6px; white-space:nowrap; }
+.tag-nosnap { background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; font-size:11px; padding:1px 6px; border-radius:4px; vertical-align:middle; margin-left:6px; white-space:nowrap; cursor:pointer; }
+@media (prefers-color-scheme: dark) {
+  :root[data-widget-theme="dark"] .tag-snap { background:#1a3a1a; color:#4ade80; border-color:#2a5a2a; }
+  :root[data-widget-theme="dark"] .tag-nosnap { background:#3a2a0a; color:#f59e0b; border-color:#5a3a0a; }
+}
+.dt-name .tag-snap, .dt-name .tag-nosnap { font-size:10px; padding:0 4px; }
+/* 分类编辑浮动菜单 */
   .float-menu { position: fixed; z-index: 9999; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; padding: 6px; box-shadow: 0 8px 28px rgba(0,0,0,.16); min-width: 150px; }.float-menu .fm-title { font-size: 12px; color: var(--text-3); padding: 3px 8px 6px; }.float-menu .fm-opt { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 6px 8px; border-radius: 6px; font-size: 14px; cursor: pointer; color: var(--text); font-family: inherit; }@media (hover: hover) { .float-menu .fm-opt:hover {  background: var(--border-3);  } }
 .float-menu .fm-opt.on { color: var(--accent-on); font-weight: 600; }.float-menu .fm-sep { height: 1px; background: var(--border-3); margin: 5px 4px; }.float-menu .fm-input { display: block; width: calc(100% - 16px); margin: 2px 8px; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 14px; font-family: inherit; background: var(--bg); color: var(--text); box-sizing: border-box; outline: none; }.float-menu .fm-input:focus { border-color: var(--accent); }.float-menu .fm-save { display: block; width: calc(100% - 16px); margin: 2px 8px 4px; padding: 6px 8px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-on); font-family: inherit; }@media (hover: hover) { .float-menu .fm-save:hover {  filter: brightness(1.06);  } }
 /* 首页持仓列表：基金内"重仓"小条（前三大） */
@@ -4999,7 +5007,7 @@ function getOverrideKey(acc,name){ return (acc||'本人账户')+'||'+(name||'');
 function getManualOverride(acc,name){ return manualOverrides[getOverrideKey(acc,name)]; }
 function setManualOverride(acc,name,data){
   const k=getOverrideKey(acc,name);
-  if(data && data.mv!=null && data.profit!=null){ manualOverrides[k]={mv:data.mv, profit:data.profit, shares:data.shares!=null?data.shares:null, cost:data.cost!=null?data.cost:null, costPrice:data.costPrice!=null?data.costPrice:null, enabled:true}; }
+  if(data && data.mv!=null && data.profit!=null){ manualOverrides[k]={mv:data.mv, profit:data.profit, shares:data.shares!=null?data.shares:null, cost:data.cost!=null?data.cost:null, costPrice:data.costPrice!=null?data.costPrice:null, enabled:true, updatedAt:Date.now()}; }
   else { delete manualOverrides[k]; }
   saveManualOverrides(); compute();
 }
@@ -6350,7 +6358,7 @@ function denseRowsHtml(list){
     const code=syncCode(f.name);
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
+      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${snapshotBadge(f)}${noteDot(f.name)}</div><div class="dt-sub">
         ${code?`<span class="dcode">#${code}</span>`:''}
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点此手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}
       </div><div class="mvline"><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
@@ -7697,6 +7705,8 @@ function buildFundsView(){
       if(mo.shares!=null){ f.shares=mo.shares; f.costPx=f.shares>0?f.cost/f.shares:0; }
       if(mo.cost!=null){ f.cost=mo.cost; f.ret=f.cost>0?f.profit/f.cost*100:0; }
     }
+    f.snapshotStatus = (mo && mo.enabled && mo.mv!=null) ? 'snapshot' : 'none';
+    f.snapshotAt = (mo && mo.updatedAt) ? mo.updatedAt : null;
     return f;
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
@@ -8347,7 +8357,7 @@ function headerHtml(f){
   const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   const _netLiq=_tr.filter(function(t){ return t.confirm!=='pending' && (t.confirm!=='cancelled'); }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); return s; },0);
   const _netTxt=_tr.length?(_liq?M(_netLiq):M(_net)):'—';
-  const _netLabel=_liq?'累计投入':'累计投入';
+  const _netLabel='累计投入（交易口径）';
   const _lt=latestTradeOf(f.name);
   const _ltIdx=_lt?trades.indexOf(_lt):-1;
   const _latestLabel='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">待确认</span>':'');
@@ -8355,7 +8365,7 @@ function headerHtml(f){
   // 清仓: 显示已实现收益
   if(_liq){
     return `<div class="card detail-head">
-      <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
+      <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}${snapshotBadge(f)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
       <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
       <div class="dh-summary">
         <div class="dh-sec">已清仓（已实现）</div>
@@ -8384,7 +8394,7 @@ function headerHtml(f){
       </div>`;
   }
   return `<div class="card detail-head">
-    <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
+    <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}${snapshotBadge(f)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
     <div class="dh-summary">
       <div class="dh-sec">金额（元）</div>
@@ -8457,7 +8467,7 @@ function updateDetailHeader(f){
   const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   const _netLiq=_tr.filter(function(t){ return t.confirm!=='pending' && t.confirm!=='cancelled'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); return s; },0);
   set('dhNet', _tr.length?(_liq?M(_netLiq):M(_net)):'—');
-  const _k=document.getElementById('dhNet')?.previousElementSibling; if(_k) _k.textContent='累计投入';
+  const _k=document.getElementById('dhNet')?.previousElementSibling; if(_k) _k.textContent='累计投入（交易口径）';
 }
 function dhToggleMore(){
   const body=document.getElementById('dhMoreBody');
@@ -8466,6 +8476,18 @@ function dhToggleMore(){
   const open=body.style.display!=='none';
   body.style.display=open?'none':'';
   if(arrow) arrow.textContent=open?'▶':'▼';
+}
+function snapshotBadge(f){
+  if(!f) return '';
+  if(f.isBond) return '';
+  if(f.snapshotStatus==='snapshot'){
+    const days=f.snapshotAt?Math.floor((Date.now()-f.snapshotAt)/864e5):0;
+    const txt=days===0?'今天':days+'天前';
+    return `<span class="tag tag-snap">📌 快照·${txt}</span>`;
+  }
+  // 已清仓或无交易记录 → 不显示待补充
+  if(isLiquidated(f) || !f.trades || !f.trades.length) return '';
+  return `<span class="tag tag-nosnap" onclick="event.stopPropagation();openEditHoldingsModal('${encodeURIComponent(f.name)}','${esc(f.account)}')" style="cursor:pointer">⚠ 待补充持仓</span>`;
 }
 function latestTradeOf(name){
   // 过滤掉撤单的交易，只取已确认和待确认的
@@ -8811,9 +8833,11 @@ function buildTradeSection(f){
   tr.forEach(function(t){ const k=t.type; if(k==='buy'||k==='dca'||k==='activity')_tc.buy++; else if(k==='sell')_tc.sell++; else if(k==='convert'||k==='convert_out')_tc.conv++; else _tc.oth++; });
   const tradeHead = `交易记录`;
   const tradeMeta = `${tr.length} 笔 · 买入${_tc.buy} · 卖出${_tc.sell}${_tc.conv?(' · 转换'+_tc.conv):''}${_tc.oth?(' · 其他'+_tc.oth):''}`;
+  const snapHint = `<div class="hint" style="font-size:12px;color:var(--text-3);margin:6px 0 8px;padding:6px 10px;background:var(--surface-2);border-radius:6px;line-height:1.5">持仓以快照为准，本表仅供参考</div>`;
   if(isMobile()){
     h+=`<div class="card trade-section">`;
     h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn" onclick="event.stopPropagation();openTradeQuickFor('${encodeURIComponent(f.name)}')">＋ 记一笔</button></div></div>`;
+    h+=snapHint;
     if(tr.length){
       h+=`<div class="tx-list">`;
       tr.forEach(t=>{
@@ -8837,6 +8861,7 @@ function buildTradeSection(f){
   } else {
     const defCol = tr.length>12;
     h+=`<div class="card trade-section"><div class="sec-head collapsible" onclick="var e=document.getElementById('tr-${idx}');if(e){e.classList.toggle('collapsed');var c=this.querySelector('.chev');if(c)c.textContent=e.classList.contains('collapsed')?'▸':'▾';}"><h2>${tradeHead}</h2><span class="hint">${tradeMeta}<span class="chev" style="margin-left:10px">${defCol?'▸':'▾'}</span></span></div>`;
+    h+=snapHint;
     h+=`<div id="tr-${idx}" class="tr-collapse ${defCol?'collapsed':''}">`;
     h+=`<p class="hint" style="margin:0 0 8px">点击任意一行可编辑交易。净值<b>留空＝T+1 待确认</b>：结算日后自动按确认日净值补全（金额/份额自动反推），无需手动刷新。</p>`;
     h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认；点右下角 + 记一笔</span></div></div>`;

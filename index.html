@@ -11237,7 +11237,7 @@ function ehParseAlipayText(raw){
     const m=s.match(/[-]?\d{1,3}(?:,\d{3})*(?:\.\d+)?|[-]?\d+(?:\.\d+)?/);
     return m?parseFloat(m[0].replace(/,/g,'')):null;
   };
-  // 1. 持有金额：找「金额（元）」或「金额(元)」后的第一个数字
+  // 第一遍：标签同行有数字
   for(const line of lines){
     if(result.mv==null && /金额.{0,3}元/.test(line) && !/收益|成本|净值/.test(line)){
       result.mv=grab(line.replace(/^.*?金额.{0,3}元/,''));
@@ -11255,32 +11255,40 @@ function ehParseAlipayText(raw){
       result.nav=grab(line);
     }
   }
-  // 2. 兜底：用金额前后的最大数字推断（折叠态金额最大）
-  if(result.mv==null){
-    // 找「金额」关键字最近后面的大数字
-    const idx=txt.search(/金额/);
-    if(idx>=0){
-      const after=txt.slice(idx, idx+80);
-      const ms=after.match(/[-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?|[-]?\d{2,}\.\d+/g);
-      if(ms && ms.length) result.mv=parseFloat(ms[0].replace(/,/g,''));
+  // 第二遍：标签在第 N 行，数字在第 N+1 行（合并"标签 + 数字"两行为虚拟行）
+  for(let i=0; i<lines.length-1; i++){
+    const merged=lines[i]+' '+lines[i+1];
+    if(result.mv==null && /金额.{0,3}元/.test(merged) && !/收益|成本|净值/.test(merged)){
+      const m=merged.match(/金额.{0,3}元[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+      if(m) result.mv=parseFloat(m[1].replace(/,/g,''));
+    }
+    if(result.profit==null && /持有收益|累计收益|总收益/.test(merged)){
+      const m=merged.match(/(?:持有收益|累计收益|总收益)[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+      if(m) result.profit=parseFloat(m[1].replace(/,/g,''));
     }
   }
-  // 3. 兜底：份额、成本价、净值——用整个文本里的所有数字+位置
+  // 第三遍：全文本兜底
+  if(result.mv==null){
+    const m=txt.match(/金额.{0,3}元[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+    if(m) result.mv=parseFloat(m[1].replace(/,/g,''));
+  }
+  if(result.profit==null){
+    // 兜底：处理中文破折号 — 当作负号
+    const fixed=txt.replace(/[—–]/g,'-');
+    const m=fixed.match(/(?:持有|累计)?收益.{0,3}元[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+    if(m) result.profit=parseFloat(m[1].replace(/,/g,''));
+  }
   if(result.shares==null){
-    const m=txt.match(/份额[^\d\-+]*([\d,]+\.?\d*)/);
+    const m=txt.match(/份额[^\d\-]*([\d,]+\.?\d*)/);
     if(m) result.shares=parseFloat(m[1].replace(/,/g,''));
   }
   if(result.costPrice==null){
-    const m=txt.match(/(?:持仓)?成本价[^\d\-+]*([\d,]+\.?\d*)/);
+    const m=txt.match(/(?:持仓)?成本价[^\d\-]*([\d,]+\.?\d*)/);
     if(m) result.costPrice=parseFloat(m[1].replace(/,/g,''));
   }
   if(result.nav==null){
-    const m=txt.match(/(?:基金|单位)?净值[^\d\-+]*([\d,]+\.?\d*)/);
+    const m=txt.match(/(?:基金|单位)?净值[^\d\-]*([\d,]+\.?\d*)/);
     if(m) result.nav=parseFloat(m[1].replace(/,/g,''));
-  }
-  if(result.profit==null){
-    const m=txt.match(/(?:持有|累计)?收益[^\d\-+]*([-]?\d[\d,]*(?:\.\d+)?)/);
-    if(m) result.profit=parseFloat(m[1].replace(/,/g,''));
   }
   return result;
 }

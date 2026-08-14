@@ -7754,8 +7754,16 @@ function buildFundsView(){
         // 份额：手动份额优先 → 否则金额÷净值 → 净值缺失且金额>0 时，用「该日期之前最近一次买入净值」近似（转换常不带净值）
         let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:(liveNav>0?amt/liveNav:0));
         if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
+        // 自动补全：如果已经确认了净值，但份额还是空的，用计算出的份额写回交易记录
+        if(t.confirm==='confirmed' && sh>0 && (t.shares==null || t.shares==='')){
+          t.shares=sh;
+        }
+        // 如果已经确认了，但净值为空但我们有 liveNav，用 liveNav 补写回交易记录
+        if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && liveNav>0 && sh>0){
+          t.nav=liveNav;
+        }
         if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
-        else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; const sellPx=nav>0?nav:lastNav; realized+=(sellPx-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }   // 平均成本法（与支付宝一致）：卖出按加权平均成本扣减，剩余持仓成本单价不变
+        else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; const sellPx=nav>0?nav:lastNav; realized+=(sellPx-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }   // 平均成本法（与支付宝一致）：卖出按加权平均扣减，剩余持仓成本单价不变
         else if(ty==='dividend'){ realized+=amt; }   // 现金分红：成本不变，仅计入已实现收益（与支付宝一致：分红不影响持仓成本）
         else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
         else if(ty==='split'){ const r=+amt||1; if(r>0){ lots.forEach(l=>l.sh*=r); shares*=r; } }             // 份额拆分：份额×比例、成本不变

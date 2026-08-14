@@ -7758,9 +7758,10 @@ function buildFundsView(){
         if(t.confirm==='confirmed' && sh>0 && (t.shares==null || t.shares==='')){
           t.shares=sh;
         }
-        // 如果已经确认了，但净值为空但我们有 liveNav，用 liveNav 补写回交易记录
-        if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && liveNav>0 && sh>0){
-          t.nav=liveNav;
+        // 如果已经确认了，但净值为空，用 liveNav 或 lastNav 补写回交易记录
+        if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && sh>0){
+          const fillNav=liveNav>0?liveNav:(lastNav>0?lastNav:0);
+          if(fillNav>0) t.nav=fillNav;
         }
         if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
         else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; const sellPx=nav>0?nav:lastNav; realized+=(sellPx-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }   // 平均成本法（与支付宝一致）：卖出按加权平均扣减，剩余持仓成本单价不变

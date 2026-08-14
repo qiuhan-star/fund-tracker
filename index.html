@@ -6718,7 +6718,7 @@ function renderGrouped(list){
   const body=order.map(k=>{
     const sub=groups[k];
     const mvSum=sub.reduce((a,f)=>a+(f.mv||0),0);
-    const sep=`<tr class="grp-sep"><td colspan="${colspan}"><div class="grp-sep-in"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div></td></tr>`;
+    const sep=`<tr class="grp-sep"><td colspan="${colspan}"><div class="grp-sep-in"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-count">${sub.length} 只</span><span class="grp-meta"><b>${M(mvSum)}</b></span></div></td></tr>`;
     return sep + denseRowsHtml(sub);
   }).join('');
   return `<div class="dense-table-wrap"><table class="dense-table"><thead><tr>${denseHeadHtml()}</tr></thead><tbody>${body}</tbody></table></div>`;
@@ -14601,7 +14601,8 @@ function renderSyncCfg(){
 .dense-table .grp-sep .grp-meta{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dense-table .grp-sep .grp-sep-in{ display:flex; align-items:center; gap:8px; }
 .dense-table .grp-sep .grp-name{ font-weight:700; font-size:14px; color:var(--text); }
-.dense-table .grp-sep .grp-meta{ margin-left:auto; font-size:13px; color:var(--text-3); }
+.dense-table .grp-sep .grp-count{ font-size:13px; color:var(--text-3); margin-left:6px; flex:0 0 auto; }
+.dense-table .grp-sep .grp-meta{ margin-left:auto; font-size:13px; color:var(--text-3); padding-right:4px; }
 
 @media (max-width: 640px) {
   /* 手机端分组视图：仅缩小"组头与首行名称"间距（用户指出的"第一个名称的距离有点太多"）；dense 表格的列间距/字号/列宽保持原样不动 */

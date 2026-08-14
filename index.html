@@ -8210,6 +8210,7 @@ function showDetail(name){
   const f=findFund(name,detailAcc), c=document.getElementById('detailContent');
   if(!f){ c.innerHTML=`<div class="card"><h2>未找到「${esc(name)}」</h2><p class="hint">可能已删除或数据未加载。点上方「← 返回首页」返回。</p></div>`; return; }
   enterDetail(f);
+  window.scrollTo(0,0);
 }
 
 function enterDetail(f){

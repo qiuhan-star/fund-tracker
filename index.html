@@ -9204,8 +9204,7 @@ function openDetailTrades(){
 }
 
 function closeDetailTrades(){
-  finalizeUndo();
-  const mask=document.getElementById('detailTradeModal');
+	  const mask=document.getElementById('detailTradeModal');
   if(mask) mask.classList.remove('show');
   if(currentView==='detail' && detailName){ try{ const f=findFund(detailName,detailAcc); if(f) updateDetailHeader(f); }catch(e){} }
 }

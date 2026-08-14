@@ -11041,15 +11041,17 @@ function openDcaModal(name){
 }
 function closeDcaModal(){ const m=document.getElementById('dcaMask'); if(m) m.classList.remove('show'); }
 // ===== 修改持仓弹窗 =====
-let _ehFundName='', _ehFundAcc='', _ehMode='amount';
+let _ehFundName='', _ehFundAcc='', _ehMode='amount', _ehSrc='manual';
 function openEditHoldingsModal(nameEnc,accEnc){
   const name=decodeURIComponent(nameEnc), acc=decodeURIComponent(accEnc);
-  _ehFundName=name; _ehFundAcc=acc; _ehMode='amount';
+  _ehFundName=name; _ehFundAcc=acc; _ehMode='amount'; _ehSrc='manual';
   const f=findFund(name,acc);
   const mo=getManualOverride(acc,name);
   const nameEl=document.getElementById('ehFundName'), resetEl=document.getElementById('ehResetBtn');
   if(nameEl) nameEl.textContent=name+(f&&f.account?' · '+effAccount(f.account):'');
   if(resetEl) resetEl.style.display=mo?'':'none';
+  // 切换到手动填写模式（默认）
+  ehSetSrc('manual');
   // 切换到按金额模式（默认），回显已有值
   ehSetMode('amount');
   const mvEl=document.getElementById('ehMv'), profitEl=document.getElementById('ehProfit');
@@ -11063,12 +11065,30 @@ function openEditHoldingsModal(nameEnc,accEnc){
   if(cpEl) cpEl.value='';
   if(mo && mo.shares!=null) shEl.value=mo.shares;
   if(mo && mo.costPrice!=null) cpEl.value=mo.costPrice;
+  // 快照模式输入框
+  const snapText=document.getElementById('ehSnapText');
+  if(snapText) snapText.value='';
+  const snapMv=document.getElementById('ehSnapMv'), snapProfit=document.getElementById('ehSnapProfit'), snapShares=document.getElementById('ehSnapShares');
+  if(snapMv) snapMv.value=mo?mo.mv:'';
+  if(snapProfit) snapProfit.value=mo?mo.profit:'';
+  if(snapShares) snapShares.value=(mo&&mo.shares!=null)?mo.shares:'';
+  _ehSnapParsed={};
   ehUpdateDerived();
+  ehUpdateSnapDerived();
   const m=document.getElementById('ehMask'); if(m) m.classList.add('show');
+}
+function ehSetSrc(src){
+  _ehSrc=src;
+  // 切换大模式按钮（手动/快照）
+  document.querySelectorAll('#ehMask .eh-seg-btn[data-src]').forEach(function(b){ b.classList.toggle('on',b.dataset.src===src); });
+  const manual=document.getElementById('ehManualMode'), snap=document.getElementById('ehSnapshotMode');
+  if(manual) manual.style.display=src==='manual'?'':'none';
+  if(snap) snap.style.display=src==='snapshot'?'':'none';
 }
 function ehSetMode(mode){
   _ehMode=mode;
-  document.querySelectorAll('.eh-seg-btn').forEach(function(b){ b.classList.toggle('on',b.dataset.mode===mode); });
+  // 只切换「手动模式」下的子模式按钮，避免影响手动/快照切换器
+  document.querySelectorAll('#ehManualMode .eh-seg-btn[data-mode]').forEach(function(b){ b.classList.toggle('on',b.dataset.mode===mode); });
   const a=document.getElementById('ehFieldsAmount'), s=document.getElementById('ehFieldsShares');
   if(a) a.style.display=mode==='amount'?'':'none';
   if(s) s.style.display=mode==='shares'?'':'none';
@@ -11084,8 +11104,25 @@ function ehToggleSign(){
   el.focus(); el.setSelectionRange(el.value.length, el.value.length);
   ehUpdateDerived();
 }
+function ehToggleSnapSign(){
+  const el=document.getElementById('ehSnapProfit'); if(!el) return;
+  const v=el.value.trim();
+  if(v.startsWith('-')){ el.value=v.slice(1); }
+  else if(v!==''){ el.value='-'+v; }
+  else{ el.value='-'; }
+  el.focus(); el.setSelectionRange(el.value.length, el.value.length);
+  ehUpdateSnapDerived();
+}
 function closeEditHoldingsModal(){ const m=document.getElementById('ehMask'); if(m) m.classList.remove('show'); }
 function ehGetFields(){
+  // 快照模式：从快照输入框读取
+  if(_ehSrc==='snapshot'){
+    const mv=+(document.getElementById('ehSnapMv')?.value||0);
+    const profit=+(document.getElementById('ehSnapProfit')?.value||0);
+    const shares=+(document.getElementById('ehSnapShares')?.value||0);
+    return {shares, mv, profit, costPrice:0};
+  }
+  // 手动模式
   if(_ehMode==='shares'){
     const sh=+(document.getElementById('ehShares')?.value||0), mv=+(document.getElementById('ehMv2')?.value||0), profit=+(document.getElementById('ehProfit2')?.value||0), cp=+(document.getElementById('ehCostPrice')?.value||0);
     return {shares:sh, mv, profit, costPrice:cp};
@@ -11094,6 +11131,7 @@ function ehGetFields(){
   return {shares:0, mv, profit, costPrice:0};
 }
 function ehUpdateDerived(){
+  if(_ehSrc!=='manual') return; // 手动模式才更新
   const {shares, mv, profit, costPrice}=ehGetFields();
   const hit=document.getElementById('ehDerived');
   const profitId=_ehMode==='shares'?'ehProfit2':'ehProfit';
@@ -11121,17 +11159,38 @@ function ehUpdateDerived(){
     if(hit) hit.innerHTML='填写持有金额和持有收益后，自动计算持仓成本和持有收益率';
   }
 }
+function ehUpdateSnapDerived(){
+  const mv=+(document.getElementById('ehSnapMv')?.value||0);
+  const profit=+(document.getElementById('ehSnapProfit')?.value||0);
+  const shares=+(document.getElementById('ehSnapShares')?.value||0);
+  const hit=document.getElementById('ehSnapDerived');
+  if(hit){
+    if(mv>0){
+      const cost=mv-profit;
+      const ret=cost>0?profit/cost*100:0;
+      let parts=[];
+      if(shares>0) parts.push('最新净值：<b>'+navFmt(mv/shares)+'</b>');
+      parts.push('持仓成本：<b>'+M(cost)+'</b> 元');
+      parts.push('持有收益率：<b>'+(ret>=0?'+':'')+ret.toFixed(2)+'%</b>');
+      hit.innerHTML=parts.join(' · ');
+    } else {
+      hit.textContent='填写后自动计算持仓成本和收益率';
+    }
+  }
+}
 function ehSave(){
-  const {shares, mv, profit, costPrice}=ehGetFields();
+  const {shares, mv, profit}=ehGetFields();
   if(mv<=0){ toast('请填写持有金额'); return; }
-  setManualOverride(_ehFundAcc,_ehFundName,{mv,profit,shares:shares>0?shares:null,costPrice:costPrice>0?costPrice:null});
-  toast('持仓已手动更新');
+  setManualOverride(_ehFundAcc,_ehFundName,{mv,profit,shares:shares>0?shares:null});
+  toast('持仓已更新');
   closeEditHoldingsModal();
   // 刷新详情页：先重建 fundsView 让手动覆盖值生效，再更新 UI
   try{ if(typeof detailName!=='undefined'&&detailName===_ehFundName){
     buildFundsView();
     const f=findFund(_ehFundName,_ehFundAcc); if(f){ updateDetailHeader(f); renderDetailTabs(f); }
   } }catch(e){}
+  // 刷新首页（更新待补充提示条）
+  try{ renderHomeList(); }catch(e){}
 }
 function ehClearOverride(){
   clearManualOverride(_ehFundAcc,_ehFundName);
@@ -13113,18 +13172,18 @@ function renderSyncCfg(){
         <div id="ehSnapFillArea" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-2)">
           <div class="eh-field">
             <label>持有金额（元）</label>
-            <input id="ehSnapMv" type="text" inputmode="decimal" placeholder="0.00">
+            <input id="ehSnapMv" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateSnapDerived()">
           </div>
           <div class="eh-field">
             <label>持有收益（元）</label>
             <div class="eh-input-wrap">
               <button class="eh-sign" onclick="ehToggleSnapSign()">±</button>
-              <input id="ehSnapProfit" type="text" inputmode="decimal" placeholder="0.00">
+              <input id="ehSnapProfit" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateSnapDerived()">
             </div>
           </div>
           <div class="eh-field">
             <label>持有份额</label>
-            <input id="ehSnapShares" type="text" inputmode="decimal" placeholder="0.00">
+            <input id="ehSnapShares" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateSnapDerived()">
           </div>
           <div class="eh-hit" id="ehSnapDerived" style="font-size:11px;color:var(--text-3)">填写后自动计算持仓成本和收益率</div>
         </div>

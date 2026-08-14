@@ -9114,6 +9114,11 @@ function buildTradeSection(f){
       h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">净值确认日</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
       tr.forEach(t=>{
         const i=trades.indexOf(t);
+        if(t._deleted){
+          h+=`<tr class="tr-deleted"><td colspan="10"><div class="tr-deleted-bar"><span>已删除</span><button class="tx-undo-btn" type="button" onclick="undoSoftDelete(${i})">撤销</button></div></td></tr>`;
+          return;
+        }
+        const i=trades.indexOf(t);
         const _canc = t.confirm==='cancelled';
         const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
         h+=`<tr class="tr-locked${_canc?' cancelled':''}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">

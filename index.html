@@ -9201,10 +9201,10 @@ function afAutoCalc(){
 }
 function addFundSave(){
   const g=id=>document.getElementById(id);
-  const raw=(g('af-input').value||'').trim();
+  let raw=(g('af-input').value||'').trim();
   if(!raw){ toast('请填写基金名称或 6 位代码'); g('af-input').focus(); return; }
   const acc=g('af-acc').value||effAccount('本人账户');
-  let mv=null, shares=null, nav=null;
+  let name=raw, code='', mv=null, shares=null, nav=null;
   const mode=document.querySelector('.af-seg-btn.on')?.dataset.afm||'amt';
   if(mode==='amt'){
     const mvRaw=g('af-mv').value; mv=(mvRaw===''||mvRaw==null)?null:+mvRaw;
@@ -9214,13 +9214,23 @@ function addFundSave(){
     nav=(navRaw===''||navRaw==null)?null:+navRaw;
     if(shares!=null && nav!=null){ mv=shares*nav; }
     else if(shares!=null){ const mvRaw=g('af-mv').value; mv=(mvRaw===''||mvRaw==null)?null:+mvRaw; }
-  }else if(mode==='ocr' && _afOcrData.mv!=null){
-    mv=_afOcrData.mv; shares=_afOcrData.shares; nav=_afOcrData.nav;
-    if(_afOcrData.code){ code=_afOcrData.code; if(!raw || raw===_afOcrData.code){ if(_afOcrData.name){ g('af-input').value=_afOcrData.name; raw=_afOcrData.name; } } }
+  }else if(mode==='ocr'){
+    // OCR 数据优先；OCR 缺项时 fallback 到手动输入
+    const ocrMv=_afOcrData.mv, ocrSh=_afOcrData.shares, ocrNav=_afOcrData.nav;
+    const manualMv=g('af-mv').value, manualSh=g('af-shares').value, manualNav=g('af-nav').value;
+    mv=(ocrMv!=null)?ocrMv:((manualMv===''||manualMv==null)?null:+manualMv);
+    shares=(ocrSh!=null)?ocrSh:((manualSh===''||manualSh==null)?null:+manualSh);
+    nav=(ocrNav!=null)?ocrNav:((manualNav===''||manualNav==null)?null:+manualNav);
+    if(shares!=null && nav!=null && mv==null){ mv=shares*nav; }
+    if(_afOcrData.code){
+      code=_afOcrData.code;
+      if(!raw || raw===_afOcrData.code){
+        if(_afOcrData.name){ g('af-input').value=_afOcrData.name; name=_afOcrData.name; }
+      }
+    }
   }
-  let name=raw, code='';
-  if(afSelected && (afSelected.name===raw || afSelected.code===raw)){ name=afSelected.name; code=afSelected.code; }
-  else if(/^\d{6}$/.test(raw)){ const nm=syncNameByCode(raw); if(nm) name=nm; code=raw; }
+  if(afSelected && (afSelected.name===name || afSelected.code===code || afSelected.name===raw || afSelected.code===raw)){ name=afSelected.name; code=afSelected.code; }
+  else if(/^\d{6}$/.test(name) || /^\d{6}$/.test(raw)){ const c=/^\d{6}$/.test(name)?name:raw; const nm=syncNameByCode(c); if(nm) name=nm; code=c; }
   if(snaps.some(s=>s.name===name && accOf(s)===acc)){ toast('该基金在当前账户已存在'); return; }
   const snap={name,cat:'',mv:(mv!=null && !isNaN(mv))?mv:0,ret:0,account:acc};
   if(acc!==effAccount('本人账户')) snap.account=acc;

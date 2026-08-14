@@ -8984,7 +8984,14 @@ function refreshDetailTradesByName(name){
     const f=findFund(name,detailAcc);
     if(f){ updateDetailHeader(f); renderDetailTabs(f); }
     const modal=document.getElementById('detailTradeModal');
-    if(f && modal && modal.classList.contains('show')) renderDetailTrades(f);
+    if(f && modal && modal.classList.contains('show')){
+      renderDetailTrades(f);
+    } else if(f){
+      const box=document.getElementById('detailTrades');
+      if(box){
+        renderDetailTrades(f);
+      }
+    }
   }catch(e){}
 }
 

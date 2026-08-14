@@ -12562,23 +12562,10 @@ function toast(msg){
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
 }
 
-// ---------- 删除交易：撤销（返回/切后台/超时即生效）----------
-var _undoTrade=null, _undoPair=null, _undoTimer=null, _undoInited=false;
-function initUndo(){
-  if(_undoInited) return; _undoInited=true;
-  if(!document.getElementById('undoStyle')){
-    var st=document.createElement('style'); st.id='undoStyle';
-    st.textContent='.undo-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));z-index:3200;display:none;align-items:center;gap:16px;max-width:92vw;background:rgba(28,30,36,.97);color:#fff;padding:11px 14px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px;font-weight:500}.undo-bar.show{display:flex}.undo-bar #undoBtn{background:none;border:none;color:#4f9bff;font-weight:700;font-size:14px;padding:4px 10px;margin:-4px -4px -4px 0;cursor:pointer}';
-    document.head.appendChild(st);
-  }
-  if(!document.getElementById('undoBar')){
-    var bar=document.createElement('div'); bar.id='undoBar'; bar.className='undo-bar';
-    bar.innerHTML='<span id="undoMsg"></span><button id="undoBtn" onclick="undoDeleteTrade()">撤销</button>';
-    document.body.appendChild(bar);
-  }
-}
-function _clearUndoTimer(){ if(_undoTimer){ clearTimeout(_undoTimer); _undoTimer=null; } }
-function finalizeUndo(){ _undoTrade=null; _undoPair=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show'); }
+// ---------- 删除交易：卡片内撤销（标记 _deleted，8秒后实际移除）----------
+var _deleteTimers={};
+function _deleteTimerKey(i){ return 't_'+i; }
+function _clearDeleteTimer(i){ var k=_deleteTimerKey(i); if(_deleteTimers[k]){ clearTimeout(_deleteTimers[k]); delete _deleteTimers[k]; } }
 function refreshDetailHeaderByName(name){
   if(currentView!=='detail' || !name || name!==detailName) return;
   try{ const f=findFund(name, detailAcc); if(!f) return;
@@ -12586,61 +12573,67 @@ function refreshDetailHeaderByName(name){
     else if(typeof updateDetailHeader==='function') updateDetailHeader(f);
   }catch(e){}
 }
-function undoDeleteTrade(){
-  if(!_undoTrade) return;
-  var u=_undoTrade;
-  if(u.idx>=trades.length) trades.push(u.rec); else trades.splice(u.idx,0,u.rec);
-  // 恢复配对记录
-  if(_undoPair && _undoPair.rec){
-    var p=_undoPair;
-    if(p.idx>=trades.length) trades.push(p.rec); else trades.splice(p.idx,0,p.rec);
-  }
-  silentSave(); compute();
-  if(u.name) refreshDetailTradesByName(u.name);
-  if(typeof renderTrade==='function') renderTrade();
-  if(u.name) refreshDetailHeaderByName(u.name);
-  if(_undoPair && _undoPair.name && _undoPair.name!==u.name){ refreshDetailTradesByName(_undoPair.name); refreshDetailHeaderByName(_undoPair.name); }
-  _undoTrade=null; _undoPair=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show');
-  toast('已恢复');
-}
-function removeTrade(i){
-  if(!trades[i]) return null;
-  initUndo();
-  var rec=trades[i], idx=i, name=rec.name;
-  // 删除配对记录（convert_out/convert 联动）
-  var pairIdx = -1, pairRec = null;
-  if(rec.pairId && (rec.type==='convert_out'||rec.type==='convert')){
-    for(var p=0; p<trades.length; p++){
-      if(p!==i && trades[p].pairId===rec.pairId && trades[p].name===rec.convertTarget){
-        pairIdx = p; pairRec = trades[p]; break;
+function softDeleteTrade(i){
+  if(!trades[i]) return;
+  var t=trades[i];
+  t._deleted=true;
+  // 配对标记（convert_out/convert 联动）
+  var pairFund='';
+  if(t.pairId && (t.type==='convert_out'||t.type==='convert') && t.convertTarget && t.convertTarget!==t.name){
+    pairFund=t.convertTarget;
+    for(var _p=0; _p<trades.length; _p++){
+      if(_p!==i && trades[_p].pairId===t.pairId && trades[_p].name===t.convertTarget){
+        trades[_p]._deleted=true; break;
       }
     }
   }
-  trades.splice(i,1);
-  if(pairIdx > -1){
-    // 如果 pairIdx 在 i 之后，已经因为 splice 而前移了 1
-    if(pairIdx > i) pairIdx--;
-    trades.splice(pairIdx,1);
-  }
   silentSave(); compute();
-  if(name) refreshDetailTradesByName(name);
-  if(typeof renderTrade==='function') renderTrade();
-  if(name) refreshDetailHeaderByName(name);
-  // 刷新配对基金的详情页
-  if(pairRec && pairRec.name && pairRec.name!==name){
-    refreshDetailTradesByName(pairRec.name);
-    refreshDetailHeaderByName(pairRec.name);
-  }
-  _undoTrade={idx:idx, rec:rec, name:name};
-  _undoPair = pairIdx > -1 ? {idx:pairIdx, rec:pairRec, name:pairRec?pairRec.name:''} : null;
-  _clearUndoTimer();
-  var b=document.getElementById('undoBar');
-  if(b){ var m=document.getElementById('undoMsg'); if(m) m.textContent=_undoPair?'已删除 2 笔交易':'已删除一笔交易'; b.classList.add('show'); }
-  _undoTimer=setTimeout(finalizeUndo, 8000);
-  return rec;
+  refreshUIAfterDelete(t.name, pairFund);
+  _clearDeleteTimer(i);
+  _deleteTimers[_deleteTimerKey(i)]=setTimeout(function(){ _finalizeDelete(i); }, 8000);
 }
-document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') finalizeUndo(); });
-window.addEventListener('pagehide', finalizeUndo);
+function _finalizeDelete(i){
+  if(!trades[i] || !trades[i]._deleted) return;
+  var t=trades[i], pairFund='';
+  if(t.pairId && (t.type==='convert_out'||t.type==='convert') && t.convertTarget && t.convertTarget!==t.name){
+    pairFund=t.convertTarget;
+  }
+  trades.splice(i,1);
+  // 清理配对
+  if(pairFund){
+    for(var _p=0; _p<trades.length; _p++){
+      if(trades[_p].pairId===t.pairId && trades[_p].name===pairFund){
+        trades.splice(_p,1); break;
+      }
+    }
+  }
+  _clearDeleteTimer(i);
+  silentSave(); compute();
+  refreshUIAfterDelete(t.name, pairFund);
+}
+function undoSoftDelete(i){
+  if(!trades[i] || !trades[i]._deleted) return;
+  trades[i]._deleted=false;
+  // 恢复配对
+  if(trades[i].pairId){
+    for(var _p=0; _p<trades.length; _p++){
+      if(_p!==i && trades[_p].pairId===trades[i].pairId && trades[_p]._deleted){
+        trades[_p]._deleted=false; break;
+      }
+    }
+  }
+  _clearDeleteTimer(i);
+  silentSave(); compute();
+  refreshUIAfterDelete(trades[i].name, trades[i].convertTarget);
+  toast('已恢复');
+}
+function refreshUIAfterDelete(name, pairFund){
+  if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} }
+  if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+  if(pairFund && pairFund!==name){
+    try{ refreshDetailTradesByName(pairFund); refreshDetailHeaderByName(pairFund); }catch(e){}
+  }
+}
 
 function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function M(n){ if(hidden) return '••••'; const s=fmt(Math.abs(n||0)); return (n||0)<0?'-¥'+s:'¥'+s; }

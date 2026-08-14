@@ -11719,32 +11719,47 @@ function ehParseAlipayText(raw){
   const lines=txt.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);
   // 工具：从一行里抓数字（支持千分位逗号、小数点、负号、百分号）
   const grab=function(s){
-    const m=s.match(/[-]?\d{1,3}(?:,\d{3})*(?:\.\d+)?%?|[-]?\d+(?:\.\d+)?%?/);
+    const m=s.match(/-?\d+(?:,\d{3})*(?:\.\d+)?%?/);
     if(!m) return null;
     return parseFloat(m[0].replace(/[,%]/g,''));
   };
   // 抓标签后面的数字（标签和数字之间可能有 (元) / 空格 等分隔）
   const grabAfter=function(s, labelPattern){
-    const re=new RegExp(labelPattern+'[^\\d\\-]*([-]?\\d[\\d,]*(?:\\.\\d+)?%?)');
+    const re=new RegExp(labelPattern+'[^\\d\\-]*(-?\\d+(?:,\\d{3})*(?:\\.\\d+)?%?)');
     const m=s.match(re);
     if(!m) return null;
     return parseFloat(m[1].replace(/[,%]/g,''));
   };
+  // 处理「标签+标签+标签 数字 数字 数字」的合并行：拆分多列标签，按列对齐
+  // 已知问题行：'昨日收益(元) 持有收益(元) 持有收益率 -0.11 -1.30 -6.29%'
+  //             '日涨幅 -0.95% 持有成本 3.1487'  → 持有成本前有"日涨幅"，先抓"持有成本"对应数字
+  //             '持有份额 6.56 基金净值 2.9506 (08-14)'  → 正常
+  // 处理「标题+数字」两行结构：标题行含"昨日收益(元) 持有收益(元) 持有收益率"，下一行是数字列
+  for(let i=0; i<lines.length-1; i++){
+    if(/昨日收益.*持有收益.*持有收益率/.test(lines[i])){
+      const nums=[];
+      const re=/-?\d+(?:,\d{3})*(?:\.\d+)?%?/g;
+      let m; while((m=re.exec(lines[i+1]))!==null) nums.push(m[0]);
+      if(nums.length>=2) result.profit=parseFloat(nums[1].replace(/[,%]/g,''));
+    }
+  }
   // 第一遍：标签同行有数字
   for(const line of lines){
     if(result.mv==null && /(?:金额.{0,3}元|当前持有.{0,3}元|持有金额|持仓金额|市值)/.test(line) && !/收益|成本|净值|份额|待确认/.test(line)){
       const v=grabAfter(line,'(?:金额.{0,3}元|当前持有.{0,3}元|持有金额|持仓金额|市值)');
       if(v!=null) result.mv=v;
     }
-    if(result.profit==null && /持有收益|累计收益|总收益|浮动盈亏/.test(line)){
-      const v=grabAfter(line,'(?:持有收益|累计收益|总收益|浮动盈亏)');
+    // 收益：仅匹配「单独存在的持有收益」标签（行内不能同时含"昨日"）
+    if(result.profit==null && /持有收益/.test(line) && !/昨日|累计/.test(line)){
+      const v=grabAfter(line,'持有收益');
       if(v!=null) result.profit=v;
     }
     if(result.shares==null && /持有份额|总份额/.test(line)){
       const v=grabAfter(line,'(?:持有份额|总份额)');
       if(v!=null) result.shares=v;
     }
-    if(result.costPrice==null && /(?:持仓)?(?:成本价|持有成本|持仓成本)/.test(line)){
+    // 成本价：行内不能同时含"日涨幅"（避免抓到日涨幅百分比）
+    if(result.costPrice==null && /(?:持仓)?(?:成本价|持有成本|持仓成本)/.test(line) && !/日涨幅|涨幅/.test(line)){
       const v=grabAfter(line,'(?:持仓)?(?:成本价|持有成本|持仓成本)');
       if(v!=null) result.costPrice=v;
     }
@@ -11753,10 +11768,10 @@ function ehParseAlipayText(raw){
       if(v!=null) result.nav=v;
     }
   }
-  // 第一遍兜底：持有收益没找到，尝试累计收益/总收益
+  // 第一遍兜底：累计收益 / 总收益（黄金"浮动盈亏"也走这里）
   if(result.profit==null){
     for(const line of lines){
-      if(/累计收益|总收益/.test(line)){ result.profit=grabAfter(line,'(?:累计收益|总收益)'); if(result.profit!=null) break; }
+      if(/累计收益|总收益|浮动盈亏/.test(line)){ result.profit=grabAfter(line,'(?:累计收益|总收益|浮动盈亏)'); if(result.profit!=null) break; }
     }
   }
   // 第二遍：标签在第 N 行，数字在第 N+1 行（合并"标签 + 数字"两行为虚拟行）
@@ -11766,7 +11781,7 @@ function ehParseAlipayText(raw){
       const m=merged.match(/(?:金额.{0,3}元|当前持有.{0,3}元|持有金额|持仓金额|市值)[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
       if(m) result.mv=parseFloat(m[1].replace(/,/g,''));
     }
-    if(result.profit==null && /持有收益/.test(merged)){
+    if(result.profit==null && /持有收益/.test(merged) && !/昨日/.test(merged)){
       const m=merged.match(/持有收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
       if(m) result.profit=parseFloat(m[1].replace(/,/g,''));
     }
@@ -11787,8 +11802,8 @@ function ehParseAlipayText(raw){
     if(m) result.mv=parseFloat(m[1].replace(/,/g,''));
   }
   if(result.profit==null){
-    // 优先匹配持有收益，其次累计收益
-    let m=txt.match(/持有收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
+    // 优先匹配持有收益（要求前面没有"昨日"），其次累计收益
+    let m=txt.match(/(?<!昨日)持有收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
     if(!m) m=txt.match(/累计收益[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/);
     // 兜底：处理中文破折号 — 当作负号
     if(!m){ const fixed=txt.replace(/[—–]/g,'-'); m=fixed.match(/(?:持有|累计)?收益.{0,3}元[^\d\-]*([-]?\d[\d,]*(?:\.\d+)?)/); }

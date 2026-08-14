@@ -7884,15 +7884,13 @@ function autoConfirmPendingTrades(){
     if(!navDate) return;
     // 净值日期必须 >= 交易日期
     if(navDate < t.date) return;
-    // 同日情况下，排除估值（未收盘）或盘中估算 — 仅当为官方净值才自动确认
-    if(navDate===t.date && navDate!==today){
-      // 非今日的净值日期与交易日期相同 → 说明该日净值已公布，确认
-    }else if(navDate===today){
-      // 同日场景：仅当净值是官方值（非估值）才确认
+    // 若净值日期与交易日期相同且是今天 → 仅当是官方净值（非盘中估值）才确认
+    if(navDate===t.date && navDate===today){
       const mkt=isMarketOpen(new Date());
       if(mkt&&nc.gsz!=null) return; // 盘中估值 → 不确认
       if(nc.gsz!=null&&isTodayTs(nc.gszTs)) return; // 估算新鲜 → 不确认
     }
+    // 净值日期 > 交易日期，或非今日的净值日期与交易日期相同 → 确认
     t.confirm='confirmed';
     count++;
   });

@@ -9620,15 +9620,24 @@ function saveTradeEdit(){
   var nm=t.name;
   if(currentView==='detail'){ try{ renderDetailLive(nm); refreshDetailTradesByName(nm); }catch(e){} }
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+  // 编辑转换配对时，刷新目标基金
+  if(t.pairId && (t.type==='convert_out'||t.type==='convert') && t.convertTarget && t.convertTarget!==nm){
+    try{ refreshDetailTradesByName(t.convertTarget); refreshDetailHeaderByName(t.convertTarget); }catch(e){}
+  }
   var dispLabel=amount?M(amount):(shares!=null?fmt(shares)+'份':'');
   toast('已保存 · '+typeLabel(t.type)+' '+dispLabel);
 }
 function deleteTradeEdit(){
   var i=_editTradeIdx; if(i<0||!trades[i]) return;
+  var delT=trades[i], delPairName='';
+  if(delT.pairId && (delT.type==='convert_out'||delT.type==='convert') && delT.convertTarget && delT.convertTarget!==delT.name){
+    delPairName=delT.convertTarget;
+  }
   ftConfirm('确定删除这笔交易？', function(ok){
     if(!ok) return;
     var nm=trades[i].name; removeTrade(i); closeTradeEdit(); if(currentView==='detail'){ try{ renderDetailLive(nm); }catch(e){} }
     if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+    if(delPairName){ try{ refreshDetailTradesByName(delPairName); refreshDetailHeaderByName(delPairName); }catch(e){} }
     toast('已删除');
   });
 }
@@ -9699,6 +9708,10 @@ function tradeQuickSave(){
   draftClear('ft_draft_tq', DRAFT_TQ_IDS); const _tq=document.getElementById('tqDraftPill'); if(_tq) _tq.classList.remove('show');
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
   if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} }
+  // 自动生成配对交易后，刷新目标基金的交易列表
+  if((type==='convert_out'||type==='convert') && convertTarget && convertTarget!==name){
+    try{ refreshDetailTradesByName(convertTarget); refreshDetailHeaderByName(convertTarget); }catch(e){}
+  }
   var dispLabel=_amount?M(_amount):(_shares!=null?fmt(_shares)+'份':'');
   toast('已记账 · '+esc(name)+' '+typeLabel(type)+' '+dispLabel);
   }
@@ -12602,6 +12615,11 @@ function removeTrade(i){
   if(name) refreshDetailTradesByName(name);
   if(typeof renderTrade==='function') renderTrade();
   if(name) refreshDetailHeaderByName(name);
+  // 刷新配对基金的详情页
+  if(pairRec && pairRec.name && pairRec.name!==name){
+    refreshDetailTradesByName(pairRec.name);
+    refreshDetailHeaderByName(pairRec.name);
+  }
   _undoTrade={idx:idx, rec:rec, name:name};
   _undoPair = pairIdx > -1 ? {idx:pairIdx, rec:pairRec, name:pairRec?pairRec.name:''} : null;
   _clearUndoTimer();

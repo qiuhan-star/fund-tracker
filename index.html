@@ -6503,7 +6503,7 @@ function denseRowsHtml(list){
         const offDate=nc2.navChgDate?nc2.navChgDate:'';
         const fresh=offDate===todayStr;
         const est=nc2.gszzl!=null?nc2.gszzl:null;
-        const estTime=nc2.gztime||'';
+        const estTime=fmtGzTime(nc2.gztime||'');
         if(fresh && offChg!=null){
           tds+=`<td class="${offChg>=0?'pos':'neg'} day-fresh"><div class="dt-big">${offChg>=0?'+':''}${offChg.toFixed(2)}%</div><div class="dt-sub2">${offDate.slice(5)}</div></td>`;
         } else if(est!=null){
@@ -6580,7 +6580,7 @@ function homeMobileHead(cols){
 }
 function homeMobileCellOf(fd,key){
   const nc=navCache[fd.name]||{};
-  if(key==='day'){ const nc2=navCache[fd.name]||{}; const mkt=isMarketOpen(new Date()); const offChg=nc2.navChg!=null?nc2.navChg:null; const offDate=nc2.navChgDate?nc2.navChgDate:''; const fresh=offDate===fmtDate(new Date()); const est=nc2.gszzl!=null?nc2.gszzl:null; const estTime=nc2.gztime||''; if(fresh&&offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+' day-fresh">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; if(est!=null){ const sub=mkt?(estTime||'实时'):(estTime||'今日估算'); return '<td class="cnum '+(est>=0?'pos':'neg')+'">'+(est>=0?'+':'')+est.toFixed(2)+'%<div class="csub" style="margin-top:2px;color:var(--text-3)">'+sub+'</div></td>'; } if(offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+'">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; return '<td class="cnum zero">—</td>'; }
+  if(key==='day'){ const nc2=navCache[fd.name]||{}; const mkt=isMarketOpen(new Date()); const offChg=nc2.navChg!=null?nc2.navChg:null; const offDate=nc2.navChgDate?nc2.navChgDate:''; const fresh=offDate===fmtDate(new Date()); const est=nc2.gszzl!=null?nc2.gszzl:null; const estTime=fmtGzTime(nc2.gztime||''); if(fresh&&offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+' day-fresh">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; if(est!=null){ const sub=mkt?(estTime||'实时'):(estTime||'今日估算'); return '<td class="cnum '+(est>=0?'pos':'neg')+'">'+(est>=0?'+':'')+est.toFixed(2)+'%<div class="csub" style="margin-top:2px;color:var(--text-3)">'+sub+'</div></td>'; } if(offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+'">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; return '<td class="cnum zero">—</td>'; }
   if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+_fmtRet(fd.ret)+'</td>':'<td class="cnum zero">—</td>'; }
@@ -10138,7 +10138,7 @@ function searchCode(name){
   return new Promise(resolve=>{
     const timer=setTimeout(()=>resolve(null),4000);
     const s=document.createElement('script'), cb='s_'+Math.random().toString(36).slice(2);
-    window[cb]=d=>{ clearTimeout(timer); try{const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]); let hit=arr&&arr.find(x=>x.NAME===name); if(!hit){ const tail=name.trim().slice(-1); if(tail==='A'||tail==='C'){ hit=arr.find(x=>(x.NAME||'').slice(-1)===tail); } } const pick=hit||(arr&&arr[0]); resolve(pick?pick.CODE:null); }catch(e){resolve(null);} window[cb]=null; s.remove(); };
+    window[cb]=d=>{ clearTimeout(timer); try{const arr=d&&d.Datas?d.Datas:(Array.isArray(d)?d:[]); let hit=arr&&arr.find(x=>x.NAME===name); if(!hit){ const tail=name.trim().slice(-1); if(tail==='A'||tail==='C'){ hit=arr.find(x=>(x.NAME||'').slice(-1)===tail); } } if(!hit){ const _n=name.replace(/[·•\s()（）]/g,''); hit=arr.find(x=>x.NAME&&x.NAME.replace(/[·•\s()（）]/g,'')===_n); } if(!hit){ const _re=/^(.+?)(?:ETF联接|ETF|LOF)?(?:[A-Z])?$/; const _m=name.match(_re); if(_m) hit=arr.find(x=>x.NAME&&x.NAME.includes(_m[1])); } const pick=hit||(arr&&arr[0]); resolve(pick?pick.CODE:null); }catch(e){resolve(null);} window[cb]=null; s.remove(); };
     s.onerror=()=>{ clearTimeout(timer); resolve(null); window[cb]=null; };
     s.src=`https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key=${encodeURIComponent(name)}&callback=${cb}`;
     document.body.appendChild(s);

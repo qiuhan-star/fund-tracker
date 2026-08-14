@@ -9569,20 +9569,37 @@ function saveTradeEdit(){
   }
   t.locked=true;
   // 转换配对同步：编辑 convert_out/convert 时同步更新配对记录
-  if(t.pairId && (t.type==='convert_out'||t.type==='convert')){
-    var pair = trades.find(function(x){ return x!==t && x.pairId===t.pairId; });
-    if(pair){
-      pair.date = t.date;
-      pair.time = t.time;
-      pair.confirm = t.confirm;
-      pair.amount = Math.max(0, t.amount - t.fee);
-      // 同步备注中的转换标记
-      var pairLabel = t.type==='convert_out' ? '← 转入自 ' : '→ 转出至 ';
-      var otherName = t.type==='convert_out' ? t.convertTarget : t.name;
-      if(t.note && t.note.indexOf(pairLabel) === -1){
-        pair.note = t.note + ' ' + pairLabel + otherName;
-      } else if(!t.note){
-        pair.note = pairLabel + otherName;
+  if(t.pairId){
+    if(t.type==='convert_out'||t.type==='convert'){
+      var pair = trades.find(function(x){ return x!==t && x.pairId===t.pairId; });
+      if(pair){
+        // 转换目标变更：更新配对记录的基金名称和 convertTarget
+        if(t.type==='convert_out' && t.convertTarget && t.convertTarget!==pair.name){
+          pair.name = t.convertTarget;
+          pair.convertTarget = t.name;
+        } else if(t.type==='convert' && t.convertTarget && t.convertTarget!==pair.name){
+          pair.name = t.convertTarget;
+          pair.convertTarget = t.name;
+        }
+        pair.date = t.date;
+        pair.time = t.time;
+        pair.confirm = t.confirm;
+        pair.amount = Math.max(0, t.amount - t.fee);
+        // 同步备注中的转换标记
+        var pairLabel = t.type==='convert_out' ? '← 转入自 ' : '→ 转出至 ';
+        var otherName = t.type==='convert_out' ? t.convertTarget : t.name;
+        if(t.note && t.note.indexOf(pairLabel) === -1){
+          pair.note = t.note + ' ' + pairLabel + otherName;
+        } else if(!t.note){
+          pair.note = pairLabel + otherName;
+        }
+      }
+    } else {
+      // 类型不再是转换配对，删除配对记录
+      for(var _p=0; _p<trades.length; _p++){
+        if(_p!==_editTradeIdx && trades[_p].pairId===t.pairId){
+          trades.splice(_p,1); break;
+        }
       }
     }
   }

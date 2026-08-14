@@ -11143,10 +11143,11 @@ async function ehEnsureOcrWorker(){
     langPath: cdn.lang,
     logger: function(m){ if(m&&m.status==='recognizing text'){ ehOcrSetProgress(m.progress||0,'识别中… '+Math.round((m.progress||0)*100)+'%'); } }
   });
-  // 设置中文字符白名单 + 数字 + 标点
+  // 字符白名单：数字 + 标点 + 常见基金术语关键字。故意放得宽松些，避免 Tesseract 跳过包含「+」「%」「.」的有效行
   await _ehOcrWorker.setParameters({
-    tessedit_char_whitelist: '0123456789.,%-元份额金额收益本价净值年月日持有成本持仓基金',
-    preserve_interword_spaces: '1'
+    tessedit_char_whitelist: '0123456789.,+-%()（）元份额金额收益本价净值年月日今日昨日时分累计盈亏业绩走势跟踪指数成本持仓基金名称代码中高风险卖出买入持有份日涨幅',
+    preserve_interword_spaces: '1',
+    tessedit_pageseg_mode: '6'  // 假设一整块统一的文本块
   });
   return _ehOcrWorker;
 }
@@ -11204,8 +11205,18 @@ async function ehDoOcr(url){
     _ehSnapParsed=parsed;
     // 填入下方
     ehFillFromSnap();
-    ehOcrSetProgress(1,'✅ 识别完成：金额 '+fmtNum(parsed.mv)+' · 收益 '+fmtNum(parsed.profit)+' · 份额 '+fmtNum(parsed.shares)+' · 成本价 '+fmtNum(parsed.costPrice)+' · 净值 '+fmtNum(parsed.nav));
-    setTimeout(ehOcrHideProgress, 4000);
+    const hasAny=parsed.mv!=null||parsed.profit!=null||parsed.shares!=null||parsed.costPrice!=null||parsed.nav!=null;
+    if(hasAny && parsed.mv!=null && parsed.profit!=null){
+      // 关键：金额和收益都识别到了 → 直接保存，不用再点「确认修改」
+      ehOcrSetProgress(0.95,'✅ 识别完成，正在自动保存…');
+      setTimeout(function(){
+        try{ ehSave(); }catch(e){ console.error('自动保存失败:',e); }
+        ehOcrSetProgress(1,'✅ 已自动保存');
+        setTimeout(ehOcrHideProgress, 2500);
+      }, 300);
+    }else{
+      ehOcrSetProgress(1,'⚠️ 部分识别：金额 '+fmtNum(parsed.mv)+' · 收益 '+fmtNum(parsed.profit)+' · 份额 '+fmtNum(parsed.shares)+' · 成本价 '+fmtNum(parsed.costPrice)+' · 净值 '+fmtNum(parsed.nav)+'（缺失字段请手动补）');
+    }
   }catch(e){
     console.error('OCR 失败:', e);
     ehOcrSetProgress(0,'❌ 识别失败：'+(e&&e.message?e.message:e));

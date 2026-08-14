@@ -995,7 +995,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; }
   .dense-table .dt-sub .val { font-size: 12.5px; font-weight: 600; color: var(--text); }
   .dense-table .dt-sub .tog-mini { width: 18px; height: 18px; font-size: 10px; }
-  .dense-table .dcode { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .dense-table .dcode { font-size: 10.5px; color: var(--text-2); font-weight: 500; font-variant-numeric: tabular-nums; }
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -8113,7 +8113,7 @@ function migrateConvertTarget(){
     }
   });
 }
-function compute(){ autoConfirmPendingTrades(); migrateConvertTarget(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); ensureNavlessHist(); }
+function compute(){ autoConfirmPendingTrades(); migrateConvertTarget(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); ensureNavlessHist(); ensureFundCodes(); }
 // 每日资产快照：盘后/刷新时落一条结存（同一天去重只更新），支撑历史收益曲线与回撤
 function scopeTotals(scope){
   const list=_allHoldings.filter(f=> scope==='all'?true:(scope==='managed'? !accIsPersonal(f.account) : accIsPersonal(f.account)));
@@ -10452,6 +10452,26 @@ async function ensureNavlessHist(){
   }
   _histLoading=false;
   if(loadedAny) compute();
+}
+
+// 持仓列表：确保每只基金代码都被解析出来（名称下方才能显示「代码 · 金额」）。
+// 即便用户关闭了自动刷新（ft_autorefresh='0'）也能补全；仅在 codeCache 缺失时
+// 按需解析，避免与 refresh() 的批量解析重复请求。
+let _codesLoading=false;
+async function ensureFundCodes(){
+  if(_codesLoading) return;
+  const _names=[...new Set((typeof fundsView!=='undefined'?fundsView:[]).map(f=>f.name))].filter(n=> !codeCache[n] && !codeFailed.has(n));
+  if(!_names.length) return;
+  _codesLoading=true;
+  let _loaded=false;
+  for(const _nm of _names){
+    if(codeFailed.has(_nm)) continue;
+    let _c=codeCache[_nm];
+    if(!_c){ try{ _c=await resolveCode(_nm); }catch(e){ _c=null; } if(!_c){ codeFailed.add(_nm); continue; } }
+    _loaded=true;
+  }
+  _codesLoading=false;
+  if(_loaded) compute();
 }
 const HIST_BUY_PRE_DAYS=10;
 let histRange='buy';

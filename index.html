@@ -13004,50 +13004,90 @@ function renderSyncCfg(){
     <div class="eh-body">
       <div class="eh-fund-name" id="ehFundName"></div>
 
+      <!-- 手动 / 快照 模式切换 -->
       <div class="eh-seg-wrap">
-        <button class="eh-seg-btn on" data-mode="amount" onclick="ehSetMode('amount')">按金额填</button>
-        <button class="eh-seg-btn" data-mode="shares" onclick="ehSetMode('shares')">按份额填</button>
+        <button class="eh-seg-btn on" data-src="manual" onclick="ehSetSrc('manual')">✍️ 手动填写</button>
+        <button class="eh-seg-btn" data-src="snapshot" onclick="ehSetSrc('snapshot')">📸 从快照导入</button>
       </div>
 
-      <div id="ehFieldsAmount">
-        <div class="eh-field">
-          <label>持有金额（元）</label>
-          <input id="ehMv" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+      <!-- 手动填写模式：金额/份额子模式 -->
+      <div id="ehManualMode">
+        <div class="eh-seg-wrap" style="margin-bottom:10px">
+          <button class="eh-seg-btn on" data-mode="amount" onclick="ehSetMode('amount')">按金额填</button>
+          <button class="eh-seg-btn" data-mode="shares" onclick="ehSetMode('shares')">按份额填</button>
         </div>
-        <div class="eh-field">
-          <label>持有收益（元）</label>
-          <div class="eh-input-wrap">
-            <button class="eh-sign" onclick="ehToggleSign()">±</button>
-            <input id="ehProfit" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+
+        <div id="ehFieldsAmount">
+          <div class="eh-field">
+            <label>持有金额（元）</label>
+            <input id="ehMv" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+          </div>
+          <div class="eh-field">
+            <label>持有收益（元）</label>
+            <div class="eh-input-wrap">
+              <button class="eh-sign" onclick="ehToggleSign()">±</button>
+              <input id="ehProfit" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+            </div>
           </div>
         </div>
+
+        <div id="ehFieldsShares" style="display:none">
+          <div class="eh-field">
+            <label>持有份额</label>
+            <input id="ehShares" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+          </div>
+          <div class="eh-field">
+            <label>持有金额（元）</label>
+            <input id="ehMv2" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+          </div>
+          <div class="eh-field">
+            <label>持仓成本价（元）</label>
+            <div class="eh-input-wrap">
+              <input id="ehCostPrice" type="text" inputmode="decimal" placeholder="可选，填后自动算持有收益" oninput="ehUpdateDerived()" style="flex:1">
+            </div>
+          </div>
+          <div class="eh-field">
+            <label>持有收益（元）</label>
+            <div class="eh-input-wrap">
+              <button class="eh-sign" onclick="ehToggleSign()">±</button>
+              <input id="ehProfit2" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+            </div>
+          </div>
+        </div>
+
+        <div class="eh-hit" id="ehDerived">填写持有金额和持有收益后，自动计算持仓成本和持有收益率</div>
       </div>
 
-      <div id="ehFieldsShares" style="display:none">
+      <!-- 快照导入模式：粘贴支付宝截图文字 -->
+      <div id="ehSnapshotMode" style="display:none">
+        <p class="eh-snap-tip">📌 打开支付宝 → 资产 → 点基金卡片 → 截图，复制页面文字后粘贴到下方。系统会自动识别金额、收益、份额、单位净值。</p>
         <div class="eh-field">
-          <label>持有份额</label>
-          <input id="ehShares" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+          <label>粘贴截图文字</label>
+          <textarea id="ehSnapText" placeholder="例如：&#10;持有金额 12,345.67&#10;持有收益 234.56&#10;持有份额 5,678.90&#10;单位净值 2.1234" style="width:100%;min-height:110px;padding:10px;border:1px solid var(--border-2);border-radius:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box" oninput="ehParseSnap()"></textarea>
         </div>
-        <div class="eh-field">
-          <label>持有金额（元）</label>
-          <input id="ehMv2" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+        <div class="eh-hit" id="ehSnapResult" style="min-height:20px">未识别到数据，请粘贴包含「持有金额」「持有收益」「份额」等关键字的截图文字</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="eh-btn eh-btn-primary" onclick="ehFillFromSnap()" style="flex:1">识别并填入下方</button>
         </div>
-        <div class="eh-field">
-          <label>持仓成本价（元）</label>
-          <div class="eh-input-wrap">
-            <input id="ehCostPrice" type="text" inputmode="decimal" placeholder="可选，填后自动算持有收益" oninput="ehUpdateDerived()" style="flex:1">
+        <div id="ehSnapFillArea" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-2)">
+          <div class="eh-field">
+            <label>持有金额（元）</label>
+            <input id="ehSnapMv" type="text" inputmode="decimal" placeholder="0.00">
           </div>
-        </div>
-        <div class="eh-field">
-          <label>持有收益（元）</label>
-          <div class="eh-input-wrap">
-            <button class="eh-sign" onclick="ehToggleSign()">±</button>
-            <input id="ehProfit2" type="text" inputmode="decimal" placeholder="0.00" oninput="ehUpdateDerived()">
+          <div class="eh-field">
+            <label>持有收益（元）</label>
+            <div class="eh-input-wrap">
+              <button class="eh-sign" onclick="ehToggleSnapSign()">±</button>
+              <input id="ehSnapProfit" type="text" inputmode="decimal" placeholder="0.00">
+            </div>
           </div>
+          <div class="eh-field">
+            <label>持有份额</label>
+            <input id="ehSnapShares" type="text" inputmode="decimal" placeholder="0.00">
+          </div>
+          <div class="eh-hit" id="ehSnapDerived" style="font-size:11px;color:var(--text-3)">填写后自动计算持仓成本和收益率</div>
         </div>
       </div>
-
-      <div class="eh-hit" id="ehDerived">填写持有金额和持有收益后，自动计算持仓成本和持有收益率</div>
 
       <div class="eh-actions">
         <button class="eh-btn eh-btn-reset" id="ehResetBtn" onclick="ehClearOverride()" style="display:none">恢复自动计算</button>

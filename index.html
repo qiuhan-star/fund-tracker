@@ -3919,10 +3919,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           .us-digest{margin:12px 14px 4px;background:linear-gradient(135deg,#eef4ff,#f7f0ff);border:1px solid #e3ecff;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.55}
           .us-dig-lab{color:var(--accent,#2d6cdf);font-weight:700;margin-right:4px}
           .us-digest b.up{color:var(--up,#e5453b)} .us-digest b.down{color:var(--down,#15a86a)}
-          .us-idx{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 14px}
-          .us-idx-c{background:var(--surface-2,#f5f6f8);border:1px solid var(--border-2,#ececf0);border-radius:10px;padding:8px 4px;text-align:center}
-          .us-idx-c .nm{font-size:11px;color:var(--text-3,#8a8f99)}
-          .us-idx-c .pc{font-size:14px;font-weight:700;margin-top:3px}
           .us-ctrls{margin:10px 14px 4px}
           .us-srch{width:100%;border:1px solid var(--border-2,#ececf0);border-radius:10px;padding:9px 12px;font-size:13px;background:var(--surface-2,#f5f6f8);color:var(--text,#1d1d1f)}
           .us-srch:focus{outline:none;border-color:var(--accent,#2d6cdf)}
@@ -3962,12 +3958,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <div class="us-top-row2" id="usSess">加载中…</div>
         </div>
         <div class="us-digest" id="usDigest"><span class="us-dig-lab">今夜看点</span>加载中…</div>
-        <div class="us-idx">
-          <div class="us-idx-c"><div class="nm">纳斯达克</div><div class="pc" id="usIxIxic">—</div></div>
-          <div class="us-idx-c"><div class="nm">标普500</div><div class="pc" id="usIxSpx">—</div></div>
-          <div class="us-idx-c"><div class="nm">道琼斯</div><div class="pc" id="usIxDow">—</div></div>
-          <div class="us-idx-c"><div class="nm">美元汇率</div><div class="pc" id="usIxFx">—</div></div>
-        </div>
         <div class="us-ctrls">
           <input class="us-srch" id="usSrch" placeholder="搜索基金名称 / 代码">
           <div class="us-chips" id="usChips">
@@ -4508,31 +4498,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <button class="btn primary" onclick="drawerSave()">保存并记账</button>
     </div>
   </aside>
-  <div id="copyLastModal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(17,24,39,.45);z-index:9999;align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#fff;color:#1f2937;border-radius:14px;max-width:400px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25);">
-      <div style="background:#185fa5;color:#fff;padding:14px 18px;font-size:15px;font-weight:500;border-radius:14px 14px 0 0;">复制交易 · 勾选要带过来的字段</div>
-      <div style="background:#185fa5;color:#dbeafe;padding:0 18px 14px;font-size:12px;">来源：<span id="cpSrcName"></span></div>
-      <div style="padding:14px 18px;">
-        <div style="font-size:13px;font-weight:500;color:#6b7280;margin:0 0 6px;">基础信息（通常不变）</div>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-fund" checked style="width:16px;height:16px;accent-color:#185fa5;"> 基金名称</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-acc" checked style="width:16px;height:16px;accent-color:#185fa5;"> 账户</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-type" checked style="width:16px;height:16px;accent-color:#185fa5;"> 业务类型（买入 / 赎回…）</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0 10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-fee" checked style="width:16px;height:16px;accent-color:#185fa5;"> 费率</label>
-        <div style="font-size:13px;font-weight:500;color:#6b7280;margin:6px 0;padding-top:10px;border-top:1px solid #eee;">交易明细（每笔不同）</div>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-date" style="width:16px;height:16px;accent-color:#185fa5;"> 买入日期（不勾则自动填今天）</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-time" checked style="width:16px;height:16px;accent-color:#185fa5;"> 买入时间</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-amount" checked style="width:16px;height:16px;accent-color:#185fa5;"> 金额</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-nav" style="width:16px;height:16px;accent-color:#185fa5;"> 净值（不勾则 T+1 自动补）</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-shares" style="width:16px;height:16px;accent-color:#185fa5;"> 份额</label>
-        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-note" style="width:16px;height:16px;accent-color:#185fa5;"> 备注</label>
-      </div>
-      <div style="display:flex;gap:8px;padding:12px 18px 16px;border-top:1px solid #eee;">
-        <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="toggleCopyAll()">全选 / 全不选</button>
-        <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="document.getElementById('copyLastModal').style.display='none'">取消</button>
-        <button style="flex:1.4;padding:8px;border:1px solid #185fa5;border-radius:8px;background:#185fa5;color:#fff;font-size:13px;cursor:pointer;" onclick="applyCopyTrade()">确定复制</button>
-      </div>
-    </div>
-  </div>
+</div>
 
 <script>
 // ---------- 示例数据 ----------
@@ -5184,11 +5150,7 @@ function qdiiHeld(){
   });
 }
 function qdiiUsRender(){
-  var setIdx=function(id,v){ var el=document.getElementById(id); if(!el) return; el.textContent=fmtPct(v); el.className='pc '+(v>0?'up':v<0?'down':''); };
-  setIdx('usIxIxic', qdiiPct('ixic'));
-  setIdx('usIxSpx', qdiiPct('spx'));
-  setIdx('usIxDow', qdiiPct('dow'));
-  var fxe=document.getElementById('usIxFx'); if(fxe){ var fp=QDII_IDX.fx?QDII_IDX.fx.pct:null; fxe.textContent=fmtPct(fp); fxe.className='pc '+(fp>0?'up':fp<0?'down':''); }
+  // 四大指数已在 大盘指数 section 展示，不再重复渲染
   var held=qdiiHeld();
   var hl=document.getElementById('usHoldList');
   if(hl){
@@ -5279,9 +5241,15 @@ function stopUSWatchTimer(){ if(_usWatchTimer){ clearInterval(_usWatchTimer); _u
 function toggleUSWatch(){
   var p=document.getElementById('usWatchPanel'); if(!p) return;
   var open=(p.style.display!=='none');
-  if(open){ p.style.display='none'; var c=document.getElementById('usEntryChev'); if(c) c.textContent='›'; stopUSWatchTimer(); }
-  else {
-    p.style.display='block'; var c=document.getElementById('usEntryChev'); if(c) c.textContent='▾';
+  if(open){
+    p.style.display='none';
+    var e=document.getElementById('usEntry'); if(e) e.style.display='flex';
+    var c=document.getElementById('usEntryChev'); if(c) c.textContent='›';
+    stopUSWatchTimer();
+  } else {
+    p.style.display='block';
+    var e=document.getElementById('usEntry'); if(e) e.style.display='none';
+    var c=document.getElementById('usEntryChev'); if(c) c.textContent='▾';
     usWatchSessLabel();
     if(!_usWatchFetched){ qdiiUsRender(); qdiiUsFetch(); _usWatchFetched=true; } else { qdiiUsFetch(); }
     startUSWatchTimer();
@@ -9357,24 +9325,27 @@ function applyCopyTrade(){
   if(!trades || _copySrcIdx<0 || !trades[_copySrcIdx]){ toast('没有可复制的交易'); return; }
   const t=trades[_copySrcIdx];
   const pick=id=>{ const el=document.getElementById(id); return el?el.checked:false; };
-  try{ if(typeof draftClear==='function') draftClear('ft_draft_drawer', DRAFT_DR_IDS); }catch(e){}
-  openDrawer();
-  const _dp=document.getElementById('drDraftPill'); if(_dp) _dp.classList.remove('show');
-  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?'':v); };
-  if(pick('cp-fund')) set('dr-fund', t.name||'');
-  if(pick('cp-acc')) set('dr-acc', t.account||'');
-  if(pick('cp-type')) set('dr-type', t.type||'buy');
-  if(pick('cp-fee')) set('dr-fee', t.fee!=null?t.fee:'');
-  const dt=document.getElementById('dr-date');
-  if(pick('cp-date')){ set('dr-date', t.date||''); }
-  else if(dt){ dt.value=new Date().toISOString().slice(0,10); }
-  if(pick('cp-time')) set('dr-time', t.time||'');
-  if(pick('cp-amount')) set('dr-amount', t.amount!=null?t.amount:'');
-  if(pick('cp-nav')) set('dr-nav', t.nav!=null?t.nav:'');
-  if(pick('cp-shares')) set('dr-shares', t.shares!=null?t.shares:'');
-  if(pick('cp-note')) set('dr-note', t.note||'');
-  try{ if(typeof autoFee==='function') autoFee('dr'); }catch(e){}
-  toast('已复制：'+(t.name||'')+'（未勾的留空，可现填）');
+  const today=new Date().toISOString().slice(0,10);
+  const nt={
+    name: pick('cp-fund') ? (t.name||'') : '',
+    account: pick('cp-acc') ? (t.account||effAccount('本人账户')) : effAccount('本人账户'),
+    date: pick('cp-date') ? (t.date||today) : today,
+    time: pick('cp-time') ? (t.time||'') : '',
+    type: pick('cp-type') ? (t.type||'buy') : 'buy',
+    amount: pick('cp-amount') ? (t.amount||0) : 0,
+    nav: pick('cp-nav') ? (t.nav!=null?t.nav:null) : null,
+    fee: pick('cp-fee') ? (t.fee||0) : 0,
+    shares: pick('cp-shares') ? (t.shares!=null?t.shares:null) : null,
+    note: pick('cp-note') ? (t.note||'') : '',
+    confirm: 'confirmed',
+    locked: true
+  };
+  if(!nt.name || !nt.amount){ toast('至少勾选"基金名称"和"金额"才能复制'); return; }
+  trades.push(nt);
+  silentSave(); compute(); recordSnapshot();
+  if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
+  try{ if(currentView==='detail'){ renderDetailLive(detailName); refreshDetailTradesByName(detailName); } }catch(e){}
+  toast('已复制：'+esc(nt.name)+' '+typeLabel(nt.type)+' '+M(nt.amount));
 }
 
 function drawerSave(){
@@ -14289,4 +14260,28 @@ function fbCopy(t){
 </script>
 
 
-<script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000001=/CN_MarketDataService.getKLineData?symbol=sh000001&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sz399006=/CN_MarketDataService.getKLineData?symbol=sz399006&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000688=/CN_MarketDataService.getKLineData?symbol=sh000688&amp;scale=5&amp;ma=no&amp;datalen=120"></script><div id="toast" class="toast">已加基金自选 嘉实黄金</div></body></html>
+<script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000001=/CN_MarketDataService.getKLineData?symbol=sh000001&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sz399006=/CN_MarketDataService.getKLineData?symbol=sz399006&amp;scale=5&amp;ma=no&amp;datalen=120"></script><script src="https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20__spk_sh000688=/CN_MarketDataService.getKLineData?symbol=sh000688&amp;scale=5&amp;ma=no&amp;datalen=120"></script><div id="toast" class="toast">已加基金自选 嘉实黄金</script><div id="copyLastModal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(17,24,39,.45);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;color:#1f2937;border-radius:14px;max-width:400px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.25);">
+      <div style="background:#185fa5;color:#fff;padding:14px 18px;font-size:15px;font-weight:500;border-radius:14px 14px 0 0;">复制交易 · 勾选要带过来的字段</div>
+      <div style="background:#185fa5;color:#dbeafe;padding:0 18px 14px;font-size:12px;">来源：<span id="cpSrcName"></span></div>
+      <div style="padding:14px 18px;">
+        <div style="font-size:13px;font-weight:500;color:#6b7280;margin:0 0 6px;">基础信息（通常不变）</div>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-fund" checked style="width:16px;height:16px;accent-color:#185fa5;"> 基金名称</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-acc" checked style="width:16px;height:16px;accent-color:#185fa5;"> 账户</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-type" checked style="width:16px;height:16px;accent-color:#185fa5;"> 业务类型（买入 / 赎回…）</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0 10px;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-fee" checked style="width:16px;height:16px;accent-color:#185fa5;"> 费率</label>
+        <div style="font-size:13px;font-weight:500;color:#6b7280;margin:6px 0;padding-top:10px;border-top:1px solid #eee;">交易明细（每笔不同）</div>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-date" style="width:16px;height:16px;accent-color:#185fa5;"> 买入日期（不勾则自动填今天）</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-time" checked style="width:16px;height:16px;accent-color:#185fa5;"> 买入时间</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-amount" checked style="width:16px;height:16px;accent-color:#185fa5;"> 金额</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-nav" style="width:16px;height:16px;accent-color:#185fa5;"> 净值（不勾则 T+1 自动补）</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-shares" style="width:16px;height:16px;accent-color:#185fa5;"> 份额</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;cursor:pointer;"><input type="checkbox" id="cp-note" style="width:16px;height:16px;accent-color:#185fa5;"> 备注</label>
+      </div>
+      <div style="display:flex;gap:8px;padding:12px 18px 16px;border-top:1px solid #eee;">
+        <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="toggleCopyAll()">全选 / 全不选</button>
+        <button style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:13px;cursor:pointer;" onclick="document.getElementById('copyLastModal').style.display='none'">取消</button>
+        <button style="flex:1.4;padding:8px;border:1px solid #185fa5;border-radius:8px;background:#185fa5;color:#fff;font-size:13px;cursor:pointer;" onclick="applyCopyTrade()">确定复制</button>
+      </div>
+    </div>
+  </div></body></html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>持仓列表 - 排版优化预览</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-2: #555;
+    --text-3: #999;
+    --border: #ececec;
+    --up: #e74c3c;
+    --down: #2f9e58;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .phone {
+    max-width: 420px;
+    margin: 0 auto;
+    background: var(--bg);
+    min-height: 100vh;
+    padding-bottom: 24px;
+  }
+  .header {
+    padding: 14px 16px 10px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .header h1 { font-size: 18px; font-weight: 700; margin: 0; }
+  .header .meta { font-size: 12px; color: var(--text-3); }
+  .group-head {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    padding: 18px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group-head .count {
+    font-size: 11px;
+    color: var(--text-3);
+    font-weight: 500;
+  }
+  .group-head .line { flex: 1; height: 1px; background: var(--border); margin-left: 4px; }
+
+  .card {
+    background: var(--card);
+    margin: 0 12px 10px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+
+  /* 核心：单条基金行 */
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:active { background: #fafafa; }
+
+  .row-main { flex: 1; min-width: 0; }
+  .row-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .row-name .nm {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 1.5px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    line-height: 1.3;
+  }
+  .tag-medicine { color: #c0392b; background: #fdecea; }
+  .tag-manufact { color: #c0653a; background: #fbf0e9; }
+  .tag-tech { color: #6c5ce7; background: #efedfd; }
+  .tag-overseas { color: #0d8a8a; background: #e3f5f5; }
+  .tag-cycle { color: #b8821f; background: #faf3e1; }
+
+  .row-amount {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .row-amount .num {
+    color: var(--text-2);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+
+  .row-data {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    margin-left: 10px;
+  }
+  .data-item {
+    text-align: right;
+    min-width: 58px;
+  }
+  .data-item .v {
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+  .data-item .l {
+    font-size: 10.5px;
+    color: var(--text-3);
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+  .neutral { color: var(--text-2); }
+
+  .summary-bar {
+    margin: 12px 12px 6px;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .summary-bar .left {
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .summary-bar .left b { color: var(--text); font-size: 15px; }
+  .summary-bar .right {
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .section-label {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-3);
+    padding: 20px 0 4px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="header">
+    <h1>持仓</h1>
+    <span class="meta">2026-08-14 22:40</span>
+  </div>
+
+  <div class="summary-bar">
+    <div class="left">总市值 <b>¥ 36,425.50</b> · 9 只</div>
+    <div class="right">当日 -¥ 27.85</div>
+  </div>
+
+  <div class="section-label">新排版 · 标签紧贴名字后</div>
+
+  <div class="group-head"><span>医药</span><span class="count">3 只</span><span class="line"></span></div>
+  <div class="card">
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">广发港股创新药ETF联接（QDII）C</span>
+          <span class="tag tag-medicine">医药</span>
+        </div>
+        <div class="row-amount">¥ 4,313.34 <span class="num">· 09:44</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v up">+1.85%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-2.38%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-¥105.16</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">中欧医疗创新股票C</span>
+          <span class="tag tag-medicine">医药</span>
+        </div>
+        <div class="row-amount">¥ 4,396.85 <span class="num">· 09:44</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v up">+1.39%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-1.73%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-¥77.40</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">招商国证生物医药指数C</span>
+          <span class="tag tag-medicine">医药</span>
+        </div>
+        <div class="row-amount">¥ 4,347.81 <span class="num">· 09:44</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v up">+1.03%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-1.02%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-¥44.80</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-head"><span>制造</span><span class="count">1 只</span><span class="line"></span></div>
+  <div class="card">
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">广发工程机械主题ETF联接C</span>
+          <span class="tag tag-manufact">制造</span>
+        </div>
+        <div class="row-amount">¥ 5,134.93 <span class="num">· 09:44</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v down">-0.04%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-0.49%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-¥25.29</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-head"><span>科技</span><span class="count">2 只</span><span class="line"></span></div>
+  <div class="card">
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">华宝中证港股通信息技术综合ETF联接</span>
+          <span class="tag tag-tech">科技</span>
+        </div>
+        <div class="row-amount">¥ 2,184.60 <span class="num">· 09:48</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v up">+2.87%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-1.04%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-¥22.96</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">南方恒生科技ETF联接（QDII）C</span>
+          <span class="tag tag-tech">科技</span>
+        </div>
+        <div class="row-amount">¥ 1,143.19 <span class="num">· 09:44</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v up">+1.06%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-1.71%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-¥19.89</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-head"><span>海外</span><span class="count">2 只</span><span class="line"></span></div>
+  <div class="card">
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">嘉实全球产业升级股票（QDII）C</span>
+          <span class="tag tag-overseas">海外</span>
+        </div>
+        <div class="row-amount">¥ 4,466.84 <span class="num">· 08-13</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v down">-0.25%</div>
+          <div class="l">08-13</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-0.25%</div>
+          <div class="l">08-13</div>
+        </div>
+        <div class="data-item">
+          <div class="v down">-¥11.20</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">南方纳斯达克100指数（QDII）C</span>
+          <span class="tag tag-overseas">海外</span>
+        </div>
+        <div class="row-amount">¥ 50.74 <span class="num">· 08-13</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v up">+1.09%</div>
+          <div class="l">08-13</div>
+        </div>
+        <div class="data-item">
+          <div class="v up">+1.09%</div>
+          <div class="l">08-13</div>
+        </div>
+        <div class="data-item">
+          <div class="v up">+¥0.55</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-head"><span>周期资源</span><span class="count">1 只</span><span class="line"></span></div>
+  <div class="card">
+    <div class="row">
+      <div class="row-main">
+        <div class="row-name">
+          <span class="nm">嘉实中证细分化工产业主题ETF联接C</span>
+          <span class="tag tag-cycle">周期资源</span>
+        </div>
+        <div class="row-amount">¥ 4,357.18 <span class="num">· 09:44</span></div>
+      </div>
+      <div class="row-data">
+        <div class="data-item">
+          <div class="v up">+0.43%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v up">+0.05%</div>
+          <div class="l">08-14</div>
+        </div>
+        <div class="data-item">
+          <div class="v up">+¥2.18</div>
+          <div class="l">持有</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

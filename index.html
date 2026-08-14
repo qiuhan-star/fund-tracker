@@ -13920,7 +13920,8 @@ function renderSyncCfg(){
   };
   window.renderMobileSettingsHome=function(){
     var host=document.getElementById('smMobileGroups'); if(!host) return;
-    var SVG={
+    try {
+      var SVG={
       acct:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>',
       palette:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18c1.5 0 2-1 2-2s-.5-1.5-.5-2.5.5-1.5.5-2.5-1-2-2-2-1.5 1-1.5 2 .5 1.5.5 2.5-.5 1.5-.5 2.5 1 2 2 2z"/></svg>',
       cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 01-.5-7.97A5 5 0 0116 9.2 4 4 0 0117.5 18H7z"/></svg>',
@@ -13930,12 +13931,21 @@ function renderSyncCfg(){
     };
     function group(title, rows){ return '<div class="st-group"><div class="st-gtitle">'+title+'</div><div class="st-card">'+rows.join('')+'</div></div>'; }
     function row(ic,icbg,t,d,trail,oc,danger){ return '<div class="st-row'+(danger?' danger':'')+'"'+(oc?' onclick="'+oc+'"':'')+'><span class="st-ic" style="background:'+icbg+'">'+ic+'</span><div class="st-txt"><div class="st-t">'+t+'</div>'+(d?'<div class="st-d">'+d+'</div>':'')+'</div>'+(trail?'<div class="st-trail">'+trail+'</div>':'')+'<div class="st-chev">›</div></div>'; }
+    // 安全获取 dca 状态文案
+    var dcaDesc='';
+    try{
+      if(typeof dcaAutoEnabled==='function' && dcaAutoEnabled()){
+        var active=(typeof dcaActiveCount==='function')?dcaActiveCount():0;
+        var due=(typeof dcaDueCount==='function')?dcaDueCount():0;
+        dcaDesc='已开启 '+active+' 个 · 待补记 '+due+' 期';
+      } else { dcaDesc='自动补记已关闭'; }
+    }catch(e){ dcaDesc=''; }
     var html='';
     html+=group('账户',[ row(SVG.acct,'#007AFF','账户名称、备注与排序','','',"openSettingsDetail('account')") ]);
     html+=group('偏好设置',[
       row(SVG.palette,'#5856D6','外观与风格','','',"openSettingsDetail('prefs','appearance')"),
       row(SVG.palette,'#5856D6','列表与排序','','',"openSettingsDetail('prefs','listsort')"),
-      row(SVG.palette,'#5856D6','记账偏好',(typeof dcaAutoEnabled==='function'?(dcaAutoEnabled()?('已开启 '+dcaActiveCount()+' 个 · 待补记 '+dcaDueCount()+' 期'):'自动补记已关闭'):''),'',"openSettingsDetail('prefs','ledger')")
+      row(SVG.palette,'#5856D6','记账偏好',dcaDesc,'',"openSettingsDetail('prefs','ledger')")
     ]);
     html+=group('数据与备份',[
       row(SVG.cloud,'#1f93a8','云端同步','','',"openSettingsDetail('data','cloud')"),
@@ -13953,7 +13963,19 @@ function renderSyncCfg(){
       row(SVG.info,'#8e8e93','版本信息与免责声明','','',"openSettingsDetail('about')"),
       row(SVG.info,'#8e8e93','意见与反馈','','',"openFeedback()")
     ]);
-    host.innerHTML=html;
+      host.innerHTML=html;
+    } catch(e) {
+      console.error('renderMobileSettingsHome failed:', e);
+      // 兜底：保证至少能进入各个 tab（避免整页空白）
+      host.innerHTML='<div class="st-group"><div class="st-gtitle">快速进入</div><div class="st-card">'+
+        '<div class="st-row" onclick="settingsTab(\'account\')"><span class="st-ic" style="background:#007AFF">A</span><div class="st-txt"><div class="st-t">账户管理</div></div><div class="st-chev">›</div></div>'+
+        '<div class="st-row" onclick="settingsTab(\'prefs\')"><span class="st-ic" style="background:#5856D6">P</span><div class="st-txt"><div class="st-t">偏好设置</div></div><div class="st-chev">›</div></div>'+
+        '<div class="st-row" onclick="settingsTab(\'data\')"><span class="st-ic" style="background:#1f93a8">D</span><div class="st-txt"><div class="st-t">数据与备份</div></div><div class="st-chev">›</div></div>'+
+        '<div class="st-row" onclick="settingsTab(\'tools\')"><span class="st-ic" style="background:#FF9500">T</span><div class="st-txt"><div class="st-t">实用工具</div></div><div class="st-chev">›</div></div>'+
+        '<div class="st-row" onclick="settingsTab(\'security\')"><span class="st-ic" style="background:#1f9e43">S</span><div class="st-txt"><div class="st-t">安全与隐私</div></div><div class="st-chev">›</div></div>'+
+        '<div class="st-row" onclick="settingsTab(\'about\')"><span class="st-ic" style="background:#8e8e93">i</span><div class="st-txt"><div class="st-t">关于</div></div><div class="st-chev">›</div></div>'+
+        '</div></div>';
+    }
   };
   window.openSettingsDetail=function(id, anchor){
     var panel=document.querySelector('.settings-panel'); if(!panel) return;

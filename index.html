@@ -11557,28 +11557,17 @@ let _ehSnapParsed={};
 function ehParseSnap(){
   const txt=document.getElementById('ehSnapText')?.value||'';
   const result=document.getElementById('ehSnapResult');
-  if(!txt.trim()){ if(result){ result.textContent='未识别到数据，请粘贴包含「持有金额」「持有收益」「份额」等关键字的截图文字'; result.style.color='var(--text-3)'; } return; }
-  const numOf=function(line){ const m=line.match(/[-+]?[\d,]+\.?\d*/); return m?parseFloat(m[0].replace(/,/g,'')):null; };
-  const lines=txt.split(/[\n\r,;，；\t]+/).map(s=>s.trim()).filter(Boolean);
-  let mv=null, profit=null, shares=null, nav=null;
-  for(const line of lines){
-    if(mv==null && /持有金额|总金额|市值/.test(line)){ mv=numOf(line); continue; }
-    if(profit==null && /持有收益/.test(line)){ profit=numOf(line); continue; }
-    if(shares==null && /持有份额|总份额|份额/.test(line)){ shares=numOf(line); continue; }
-    if(nav==null && /(单位净值|净值)/.test(line) && !/估算|涨跌|累计/.test(line)){ nav=numOf(line); continue; }
-  }
-  if(profit==null){ for(const line of lines){ if(/累计收益|总收益/.test(line)){ profit=numOf(line); break; } } }
-  if(mv==null){ const m=txt.match(/持有金额[^\d\-+]*([\d,]+\.?\d*)/); if(m) mv=parseFloat(m[1].replace(/,/g,'')); }
-  if(profit==null){ let m=txt.match(/持有收益[^\d\-+]*([\d,]+\.?\d*)/); if(!m) m=txt.match(/累计收益[^\d\-+]*([\d,]+\.?\d*)/); if(m) profit=parseFloat(m[1].replace(/,/g,'')); }
-  if(shares==null){ const m=txt.match(/(持有份额|总份额)[^\d\-+]*([\d,]+\.?\d*)/); if(m) shares=parseFloat(m[2].replace(/,/g,'')); }
-  if(nav==null){ const m=txt.match(/(单位净值|净值)[^\d\-+]*([\d,]+\.?\d*)/); if(m) nav=parseFloat(m[2].replace(/,/g,'')); }
+  if(!txt.trim()){ if(result){ result.textContent='未识别到数据，请粘贴包含「持有金额」「持有收益」「份额」等关键字的截图文字'; result.style.color='var(--text-3)'; return; } }
+  // 复用统一的 OCR 文本解析函数，支持基金和黄金基金的全部字段（含持仓金额/持有成本等）
+  const p=ehParseAlipayText(txt);
+  const mv=p.mv, profit=p.profit, shares=p.shares, nav=p.nav, costPrice=p.costPrice;
   const fmt=function(n){ return n==null?'—':n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:4}); };
-  const hasAny=mv!=null||profit!=null||shares!=null||nav!=null;
+  const hasAny=mv!=null||profit!=null||shares!=null||nav!=null||costPrice!=null;
   if(result){
-    result.innerHTML='<b>识别结果：</b> 金额 '+fmt(mv)+' · 收益 '+fmt(profit)+' · 份额 '+fmt(shares)+' · 净值 '+fmt(nav);
+    result.innerHTML='<b>识别结果：</b> 金额 '+fmt(mv)+' · 收益 '+fmt(profit)+' · 份额 '+fmt(shares)+' · 净值 '+fmt(nav)+' · 成本价 '+fmt(costPrice);
     result.style.color=hasAny?'var(--accent)':'var(--danger)';
   }
-  _ehSnapParsed={mv,profit,shares,nav};
+  _ehSnapParsed={mv,profit,shares,nav,costPrice};
 }
 function ehFillFromSnap(){
   const p=_ehSnapParsed||{};

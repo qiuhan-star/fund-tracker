@@ -4295,11 +4295,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div id="afModeShares" style="display:none">
           <div class="nf-field">
             <label>持有份额</label>
-            <input id="af-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="0.00">
+            <input id="af-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="0.00" oninput="afAutoCalc()">
           </div>
           <div class="nf-field">
             <label>当前净值（元）</label>
-            <input id="af-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="填份额后可自动算市值">
+            <input id="af-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="填份额后可自动算市值" oninput="afAutoCalc()">
           </div>
           <div class="af-tip" style="font-size:11px;color:var(--text-3);margin-top:-6px">市值 = 份额 × 净值，填任意两项自动算第三项</div>
         </div>
@@ -9104,17 +9104,48 @@ function openAddFund(){
     const dl=document.getElementById('af-name');
     if(dl){ const names=(_allHoldings.length?_allHoldings:fundsView).map(f=>f.name).filter(Boolean); dl.innerHTML=[...new Set(names)].map(n=>`<option value="${esc(n)}">`).join(''); }
   }
+  // 重置为按金额模式，清空所有输入
+  afSetMode('amt');
+  ['af-shares','af-nav','af-mv','af-input'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var ocrS=document.getElementById('afOcrStatus'), ocrR=document.getElementById('afOcrResult');
+  if(ocrS) ocrS.style.display='none'; if(ocrR) ocrR.innerHTML='';
   const m=document.getElementById('addFundMask'); if(m){ m.classList.add('show'); const el=document.getElementById('af-input'); if(el) setTimeout(()=>el.focus(),60); }
 }
-function closeAddFund(){ const m=document.getElementById('addFundMask'); if(m) m.classList.remove('show'); const i=document.getElementById('af-input'); if(i) i.value=''; const v=document.getElementById('af-mv'); if(v) v.value=''; afSelected=null; afHideSuggest(); }
+function closeAddFund(){ const m=document.getElementById('addFundMask'); if(m) m.classList.remove('show'); ['af-input','af-mv','af-shares','af-nav'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; }); afSelected=null; afHideSuggest(); }
+var _afOcrData={};
+function afSetMode(mode){
+  document.querySelectorAll('.af-seg-btn').forEach(function(b){ b.classList.toggle('on',b.dataset.afm===mode); });
+  document.getElementById('afModeAmt').style.display=mode==='amt'?'':'none';
+  document.getElementById('afModeShares').style.display=mode==='shares'?'':'none';
+  document.getElementById('afModeOcr').style.display=mode==='ocr'?'':'none';
+  if(mode==='shares'){ afAutoCalc(); }
+}
+function afAutoCalc(){
+  var sh=+(document.getElementById('af-shares')?.value||0), nav=+(document.getElementById('af-nav')?.value||0), mv=+(document.getElementById('af-mv')?.value||0);
+  if(sh>0 && nav>0 && mv===0){ document.getElementById('af-mv').value=(sh*nav).toFixed(2); }
+  else if(sh>0 && mv>0 && nav===0){ document.getElementById('af-nav').value=(mv/sh).toFixed(4); }
+  else if(nav>0 && mv>0 && sh===0){ document.getElementById('af-shares').value=(mv/nav).toFixed(2); }
+}
 function addFundSave(){
   const g=id=>document.getElementById(id);
   const raw=(g('af-input').value||'').trim();
   if(!raw){ toast('请填写基金名称或 6 位代码'); g('af-input').focus(); return; }
   const acc=g('af-acc').value||effAccount('本人账户');
-  const mvRaw=g('af-mv').value, mv=(mvRaw===''||mvRaw==null)?null:+mvRaw;
+  let mv=null, shares=null, nav=null;
+  const mode=document.querySelector('.af-seg-btn.on')?.dataset.afm||'amt';
+  if(mode==='amt'){
+    const mvRaw=g('af-mv').value; mv=(mvRaw===''||mvRaw==null)?null:+mvRaw;
+  }else if(mode==='shares'){
+    const shRaw=g('af-shares').value, navRaw=g('af-nav').value;
+    shares=(shRaw===''||shRaw==null)?null:+shRaw;
+    nav=(navRaw===''||navRaw==null)?null:+navRaw;
+    if(shares!=null && nav!=null){ mv=shares*nav; }
+    else if(shares!=null){ const mvRaw=g('af-mv').value; mv=(mvRaw===''||mvRaw==null)?null:+mvRaw; }
+  }else if(mode==='ocr' && _afOcrData.mv!=null){
+    mv=_afOcrData.mv; shares=_afOcrData.shares; nav=_afOcrData.nav;
+    if(_afOcrData.code && (!raw.match(/^\d{6}$/))){ g('af-input').value=_afOcrData.code; }
+  }
   let name=raw, code='';
-  // 优先用实时搜索选中的结果（带正确名称+代码）
   if(afSelected && (afSelected.name===raw || afSelected.code===raw)){ name=afSelected.name; code=afSelected.code; }
   else if(/^\d{6}$/.test(raw)){ const nm=syncNameByCode(raw); if(nm) name=nm; code=raw; }
   if(snaps.some(s=>s.name===name && accOf(s)===acc)){ toast('该基金在当前账户已存在'); return; }
@@ -9133,6 +9164,78 @@ function syncNameByCode(code){ // 从已载入的 snaps/trades 反查名称
   if(hit) return hit.name;
   const _an=analysisNameByCode(code); if(_an) return _an;
   return null;
+}
+// 加基金 OCR
+function afOcrImage(input){
+  const file=input?.files?.[0];
+  if(!file) return;
+  _afOcrData={};
+  const status=document.getElementById('afOcrStatus'), result=document.getElementById('afOcrResult');
+  if(status) status.innerHTML='加载 OCR 引擎…'; if(status) status.style.display='';
+  if(result) result.innerHTML='';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=new Image();
+    img.onload=function(){
+      const canvas=document.createElement('canvas'), ctx=canvas.getContext('2d');
+      const maxW=1200, scale=Math.min(1, maxW/img.width);
+      canvas.width=img.width*scale; canvas.height=img.height*scale;
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      const dataUrl=canvas.toDataURL('image/jpeg',0.8).split(',')[1];
+      afOcrDo(dataUrl, status, result);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function afOcrPaste(){
+  navigator.clipboard.read().then(function(items){
+    for(const item of items){
+      const imgType=item.types.find(t=>t.startsWith('image/'));
+      if(imgType){
+        item.getType(imgType).then(function(blob){
+          const reader=new FileReader();
+          reader.onload=function(e){
+            const imgData=e.target.result.split(',')[1];
+            const status=document.getElementById('afOcrStatus'), result=document.getElementById('afOcrResult');
+            if(status) status.innerHTML='加载 OCR 引擎…'; if(status) status.style.display='';
+            if(result) result.innerHTML='';
+            afOcrDo(imgData, status, result);
+          };
+          reader.readAsDataURL(blob);
+        });
+        return;
+      }
+    }
+    toast('剪贴板中没有图片');
+  }).catch(function(){ toast('粘贴失败，请用选择截图方式'); });
+}
+async function afOcrDo(dataUrl, statusEl, resultEl){
+  try{
+    if(typeof ehEnsureOcrWorker!=='function'){ throw new Error('OCR 引擎未加载'); }
+    if(statusEl) statusEl.innerHTML='正在识别…';
+    const worker=await ehEnsureOcrWorker();
+    if(statusEl) statusEl.innerHTML='识别中…';
+    const ret=await worker.recognize(dataUrl, {});
+    const txt=ret.data.text||'';
+    if(!txt.trim()){ if(statusEl) statusEl.innerHTML='未识别到文字'; return; }
+    if(resultEl) resultEl.innerHTML='OCR 原始文本：<br><pre style="font-size:11px;max-height:100px;overflow:auto;white-space:pre-wrap;word-break:break-all;background:var(--surface-2);padding:6px;border-radius:4px;margin:4px 0">'+esc(txt.slice(0,500))+'</pre>';
+    // 解析：提取基金代码(6位数字)、金额、份额、净值
+    const codeMatch=txt.match(/\b(\d{6})\b/);
+    const code=codeMatch?codeMatch[1]:'';
+    // 用 ehParseAlipayText 解析金额/份额/净值
+    const parsed=typeof ehParseAlipayText==='function'?ehParseAlipayText(txt):{};
+    _afOcrData={code, mv:parsed.mv, shares:parsed.shares, nav:parsed.nav, profit:parsed.profit};
+    // 填入表单
+    if(code){ document.getElementById('af-input').value=code; }
+    if(parsed.mv!=null){ document.getElementById('af-mv').value=parsed.mv.toFixed(2); }
+    if(parsed.shares!=null){ document.getElementById('af-shares').value=parsed.shares.toFixed(2); }
+    if(parsed.nav!=null){ document.getElementById('af-nav').value=parsed.nav.toFixed(4); }
+    if(statusEl) statusEl.innerHTML='✅ 识别完成，已自动填入';
+    setTimeout(function(){ if(statusEl) statusEl.style.display='none'; }, 2000);
+  }catch(e){
+    if(statusEl) statusEl.innerHTML='❌ 识别失败：'+e.message;
+  }
 }
 function addTradeRow(){ trades.push({name:'',date:'',time:'',type:'buy',amount:0,nav:'',account:effAccount('本人账户'),locked:true}); }
 function addTradeFor(enc){ const name=decodeURIComponent(enc); trades.push({name,date:'',time:'',type:'buy',amount:0,nav:'',account:fundAccountOf(name),locked:true}); compute(); }

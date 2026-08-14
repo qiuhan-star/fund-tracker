@@ -10036,7 +10036,7 @@ async function fetchFundHistory(code){
 // 根据历史净值计算各周期涨跌幅：返回 {1d, 1w, 1m, 3m, 6m, 1y, ytd}
 function computePeriodChanges(history){
   if(!history||!history.length) return null;
-  const out={1d:null, 1w:null, 1m:null, 3m:null, 6m:null, 1y:null, ytd:null};
+  const out={'1d':null,'1w':null,'1m':null,'3m':null,'6m':null,'1y':null,'ytd':null};
   const cur=history[0].nav;
   if(!cur) return out;
   function pctOf(agoDays){

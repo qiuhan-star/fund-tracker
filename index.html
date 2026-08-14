@@ -1007,13 +1007,16 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 分组视图 dense 表：固定名称列宽度，让「股票/债券/混合」各组的数据列跨组对齐（否则 table-layout:auto 按每组最长名字撑开，列会参差） */
   .dense-table th:first-child,
   .dense-table td:first-child {
-    width: 148px;
-    min-width: 148px;
-    max-width: 148px;
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
   }
   /* 名称列永不横向溢出压到相邻列：长名在列内换行（覆盖 .dense-table 的 white-space:nowrap），并 overflow:hidden 兜底 */
   .dense-table td:first-child { overflow: hidden; }
   .dense-table td:first-child .dt-name { white-space: normal; overflow-wrap: anywhere; }
+  /* 手机端缩小数据列间距，让更多列可见 */
+  .dense-table td { padding: 8px 3px; }
+  .dense-table th { padding: 8px 3px; }
 
   /* 8. 图表容器高度调整，防止占用过多屏幕空间 */
   .chart-box, .am-chart {
@@ -6626,20 +6629,30 @@ function ensureStreakLabels(list){
   list.forEach(f=>{
     const code=syncCode(f.name); if(!code) return;
     const c=streakCache[code];
-    if(c && c.d===today){ applyStreak(code, c.days, c.dir||'up'); return; }
+    if(c && c.d===today){
+      if(!_streakConflictWithEst(f.name, c.dir)) applyStreak(code, c.days, c.dir||'up');
+      return;
+    }
     if(_streakBusy[code]) return;
-    _streakBusy[code]=1; _streakQueue.push(code);
+    _streakBusy[code]=1; _streakQueue.push({code, name:f.name});
   });
   pumpStreaks();
+}
+function _streakConflictWithEst(name, dir){
+  const nc=navCache[name]||{};
+  if(dir==='up' && nc.gszzl!=null && nc.gszzl<0) return true;
+  if(dir==='down' && nc.gszzl!=null && nc.gszzl>0) return true;
+  return false;
 }
 function pumpStreaks(){
   // 串行抓取：fetchNavHistory 共用全局 Data_netWorthTrend，并发会互相覆盖，必须逐只等结果
   if(_streakRunning>=1 || !_streakQueue.length) return;
-  const code=_streakQueue.shift(); _streakRunning=1;
+  const item=_streakQueue.shift(); _streakRunning=1;
+  const code=item.code, name=item.name;
   fetchNavHistory(code).then(arr=>{
     const st=calcStreak(arr);
     streakCache[code]={days:st.days, dir:st.dir, d:fmtDate(new Date())}; saveStreakCache();
-    applyStreak(code, st.days, st.dir);
+    if(!_streakConflictWithEst(name, st.dir)) applyStreak(code, st.days, st.dir);
   }).catch(()=>{}).finally(()=>{ _streakRunning=0; pumpStreaks(); });
 }
 function applyStreak(code, days, dir){
@@ -14492,7 +14505,10 @@ function renderSyncCfg(){
 .grp-name{ font-weight:700; font-size: 14px; color:var(--text); }
 .grp-meta{ margin-left:auto; font-size: 14px; color:var(--text-3); }
 /* 分组视图 = 单张 dense 表 + 表内组分隔行（与「不分组」同格式）。需覆盖手机端 .dense-table td:first-child 的 148px/overflow 规则（本规则 specificity 更高） */
-.dense-table .grp-sep td{ width:auto; min-width:0; max-width:none; overflow:visible; background:var(--surface-3); padding:7px 10px; border-top:1px solid var(--border-3); border-bottom:1px solid var(--border-3); }
+.dense-table .grp-sep td{ width:auto; min-width:0; max-width:none; overflow:visible; background:var(--surface-3); padding:7px 10px; border-top:1px solid var(--border-3); border-bottom:1px solid var(--border-3); position:sticky; left:0; z-index:3; }
+/* 分组行粘性宽度 = 视口宽度（避免表格过宽时右侧统计文字被切） */
+.dense-table .grp-sep td{ width:100vw; min-width:100vw; box-sizing:border-box; }
+.dense-table .grp-sep .grp-meta{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dense-table .grp-sep .grp-sep-in{ display:flex; align-items:center; gap:8px; }
 .dense-table .grp-sep .grp-name{ font-weight:700; font-size:14px; color:var(--text); }
 .dense-table .grp-sep .grp-meta{ margin-left:auto; font-size:13px; color:var(--text-3); }

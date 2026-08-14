@@ -6367,7 +6367,7 @@ function denseRowsHtml(list){
     const code=syncCode(f.name);
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${snapshotBadge(f)}${noteDot(f.name)}</div><div class="dt-sub">
+      if(c.key==='name') tds+=`<td><div class="dt-name">${esc(f.name)}${noteDot(f.name)}</div><div class="dt-sub">
         ${code?`<span class="dcode">#${code}</span>`:''}
         <span class="tag tag-${f.cat}" style="cursor:pointer" title="修改分类（点此手动覆盖）" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}
       </div><div class="mvline"><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;

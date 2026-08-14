@@ -3945,8 +3945,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           .us-pc.up{color:var(--up,#e5453b)} .us-pc.down{color:var(--down,#15a86a)}
           .us-amt{font-size:11px;color:var(--text-3,#8a8f99);margin-top:1px}
           .us-amt.up{color:var(--up,#e5453b)}
-          .us-adder{display:flex;gap:8px;margin-top:10px}
-          .us-adder input{flex:1;border:1px solid var(--border-2,#ececf0);border-radius:10px;padding:8px 12px;font-size:13px;background:var(--surface-2,#f5f6f8)}
           .us-foot{font-size:11px;color:var(--text-3,#8a8f99);margin:14px 14px 0;line-height:1.6}
           .up{color:var(--up,#e5453b)} .down{color:var(--down,#15a86a)}
         </style>
@@ -3975,10 +3973,6 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
         <div class="us-sec">
           <div class="us-sec-hd">市场热门 <span class="us-sec-n" id="usHotN"></span></div>
           <div class="us-list" id="usHotList"></div>
-          <div class="us-adder">
-            <input id="usHotIn" placeholder="加基金代码，如 270042" onkeydown="if(event.key==='Enter')usHotAdd()">
-            <button class="btn sm" onclick="usHotAdd()">添加</button>
-          </div>
         </div>
         <div class="us-foot">「参考涨跌 / 估算盈亏」为根据美股对应指数变动估算的隔日净值参考，非实际净值；QDII 因净值滞后（T+1/T+2）、汇率与跟踪误差，实际以基金公司公布净值为准。🔥异动 = 预估涨跌 ≥ 3%。</div>
       </div>
@@ -9167,6 +9161,11 @@ function teSetAmtMode(mode){
   if(shm && sh) shm.value=sh.value;
   teUpdateDerived();
 }
+function teSyncSharesMore(){
+  var sh=document.getElementById('te-shares'), shm=document.getElementById('te-shares-more');
+  if(sh && shm) sh.value=shm.value;
+  teUpdateDerived();
+}
 function teUpdateDerived(){
   var g=function(id){return document.getElementById(id);};
   var nav=+(g('te-nav')?.value||0), amt=+(g('te-amount')?.value||0), sh=+(g('te-shares')?.value||0);
@@ -9203,8 +9202,14 @@ function saveTradeEdit(){
   var tName=trades[i].name||'';
   var navInput=+(g('te-nav')?.value||0);
   var nav=navInput>0?navInput:((navCache[tName]&&navCache[tName].nav>0)?navCache[tName].nav:0);
-  var sharesRaw=g('te-shares')?.value||g('te-shares-more')?.value||'';
-  var shares=(sharesRaw===''||sharesRaw==null)?null:+sharesRaw;
+  // 份额：优先取 te-shares-more 的值（用户在更多区域编辑），如果为空则取 te-shares
+  var shm = g('te-shares-more');
+  var sharesRaw = (shm?.value !== undefined && shm?.value !== null && shm?.value !== '') ? shm.value : g('te-shares')?.value || '';
+  var shares = (sharesRaw === '' || sharesRaw === null) ? null : +sharesRaw;
+  // 净值：如果用户输入了，一定保留用户输入，不要 fallback 到缓存（同一只基金不同天买入净值不同）
+  if(g('te-nav') && g('te-nav').value !== ''){
+    nav = +g('te-nav').value;
+  }
   if(!amount && shares==null){ toast('请填写金额或份额'); return; }
   // 有净值时自动换算缺失值
   if(nav>0 && !amount && shares!=null){ amount=+(shares*nav); }

@@ -1016,16 +1016,34 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table td:first-child { overflow: hidden; }
   .dense-table td:first-child .dt-name { white-space: normal; overflow-wrap: anywhere; }
   /* 手机端缩小数据列间距，让更多列可见 */
-  .dense-table td { padding: 8px 3px; }
-  .dense-table th { padding: 8px 3px; }
+  .dense-table td { padding: 9px 4px; }
+  .dense-table th { padding: 9px 4px; }
+  /* 数据列加极细左分隔线，避免数字跨列边界混读（桌面与移动统一） */
+  .dense-table td.col-day, .dense-table td.col-ret, .dense-table td.col-hold, .dense-table td.col-nav {
+    border-left: 1px solid rgba(0,0,0,.04);
+  }
 
-  /* 手机端：name 列降到 130px，让 3 列(day/ret/hold)+≡列按钮(38) = 378，375 屏下正好铺满不再溢出（nav 列默认隐藏、勾选后才会撑出横向滚动条） */
+  /* 手机端：name 列降到 122px；4 数据列各自最小宽度保证不被挤；数据列间加细线分隔；行内加大垂直 padding 让 dt-big 和 dt-sub2 不再上下挤；nav 列降到 60px */
   @media (max-width: 600px) {
-    .dense-table th.col-name, .dense-table td.col-name { width: 130px; min-width: 130px; }
+    .dense-table th.col-name, .dense-table td.col-name { width: 122px; min-width: 122px; }
     .dense-table th.col-day, .dense-table td.col-day { min-width: 64px; }
     .dense-table th.col-ret, .dense-table td.col-ret { min-width: 70px; }
     .dense-table th.col-hold, .dense-table td.col-hold { min-width: 76px; }
-    .dense-table th.th-col { width: 34px; min-width: 34px; }
+    .dense-table th.col-nav, .dense-table td.col-nav { min-width: 60px; width: 60px; }
+    .dense-table th.th-col { width: 30px; min-width: 30px; }
+    /* 数据列右侧加极细分隔线，避免数字"粘"在一起（只对数据 td 起作用，name 列不加） */
+    .dense-table td.col-day, .dense-table td.col-ret, .dense-table td.col-hold, .dense-table td.col-nav {
+      border-left: 1px solid rgba(0,0,0,.05);
+    }
+    /* 加大行内垂直 padding：让 dt-big（粗数字）和 dt-sub2（细注）有上下呼吸空间 */
+    .dense-table td { padding: 10px 4px; }
+    .dense-table th { padding: 10px 4px; }
+    /* 数据格字号缩小一档，让窄列里多塞得下，减少横向滚动 */
+    .dense-table td .dt-big { font-size: 12.5px; }
+    .dense-table td .dt-sub2 { font-size: 10.5px; }
+    /* 行间分隔线略微加深，便于一眼分清上下两笔（同类账户的并排） */
+    .dense-table tbody tr { border-bottom: 1px solid var(--border-2); }
+    .dense-table tbody tr:last-child { border-bottom: none; }
   }
 
   /* 8. 图表容器高度调整，防止占用过多屏幕空间 */

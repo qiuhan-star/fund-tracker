@@ -7747,6 +7747,8 @@ function buildFundsView(){
       .reduce((s,t) => s + (+t.amount||0) + (+t.fee||0), 0);
     if(_pendingBuy > 0) f.mv = (f.mv||0) + _pendingBuy;
     f.asset=guessAsset(name); f.market=guessMarket(name); f.currency=(snap&&snap.currency)||'CNY';
+    // 记录校准前的交易计算值，用于判断交易记录是否完整
+    f.txMv = (f.mv!=null)?f.mv:null;
     // 手动持仓校准（快照/手动填写）：有份额+成本价时，用份额×最新净值自动更新金额和收益
     const mo=getManualOverride(f.account,f.name);
     if(mo && mo.enabled && mo.shares!=null && mo.costPrice!=null){
@@ -7773,6 +7775,13 @@ function buildFundsView(){
     }
     f.snapshotStatus = (mo && mo.enabled) ? (mo.source||'manual') : 'none';
     f.snapshotAt = (mo && mo.updatedAt) ? mo.updatedAt : null;
+    // 判断交易记录是否完整：有校准数据时，对比校准值与交易计算值
+    f.tradesNeedSync = false;
+    if(mo && mo.enabled && f.txMv!=null && f.mv!=null){
+      const diff=Math.abs(f.mv - f.txMv);
+      const threshold=Math.max(100, f.mv*0.01);
+      if(diff > threshold) f.tradesNeedSync = true;
+    }
     return f;
   });
   all.forEach(f=>{ const c=syncCode(f.name); if(c && userTags[c]) f.tags=userTags[c]; });
@@ -8575,6 +8584,11 @@ function dhToggleMore(){
 function snapshotBadge(f){
   if(!f) return '';
   if(f.isBond) return '';
+  // 有校准数据但交易记录不完整 → 提示补交易
+  if(f.tradesNeedSync){
+    const encName=encodeURIComponent(f.name), encAcc=encodeURIComponent(f.account);
+    return `<span class="tag tag-nosnap" onclick="event.stopPropagation();goDetail('${encName}','${encAcc}')" style="cursor:pointer">⚠ 待补充交易记录</span>`;
+  }
   if(f.snapshotStatus==='snapshot' || f.snapshotStatus==='manual'){
     const days=f.snapshotAt?Math.floor((Date.now()-f.snapshotAt)/864e5):0;
     const txt=days===0?'今天':days+'天前';

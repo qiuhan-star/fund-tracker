@@ -771,6 +771,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sm-mobile-bar { display:none; align-items:center; height:52px; padding:0 6px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:3; }
   .sm-mobile-bar .back { color:var(--accent); font-size:17px; display:flex; align-items:center; gap:1px; cursor:pointer; padding:6px 8px; background:none; border:none; font-family:inherit; }
   .sm-mobile-bar .back .arr { font-size:24px; line-height:1; margin-top:-2px; }
+  .sm-mobile-bar .close-detail { border:none; background:transparent; color:var(--text-2); font-size:18px; width:34px; height:34px; border-radius:50%; cursor:pointer; font-family:inherit; line-height:1; padding:0; margin-left:auto; flex-shrink:0; }
+  .sm-mobile-bar .close-detail:active { background:var(--surface-3); }
   .sm-mobile-bar .bt { position:absolute; left:0; right:0; text-align:center; font-size:17px; font-weight:600; color:var(--text); pointer-events:none; }
 
   /* 详情态：隐藏首页、显示返回栏、仅显示对应 section */
@@ -12897,6 +12899,7 @@ function renderSyncCfg(){
         <div class="sm-mobile-bar" id="smMobileBar">
           <button class="back" onclick="closeSettingsDetail()"><span class="arr">‹</span> 设置</button>
           <span class="bt" id="smMobileTitle">设置</span>
+          <button class="close-detail" onclick="closeSettings()" aria-label="关闭">✕</button>
         </div>
         <div class="sm-mobile-home" id="smMobileHome">
           <div class="sm-mobile-home-head"><h1>设置</h1><button class="sm-mobile-close" onclick="closeSettings()" aria-label="关闭">✕</button></div>
@@ -13727,7 +13730,7 @@ function renderSyncCfg(){
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smStyleSeg button'); if(b){ setStyleMode(b.getAttribute('data-st')); } });
   window.reapplyStyleAccent=reapplyStyleAccent; window.setStyleMode=setStyleMode;
 
-  window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){ var p=document.querySelector('.settings-panel'); if(p){ p.classList.remove('mobile-detail'); Array.prototype.forEach.call(p.querySelectorAll('.panel-section'), function(s){ s.classList.remove('active'); }); } } };
+  window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){ var p=document.querySelector('.settings-panel'); if(p){ p.classList.remove('mobile-detail'); Array.prototype.forEach.call(p.querySelectorAll('.panel-section'), function(s){ s.classList.remove('active'); }); } } /* 重置桌面侧边栏到默认 tab */ settingsTab('account'); };
   window.closeSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.remove('show'); };
   window.settingsTab=function(name){
     var mask=document.getElementById('settingsMask'); if(!mask) return;
@@ -13863,9 +13866,21 @@ function renderSyncCfg(){
   };
   window.closeSettingsDetail=function(){
     var panel=document.querySelector('.settings-panel'); if(!panel) return;
+    var mask=document.getElementById('settingsMask');
     panel.classList.remove('mobile-detail');
     Array.prototype.forEach.call(panel.querySelectorAll('.panel-section'), function(s){ s.classList.remove('active'); });
+    // 重置标题为"设置"
+    var t=document.getElementById('smMobileTitle'); if(t) t.textContent='设置';
+    // 重置滚动位置
     panel.scrollTop=0;
+    if(mask) mask.scrollTop=0;
+    // 重置桌面侧边栏选中状态（默认选中第一个 tab - 账户管理）
+    var sidebar=mask.querySelector('.settings-sidebar');
+    if(sidebar){
+      Array.prototype.forEach.call(sidebar.querySelectorAll('.tab'), function(tab){
+        tab.classList.toggle('active', tab.getAttribute('data-tab')==='account');
+      });
+    }
   };
   window.openSortSheet=function(){
     var s=document.getElementById('sortSheet'); if(!s) return;

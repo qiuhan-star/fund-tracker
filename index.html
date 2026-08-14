@@ -1018,23 +1018,15 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   /* 手机端缩小数据列间距，让更多列可见 */
   .dense-table td { padding: 9px 4px; }
   .dense-table th { padding: 9px 4px; }
-  /* 数据列加极细左分隔线，避免数字跨列边界混读（桌面与移动统一） */
-  .dense-table td.col-day, .dense-table td.col-ret, .dense-table td.col-hold, .dense-table td.col-nav {
-    border-left: 1px solid rgba(0,0,0,.04);
-  }
 
   /* 手机端：name 列降到 122px；4 数据列各自最小宽度保证不被挤；数据列间加细线分隔；行内加大垂直 padding 让 dt-big 和 dt-sub2 不再上下挤；nav 列降到 60px */
   @media (max-width: 600px) {
-    .dense-table th.col-name, .dense-table td.col-name { width: 122px; min-width: 122px; }
+    .dense-table th.col-name, .dense-table td.col-name { width: 150px; min-width: 150px; }
     .dense-table th.col-day, .dense-table td.col-day { min-width: 64px; }
     .dense-table th.col-ret, .dense-table td.col-ret { min-width: 70px; }
     .dense-table th.col-hold, .dense-table td.col-hold { min-width: 76px; }
     .dense-table th.col-nav, .dense-table td.col-nav { min-width: 60px; width: 60px; }
     .dense-table th.th-col { width: 30px; min-width: 30px; }
-    /* 数据列右侧加极细分隔线，避免数字"粘"在一起（只对数据 td 起作用，name 列不加） */
-    .dense-table td.col-day, .dense-table td.col-ret, .dense-table td.col-hold, .dense-table td.col-nav {
-      border-left: 1px solid rgba(0,0,0,.05);
-    }
     /* 加大行内垂直 padding：让 dt-big（粗数字）和 dt-sub2（细注）有上下呼吸空间 */
     .dense-table td { padding: 10px 4px; }
     .dense-table th { padding: 10px 4px; }
@@ -5962,20 +5954,20 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:false,day:true,mv:true,ret:true,hold:true,holdpct:true};
+let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold','mv'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
 const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
 const COL_KEYS=['nav','day','ret','hold'];
 const DEFAULT_COL_ORDER=['day','ret','hold','nav'];
 const COL_ORDER_VER='8';
-const COLVIS_VER='2';
+const COLVIS_VER='3';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
 try{ if(localStorage.getItem('ft_colorder_ver')!==COL_ORDER_VER){ colOrder=DEFAULT_COL_ORDER.slice(); saveColOrder(); } }catch(e){}
-try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:true,ret:true,hold:true,holdpct:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
+try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; colExtraTouched=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_cols_extra','1'); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }

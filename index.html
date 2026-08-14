@@ -13848,7 +13848,7 @@ function renderSyncCfg(){
   document.addEventListener('click',function(e){ var b=e.target.closest && e.target.closest('#smStyleSeg button'); if(b){ setStyleMode(b.getAttribute('data-st')); } });
   window.reapplyStyleAccent=reapplyStyleAccent; window.setStyleMode=setStyleMode;
 
-  window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){ var p=document.querySelector('.settings-panel'); if(p){ p.classList.remove('mobile-detail'); Array.prototype.forEach.call(p.querySelectorAll('.panel-section'), function(s){ s.classList.remove('active'); }); } } /* 重置桌面侧边栏到默认 tab */ settingsTab('account'); };
+  window.openSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.add('show'); renderSettings(); if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){ var p=document.querySelector('.settings-panel'); if(p){ p.classList.remove('mobile-detail'); Array.prototype.forEach.call(p.querySelectorAll('.panel-section'), function(s){ s.classList.remove('active'); }); var t=document.getElementById('smMobileTitle'); if(t) t.textContent='设置'; } } };
   window.closeSettings=function(){ var m=document.getElementById('settingsMask'); if(m) m.classList.remove('show'); };
   window.settingsTab=function(name){
     var mask=document.getElementById('settingsMask'); if(!mask) return;

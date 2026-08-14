@@ -14245,8 +14245,8 @@ var _tessLoading=null;
 var _tessCDN=null;
 // 国内可达 CDN 回退：jsdelivr → unpkg（语言包两者都通；避开被墙的 tessdata.projectnaptha.com）
 var TESS_CDNS=[
-  {main:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js', worker:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js', core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/tesseract-core.wasm.js', lang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0/'},
-  {main:'https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js', worker:'https://unpkg.com/tesseract.js@5.1.1/dist/worker.min.js', core:'https://unpkg.com/tesseract.js-core@5.1.1/tesseract-core.wasm.js', lang:'https://unpkg.com/@tesseract.js-data/eng@1.0.0/4.0.0/'}
+  {main:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js', worker:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js', core:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/tesseract-core.wasm.js', lang:'https://tessdata.projectnaptha.com/4.0.0/'},
+  {main:'https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js', worker:'https://unpkg.com/tesseract.js@5.1.1/dist/worker.min.js', core:'https://unpkg.com/tesseract.js-core@5.1.1/tesseract-core.wasm.js', lang:'https://tessdata.projectnaptha.com/4.0.0/'}
 ];
 function loadTesseract(){
   if(window.Tesseract && _tessCDN) return Promise.resolve(window.Tesseract);

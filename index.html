@@ -5016,7 +5016,14 @@ function getOverrideKey(acc,name){ return (acc||'本人账户')+'||'+(name||'');
 function getManualOverride(acc,name){ return manualOverrides[getOverrideKey(acc,name)]; }
 function setManualOverride(acc,name,data){
   const k=getOverrideKey(acc,name);
-  if(data && data.mv!=null && data.profit!=null){ manualOverrides[k]={mv:data.mv, profit:data.profit, shares:data.shares!=null?data.shares:null, cost:data.cost!=null?data.cost:null, costPrice:data.costPrice!=null?data.costPrice:null, enabled:true, updatedAt:Date.now()}; }
+  if(data && data.mv!=null && data.profit!=null){
+    const o={mv:data.mv, profit:data.profit, shares:data.shares!=null?data.shares:null, cost:data.cost!=null?data.cost:null, costPrice:data.costPrice!=null?data.costPrice:null, enabled:true, updatedAt:Date.now()};
+    // 来源标记：手动填写 vs 快照（OCR）
+    if(data.source) o.source=data.source;
+    // 快照时记录当时的净值，用于后续自动更新
+    if(data.baselineNav!=null) o.baselineNav=data.baselineNav;
+    manualOverrides[k]=o;
+  }
   else { delete manualOverrides[k]; }
   saveManualOverrides(); compute();
 }
@@ -7706,15 +7713,31 @@ function buildFundsView(){
       .reduce((s,t) => s + (+t.amount||0) + (+t.fee||0), 0);
     if(_pendingBuy > 0) f.mv = (f.mv||0) + _pendingBuy;
     f.asset=guessAsset(name); f.market=guessMarket(name); f.currency=(snap&&snap.currency)||'CNY';
-    // 手动持仓覆盖：若用户手动录入了持有金额和持有收益，覆盖计算值
+    // 手动持仓校准（快照/手动填写）：有份额+成本价时，用份额×最新净值自动更新金额和收益
     const mo=getManualOverride(f.account,f.name);
-    if(mo && mo.enabled && mo.mv!=null && mo.profit!=null){
+    if(mo && mo.enabled && mo.shares!=null && mo.costPrice!=null){
+      // 固定份额+固定成本价，金额和收益跟着最新净值走
+      f.shares=mo.shares;
+      f.costPx=mo.costPrice;
+      f.cost=f.shares * f.costPx;
+      const nc=navCache[f.name]||{};
+      const liveNav=nc.nav!=null?nc.nav:nc.guessNav;
+      const currNav=liveNav!=null?liveNav:f.nav;
+      if(currNav!=null && currNav>0){
+        f.mv=f.shares * currNav;
+        f.profit=f.mv - f.cost;
+        f.ret=f.cost>0?f.profit/f.cost*100:0;
+      }else if(mo.mv!=null && mo.profit!=null){
+        // 兜底：无最新净值就用校准时的值
+        f.mv=mo.mv;
+        f.profit=mo.profit;
+      }
+    }else if(mo && mo.enabled && mo.mv!=null && mo.profit!=null){
+      // 兼容旧数据：只填了金额收益（无份额+成本价）→ 仍按旧逻辑（固定不动）
       f.mv=mo.mv; f.profit=mo.profit; f.cost=f.mv-f.profit; f.ret=f.cost>0?f.profit/f.cost*100:0;
-      if(mo.costPrice!=null && mo.shares!=null && mo.shares>0){ f.cost=mo.shares*mo.costPrice; f.profit=f.mv-f.cost; f.ret=f.cost>0?f.profit/f.cost*100:0; f.costPx=mo.costPrice; }
       if(mo.shares!=null){ f.shares=mo.shares; f.costPx=f.shares>0?f.cost/f.shares:0; }
-      if(mo.cost!=null){ f.cost=mo.cost; f.ret=f.cost>0?f.profit/f.cost*100:0; }
     }
-    f.snapshotStatus = (mo && mo.enabled && mo.mv!=null) ? 'snapshot' : 'none';
+    f.snapshotStatus = (mo && mo.enabled) ? (mo.source||'manual') : 'none';
     f.snapshotAt = (mo && mo.updatedAt) ? mo.updatedAt : null;
     return f;
   });
@@ -8489,10 +8512,11 @@ function dhToggleMore(){
 function snapshotBadge(f){
   if(!f) return '';
   if(f.isBond) return '';
-  if(f.snapshotStatus==='snapshot'){
+  if(f.snapshotStatus==='snapshot' || f.snapshotStatus==='manual'){
     const days=f.snapshotAt?Math.floor((Date.now()-f.snapshotAt)/864e5):0;
     const txt=days===0?'今天':days+'天前';
-    return `<span class="tag tag-snap">📌 快照·${txt}</span>`;
+    const label=f.snapshotStatus==='snapshot'?'📸 快照':'📝 手动校准';
+    return `<span class="tag tag-snap">${label}·${txt}</span>`;
   }
   // 已清仓或无交易记录 → 不显示待补充
   if(isLiquidated(f) || !f.trades || !f.trades.length) return '';
@@ -11029,9 +11053,18 @@ function ehUpdateSnapDerived(){
   }
 }
 function ehSave(){
-  const {shares, mv, profit}=ehGetFields();
+  const {shares, mv, profit, costPrice}=ehGetFields();
   if(mv<=0){ toast('请填写持有金额'); return; }
-  setManualOverride(_ehFundAcc,_ehFundName,{mv,profit,shares:shares>0?shares:null});
+  // 获取最新净值作为基线
+  const nc=navCache[_ehFundName]||{};
+  const baselineNav=nc.nav!=null?nc.nav:nc.guessNav;
+  setManualOverride(_ehFundAcc,_ehFundName,{
+    mv, profit,
+    shares:shares>0?shares:null,
+    costPrice:costPrice>0?costPrice:null,
+    source:_ehSrc==='snapshot'?'snapshot':'manual',
+    baselineNav:baselineNav||null
+  });
   toast('持仓已更新');
   closeEditHoldingsModal();
   // 刷新详情页：先重建 fundsView 让手动覆盖值生效，再更新 UI

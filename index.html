@@ -4436,7 +4436,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <div class="tq-more-body" id="teMoreFields">
             <div class="tq-more-row"><span>净值</span><span class="v"><input id="te-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="teUpdateDerived()"></span></div>
             <div class="tq-more-row"><span>费用（元）</span><span class="v"><input id="te-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
-            <div class="tq-more-row" id="teSharesRow"><span>份额</span><span class="v"><input id="te-shares-more" class="num" type="number" step="any" inputmode="decimal" placeholder="自动换算"></span></div>
+            <div class="tq-more-row" id="teSharesRow"><span>份额</span><span class="v"><input id="te-shares-more" class="num" type="number" step="any" inputmode="decimal" placeholder="自动换算" oninput="teSyncSharesMore()"></span></div>
             <div class="tq-more-row"><span>净值确认日</span><span class="v"><input id="te-confirmDate" type="date"></span></div>
           </div>
         </div>
@@ -5084,32 +5084,68 @@ function switchXirrTab(tab, btn){
 }
 
 // ===== 美股夜盘 · QDII 基金估值看板（v2：指数 + 我的持仓 + 市场热门） =====
-var US_HOT_KEY='ft_us_hot';
 var QDII_IDX={ixic:null,spx:null,dow:null,fx:null};
 var _usWatchTimer=null, _usWatchFetched=false, _usWatchReady=false;
 
+// 全面的热门含美股 QDII 基金列表（场内+场外），覆盖纳斯达克、标普500、全球科技、油气商品等
 var US_HOT_SEED=[
+  // === 纳斯达克100 场内ETF ===
+  {name:'国泰纳斯达克100ETF',code:'513100',cat:'纳斯达克',lag:''},
+  {name:'华夏纳斯达克100ETF',code:'513300',cat:'纳斯达克',lag:''},
+  {name:'博时纳斯达克100ETF',code:'513390',cat:'纳斯达克',lag:''},
+  {name:'华安纳斯达克100ETF',code:'159632',cat:'纳斯达克',lag:''},
+  {name:'嘉实纳斯达克100ETF',code:'159501',cat:'纳斯达克',lag:''},
+  {name:'易方达纳斯达克100ETF',code:'159696',cat:'纳斯达克',lag:''},
+  {name:'大成纳斯达克100ETF',code:'159513',cat:'纳斯达克',lag:''},
+  {name:'招商纳斯达克100ETF',code:'159659',cat:'纳斯达克',lag:''},
+  {name:'汇添富纳斯达克100ETF',code:'159660',cat:'纳斯达克',lag:''},
+  {name:'广发纳斯达克100ETF',code:'159941',cat:'纳斯达克',lag:''},
+  {name:'华泰柏瑞纳斯达克100ETF',code:'513110',cat:'纳斯达克',lag:''},
+  {name:'富国纳斯达克100ETF',code:'513870',cat:'纳斯达克',lag:''},
+  // === 纳斯达克100 场外联接 ===
+  {name:'易方达纳斯达克100联接A',code:'161130',cat:'纳斯达克',lag:'T+1'},
+  {name:'易方达纳斯达克100A',code:'270042',cat:'纳斯达克',lag:'T+1'},
+  {name:'华安纳斯达克100A',code:'040046',cat:'纳斯达克',lag:'T+1'},
+  {name:'国泰纳斯达克100A',code:'160213',cat:'纳斯达克',lag:'T+1'},
+  // === 标普500 场内ETF ===
+  {name:'博时标普500ETF',code:'513500',cat:'标普500',lag:''},
+  {name:'国泰标普500ETF',code:'159612',cat:'标普500',lag:''},
+  {name:'华夏标普500ETF',code:'159655',cat:'标普500',lag:''},
+  {name:'南方标普500ETF',code:'513650',cat:'标普500',lag:''},
+  // === 标普500 场外 ===
+  {name:'易方达标普500指数A',code:'161125',cat:'标普500',lag:'T+1'},
+  {name:'天弘标普500A',code:'007721',cat:'标普500',lag:'T+1'},
+  {name:'博时标普500A',code:'050025',cat:'标普500',lag:'T+1'},
+  {name:'大成标普500',code:'096001',cat:'标普500',lag:'T+1'},
+  // === 全球科技/信息科技 ===
+  {name:'易方达标普信息科技',code:'161128',cat:'美股科技',lag:'T+1'},
   {name:'华夏全球科技先锋',code:'024239',cat:'海外科技',lag:'T+1'},
   {name:'浦银安盛全球科技',code:'014002',cat:'全球科技',lag:'T+1'},
-  {name:'广发全球科技',code:'011420',cat:'全球科技',lag:'T+1'},
-  {name:'易方达标普信息科技',code:'161128',cat:'美股科技',lag:'T+1'},
-  {name:'国泰纳斯达克100',code:'513100',cat:'纳斯达克',lag:''},
-  {name:'博时标普500ETF',code:'513500',cat:'标普500',lag:''},
-  {name:'天弘标普500',code:'007721',cat:'标普500',lag:'T+1'},
-  {name:'易方达纳斯达克100',code:'270042',cat:'纳斯达克',lag:'T+1'}
+  {name:'广发全球科技A',code:'011420',cat:'全球科技',lag:'T+1'},
+  {name:'国富全球科技互联',code:'006373',cat:'全球科技',lag:'T+1'},
+  {name:'汇添富全球移动互联A',code:'001668',cat:'全球科技',lag:'T+1'},
+  // === 油气/商品 ===
+  {name:'华宝油气',code:'162411',cat:'商品',lag:'T+1'},
+  {name:'华安标普石油',code:'160416',cat:'商品',lag:'T+1'},
+  {name:'富国标普石油ETF',code:'013403',cat:'商品',lag:''},
+  {name:'嘉实黄金',code:'160719',cat:'商品',lag:'T+1'},
+  // === 其他海外 ===
+  {name:'交银中证海外互联网',code:'164906',cat:'海外',lag:'T+1'},
+  {name:'易方达亚洲精选',code:'118001',cat:'海外',lag:'T+1'},
+  {name:'嘉实全球互联网',code:'000988',cat:'海外',lag:'T+1'},
 ];
 function _esc(s){ s=String(s==null?'':s); return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-function usHotLoad(){ try{ var a=JSON.parse(localStorage.getItem(US_HOT_KEY)||'null'); if(Array.isArray(a)) return a; }catch(e){} return US_HOT_SEED.slice(); }
-function usHotSave(a){ try{ localStorage.setItem(US_HOT_KEY, JSON.stringify(a)); }catch(e){} }
-function usHotAdd(){
-  var inp=document.getElementById('usHotIn'); if(!inp) return;
-  var v=inp.value.trim().replace(/[^0-9A-Za-z]/g,''); if(!v) return;
-  var list=usHotLoad();
-  if(list.some(function(x){ return x.code===v; })){ inp.value=''; return; }
-  list.push({name:v, code:v, cat:'美股', lag:''});
-  usHotSave(list); inp.value=''; qdiiUsRender();
+// 加载热门列表：返回预设列表 + 持仓中未覆盖的海外/QDII 基金
+function usHotLoad(){
+  var seed=US_HOT_SEED.slice();
+  var held=qdiiHeld();
+  if(!held.length) return seed;
+  var seedCodes={}; seed.forEach(function(f){ seedCodes[f.code]=true; });
+  held.forEach(function(f){
+    if(f.code && !seedCodes[f.code]) seed.push({name:f.name||f.code,code:f.code,cat:f.cat||'海外',lag:'T+1'});
+  });
+  return seed;
 }
-function usHotDel(code){ usHotSave(usHotLoad().filter(function(x){ return x.code!==code; })); qdiiUsRender(); }
 // 基准指数：科技/纳斯达克→ixic；标普→spx；道琼→dow；默认 spx
 function qdiiBench(name){
   if(/纳斯达克|科技|信息科技|芯片|半导体|纳指|AI/i.test(name)) return 'ixic';
@@ -5178,7 +5214,7 @@ function qdiiUsRender(){
       var lag=f.lag?'<span class="us-tag lag">'+_esc(f.lag)+'</span>':'';
       var el=document.createElement('div'); el.className='us-fund'; el.dataset.cat=qdiiChip(nm);
       el.innerHTML='<div class="us-av">'+_esc(nm.slice(0,2))+'</div>'
-        +'<div class="us-mid"><div class="us-nm">'+_esc(nm)+'<button class="us-del" onclick="usHotDel(\''+_esc(f.code)+'\')" title="移除">×</button></div>'
+        +'<div class="us-mid"><div class="us-nm">'+_esc(nm)+'</div>'
         +'<div class="us-meta"><span class="us-tag t1">'+_esc(f.cat||'美股')+'</span><span class="us-tag">'+_esc(f.code)+'</span>'+fire+lag+'</div></div>'
         +'<div class="us-rt"><div class="us-pc '+(pct>0?'up':pct<0?'down':'')+'">'+fmtPct(pct)+'</div><div class="us-amt">参考涨跌</div></div>';
       hotl.appendChild(el);

@@ -9046,7 +9046,16 @@ function buildTradeSection(f){
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
         const navTxt=(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'净值待确认';
         const shareTxt=(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'份额待确认';
-        const convertTxt=(t.convertTarget && (t.type==='convert_out'||t.type==='convert'))?('<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(t.convertTarget)+'</div>'):'';
+        const convertTxt=(t.type==='convert_out'||t.type==='convert')?function(){
+          const ct=t.convertTarget;
+          if(ct) return '<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(ct)+'</div>';
+          // 兜底：通过 pairId 查找配对记录
+          if(t.pairId){
+            const pair=(trades||[]).find(x=>x!==t && x.pairId===t.pairId);
+            if(pair) return '<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(pair.name)+'</div>';
+          }
+          return '';
+        }():'';
         h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${convertTxt}${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-copy" type="button" onclick="copyTrade(${i})">复制</button><button class="tx-act-btn tx-act-del" type="button" onclick="deleteTrade(${i})">删除</button></div></div></div>`;
       });
       h+=`</div>`;

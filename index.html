@@ -4410,10 +4410,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           </div>
         </div>
         <div class="tq-more" id="tqMoreWrap">
-          <div class="tq-more-head" onclick="tqToggleMore()"><span>更多选项 <span class="tq-more-hint">净值、费用、份额</span></span><span id="tqMoreChev" class="tq-more-chev">▾</span></div>
+          <div class="tq-more-head" onclick="tqToggleMore()"><span>更多选项 <span class="tq-more-hint">净值、手续费、份额</span></span><span id="tqMoreChev" class="tq-more-chev">▾</span></div>
           <div class="tq-more-body" id="tqMoreFields">
             <div class="tq-more-row"><span>净值（可选）</span><span class="v"><input id="tq-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="tqRecalcEst()"></span></div>
-            <div class="tq-more-row"><span>费用（元）</span><span class="v"><input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
+            <div class="tq-more-row"><span>手续费（元）</span><span class="v"><input id="tq-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
             <div class="tq-more-row"><span>确认份额（可选）</span><span class="v"><input id="tq-shares-more" class="num" type="number" step="any" inputmode="decimal" placeholder="自动估算"></span></div>
           </div>
         </div>
@@ -4493,10 +4493,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           </div>
         </div>
         <div class="tq-more" id="teMoreWrap">
-          <div class="tq-more-head" onclick="teToggleMore()"><span>更多选项 <span class="tq-more-hint">净值、费用、份额</span></span><span id="teMoreChev" class="tq-more-chev">▾</span></div>
+          <div class="tq-more-head" onclick="teToggleMore()"><span>更多选项 <span class="tq-more-hint">净值、手续费、份额</span></span><span id="teMoreChev" class="tq-more-chev">▾</span></div>
           <div class="tq-more-body" id="teMoreFields">
             <div class="tq-more-row"><span>净值</span><span class="v"><input id="te-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="teUpdateDerived()"></span></div>
-            <div class="tq-more-row"><span>费用（元）</span><span class="v"><input id="te-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
+            <div class="tq-more-row"><span>手续费（元）</span><span class="v"><input id="te-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
             <div class="tq-more-row" id="teSharesRow"><span>份额</span><span class="v"><input id="te-shares-more" class="num" type="number" step="any" inputmode="decimal" placeholder="自动换算" oninput="teSyncSharesMore()"></span></div>
             <div class="tq-more-row"><span>净值确认日</span><span class="v"><input id="te-confirmDate" type="date"></span></div>
           </div>
@@ -4541,11 +4541,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <label class="fld"><span>金额（元）</span><input type="number" id="dr-amount" inputmode="decimal" placeholder="0.00" oninput="autoFee('dr')" onchange="autoFee('dr')"></label>
       <div class="fld-row">
         <label class="fld"><span>净值</span><input type="number" id="dr-nav" inputmode="decimal" step="0.0001" placeholder="可选"></label>
-        <label class="fld"><span>费用（元）</span><input type="number" id="dr-fee" inputmode="decimal" placeholder="0"></label>
+        <label class="fld"><span>手续费（元）</span><input type="number" id="dr-fee" inputmode="decimal" placeholder="0"></label>
       </div>
       <span class="fee-hint" id="dr-fee-hint"></span>
       <label class="fld"><span>份额（可选）</span><input type="number" id="dr-shares" inputmode="decimal" placeholder="不填则按 金额/净值 估算"></label>
-      <p class="hint" style="margin:6px 0 0">买入金额含申购费；卖出按金额计、费用另填。保存后即时入账并刷新持仓列表。</p>
+      <p class="hint" style="margin:6px 0 0">买入金额含申购费；卖出按金额计、手续费另填。保存后即时入账并刷新持仓列表。</p>
     </div>
       <div class="fld-row">
         <label class="fld"><span>确认状态</span>
@@ -7501,7 +7501,7 @@ function renderTrade(){
       <td><select data-fld="ht-type-${i}" onchange="trades[${i}].type=this.value;compute();silentSave()">${types.map(([v,l])=>`<option value="${v}" ${t.type===v?'selected':''}>${l}</option>`).join('')}</select></td>
       <td class="num"><input data-fld="ht-amount-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.amount}" oninput="trades[${i}].amount=+this.value;compute();silentSave()" title="${isSplit?'拆分倍数(如2=1拆2)':'金额(元)'}"></td>
       <td class="num"><input data-fld="ht-nav-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.nav||''}" placeholder="净值" oninput="trades[${i}].nav=+this.value;compute();silentSave()"></td>
-      <td class="num"><input data-fld="ht-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="费用(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
+      <td class="num"><input data-fld="ht-fee-${i}" class="num" type="number" step="any" inputmode="decimal" value="${t.fee||''}" placeholder="手续费(元)" oninput="trades[${i}].fee=+this.value;compute();silentSave()"></td>
       <td><button class="del" onclick="removeTrade(${i})">✕</button></td>
     </tr>`);
   });
@@ -9143,7 +9143,7 @@ function buildTradeSection(f){
     h+=`<p class="hint" style="margin:0 0 8px">点击任意一行可编辑交易。净值<b>留空＝T+1 待确认</b>：结算日后自动按确认日净值补全（金额/份额自动反推），无需手动刷新。</p>`;
     h+=`<div class="tr-add"><div class="tr-add-grid" style="grid-template-columns:1fr auto;align-items:center"><span class="hint" style="margin:0">弹出窗口填写，保存前确认；点右下角 + 记一笔</span></div></div>`;
     if(tr.length){
-      h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">费用</th><th class="num">净值确认日</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
+      h+=`<div class="table-scroll" style="margin-top:10px"><table class="am-t"><thead><tr><th>账户</th><th>日期</th><th>方向</th><th>状态</th><th class="num">金额/比例</th><th class="num">净值</th><th class="num">手续费</th><th class="num">净值确认日</th><th class="num">份额</th><th></th></tr></thead><tbody>`;
       tr.forEach(t=>{
         const i=trades.indexOf(t);
         if(t._deleted){
@@ -9771,7 +9771,7 @@ function tradeQuickSave(){
     sellPreviewConfirm(name, acc, _amount, nav>0?nav:null, fee, _shares, date, function(ok){ if(!ok) return; tqCommit(); });
     return;
   }
-  const _sum = typeLabel(type)+' · '+name+'\n'+(amount?('金额 ¥'+M(amount)):(shares!=null?fmt(shares)+' 份':''))+'\n'+date+(time?(' '+time):'')+'\n账户 '+acc+(nav>0?('\n净值 '+navFmt(nav)):'')+(fee?('\n费用 ¥'+M(fee)):'')+(confirm==='pending'?('\n状态 待确认'):'')+(note?('\n备注 '+note):'');
+  const _sum = typeLabel(type)+' · '+name+'\n'+(amount?('金额 ¥'+M(amount)):(shares!=null?fmt(shares)+' 份':''))+'\n'+date+(time?(' '+time):'')+'\n账户 '+acc+(nav>0?('\n净值 '+navFmt(nav)):'')+(fee?('\n手续费 ¥'+M(fee)):'')+(confirm==='pending'?('\n状态 待确认'):'')+(note?('\n备注 '+note):'');
   ftConfirm('确定保存这笔交易？\n\n'+_sum, function(ok){ if(!ok) return; tqCommit(); });
   function tqCommit(){
   var pairId = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
@@ -10081,7 +10081,7 @@ function openAllTrades(){
   }).join('');
   box.innerHTML=_mobile
     ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"
-    :"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><table class=\"am-t at-table\"><thead><tr><th>基金 / 账户</th><th>日期</th><th>方向</th><th class=\"num\">金额</th><th class=\"num\">净值</th><th class=\"num\">费用</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
+    :"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><table class=\"am-t at-table\"><thead><tr><th>基金 / 账户</th><th>日期</th><th>方向</th><th class=\"num\">金额</th><th class=\"num\">净值</th><th class=\"num\">手续费</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
   box.style.display='flex';
 }
 function closeAllTrades(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('allTradesModal'); if(b) b.style.display='none'; }
@@ -12068,7 +12068,7 @@ function exportHoldingsCSV(){
   const blob=new Blob(['\ufeff'+out],{type:'text/csv;charset=utf-8'});
   ftDownload(blob,'fund-holdings.csv','已导出 持仓+清仓 fund-holdings.csv（含全部账户）','已打开文件，点底部「分享」→「存储到文件」保存');
 }
-function downloadCSVTemplate(){ const head=IMPORT_COLUMNS.map(function(c){return c.label;}).join(','); const note='说明：删除本说明行与示例行，再按表头逐行填真实交易。业务类型填 买入/卖出/清仓/分红/转换/活动（清仓 = 卖出剩余全部份额，App 自动归入「清仓」列表）；类别/代码可留空由 App 推断；费用可留空；确认填 已确认/待确认/撤单，不填默认已确认。'; const sample='# 示例-持有：示例成长混合C,科技,900001,买入,2000,,1.5230,2026-08-10,1311.88,示例一笔买入,已确认\n# 示例-清仓：示例成长混合C,科技,900001,清仓,2000,,1.5230,2026-08-10,1311.88,卖出剩余全部份额后归清仓,已确认'; const t=head+'\n'+note+'\n'+sample+'\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); ftDownload(blob,'fund-import-template.csv','已下载 CSV 模板（Excel 交易明细表头，填真实交易即可）','已打开文件，点底部「分享」→「存储到文件」保存'); }
+function downloadCSVTemplate(){ const head=IMPORT_COLUMNS.map(function(c){return c.label;}).join(','); const note='说明：删除本说明行与示例行，再按表头逐行填真实交易。业务类型填 买入/卖出/清仓/分红/转换/活动（清仓 = 卖出剩余全部份额，App 自动归入「清仓」列表）；类别/代码可留空由 App 推断；手续费可留空；确认填 已确认/待确认/撤单，不填默认已确认。'; const sample='# 示例-持有：示例成长混合C,科技,900001,买入,2000,,1.5230,2026-08-10,1311.88,示例一笔买入,已确认\n# 示例-清仓：示例成长混合C,科技,900001,清仓,2000,,1.5230,2026-08-10,1311.88,卖出剩余全部份额后归清仓,已确认'; const t=head+'\n'+note+'\n'+sample+'\n'; const blob=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}); ftDownload(blob,'fund-import-template.csv','已下载 CSV 模板（Excel 交易明细表头，填真实交易即可）','已打开文件，点底部「分享」→「存储到文件」保存'); }
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=()=>{ const f=inp.files[0]; const r=new FileReader();

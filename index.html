@@ -999,11 +999,11 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
   /* 7. 横向滚动表格优化：防止页面被撑爆 */
   .dense-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .dense-table { min-width: 100%; table-layout: fixed; }
+  .dense-table { width: max-content; max-width: none; table-layout: fixed; }
   /* 名称列：桌面端 180px 显示长名；手机端降到 130px，让剩余 day/ret/hold 3 列有空间不被挤死 */
   .dense-table th.col-name, .dense-table td.col-name { width: 180px; min-width: 180px; }
   /* 当单位净值可见时，强制其列宽，避免被其他列挤压 */
-  .dense-table th.col-nav, .dense-table td.col-nav { width: 76px; min-width: 76px; }
+  .dense-table th.col-nav, .dense-table td.col-nav { width: 76px; min-width: 76px; padding-left: 10px; }
   .dense-table th.col-mv, .dense-table td.col-mv { width: 96px; min-width: 96px; }
   .dense-table th.col-holdpct, .dense-table td.col-holdpct { width: 72px; min-width: 72px; }
   /* 当日涨跌/收益、持有收益 4 列：给个最小宽度，避免被 table-layout:fixed 挤成 0 宽 */
@@ -1025,7 +1025,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     .dense-table th.col-day, .dense-table td.col-day { min-width: 64px; }
     .dense-table th.col-ret, .dense-table td.col-ret { min-width: 70px; }
     .dense-table th.col-hold, .dense-table td.col-hold { min-width: 76px; }
-    .dense-table th.col-nav, .dense-table td.col-nav { min-width: 60px; width: 60px; }
+    .dense-table th.col-nav, .dense-table td.col-nav { min-width: 60px; width: 60px; padding-left: 10px; }
     .dense-table th.th-col { width: 30px; min-width: 30px; }
     /* 加大行内垂直 padding：让 dt-big（粗数字）和 dt-sub2（细注）有上下呼吸空间 */
     .dense-table td { padding: 10px 4px; }

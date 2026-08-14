@@ -10926,6 +10926,8 @@ function openEditHoldingsModal(nameEnc,accEnc){
   if(resetEl) resetEl.style.display=mo?'':'none';
   // 切换到手动填写模式（默认）
   ehSetSrc('manual');
+  // 默认进入快照模式时切到「截图识别」子模式
+  ehSetSnapType('image');
   // 切换到按金额模式（默认），回显已有值
   ehSetMode('amount');
   const mvEl=document.getElementById('ehMv'), profitEl=document.getElementById('ehProfit');

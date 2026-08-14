@@ -7773,6 +7773,8 @@ function sgBadge(sgzt, minsg, shzt){
 function buildFundsView(){
   // 交易默认锁定（旧数据未标记的补 locked=true）
   trades.forEach(t=>{ if(t.locked===undefined) t.locked=true; });
+  // 历史脏份额迁移标记：buildFundsView 内清理了 t.nav 为空但 t.shares 已被旧版本用 liveNav 反推写入的交易 → 函数末尾 silentSave 持久化
+  let _tradesMigrated = false;
   // 复合键 (账户||基金名)：同一基金可在多个账户分别持有
   const keys=[...new Set([
     ...snaps.filter(s=>(s.type||'fund')!=='stock').map(s=>accKey(accOf(s),s.name)),
@@ -7792,15 +7794,26 @@ function buildFundsView(){
         // 份额：手动份额优先 → 否则金额÷净值 → 净值缺失且金额>0 时，用「该日期之前最近一次买入净值」近似（转换常不带净值）
         let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:(liveNav>0?amt/liveNav:0));
         if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
-        // 自动补全：份额缺失（null / 空串 / 0；0 来自导入时「份额」列空白被解析为 0）时，用计算出的份额写回交易记录
+        // 份额自动写回：仅在「无任何外部数据来源（CSV 导入等）时根据 t.amount + 该笔 t.nav 反推」的情形才写回。
+        // 不再写回 liveNav（实时联网最新净值）反推的份额 — 黄金等基金净值每日波动，用今天的净值反推 T-1 买入的份额会偏离真实值。
+        // 注意：line 7793 的 sh 仍用 liveNav/lastNav 兜底，用于本函数内的市值/成本/收益计算（不污染用户的交易记录）。
         const _needSh=(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest');
-        if(t.confirm==='confirmed' && sh>0 && _needSh && (t.shares==null || t.shares==='' || +t.shares===0)){
+        // 清理已存在的脏数据：t.nav 为空 + t.shares 与 amt/liveNav 接近（误差 1% 内）→ 显然是旧版用 liveNav 反推写入的脏份额
+        // 用户的真实录入份额通常与「金额/最新实时净值」不会精确匹配；只有脏数据才匹配。
+        if(t.confirm==='confirmed' && _needSh && (!t.nav || +t.nav===0) && t.shares!=null && +t.shares>0 && amt>0 && liveNav>0){
+          const _autoSh = amt / liveNav;
+          if(_autoSh > 0 && Math.abs(+t.shares - _autoSh) / _autoSh < 0.01){
+            t.shares = null;
+            sh = 0;
+            _tradesMigrated = true;
+          }
+        }
+        if(t.confirm==='confirmed' && sh>0 && _needSh && (t.shares==null || t.shares==='' || +t.shares===0) && nav>0){
           t.shares=+sh.toFixed(4);
         }
-        // 如果已经确认了，但净值为空，用 liveNav 或 lastNav 补写回交易记录
-        if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && sh>0){
-          const fillNav=liveNav>0?liveNav:(lastNav>0?lastNav:0);
-          if(fillNav>0) t.nav=fillNav;
+        // 如果已经确认了，但净值为空，仅用 lastNav（同基金上次确认净值）兜底；不再用 liveNav 写回交易记录
+        if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && sh>0 && lastNav>0){
+          t.nav=lastNav;
         }
         if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
         else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; const sellPx=nav>0?nav:lastNav; realized+=(sellPx-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }   // 平均成本法（与支付宝一致）：卖出按加权平均扣减，剩余持仓成本单价不变
@@ -7900,6 +7913,10 @@ function buildFundsView(){
   // 保留显式选择的账户：即使暂无持仓也展示空状态，避免「切了跟没切一样」的错觉（自定义账户添加后即可在此记账）
   const accF = curAccount==='全部'? null:curAccount;
   fundsView = _allHoldings.filter(f=> (accF==null||f.account===accF));
+  // 脏份额迁移：本次 buildFundsView 清理了旧版用 liveNav 反推写入的 t.shares → 持久化
+  if(_tradesMigrated){
+    try{ if(typeof silentSave==='function') silentSave(); }catch(e){}
+  }
 }
 function guessCat(name){
   if(/芯片|半导体/.test(name)) return '芯片'; if(/医疗|医药|生物|健康|药|创新药/.test(name)) return '医药';

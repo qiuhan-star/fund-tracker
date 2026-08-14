@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>持仓列表 · 可拖拽编辑</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-2: #555;
+    --text-3: #999;
+    --border: #ececec;
+    --border-2: #f1f1f1;
+    --up: #e74c3c;
+    --down: #2f9e58;
+    --accent: #3478f6;
+    --estimate: #ff8c00;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  body {
+    margin: 0;
+    background: #e9eaee;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    padding: 0 0 80px;
+  }
+
+  /* 顶部说明 */
+  .tip {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.86));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .tip .title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .tip .desc { font-size: 11.5px; color: var(--text-3); margin-top: 3px; line-height: 1.5; }
+  .tip .desc b { color: var(--accent); }
+  .tip .actions { margin-top: 8px; display: flex; gap: 6px; justify-content: center; }
+  .tip .actions button {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-2);
+    font-size: 11.5px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tip .actions button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .tip .actions button:hover { opacity: .85; }
+
+  .container { max-width: 420px; margin: 0 auto; }
+
+  /* 手机框 */
+  .phone { background: var(--bg); min-height: 100vh; padding-bottom: 24px; }
+  .pane-header {
+    padding: 14px 16px 10px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .pane-header h1 { font-size: 18px; font-weight: 700; margin: 0; }
+  .pane-header .meta { font-size: 12px; color: var(--text-3); }
+
+  .summary-bar {
+    margin: 0 12px 10px;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .summary-bar .left { font-size: 13px; color: var(--text-2); }
+  .summary-bar .left b { color: var(--text); font-size: 15px; }
+  .summary-bar .right { font-size: 11px; color: var(--text-3); }
+
+  /* 分组标题（不可编辑） */
+  .group-head {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    padding: 18px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group-head .count { font-size: 11px; color: var(--text-3); font-weight: 500; }
+  .group-head .line { flex: 1; height: 1px; background: var(--border); margin-left: 4px; }
+
+  /* 卡片 */
+  .card { background: var(--card); margin: 0 12px 10px; border-radius: 12px; overflow: hidden; }
+
+  /* 行 */
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-2);
+    gap: 8px;
+    min-height: 64px;
+  }
+  .row:last-child { border-bottom: none; }
+
+  /* 主区容器：可放入小块 */
+  .main {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    border: 1px dashed transparent;
+    border-radius: 6px;
+    padding: 2px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    align-items: center;
+    gap: 4px 6px;
+    transition: border-color .15s, background .15s;
+  }
+  .main:hover { border-color: var(--border); }
+  .main.dragover {
+    border-color: var(--accent);
+    background: rgba(52,120,246,.06);
+  }
+
+  /* 数据区容器：右侧列 */
+  .data {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    align-items: center;
+    min-height: 44px;
+  }
+  .col {
+    text-align: right;
+    min-width: 60px;
+    padding: 2px 4px;
+    border: 1px dashed transparent;
+    border-radius: 6px;
+  }
+  .col:hover { border-color: var(--border); }
+  .col.dragover {
+    border-color: var(--accent);
+    background: rgba(52,120,246,.06);
+  }
+
+  /* 小块（可拖拽） */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f0f4ff;
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: grab;
+    line-height: 1.4;
+    border: 1px solid #d6e3ff;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip:active { cursor: grabbing; }
+  .chip.dragging { opacity: .35; }
+
+  .chip.tag-medicine { color: #c0392b; background: #fdecea; border-color: #f9d6d2; }
+  .chip.tag-manufact { color: #c0653a; background: #fbf0e9; border-color: #f5dccb; }
+  .chip.tag-tech { color: #6c5ce7; background: #efedfd; border-color: #d9d4f9; }
+  .chip.tag-overseas { color: #0d8a8a; background: #e3f5f5; border-color: #cce8e8; }
+  .chip.tag-cycle { color: #b8821f; background: #faf3e1; border-color: #f0e1bf; }
+
+  .chip.name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    background: #e8f0fe;
+    border-color: #c5d8fd;
+    padding: 3px 8px;
+  }
+  .chip.code {
+    color: var(--text-3);
+    background: #f4f4f4;
+    border-color: #e8e8e8;
+  }
+  .chip.amt {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+    background: #fff7e6;
+    border-color: #ffe1a3;
+  }
+  .chip.sh {
+    color: var(--text-2);
+    background: #f4f4f4;
+    border-color: #e8e8e8;
+  }
+  .chip.nav {
+    color: var(--text-3);
+    background: #f4f4f4;
+    border-color: #e8e8e8;
+  }
+  .chip.pct {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 3px 8px;
+  }
+  .chip.pct.up { color: var(--up); background: #fdecea; border-color: #f9d6d2; }
+  .chip.pct.down { color: var(--down); background: #e8f7ed; border-color: #c9e8d3; }
+  .chip.day {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+    background: #f4f4f4;
+    border-color: #e8e8e8;
+  }
+  .chip.day.up { color: var(--up); }
+  .chip.day.down { color: var(--down); }
+  .chip.total {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+    background: #fff;
+    border-color: var(--border);
+  }
+  .chip.total.up { color: var(--up); }
+  .chip.total.down { color: var(--down); }
+  .chip.label {
+    color: var(--text-3);
+    background: transparent;
+    border: 1px dashed var(--border);
+    font-size: 10px;
+  }
+  .chip.label.est { color: var(--estimate); border-color: #ffd9a8; }
+
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+  .neutral { color: var(--text-2); }
+
+  /* 元素库 */
+  .palette {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
+    background: rgba(255,255,255,.97);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    z-index: 15;
+  }
+  .palette .pt {
+    font-size: 10.5px;
+    color: var(--text-3);
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .palette .pt b { color: var(--accent); }
+  .palette .list {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .palette .list::-webkit-scrollbar { display: none; }
+
+  /* tab 模拟 */
+  .tab-bar {
+    position: fixed;
+    bottom: 64px;
+    left: 0;
+    right: 0;
+    max-width: 420px;
+    margin: 0 auto;
+    background: transparent;
+    display: none; /* 元素库占用底部 */
+  }
+</style>
+</head>
+<body>
+
+<div class="tip">
+  <div class="title">📐 持仓排版 - 可拖拽编辑器</div>
+  <div class="desc">
+    直接 <b>拖动每行里的彩色小标签</b> 在主区/右区之间移动。<br>
+    调好后点下方「<b>导出最终结果</b>」我按你的排版落到代码里。
+  </div>
+  <div class="actions">
+    <button onclick="resetLayout()">↺ 还原初始</button>
+    <button class="primary" onclick="exportLayout()">📋 导出最终结果</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="phone" id="phone">
+
+    <div class="pane-header">
+      <h1>持仓</h1>
+      <span class="meta">2026-08-14 · 22:40</span>
+    </div>
+
+    <div class="summary-bar">
+      <div class="left">总市值 <b>¥ 36,425.50</b> · 9 只</div>
+      <div class="right">当日 -¥ 27.85</div>
+    </div>
+
+    <div class="group-head"><span>医药</span><span class="count">3 只</span><span class="line"></span></div>
+    <div class="card" data-cat="医药">
+      <div class="row">
+        <div class="main" data-row="r1-main">
+          <span class="chip name" draggable="true" data-key="name">广发港股创新药ETF联接（QDII）C</span>
+          <span class="chip tag-medicine" draggable="true" data-key="tag">医药</span>
+          <span class="chip code" draggable="true" data-key="code">006478</span>
+          <span class="chip amt" draggable="true" data-key="amt">¥ 4,313.34</span>
+          <span class="chip sh" draggable="true" data-key="sh">1,354.78 份</span>
+          <span class="chip nav" draggable="true" data-key="nav">3.1842</span>
+        </div>
+        <div class="data" data-row="r1-data">
+          <div class="col" data-col="c1">
+            <span class="chip pct up" draggable="true" data-key="pct">+1.85%</span>
+            <span class="chip label est" draggable="true" data-key="pctlbl">09:44 估</span>
+          </div>
+          <div class="col" data-col="c2">
+            <span class="chip day up" draggable="true" data-key="day">+¥78.30</span>
+            <span class="chip label" draggable="true" data-key="daylbl">当日</span>
+          </div>
+          <div class="col" data-col="c3">
+            <span class="chip total down" draggable="true" data-key="total">-¥105.16</span>
+            <span class="chip label" draggable="true" data-key="totallbl">累计</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="main" data-row="r2-main">
+          <span class="chip name" draggable="true" data-key="name">中欧医疗创新股票C</span>
+          <span class="chip tag-medicine" draggable="true" data-key="tag">医药</span>
+          <span class="chip code" draggable="true" data-key="code">012583</span>
+          <span class="chip amt" draggable="true" data-key="amt">¥ 4,396.85</span>
+          <span class="chip sh" draggable="true" data-key="sh">1,826.42 份</span>
+          <span class="chip nav" draggable="true" data-key="nav">2.4070</span>
+        </div>
+        <div class="data" data-row="r2-data">
+          <div class="col" data-col="c1">
+            <span class="chip pct up" draggable="true" data-key="pct">+1.39%</span>
+            <span class="chip label est" draggable="true" data-key="pctlbl">09:44 估</span>
+          </div>
+          <div class="col" data-col="c2">
+            <span class="chip day up" draggable="true" data-key="day">+¥60.10</span>
+            <span class="chip label" draggable="true" data-key="daylbl">当日</span>
+          </div>
+          <div class="col" data-col="c3">
+            <span class="chip total down" draggable="true" data-key="total">-¥77.40</span>
+            <span class="chip label" draggable="true" data-key="totallbl">累计</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="group-head"><span>科技</span><span class="count">1 只</span><span class="line"></span></div>
+    <div class="card" data-cat="科技">
+      <div class="row">
+        <div class="main" data-row="r3-main">
+          <span class="chip name" draggable="true" data-key="name">南方恒生科技ETF联接（QDII）C</span>
+          <span class="chip tag-tech" draggable="true" data-key="tag">科技</span>
+          <span class="chip code" draggable="true" data-key="code">020692</span>
+          <span class="chip amt" draggable="true" data-key="amt">¥ 1,143.19</span>
+          <span class="chip sh" draggable="true" data-key="sh">1,392.45 份</span>
+          <span class="chip nav" draggable="true" data-key="nav">0.8210</span>
+        </div>
+        <div class="data" data-row="r3-data">
+          <div class="col" data-col="c1">
+            <span class="chip pct up" draggable="true" data-key="pct">+1.06%</span>
+            <span class="chip label" draggable="true" data-key="pctlbl">08-14</span>
+          </div>
+          <div class="col" data-col="c2">
+            <span class="chip day up" draggable="true" data-key="day">+¥11.98</span>
+            <span class="chip label" draggable="true" data-key="daylbl">当日</span>
+          </div>
+          <div class="col" data-col="c3">
+            <span class="chip total down" draggable="true" data-key="total">-¥19.89</span>
+            <span class="chip label" draggable="true" data-key="totallbl">累计</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="group-head"><span>海外</span><span class="count">1 只</span><span class="line"></span></div>
+    <div class="card" data-cat="海外">
+      <div class="row">
+        <div class="main" data-row="r4-main">
+          <span class="chip name" draggable="true" data-key="name">南方纳斯达克100指数（QDII）C</span>
+          <span class="chip tag-overseas" draggable="true" data-key="tag">海外</span>
+          <span class="chip code" draggable="true" data-key="code">270023</span>
+          <span class="chip amt" draggable="true" data-key="amt">¥ 50.74</span>
+          <span class="chip sh" draggable="true" data-key="sh">16.78 份</span>
+          <span class="chip nav" draggable="true" data-key="nav">3.0243</span>
+        </div>
+        <div class="data" data-row="r4-data">
+          <div class="col" data-col="c1">
+            <span class="chip pct up" draggable="true" data-key="pct">+1.09%</span>
+            <span class="chip label" draggable="true" data-key="pctlbl">08-13</span>
+          </div>
+          <div class="col" data-col="c2">
+            <span class="chip day up" draggable="true" data-key="day">+¥0.55</span>
+            <span class="chip label" draggable="true" data-key="daylbl">当日</span>
+          </div>
+          <div class="col" data-col="c3">
+            <span class="chip total up" draggable="true" data-key="total">+¥0.55</span>
+            <span class="chip label" draggable="true" data-key="totallbl">累计</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="palette">
+  <div class="pt">拖动下方元素到行内 / 行间 / 列内 — 自由调整排版 · 点 <b>导出</b> 给我最终结构</div>
+</div>
+
+<!-- 导出弹窗 -->
+<div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:50; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:12px; max-width:380px; width:100%; max-height:80vh; overflow:auto; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <b style="font-size:14px">📋 排版结构（已复制到剪贴板）</b>
+      <button onclick="document.getElementById('modal').style.display='none'" style="border:none; background:transparent; font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <pre id="result" style="font-size:11px; background:#f5f6f8; padding:10px; border-radius:6px; overflow:auto; max-height:60vh; white-space:pre-wrap; word-break:break-all;"></pre>
+    <button onclick="navigator.clipboard.writeText(document.getElementById('result').textContent); this.textContent='✓ 已复制'" style="margin-top:8px; width:100%; padding:8px; border:0; border-radius:6px; background:#3478f6; color:#fff; font-size:13px; cursor:pointer;">📋 复制到剪贴板</button>
+  </div>
+</div>
+
+<script>
+  // 拖拽实现
+  let draggedEl = null;
+
+  document.addEventListener('dragstart', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    draggedEl = chip;
+    chip.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  document.addEventListener('dragend', e => {
+    if (draggedEl) draggedEl.classList.remove('dragging');
+    draggedEl = null;
+    document.querySelectorAll('.dragover').forEach(el => el.classList.remove('dragover'));
+  });
+
+  document.addEventListener('dragover', e => {
+    e.preventDefault();
+    const target = e.target.closest('.main, .col, .data, .row');
+    if (target && draggedEl) {
+      document.querySelectorAll('.dragover').forEach(el => el.classList.remove('dragover'));
+      target.classList.add('dragover');
+    }
+  });
+
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!draggedEl) return;
+    const target = e.target.closest('.main, .col, .data, .row');
+    if (!target) return;
+    target.classList.remove('dragover');
+    if (target.classList.contains('col')) {
+      target.appendChild(draggedEl);
+    } else if (target.classList.contains('data')) {
+      target.appendChild(draggedEl);
+    } else if (target.classList.contains('main')) {
+      target.appendChild(draggedEl);
+    } else if (target.classList.contains('row')) {
+      const main = target.querySelector('.main');
+      main.appendChild(draggedEl);
+    }
+  });
+
+  // 触屏支持
+  let touchChip = null;
+  document.addEventListener('touchstart', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    touchChip = chip;
+    chip.style.opacity = '0.5';
+  }, {passive: true});
+
+  document.addEventListener('touchmove', e => {
+    if (!touchChip) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    document.querySelectorAll('.dragover').forEach(x => x.classList.remove('dragover'));
+    const target = el?.closest('.main, .col, .data');
+    if (target) target.classList.add('dragover');
+  }, {passive: false});
+
+  document.addEventListener('touchend', e => {
+    if (!touchChip) return;
+    const t = e.changedTouches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const target = el?.closest('.main, .col, .data');
+    if (target) target.appendChild(touchChip);
+    touchChip.style.opacity = '';
+    touchChip = null;
+    document.querySelectorAll('.dragover').forEach(x => x.classList.remove('dragover'));
+  });
+
+  // 导出结构
+  function exportLayout() {
+    const rows = document.querySelectorAll('.row');
+    const result = [];
+    rows.forEach((row, i) => {
+      const main = row.querySelector('.main');
+      const data = row.querySelector('.data');
+      const mainKeys = Array.from(main.children).map(c => c.dataset.key + (c.className.match(/tag-[a-z]+|up|down|est/) ? ':' + c.className.match(/tag-[a-z]+|up|down|est/)[0] : ''));
+      const cols = Array.from(data.children).map(col => {
+        return Array.from(col.children).map(c => c.dataset.key + (c.className.match(/up|down|est/) ? ':' + c.className.match(/up|down|est/)[0] : ''));
+      });
+      result.push({ row: i + 1, main: mainKeys, cols: cols });
+    });
+    const text = JSON.stringify(result, null, 2);
+    document.getElementById('result').textContent = text;
+    document.getElementById('modal').style.display = 'flex';
+    try { navigator.clipboard.writeText(text); } catch(e) {}
+  }
+
+  // 还原（刷新即可）
+  function resetLayout() {
+    if (confirm('确认还原初始排版？')) location.reload();
+  }
+</script>
+
+</body>
+</html>

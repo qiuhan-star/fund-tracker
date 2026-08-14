@@ -4265,7 +4265,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   </style>
   <!-- 加一只基金弹窗 -->
   <div class="sm-mask" id="addFundMask" onclick="if(event.target===this)closeAddFund()">
-    <div class="sm-modal">
+    <div class="sm-modal" style="max-width:420px;width:94%">
       <div class="sm-head"><h2>＋ 加一只基金</h2><button class="sm-x" onclick="closeAddFund()">✕</button></div>
       <div class="sm-body">
         <div class="nf-field" style="position:relative">
@@ -4278,9 +4278,43 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <label>账户</label>
           <select id="af-acc"></select>
         </div>
-        <div class="nf-field">
-          <label>当前市值（元）</label>
-          <input id="af-mv" class="num" type="number" step="any" inputmode="decimal" placeholder="可留空，记为 0">
+        <!-- 模式切换：按金额 / 按份额 -->
+        <div class="af-seg" style="display:flex;gap:6px;margin:4px 0 10px">
+          <button class="af-seg-btn on" data-afm="amt" onclick="afSetMode('amt')" style="flex:1;padding:6px 0;border:1px solid var(--border-2);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px;cursor:pointer">按金额填</button>
+          <button class="af-seg-btn" data-afm="shares" onclick="afSetMode('shares')" style="flex:1;padding:6px 0;border:1px solid var(--border-2);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px;cursor:pointer">按份额填</button>
+          <button class="af-seg-btn" data-afm="ocr" onclick="afSetMode('ocr')" style="flex:1;padding:6px 0;border:1px solid var(--border-2);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px;cursor:pointer">📸 截图</button>
+        </div>
+        <!-- 按金额填 -->
+        <div id="afModeAmt">
+          <div class="nf-field">
+            <label>当前市值（元）</label>
+            <input id="af-mv" class="num" type="number" step="any" inputmode="decimal" placeholder="可留空，记为 0">
+          </div>
+        </div>
+        <!-- 按份额填 -->
+        <div id="afModeShares" style="display:none">
+          <div class="nf-field">
+            <label>持有份额</label>
+            <input id="af-shares" class="num" type="number" step="any" inputmode="decimal" placeholder="0.00">
+          </div>
+          <div class="nf-field">
+            <label>当前净值（元）</label>
+            <input id="af-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="填份额后可自动算市值">
+          </div>
+          <div class="af-tip" style="font-size:11px;color:var(--text-3);margin-top:-6px">市值 = 份额 × 净值，填任意两项自动算第三项</div>
+        </div>
+        <!-- 截图识别 -->
+        <div id="afModeOcr" style="display:none">
+          <p style="font-size:12px;color:var(--text-2);margin:0 0 8px;line-height:1.5">上传支付宝持仓截图，自动识别基金代码、金额、份额、净值。</p>
+          <div style="display:flex;gap:8px">
+            <label class="btn primary" style="flex:1;text-align:center;cursor:pointer;font-size:13px;padding:8px 0;border-radius:8px">
+              📁 选择截图
+              <input type="file" id="afOcrImg" accept="image/*" style="display:none" onchange="afOcrImage(this)">
+            </label>
+            <button class="btn" onclick="afOcrPaste()" style="flex:1;text-align:center;font-size:13px;padding:8px 0;border-radius:8px">📋 粘贴图片</button>
+          </div>
+          <div id="afOcrStatus" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)">识别中…</div>
+          <div id="afOcrResult" style="margin-top:8px;font-size:12px;color:var(--text-2)"></div>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
           <button class="btn" onclick="closeAddFund()">取消</button>

@@ -7755,9 +7755,10 @@ function buildFundsView(){
         // 份额：手动份额优先 → 否则金额÷净值 → 净值缺失且金额>0 时，用「该日期之前最近一次买入净值」近似（转换常不带净值）
         let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:(liveNav>0?amt/liveNav:0));
         if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
-        // 自动补全：如果已经确认了净值，但份额还是空的，用计算出的份额写回交易记录
-        if(t.confirm==='confirmed' && sh>0 && (t.shares==null || t.shares==='')){
-          t.shares=sh;
+        // 自动补全：份额缺失（null / 空串 / 0；0 来自导入时「份额」列空白被解析为 0）时，用计算出的份额写回交易记录
+        const _needSh=(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest');
+        if(t.confirm==='confirmed' && sh>0 && _needSh && (t.shares==null || t.shares==='' || +t.shares===0)){
+          t.shares=+sh.toFixed(4);
         }
         // 如果已经确认了，但净值为空，用 liveNav 或 lastNav 补写回交易记录
         if(t.confirm==='confirmed' && (!t.nav || t.nav===0) && sh>0){
@@ -9029,8 +9030,8 @@ function buildTradeSection(f){
         const idTxt=typeLabel(t.type);
         const accTxt=accOf(t);
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
-        const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'净值待确认';
-        const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'份额待确认';
+        const navTxt=(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'净值待确认';
+        const shareTxt=(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'份额待确认';
         const convertTxt=(t.convertTarget && (t.type==='convert_out'||t.type==='convert'))?('<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(t.convertTarget)+'</div>'):'';
         h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${convertTxt}${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-copy" type="button" onclick="copyTrade(${i})">复制</button><button class="tx-act-btn tx-act-del" type="button" onclick="deleteTrade(${i})">删除</button></div></div></div>`;
       });
@@ -9058,7 +9059,7 @@ function buildTradeSection(f){
             <td>${typeLabel(t.type)}${t.convertTarget && (t.type==='convert_out'||t.type==='convert')?('<br><span style="font-size:11px;color:var(--text-3)">→ '+esc(t.convertTarget)+'</span>'):''}</td>
             <td>${_confBadge}</td>
             <td class="num">${M(t.amount)}</td>
-            <td class="num">${t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class="pending-nav">净值待确认</span>'}</td>
+            <td class="num">${t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'<span class="pending-nav">净值待确认</span>'}</td>
             <td class="num">${t.fee?M(t.fee):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
             <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'份额待确认'}</td>
@@ -9567,6 +9568,24 @@ function saveTradeEdit(){
     t.convertTarget=(g('te-convert-target')?.value||'').trim()||'';
   }
   t.locked=true;
+  // 转换配对同步：编辑 convert_out/convert 时同步更新配对记录
+  if(t.pairId && (t.type==='convert_out'||t.type==='convert')){
+    var pair = trades.find(function(x){ return x!==t && x.pairId===t.pairId; });
+    if(pair){
+      pair.date = t.date;
+      pair.time = t.time;
+      pair.confirm = t.confirm;
+      pair.amount = Math.max(0, t.amount - t.fee);
+      // 同步备注中的转换标记
+      var pairLabel = t.type==='convert_out' ? '← 转入自 ' : '→ 转出至 ';
+      var otherName = t.type==='convert_out' ? t.convertTarget : t.name;
+      if(t.note && t.note.indexOf(pairLabel) === -1){
+        pair.note = t.note + ' ' + pairLabel + otherName;
+      } else if(!t.note){
+        pair.note = pairLabel + otherName;
+      }
+    }
+  }
   silentSave(); compute();
   closeTradeEdit();
   var nm=t.name;
@@ -9632,7 +9651,20 @@ function tradeQuickSave(){
   const _sum = typeLabel(type)+' · '+name+'\n'+(amount?('金额 ¥'+M(amount)):(shares!=null?fmt(shares)+' 份':''))+'\n'+date+(time?(' '+time):'')+'\n账户 '+acc+(nav>0?('\n净值 '+navFmt(nav)):'')+(fee?('\n费用 ¥'+M(fee)):'')+(confirm==='pending'?('\n状态 待确认'):'')+(note?('\n备注 '+note):'');
   ftConfirm('确定保存这笔交易？\n\n'+_sum, function(ok){ if(!ok) return; tqCommit(); });
   function tqCommit(){
-  trades.push({name,account:acc,date,time,type,amount:_amount,nav:nav>0?nav:null,fee,shares:_shares,confirm,note,convertTarget:convertTarget||'',locked:true});
+  var pairId = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  trades.push({name,account:acc,date,time,type,amount:_amount,nav:nav>0?nav:null,fee,shares:_shares,confirm,note,convertTarget:convertTarget||'',locked:true,pairId:pairId});
+  // 转换转出：自动生成目标基金的转换转入记录
+  if(type==='convert_out' && convertTarget && convertTarget!==name){
+    var n = note ? note + ' ← 转入自 ' + name : '← 转入自 ' + name;
+    var autoAmount = Math.max(0, _amount - fee);
+    trades.push({name:convertTarget,account:acc,date,time,type:'convert',amount:autoAmount,nav:null,fee:0,shares:null,confirm,convertTarget:name,note:n,locked:true,pairId:pairId});
+  }
+  // 转换转入：自动生成源基金的转换转出记录
+  if(type==='convert' && convertTarget && convertTarget!==name){
+    var n = note ? note + ' → 转出至 ' + convertTarget : '→ 转出至 ' + convertTarget;
+    var autoAmount = Math.max(0, _amount - fee);
+    trades.push({name:convertTarget,account:acc,date,time,type:'convert_out',amount:autoAmount,nav:null,fee:0,shares:null,confirm,convertTarget:name,note:n,locked:true,pairId:pairId});
+  }
   silentSave(); compute(); recordSnapshot();
   closeTradePicker();
   draftClear('ft_draft_tq', DRAFT_TQ_IDS); const _tq=document.getElementById('tqDraftPill'); if(_tq) _tq.classList.remove('show');
@@ -9914,11 +9946,11 @@ function openAllTrades(){
     const confCls=confirmClass(t.confirm);
     if(_mobile){
       const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
-      const navTxt=(t.nav!=null&&t.nav!=='')?navFmt(t.nav):'净值待确认';
-      const shareTxt=(t.shares!=null&&t.shares!=='')?(fmt(t.shares)+'份'):'份额待确认';
+      const navTxt=(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'净值待确认';
+      const shareTxt=(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'份额待确认';
       return "<div class='at-card' onclick='atGo(\""+enc+"\",\""+esc(acc)+"\")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
     }
-    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.nav!=null&&t.nav!==''?navFmt(t.nav):'<span class=\"pending-nav\">净值待确认</span>')+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
+    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'<span class=\"pending-nav\">净值待确认</span>')+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
   }).join('');
   box.innerHTML=_mobile
     ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"
@@ -12045,9 +12077,11 @@ function parseCSV(text, defaultAcc, forceAcc){
     let date=_dt.date, time=_dt.time;
     const type=col.type>=0?guessType(c[col.type]):'buy';
     const amount=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
-    const nav=col.nav>=0?parseFloat(String(c[col.nav]).replace(/[^\d.\-]/g,''))||0:0;
+    const navRaw=col.nav>=0?c[col.nav]:null;
+    const nav=(navRaw!=null&&navRaw!=='')?parseFloat(String(navRaw).replace(/[^\d.\-]/g,''))||0:null;
     const fee=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
-    const sh=col.shares>=0?parseFloat(String(c[col.shares]).replace(/[^\d.\-]/g,''))||0:0;
+    const shRaw=col.shares>=0?c[col.shares]:null;
+    const sh=(shRaw!=null&&shRaw!=='')?parseFloat(String(shRaw).replace(/[^\d.\-]/g,''))||0:null;
     const rawAcc = forceAcc ? (defaultAcc||'') : (col.account>=0 ? c[col.account] : (defaultAcc||''));
     const account=normalizeAccount(rawAcc);
     if(!(amount||nav||sh)) continue;
@@ -12103,9 +12137,9 @@ function parsePaste(text, defaultAcc, forceAcc){
     const dt=_dt.date, tm=_dt.time;
     const tType=type?guessType(type):'buy';
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
-    const nv=parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0;
+    const nv=(nav!=null&&nav!=='')?parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0:null;
     const feS=parseFloat(String(fee).replace(/[^\d.\-]/g,''))||0;
-    const sh=parseFloat(String(shares).replace(/[^\d.\-]/g,''))||0;
+    const sh=(shares!=null&&shares!=='')?parseFloat(String(shares).replace(/[^\d.\-]/g,''))||0:null;
     const acc=normalizeAccount(account?account:(defaultAcc||''));
     if(!(amt||nv||sh)) return;
     added.push({name:name,date:dt,time:tm,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||'',confirmDate:confirmDate||''});
@@ -12476,7 +12510,7 @@ function toast(msg){
 }
 
 // ---------- 删除交易：撤销（返回/切后台/超时即生效）----------
-var _undoTrade=null, _undoTimer=null, _undoInited=false;
+var _undoTrade=null, _undoPair=null, _undoTimer=null, _undoInited=false;
 function initUndo(){
   if(_undoInited) return; _undoInited=true;
   if(!document.getElementById('undoStyle')){
@@ -12491,7 +12525,7 @@ function initUndo(){
   }
 }
 function _clearUndoTimer(){ if(_undoTimer){ clearTimeout(_undoTimer); _undoTimer=null; } }
-function finalizeUndo(){ _undoTrade=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show'); }
+function finalizeUndo(){ _undoTrade=null; _undoPair=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show'); }
 function refreshDetailHeaderByName(name){
   if(currentView!=='detail' || !name || name!==detailName) return;
   try{ const f=findFund(name, detailAcc); if(!f) return;
@@ -12503,26 +12537,47 @@ function undoDeleteTrade(){
   if(!_undoTrade) return;
   var u=_undoTrade;
   if(u.idx>=trades.length) trades.push(u.rec); else trades.splice(u.idx,0,u.rec);
+  // 恢复配对记录
+  if(_undoPair && _undoPair.rec){
+    var p=_undoPair;
+    if(p.idx>=trades.length) trades.push(p.rec); else trades.splice(p.idx,0,p.rec);
+  }
   silentSave(); compute();
   if(u.name) refreshDetailTradesByName(u.name);
   if(typeof renderTrade==='function') renderTrade();
   if(u.name) refreshDetailHeaderByName(u.name);
-  _undoTrade=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show');
+  if(_undoPair && _undoPair.name && _undoPair.name!==u.name){ refreshDetailTradesByName(_undoPair.name); refreshDetailHeaderByName(_undoPair.name); }
+  _undoTrade=null; _undoPair=null; _clearUndoTimer(); var b=document.getElementById('undoBar'); if(b) b.classList.remove('show');
   toast('已恢复');
 }
 function removeTrade(i){
   if(!trades[i]) return null;
   initUndo();
   var rec=trades[i], idx=i, name=rec.name;
+  // 删除配对记录（convert_out/convert 联动）
+  var pairIdx = -1, pairRec = null;
+  if(rec.pairId && (rec.type==='convert_out'||rec.type==='convert')){
+    for(var p=0; p<trades.length; p++){
+      if(p!==i && trades[p].pairId===rec.pairId && trades[p].name===rec.convertTarget){
+        pairIdx = p; pairRec = trades[p]; break;
+      }
+    }
+  }
   trades.splice(i,1);
+  if(pairIdx > -1){
+    // 如果 pairIdx 在 i 之后，已经因为 splice 而前移了 1
+    if(pairIdx > i) pairIdx--;
+    trades.splice(pairIdx,1);
+  }
   silentSave(); compute();
   if(name) refreshDetailTradesByName(name);
   if(typeof renderTrade==='function') renderTrade();
   if(name) refreshDetailHeaderByName(name);
   _undoTrade={idx:idx, rec:rec, name:name};
+  _undoPair = pairIdx > -1 ? {idx:pairIdx, rec:pairRec, name:pairRec?pairRec.name:''} : null;
   _clearUndoTimer();
   var b=document.getElementById('undoBar');
-  if(b){ var m=document.getElementById('undoMsg'); if(m) m.textContent='已删除一笔交易'; b.classList.add('show'); }
+  if(b){ var m=document.getElementById('undoMsg'); if(m) m.textContent=_undoPair?'已删除 2 笔交易':'已删除一笔交易'; b.classList.add('show'); }
   _undoTimer=setTimeout(finalizeUndo, 8000);
   return rec;
 }

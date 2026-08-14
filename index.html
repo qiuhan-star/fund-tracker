@@ -9708,8 +9708,8 @@ function tradeQuickSave(){
   draftClear('ft_draft_tq', DRAFT_TQ_IDS); const _tq=document.getElementById('tqDraftPill'); if(_tq) _tq.classList.remove('show');
   if(currentView==='home'){ if(activeTab===0) renderHomeList(); renderOverview(); }
   if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} }
-  // 自动生成配对交易后，刷新目标基金的交易列表
-  if((type==='convert_out'||type==='convert') && convertTarget && convertTarget!==name){
+  // 自动生成配对交易后，刷新目标基金详情（仅当当前详情页就是目标基金时）
+  if((type==='convert_out'||type==='convert') && convertTarget && convertTarget!==name && convertTarget===detailName){
     try{ refreshDetailTradesByName(convertTarget); refreshDetailHeaderByName(convertTarget); }catch(e){}
   }
   var dispLabel=_amount?M(_amount):(_shares!=null?fmt(_shares)+'份':'');

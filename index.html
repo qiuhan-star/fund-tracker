@@ -9127,7 +9127,6 @@ function buildTradeSection(f){
           h+=`<tr class="tr-deleted"><td colspan="10"><div class="tr-deleted-bar"><span>已删除</span><button class="tx-undo-btn" type="button" onclick="undoSoftDelete(${i})">撤销</button></div></td></tr>`;
           return;
         }
-        const i=trades.indexOf(t);
         const _canc = t.confirm==='cancelled';
         const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
         h+=`<tr class="tr-locked${_canc?' cancelled':''}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">

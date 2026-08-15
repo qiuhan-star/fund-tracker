@@ -4269,6 +4269,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .cat-grid .cat-chip{ display:inline-flex; align-items:center; gap:5px; margin:0; }
   .cat-grid .check{ color:var(--accent); font-weight:700; }
   .sheet-row.reset{ border-bottom:none; }
+  .cat-pop{ position:fixed; z-index:120; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.18); padding:12px; width:288px; max-width:calc(100vw - 24px); box-sizing:border-box; display:none; }
+  .cat-pop.show{ display:block; }
+  .cat-pop .pop-head{ font-size:13px; color:var(--text-3); margin:0 2px 8px; }
+  .cat-pop .cat-grid{ padding:0; }
+  .cat-pop .pop-reset{ display:block; width:100%; margin-top:10px; padding:10px; border:1px dashed var(--border-strong); border-radius:10px; background:transparent; color:var(--text-2); font-size:14px; font-family:inherit; cursor:pointer; box-sizing:border-box; }
+  .cat-pop .sheet-custom{ margin-top:10px; }
+  .cat-pop .fm-input{ width:100%; margin:0 0 6px; box-sizing:border-box; }
+  .cat-pop .save{ width:100%; padding:10px; border:none; border-radius:10px; background:var(--accent); color:var(--accent-on); font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; box-sizing:border-box; }
   .sheet-cancel{ background:var(--surface); border-radius:14px; padding:16px; text-align:center; font-size:17px; font-weight:600; color:var(--accent); border:none; width:100%; font-family:inherit; }
   /* 复盘编辑：复用底部 sheet 弹层（去内联展开，避免遮挡列表） */
   .rv-sheet-card{ margin-bottom:8px; max-height:82vh; overflow:auto; -webkit-overflow-scrolling:touch; }
@@ -6196,29 +6204,42 @@ function editTags(code){
 const CAT_LIST=['芯片','周期资源','医药','军工','制造','海外','科技','债基','混合','黄金','其他'];
 function closeCatSheet(){
   const m=document.getElementById('catSheetMask'); if(m) m.classList.remove('show');
-  const s=document.getElementById('catSheet'); if(s) s.classList.remove('show');
+  const p=document.getElementById('catPop'); if(p) p.classList.remove('show');
 }
 function closeMenus(){ document.querySelectorAll('.float-menu').forEach(m=>m.remove()); closeCatSheet(); }
 function catMenu(name, ev){
   closeCatSheet();
   const cur=catOverride[name]||((fundsView.find(f=>f.name===name)||{}).cat)||'';
   const customVal=(cur && CAT_LIST.indexOf(cur)<0)?cur:'';
-  let html='<div class="sheet-card" style="max-height:78vh;overflow:auto">'
-    + '<div class="sheet-head">修改分类（系统按名称自动判定，可手动覆盖）</div>'
+  const trig = (ev && ev.currentTarget) ? ev.currentTarget : null;
+  let html='<div class="pop-head">修改分类（系统按名称自动判定，可手动覆盖）</div>'
     + '<div class="cat-grid">'
     + CAT_LIST.map(c=>`<button class="cat-chip${c===cur?' on':''}" onclick="setCatOverride('${esc(name)}','${c}')">${c}${c===cur?' <span class="check">✓</span>':''}</button>`).join('')
     + '</div>'
-    + `<button class="sheet-row reset" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`
-    + '<div class="sheet-custom"><input class="fm-input" id="catCustom" placeholder="或自己输入分类名：半导体、红利…" value="'+esc(customVal)+'"><button class="save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button></div>'
-    + '</div>'
-    + '<button class="sheet-cancel" onclick="closeCatSheet()">取消</button>';
+    + `<button class="pop-reset" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`
+    + '<div class="sheet-custom"><input class="fm-input" id="catCustom" placeholder="或自己输入分类名：半导体、红利…" value="'+esc(customVal)+'"><button class="save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button></div>';
   let mask=document.getElementById('catSheetMask');
-  let sheet=document.getElementById('catSheet');
+  let pop=document.getElementById('catPop');
   if(!mask){ mask=document.createElement('div'); mask.className='sheet-mask'; mask.id='catSheetMask'; mask.onclick=closeCatSheet; document.body.appendChild(mask); }
-  if(!sheet){ sheet=document.createElement('div'); sheet.className='sheet'; sheet.id='catSheet'; document.body.appendChild(sheet); }
-  sheet.innerHTML=html;
-  const inp=sheet.querySelector('#catCustom'); if(inp){ inp.focus(); inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); applyCatCustom(name); } }); }
-  mask.classList.add('show'); sheet.classList.add('show');
+  if(!pop){ pop=document.createElement('div'); pop.className='cat-pop'; pop.id='catPop'; document.body.appendChild(pop); }
+  pop.innerHTML=html;
+  const inp=pop.querySelector('#catCustom'); if(inp){ inp.focus(); inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); applyCatCustom(name); } }); }
+  // 贴着触发标签弹出（标签正下方；空间不够则翻到上方），不再跑到屏幕底部
+  pop.classList.add('show'); pop.style.visibility='hidden';
+  if(trig){
+    const r=trig.getBoundingClientRect();
+    const w=Math.min(288, window.innerWidth-24);
+    pop.style.width=w+'px';
+    let left=r.left;
+    if(left+w > window.innerWidth-12) left=window.innerWidth-12-w;
+    if(left<12) left=12;
+    const h=pop.offsetHeight;
+    let top=r.bottom+6;
+    if(top+h > window.innerHeight-12) top=Math.max(12, r.top-h-6);
+    pop.style.left=left+'px'; pop.style.top=top+'px';
+  } else { pop.style.left='12px'; pop.style.top='72px'; }
+  pop.style.visibility='visible';
+  mask.classList.add('show');
 }
 function setCatOverride(name, cat){
   if(cat) catOverride[name]=cat; else delete catOverride[name];

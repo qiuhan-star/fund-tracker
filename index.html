@@ -9120,6 +9120,19 @@ function jumpToEarliestBatch(name){
     }
   },350);
 }
+/* 状态条点击跳转：事件委托（避免在字符串里转义 onclick） */
+(function bindFeeStatusClick(){
+  if(bindFeeStatusClick._done) return;
+  bindFeeStatusClick._done=true;
+  document.addEventListener('click', function(e){
+    const el=e.target.closest('#feeHoldStatus');
+    if(!el) return;
+    const enc=el.getAttribute('data-fn');
+    if(!enc) return;
+    e.stopPropagation();
+    jumpToEarliestBatch(decodeURIComponent(enc));
+  });
+})();
 
 /* 详情页「持有天数 / 赎回费」状态条（基于 FIFO 算最早一批份额）
    - 思路文档：思路文档/费率功能代码思路.md §3.2
@@ -9145,7 +9158,7 @@ function feeHoldStatusHtml(f){
     l1='最早一批份额购于 '+eb.date+'，已持有 '+days+' 天';
     l2='全部份额已过 30 天免赎期 · 现在卖出都免赎回费';
   }
-  return '<div class="fee-hold-status fee-hold-'+cls+'" id="feeHoldStatus" onclick="jumpToEarliestBatch(decodeURIComponent(\''+enc+'\'))" title="点击查看这笔交易">'
+  return '<div class="fee-hold-status fee-hold-'+cls+'" id="feeHoldStatus" data-fn="'+enc+'" title="点击查看这笔交易">'
     +'<div class="fhs-ico">'+icon+'</div>'
     +'<div class="fhs-body">'
       +'<div class="fhs-l1">'+l1+'</div>'

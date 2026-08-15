@@ -4181,9 +4181,9 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .lt-date{ font-weight:700; }
   .highlight-flash{ animation:hlFlash 1.5s ease-out; }
   @keyframes hlFlash{ 0%{ box-shadow:0 0 0 0 rgba(255,149,0,.4); } 50%{ box-shadow:0 0 0 6px rgba(255,149,0,.15); } 100%{ box-shadow:0 0 0 0 rgba(255,149,0,0); } }
-  /* 费率跳转：红框闪烁 3 次后停留 0.6s 再消失（共 2.4s） */
+  /* 费率跳转：红框闪烁 3 次后停留 0.4s 再消失（共 2.2s） */
   .tx-flash-highlight{
-    animation: txFlashAnim 0.6s ease-in-out 4, txFlashSettle 0.4s ease-out 2.4s 1 forwards;
+    animation: txFlashAnim 0.6s ease-in-out 3, txFlashSettle 0.4s ease-out 1.8s 1 forwards;
     position: relative; z-index: 2;
   }
   @keyframes txFlashAnim{
@@ -8458,10 +8458,8 @@ function sourceCardHtml(name){
   if(!src.trim()){
     return '<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">持仓理由 · 参考来源</h2></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;color:var(--text-3)">还没记录买入依据</div><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">添加</button></div></div>';
   }
-  const tags=(src.match(/#([^\s#]+)/g)||[]);
   let h='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">持仓理由 · 参考来源</h2><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">编辑</button></div>';
   h+='<div class="src-text">'+srcTextHtml(src)+'</div>';
-  if(tags.length) h+='<div class="tags">'+tags.map(function(t){return '<span class="tag">'+rvEsc(t)+'</span>';}).join('')+'</div>';
   h+='</div>';
   return h;
 }
@@ -9116,7 +9114,7 @@ function jumpToEarliestBatch(name){
     if(card){
       card.scrollIntoView({behavior:'smooth',block:'center'});
       card.classList.add('tx-flash-highlight');
-      setTimeout(function(){ card.classList.remove('tx-flash-highlight'); },2400);
+      setTimeout(function(){ card.classList.remove('tx-flash-highlight'); },2200);
     }
   },350);
 }

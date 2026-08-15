@@ -5004,9 +5004,10 @@ function migrate(raw){
   (data.dcaPlans||[]).forEach(p=>{ if(p&&p.account) p.account=_accNorm(p.account); if(p&&!p.period) p.period='month'; });
   // 定投自动补记的交易默认应为待确认（QDII 等海外基金有确认周期）
   (data.trades||[]).forEach(t=>{ if(t.dcaId && !t.confirm) t.confirm='pending'; });
+  // 修复旧版定投交易：被自动确认的改回待确认，清空净值/份额（避免自动补净值后错误确认）
+  (data.trades||[]).forEach(t=>{ if(t.dcaId && t.confirm==='confirmed'){ t.confirm='pending'; t.nav=null; t.shares=null; } });
   return data;
 }
-
 // ---------- 数据容灾：导入/同步前自动备份 + 损坏自恢复 ----------
 const BK=['ft_backup_1','ft_backup_2','ft_backup_3']; // _1=最新；环形保留最近 3 份
 function _sig(arr,keys){ return (arr||[]).map(o=>keys.map(k=>o[k]).join(':')).sort().join('|'); }
@@ -8094,6 +8095,7 @@ function autoConfirmPendingTrades(){
   const today=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
   trades.forEach(function(t){
     if(t.confirm!=='pending') return;
+    if(t.dcaId) return;  // 定投单保持待确认，不自动确认
     const ty=(t.type||'buy').toLowerCase();
     // 仅对买入类交易自动确认
     if(ty!=='buy'&&ty!=='dca'&&ty!=='convert'&&ty!=='reinvest'&&ty!=='activity') return;
@@ -11219,6 +11221,7 @@ async function refresh(){
     });
     const cands=trades.filter(t=>{
       if(t.confirm==='cancelled') return false;
+      if(t.dcaId) return false;                  // 定投单不自动补净值/份额，保持待确认
       if(!['buy','reinvest','convert'].includes(t.type||'buy')) return false;
       const navOk=!!(t.nav!=null&&t.nav!==''&&!isNaN(+t.nav));
       const amt=+t.amount||0, sh=+t.shares||0;

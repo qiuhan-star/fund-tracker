@@ -8274,6 +8274,27 @@ function reviewImport(input){ const f=input.files[0]; if(!f) return; const r=new
 // 持仓列表「笔记」列：点图标直接打开某基金的复盘笔记（复用 ft_review 系统，不另建存储）
 function fundNoteCount(name){ let c=0; try{ if(Array.isArray(reviewNotes)) c=reviewNotes.filter(n=>(n.fund||'')===name).length; }catch(e){} return c; }
 function openFundReview(name){ try{ reviewCurFund=name; const b=document.getElementById('rvSheetBody'); if(b) b.innerHTML=reviewCardHtml(name); var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent=(name||'全局')+' · 复盘笔记'; reviewSheetOpen(); }catch(e){} }
+// 精选笔记：每基金至多一条置顶；列表点开只显示这一条
+function fundPinnedNote(name){ try{ if(Array.isArray(reviewNotes)) return reviewNotes.find(n=>(n.fund||'')===name && n.pinned); }catch(e){} return null; }
+function togglePinNote(id){ try{ const n=reviewNotes.find(x=>x.id===id); if(!n) return; const fund=n.fund||''; if(n.pinned){ n.pinned=false; } else { reviewNotes.forEach(x=>{ if((x.fund||'')===fund) x.pinned=false; }); n.pinned=true; } reviewSave(); reviewRender(reviewCurFund); }catch(e){} }
+function singleNoteHtml(n){
+  let h='<div class="card" id="reviewCard"><div class="sec-head"><h2 style="margin:0;font-size:14px">精选笔记 <span class="tag">'+rvEsc(n.date)+'</span></h2></div><div class="rv-item" style="border:none;padding:4px 0">';
+  if(n.tags&&n.tags.length) h+='<div class="rv-tags">'+n.tags.map(t=>'<span class="tag">#'+rvEsc(t)+'</span>').join('')+'</div>';
+  if(n.snap&&(n.snap.nav!=null||n.snap.pnl!=null||n.snap.weight!=null)){
+    h+='<div class="rv-snap">自动快照 · ';
+    if(n.snap.nav!=null) h+='净值 '+n.snap.nav+' ';
+    if(n.snap.pnl!=null) h+='· 持仓盈亏 '+(n.snap.pnl>0?'+':'')+n.snap.pnl.toFixed(2)+'% ';
+    if(n.snap.weight!=null) h+='· 仓位 '+n.snap.weight.toFixed(1)+'%';
+    h+='</div>';
+  }
+  h+='<div class="rv-body" style="white-space:pre-wrap">'+rvEsc(n.body)+'</div>';
+  if(n.expect) h+='<div class="rv-exp">预期：'+rvEsc(n.expect.text)+(n.expect.due?('（'+rvEsc(n.expect.due)+'）'):'')+'</div>';
+  if(n.outcome) h+='<div class="rv-out '+(n.outcome.hit?'hit':'miss')+'">'+(n.outcome.hit?'兑现':'未兑现')+'结论：'+rvEsc(n.outcome.note)+'</div>';
+  h+='<div class="rv-acts" style="margin-top:10px"><button class="btn tiny" onclick="reviewEdit('+n.id+')">编辑</button><button class="btn tiny danger" onclick="reviewDel('+n.id+')">删除</button><button class="btn tiny ghost" onclick="openFundReview(\''+esc(n.fund)+'\')">查看全部笔记</button></div>';
+  h+='</div></div>';
+  return h;
+}
+function openFundPinnedNote(name){ try{ const pin=fundPinnedNote(name); if(!pin){ openFundReview(name); return; } reviewCurFund=name; const b=document.getElementById('rvSheetBody'); if(b) b.innerHTML=singleNoteHtml(pin); var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent=(name||'')+' · 精选笔记'; reviewSheetOpen(); }catch(e){} }
 
 // ---------- 渲染调度 ----------
 function render(){

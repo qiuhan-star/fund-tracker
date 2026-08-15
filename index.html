@@ -8903,6 +8903,7 @@ function headerHtml(f){
           <div class="dh-subitem" style="text-align:center;position:relative"><div class="k" id="dhLatestTradeK" style="position:relative">${_latestLabel}</div><div class="v" id="dhLatestTrade" style="color:var(--text);font-size:14px;cursor:${_lt?'pointer':'default'};overflow:visible;text-overflow:clip" onclick="${_ltIdx>=0?('scrollToLatestTrade('+_ltIdx+')'):''}">${_latestTxt}</div></div>
         </div>
       </div>
+      ${feeHoldStatusHtml(f)}
       <div class="dh-actions">
         <button class="dh-action" onclick="openDetailTrades()"><span class="ico">≡</span><span>交易记录</span></button>
         <button class="dh-action" onclick="openEditHoldingsModal('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account)}')"><span class="ico">✎</span><span>修改持仓</span></button>

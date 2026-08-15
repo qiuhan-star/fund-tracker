@@ -12973,24 +12973,28 @@ function refreshDetailHeaderByName(name){
     else if(typeof updateDetailHeader==='function') updateDetailHeader(f);
   }catch(e){}
 }
-function softDeleteTrade(i){
-  if(!trades[i]) return;
-  var t=trades[i];
-  t._deleted=true;
-  // 配对标记（convert_out/convert 联动）
-  var pairFund='';
-  if(t.pairId && (t.type==='convert_out'||t.type==='convert') && t.convertTarget && t.convertTarget!==t.name){
-    pairFund=t.convertTarget;
-    for(var _p=0; _p<trades.length; _p++){
-      if(_p!==i && trades[_p].pairId===t.pairId && trades[_p].name===t.convertTarget){
-        trades[_p]._deleted=true; break;
-      }
-    }
-  }
-  silentSave(); compute();
-  refreshUIAfterDelete(t.name, pairFund);
-  _clearDeleteTimer(i);
-  _deleteTimers[_deleteTimerKey(i)]=setTimeout(function(){ _finalizeDelete(i); }, 8000);
+function softDeleteTrade(i, confirmed){
+	  if(!trades[i]) return;
+	  var t=trades[i];
+	  if(t.dcaId && !confirmed){
+	    ftConfirm('这是定投自动生成的交易，确定要删除吗？', function(ok){ if(ok) softDeleteTrade(i, true); });
+	    return;
+	  }
+	  t._deleted=true;
+	  // 配对标记（convert_out/convert 联动）
+	  var pairFund='';
+	  if(t.pairId && (t.type==='convert_out'||t.type==='convert') && t.convertTarget && t.convertTarget!==t.name){
+	    pairFund=t.convertTarget;
+	    for(var _p=0; _p<trades.length; _p++){
+	      if(_p!==i && trades[_p].pairId===t.pairId && trades[_p].name===t.convertTarget){
+	        trades[_p]._deleted=true; break;
+	      }
+	    }
+	  }
+	  silentSave(); compute();
+	  refreshUIAfterDelete(t.name, pairFund);
+	  _clearDeleteTimer(i);
+	  _deleteTimers[_deleteTimerKey(i)]=setTimeout(function(){ _finalizeDelete(i); }, 8000);
 }
 function _finalizeDelete(i){
   if(!trades[i] || !trades[i]._deleted) return;

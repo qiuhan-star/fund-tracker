@@ -8193,7 +8193,7 @@ function autoConfirmPendingTrades(){
     if(t.dcaId) return;  // 定投单保持待确认，不自动确认
     const ty=(t.type||'buy').toLowerCase();
     // 仅对买入类交易自动确认
-    if(ty!=='buy'&&ty!=='dca'&&ty!=='convert'&&ty!=='reinvest'&&ty!=='activity'&&ty!=='sell') return;
+    if(ty!=='buy'&&ty!=='dca'&&ty!=='convert'&&ty!=='reinvest'&&ty!=='activity'&&ty!=='sell'&&ty!=='convert_out') return;
     // 待确认且无净值/份额的，不自动确认（如刚定投记上的），等用户手动填
     if(t.nav==null || t.shares==null) return;
     const nc=navCache[t.name];
@@ -9939,6 +9939,7 @@ function saveTradeEdit(){
         pair.date = t.date;
         pair.time = t.time;
         pair.confirm = t.confirm;
+        pair.confirmDate = t.confirmDate;
         pair.amount = Math.max(0, t.amount - t.fee);
         // 同步备注中的转换标记
         var pairLabel = t.type==='convert_out' ? '← 转入自 ' : '→ 转出至 ';
@@ -9948,6 +9949,8 @@ function saveTradeEdit(){
         } else if(!t.note){
           pair.note = pairLabel + otherName;
         }
+        // 配对份额回填：用配对记录自身净值+金额反推份额（不跨基金复制净值，转换两边净值不同）
+        if(pair.nav && pair.amount>0 && !(pair.shares>0)){ pair.shares=+(pair.amount/+pair.nav).toFixed(4); }
       }
     } else {
       // 类型不再是转换配对，删除配对记录
@@ -11400,14 +11403,14 @@ async function refresh(){
     // 历史兼容：t.date 内嵌时间拆到 t.time；并自动补净值确认日期（无需联网）
     trades.forEach(t=>{
       if(t.confirm==='cancelled') return;
-      if(!['buy','reinvest','convert','sell'].includes(t.type||'buy')) return;
+      if(!['buy','reinvest','convert','sell','convert_out'].includes(t.type||'buy')) return;
       if(t.date && !t.time){ const sp=splitDT(t.date); if(sp.time){ t.time=sp.time; t.date=sp.date; filled++; } }
       if(!t.confirmDate){ const cd=deriveCD(t.date,t.time); if(cd){ t.confirmDate=cd; filled++; } }
     });
     const cands=trades.filter(t=>{
       if(t.confirm==='cancelled') return false;
       if(t.dcaId) return false;                  // 定投单不自动补净值/份额，保持待确认
-      if(!['buy','reinvest','convert','sell'].includes(t.type||'buy')) return false;
+      if(!['buy','reinvest','convert','sell','convert_out'].includes(t.type||'buy')) return false;
       const navOk=!!(t.nav!=null&&t.nav!==''&&!isNaN(+t.nav));
       const amt=+t.amount||0, sh=+t.shares||0;
       if(navOk&&amt&&sh) return false;            // 三字段齐全，无需处理
@@ -11442,6 +11445,11 @@ async function refresh(){
       if(!navOk){ t.nav=nav; t.navConfirmed=true; filled++; }   // 补净值（结算日历史净值）
       if(!amt0&&sh0){ t.amount=+(sh0*nav).toFixed(2); filled++; } // 只填份额→反推金额
       if(!sh0&&amt0){ t.shares=+(amt0/nav).toFixed(4); filled++; } // 只填金额→反推份额
+      // 转换配对联动：本方补到净值+份额后，若配对记录已有净值则同步反推其份额（各自用自身净值，不跨基金复制）
+      if(t.pairId && (t.type==='convert'||t.type==='convert_out') && t.nav && t.shares){
+        const _pair=trades.find(x=>x!==t && x.pairId===t.pairId);
+        if(_pair && _pair.nav && !(_pair.shares>0) && _pair.amount>0){ _pair.shares=+(_pair.amount/+_pair.nav).toFixed(4); filled++; }
+      }
     }
     if(filled) silentSave();
   })();

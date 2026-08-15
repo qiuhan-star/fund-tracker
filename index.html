@@ -8999,6 +8999,80 @@ function scrollToLatestTrade(idx){
     }
   },350);
 }
+
+/* ====== FIFO 批次计算（费率 / 持有天数 专用） ======
+   思路文档：思路文档/费率功能代码思路.md §1.2
+   注意：这是「每批份额的独立持有天数」算法，跟持仓成本的「平均成本法」是两回事，不能混用。
+   返回结构：[{date, remaining, cost, tradeIdx, fee}, ...] 按时间正序
+*/
+function computeFifoBatches(name){
+  const trs=(trades||[]).filter(function(t){
+    return t.name===name && t.confirm!=='cancelled' && !t._deleted;
+  }).slice().sort(function(a,b){
+    return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));
+  });
+  const batches=[];
+  for(let k=0;k<trs.length;k++){
+    const t=trs[k];
+    const ty=t.type;
+    const amt=+t.amount||0;
+    const fee=+t.fee||0;
+    if(ty==='buy'||ty==='dca'||ty==='activity'||ty==='reinvest'||ty==='convert'){
+      let shares=+t.shares||0;
+      if(!shares && t.nav){
+        shares=(amt-fee)/t.nav;
+      }
+      if(shares>0){
+        batches.push({
+          date: t.date,
+          time: t.time||'',
+          remaining: shares,
+          cost: t.nav||(amt/shares),
+          tradeIdx: trades.indexOf(t),
+          tradeObj: t
+        });
+      }
+    } else if(ty==='sell'||ty==='convert_out'){
+      let need=+t.shares||0;
+      if(!need && t.nav){ need=amt/t.nav; }
+      for(let b=0;b<batches.length && need>0.0001;b++){
+        const take=Math.min(batches[b].remaining, need);
+        batches[b].remaining-=take;
+        need-=take;
+      }
+    }
+    // 分红 / 其它类型不改变 batches
+  }
+  return batches.filter(function(b){ return b.remaining>0.001; });
+}
+function earliestBatch(name){
+  const bs=computeFifoBatches(name);
+  if(!bs.length) return null;
+  return bs[0];
+}
+function earliestBatchDays(name){
+  const b=earliestBatch(name);
+  if(!b) return null;
+  const today=new Date();
+  const d1=new Date(b.date);
+  if(isNaN(d1.getTime())) return null;
+  return Math.max(0, Math.floor((today-d1)/86400000));
+}
+function jumpToEarliestBatch(name){
+  const b=earliestBatch(name);
+  if(!b) return;
+  openDetailTrades();
+  setTimeout(function(){
+    const idx=b.tradeIdx;
+    const card=document.querySelector('.tx-card[data-tx-idx="'+idx+'"]')
+             || document.querySelector('tr.tr-locked[data-tx-idx="'+idx+'"]');
+    if(card){
+      card.scrollIntoView({behavior:'smooth',block:'center'});
+      card.classList.add('tx-flash-highlight');
+      setTimeout(function(){ card.classList.remove('tx-flash-highlight'); },2400);
+    }
+  },350);
+}
 function genericDetail(f){
   const tr=(trades||[]).filter(t=>t.name===f.name);
   // 交易型基金：基础数据全部由交易流水 FIFO 自动算出，详情页头部 + 下方「交易流水 / 回本计算器 / 止盈止损」
@@ -9402,7 +9476,7 @@ function buildTradeSection(f){
         }
         const _canc = t.confirm==='cancelled';
         const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
-        h+=`<tr class="tr-locked${_canc?' cancelled':''}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">
+        h+=`<tr class="tr-locked${_canc?' cancelled':''}" data-tx-idx="${i}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">
             <td>${esc(accOf(t))}</td>
             <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
             <td>${typeLabel(t.type)}${(t.type==='convert_out'||t.type==='convert')?function(){
@@ -14870,7 +14944,7 @@ function renderSyncCfg(){
     m.setAttribute('data-acc', name||'');
     var bi=accIsBuiltin(name);
     var t=document.getElementById('accEditTitle'); if(t) t.textContent=name||'';
-    var nm=document.getElementById('accEditName'); if(nm){ nm.value=name||''; nm.readOnly=bi; nm.style.opacity=bi?'0.6':'1'; }
+    var nm=document.getElementById('accEditName'); if(nm){ nm.value=name||''; nm.readOnly=false; nm.style.opacity='1'; }
     var nt=document.getElementById('accEditNote'); if(nt) nt.value=getAccNote(name)||'';
     var del=document.getElementById('accEditDel'); if(del){ del.style.display=bi?'none':''; }
     m.classList.add('show');

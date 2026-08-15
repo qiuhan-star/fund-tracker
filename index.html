@@ -8303,6 +8303,41 @@ function singleNoteHtml(n){
 }
 function openFundPinnedNote(name){ try{ const pin=fundPinnedNote(name); if(!pin){ openFundReview(name); return; } reviewCurFund=name; const b=document.getElementById('rvSheetBody'); if(b) b.innerHTML=singleNoteHtml(pin); var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent=(name||'')+' · 精选笔记'; reviewSheetOpen(); }catch(e){} }
 
+// ---------- 持仓理由 / 参考来源（基金级，拆出复盘笔记） ----------
+function srcSnippet(s){ s=(s||'').trim(); const m=s.match(/#([^\s#]+)/); if(m) return m[1]; return s.length>10?s.slice(0,10)+'…':s; }
+function srcTextHtml(s){ return rvEsc(s).replace(/#([^\s#]+)/g, '<span class="tag">#$1</span>'); }
+function sourceCardHtml(name){
+  const f=fundsView.find(x=>x.name===name)||{};
+  const src=f.source||'';
+  if(!src.trim()){
+    return '<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">持仓理由 · 参考来源</h2></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;color:var(--text-3)">还没记录买入依据</div><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">添加</button></div></div>';
+  }
+  const tags=(src.match(/#([^\s#]+)/g)||[]);
+  let h='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">持仓理由 · 参考来源</h2><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">编辑</button></div>';
+  h+='<div class="src-text">'+srcTextHtml(src)+'</div>';
+  if(tags.length) h+='<div class="tags">'+tags.map(function(t){return '<span class="tag">'+rvEsc(t)+'</span>';}).join('')+'</div>';
+  h+='</div>';
+  return h;
+}
+function sourceEditOpen(name){
+  reviewCurFund=name;
+  const f=fundsView.find(x=>x.name===name)||{};
+  const cur=f.source||'';
+  const b=document.getElementById('rvSheetBody'); if(!b) return;
+  b.innerHTML='<div class="rv-ed"><label style="font-size:13px;color:var(--text-2)">持仓理由 / 参考来源</label><textarea id="srcTa" placeholder="例如：参考赛里木湖先生，看他去年那篇半导体周期文章。用 # 开头写标签，如 #赛里木湖 #半导体">'+rvEsc(cur)+'</textarea><div class="rv-acts" style="margin-top:10px"><button class="btn" onclick="sourceSave(\''+esc(name)+'\')">保存</button><button class="btn ghost" onclick="reviewSheetClose()">取消</button></div></div>';
+  var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent='持仓理由 · 参考来源';
+  reviewSheetOpen();
+}
+function sourceSave(name){
+  const ta=document.getElementById('srcTa'); if(!ta) return;
+  const text=ta.value;
+  const s=(snaps||[]).find(x=>x.name===name); if(s) s.source=text;
+  const f=fundsView.find(x=>x.name===name); if(f) f.source=text;
+  try{ silentSave(); }catch(e){}
+  reviewSheetClose();
+  try{ renderDetailLive(name); }catch(e){}
+}
+
 // ---------- 渲染调度 ----------
 function render(){
   captureFocus();

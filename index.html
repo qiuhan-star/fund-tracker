@@ -1002,6 +1002,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .note-btn .note-ico svg { width: 15px; height: 15px; display: block; }
   .dense-table .note-btn .note-cnt { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .dense-table .note-btn .note-add { font-size: 16px; line-height: 1; color: var(--text-3); opacity: .55; }
+  .dense-table .note-btn .note-pin { color: var(--accent, #3b82f6); font-size: 17px; line-height: 1; }
+  .rv-pin { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--accent, #3b82f6); background: rgba(59,130,246,.12); padding: 1px 6px; border-radius: 6px; }
   .dense-table .dt-sub .tog-mini { width: 18px; height: 18px; font-size: 10px; }
   .dense-table .dcode { font-size: 10.5px; color: var(--text-2); font-weight: 500; font-variant-numeric: tabular-nums; }
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
@@ -8198,10 +8200,10 @@ function reviewInner(fund){
   else {
     list.slice().sort((a,b)=>a.date<b.date?1:-1).forEach(n=>{
       h+='<div class="rv-item">';
-      h+='<div class="rv-top"><span class="rv-date">'+rvEsc(n.date)+'</span>';
+      h+='<div class="rv-top"><span class="rv-date">'+rvEsc(n.date)+'</span>'+(n.pinned?'<span class="rv-pin">★ 精选</span>':'');
       if(n.expect&&!n.outcome) h+='<span class="rv-track">跟踪中 · '+rvEsc(n.expect.due)+'</span>';
       if(n.outcome) h+='<span class="rv-done '+(n.outcome.hit?'hit':'miss')+'">'+(n.outcome.hit?'✓ 已兑现':'✗ 未兑现')+'</span>';
-      h+='<span class="rv-acts"><button class="btn tiny" onclick="reviewEdit('+n.id+')">编辑</button><button class="btn tiny danger" onclick="reviewDel('+n.id+')">删除</button></span></div>';
+      h+='<span class="rv-acts"><button class="btn tiny" onclick="togglePinNote('+n.id+')">'+(n.pinned?'★ 已精选':'☆ 设为精选')+'</button><button class="btn tiny" onclick="reviewEdit('+n.id+')">编辑</button><button class="btn tiny danger" onclick="reviewDel('+n.id+')">删除</button></span></div>';
       if(n.snap&&(n.snap.nav!=null||n.snap.pnl!=null||n.snap.weight!=null)){
         h+='<div class="rv-snap">自动快照 · ';
         if(n.snap.nav!=null) h+='净值 '+n.snap.nav+' ';
@@ -9239,7 +9241,7 @@ function buildTradeSection(f){
             }():''}</td>
             <td>${_confBadge}</td>
             <td class="num">${M(t.amount)}</td>
-            <td class="num">${t.confirm==='pending'?'待确认':(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—')}</td>
+            <td class="num">${t.confirm==='pending'?(t.dcaId?`<button class="lk" onclick="event.stopPropagation();autoFillDcaTrade(${i})" title="自动填入当日净值并确认">一键确认</button>`:'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—')}</td>
             <td class="num">${t.fee?M(t.fee):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
             <td class="num">${t.confirm==='pending'?'待确认':(t.shares!=null&&t.shares!==''?fmt(t.shares):'—')}</td>
@@ -10151,7 +10153,7 @@ function openAllTrades(){
       const shareTxt=_pend?'待确认':(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
       return "<div class='at-card' onclick='atGo(\""+enc+"\",\""+esc(acc)+"\")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
     }
-    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?'待确认':(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
+    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?(t.dcaId?"<button class=\"lk\" onclick=\"event.stopPropagation();autoFillDcaTrade("+trades.indexOf(t)+")\">一键确认</button>":'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
   }).join('');
   box.innerHTML=_mobile
     ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"
@@ -11409,6 +11411,34 @@ function dcaDueCount(){
   let n=0;
   dcaPlans.forEach(function(p){ if(p.paused) return; const periods=dcaPeriods(p, todayStr); const booked=new Set(trades.filter(x=>x.dcaId===p.id).map(x=>x.dcaPeriod)); periods.forEach(function(per){ if(!booked.has(per.periodKey)) n++; }); });
   return n;
+}
+// 定投待确认单：一键自动填入历史净值并确认
+async function autoFillDcaTrade(i){
+  const t=trades[i];
+  if(!t||!t.dcaId||t.confirm!=='pending') return;
+  const navOk=!!(t.nav!=null&&t.nav!==''&&!isNaN(+t.nav));
+  const amt=+t.amount||0;
+  if(!amt) return toast('金额为空，无法自动确认');
+  let nav=navOk?+t.nav:null;
+  if(nav==null){
+    const name=t.name, code=await resolveCode(name);
+    if(code){
+      const hist=await fetchNavHistory(code);
+      if(hist&&hist.length){
+        const sd=new Date(String(t.date).replace(/-/g,'/'));
+        if(t.time&&t.time>'15:00') sd.setDate(sd.getDate()+1);
+        sd.setHours(0,0,0,0);
+        let best=null; for(const p of hist){ if(p.t<=sd&&p.nav!=null) best=p.nav; }
+        if(best!=null) nav=best;
+      }
+    }
+    if(nav==null&&navCache[name]&&navCache[name].nav!=null) nav=navCache[name].nav;
+  }
+  if(nav==null) return toast('未能获取 '+t.date+' 的净值，请手动填写');
+  t.nav=nav; t.shares=+(amt/nav).toFixed(4); t.confirm='confirmed';
+  silentSave(); compute();
+  try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(_){}
+  toast('已自动填入净值 '+navFmt(nav)+'，份额 '+fmt(t.shares)+' 份');
 }
 function buildDcaSection(){
   const total=dcaPlans.length, active=dcaActiveCount();

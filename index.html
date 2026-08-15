@@ -8844,8 +8844,8 @@ function renderDetailLive(arg){
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
   live.innerHTML += sourceCardHtml(f.name);
-  live.innerHTML += reviewCardHtml(f.name);
   try{ const _dcaCard=dcaCardHtml(f); if(_dcaCard) live.innerHTML += _dcaCard; }catch(e){ console.error(e); }
+  live.innerHTML += reviewCardHtml(f.name);
   live.innerHTML += noteCardHtml(f.name);
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   live.innerHTML += peerCardHtml(f.name);

@@ -11511,7 +11511,15 @@ async function autoFillDcaTrade(i){
     }
     if(nav==null&&navCache[name]&&navCache[name].nav!=null) nav=navCache[name].nav;
   }
-  if(nav==null) return toast('未能获取 '+t.date+' 的净值，请手动填写');
+  if(nav==null){
+    const cd=t.confirmDate;
+    if(cd){
+      const _cd=new Date(cd.replace(/-/g,'/'));
+      const _now=new Date(); _now.setHours(0,0,0,0);
+      if(_cd>_now) return toast('净值尚未公布，预计 '+cd+' 方可确认');
+    }
+    return toast('未能获取 '+t.date+' 的净值，请手动填写');
+  }
   t.nav=nav; t.shares=+(amt/nav).toFixed(4); t.confirm='confirmed';
   silentSave(); compute();
   try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(_){}

@@ -6730,7 +6730,7 @@ function renderGrouped(list){
   const body=order.map(k=>{
     const sub=groups[k];
     const mvSum=sub.reduce((a,f)=>a+(f.mv||0),0);
-    const sep=`<tr class="grp-sep"><td colspan="${colspan}"><div class="grp-sep-in"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-count">${sub.length} 只</span><span class="grp-meta"><b>${M(mvSum)}</b></span></div></td></tr>`;
+    const sep=`<tr class="grp-sep"><td colspan="${colspan}"><div class="grp-sep-in"><span class="grp-name">${grpLabel(dim,k)}</span><span class="grp-meta">${sub.length} 只 · <b>${M(mvSum)}</b></span></div></td></tr>`;
     return sep + denseRowsHtml(sub);
   }).join('');
   return `<div class="dense-table-wrap"><table class="dense-table"><thead><tr>${denseHeadHtml()}</tr></thead><tbody>${body}</tbody></table></div>`;
@@ -14620,10 +14620,9 @@ function renderSyncCfg(){
 .dense-table .grp-sep td{ width:auto; min-width:0; max-width:none; overflow:visible; background:var(--surface-3); padding:7px 10px; border-top:1px solid var(--border-3); border-bottom:1px solid var(--border-3); position:sticky; left:0; z-index:3; }
 /* 分组行粘性宽度 = 视口宽度（避免表格过宽时右侧统计文字被切） */
 .dense-table .grp-sep td{ width:100vw; min-width:100vw; box-sizing:border-box; }
-.dense-table .grp-sep .grp-meta{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dense-table .grp-sep .grp-meta{ white-space:nowrap; flex-shrink:0; position:sticky; right:0; background:var(--surface-3); padding-left:8px; z-index:4; }
 .dense-table .grp-sep .grp-sep-in{ display:flex; align-items:center; gap:8px; }
 .dense-table .grp-sep .grp-name{ font-weight:700; font-size:14px; color:var(--text); }
-.dense-table .grp-sep .grp-count{ font-size:13px; color:var(--text-3); margin-left:6px; flex:0 0 auto; }
 .dense-table .grp-sep .grp-meta{ margin-left:auto; font-size:13px; color:var(--text-3); padding-right:4px; }
 
 @media (max-width: 640px) {

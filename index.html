@@ -6533,7 +6533,7 @@ function denseRowsHtml(list){
     const code=syncCode(f.name);
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}${noteDot(f.name)}<span class="tag tag-${f.cat}" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类（点此手动覆盖）">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
+      if(c.key==='name') tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}${noteDot(f.name)}<span class="tag tag-${f.cat}" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类（点此手动覆盖）">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button>${f.source?`<div class="dt-src">· ${rvEsc(srcSnippet(f.source))}</div>`:''}</div></td>`;
       else if(c.key==='nav') tds+=`<td class="col-nav"><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='day'){
         // 当日涨跌：单列双态 — 估算中显示灰色时间，官方已出显示蓝色日期
@@ -7927,6 +7927,7 @@ function buildFundsView(){
       .reduce((s,t) => s + (+t.amount||0) + (+t.fee||0), 0);
     if(_pendingBuy > 0) f.mv = (f.mv||0) + _pendingBuy;
     f.asset=guessAsset(name); f.market=guessMarket(name); f.currency=(snap&&snap.currency)||'CNY';
+    f.source = (snap&&snap.source)?snap.source:undefined; // 持仓理由/参考来源：拆出复盘笔记，挂基金级
     // 记录校准前的交易计算值，用于判断交易记录是否完整
     f.txMv = (f.mv!=null)?f.mv:null;
     // 手动持仓校准（快照/手动填写）：有份额+成本价时，用份额×最新净值自动更新金额和收益
@@ -11388,25 +11389,7 @@ function navOnOrBefore(hist, dateStr){
   for(const p of arr){ const ds=p.t.getFullYear()+'-'+pad2(p.t.getMonth()+1)+'-'+pad2(p.t.getDate()); if(ds<=dateStr){ best=p.nav; } else break; }
   return best;
 }
-// ---------- 交易日历 ----------
-// 中国法定节假日（不含调休上班日，仅列出实际休市日期）
-// 来源：国务院办公厅每年发布，以下为 2026 年已知日期
-const HOLIDAYS=new Set([
-  '2026-01-01', // 元旦
-  '2026-01-02','2026-01-03',
-  '2026-02-14','2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-02-20', // 春节
-  '2026-04-04','2026-04-05','2026-04-06', // 清明
-  '2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05', // 劳动节
-  '2026-06-25','2026-06-26','2026-06-27', // 端午
-  '2026-09-26','2026-09-27','2026-09-28','2026-09-29','2026-09-30', // 中秋+国庆前段
-  '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07', // 国庆
-]);
-function isTradingDay(d){
-  const dow=d.getDay();
-  if(dow===0||dow===6) return false;
-  const y=d.getFullYear(), m=pad2(d.getMonth()+1), day=pad2(d.getDate());
-  return !HOLIDAYS.has(y+'-'+m+'-'+day);
-}
+// ---------- 交易日历（统一使用下方 TRADING_CALENDAR，函数声明提升）----------
 function nextTradingDay(d){
   const nd=new Date(d);
   do{ nd.setDate(nd.getDate()+1); }while(!isTradingDay(nd));

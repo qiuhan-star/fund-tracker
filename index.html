@@ -4732,12 +4732,32 @@ function accountListOrdered(){
   return list;
 }
 // Header 账户下拉（取代原顶部 scope-bar）：整合账户切换 + 全量 + 新增/重命名/删除
+// 账户隐藏：在「设置→账户管理」可隐藏某账户；隐藏后该账户从首页账户选择、持仓列表与首页合计中消失（持久化 ft_hidden_accs）
+var HIDDEN_ACCOUNTS=new Set();
+try{ (JSON.parse(localStorage.getItem('ft_hidden_accs')||'[]')||[]).forEach(function(a){ if(a) HIDDEN_ACCOUNTS.add(effAccount(a)); }); }catch(e){}
+function saveHiddenAccs(){ try{ localStorage.setItem('ft_hidden_accs', JSON.stringify([].slice.call(HIDDEN_ACCOUNTS))); }catch(e){} }
+function isAccHidden(a){ return HIDDEN_ACCOUNTS.has(effAccount(a)); }
+function accHiddenOf(f){ return HIDDEN_ACCOUNTS.has(effAccount(f.account)) || HIDDEN_ACCOUNTS.has(effAccount(f.acc)); }
+function visibleAccounts(){ return accountListOrdered().filter(function(a){ return !HIDDEN_ACCOUNTS.has(effAccount(a)); }); }
+function homeFunds(){ return (typeof fundsView!=='undefined'?fundsView:[]).filter(function(f){ return !accHiddenOf(f); }); }
+window.toggleAccHidden=function(a){
+  a=effAccount(a);
+  if(HIDDEN_ACCOUNTS.has(a)) HIDDEN_ACCOUNTS.delete(a); else HIDDEN_ACCOUNTS.add(a);
+  saveHiddenAccs();
+  if(HIDDEN_ACCOUNTS.has(a) && scopeAcc===a) setScopeAcc('all');
+  try{ if(typeof renderAccountNames==='function') renderAccountNames(); }catch(e){}
+  try{ if(typeof renderScopeBar==='function') renderScopeBar(); }catch(e){}
+  try{ if(typeof renderHomeList==='function') renderHomeList(); }catch(e){}
+  try{ if(typeof renderOverview==='function') renderOverview(); }catch(e){}
+  try{ if(typeof renderTrendSection==='function') renderTrendSection(); }catch(e){}
+  if(typeof toast==='function') toast(HIDDEN_ACCOUNTS.has(a)?('已隐藏「'+a+'」，首页不再显示'):('已显示「'+a+'」'));
+};
 function renderScopeBar(){
   const menu=document.getElementById('accMenu'); if(!menu) return;
   // 与仪表盘「基金数/胜率」卡片同口径：只算当前持有（份额=0 且非债券 且 无市值 的清仓不计入）
   const isHold=f=>!(f.shares===0 && !f.isBond && !f.pending && !(f.mv>0));
   const cntOf=a=> (a==='all')? _allRaw.filter(isHold).length : _allRaw.filter(f=>effAccount(f.account)===a && isHold(f)).length;
-  const list=accountListOrdered();
+  const list=visibleAccounts();
   let html='<div class="acc-menu-head"><span>账户选择</span></div>';
   list.forEach(a=>{
     const bi=accIsBuiltin(a);
@@ -6433,6 +6453,7 @@ function renderHomeList(){
   let list=[...fundsView];
   // 最终防线：确保列表严格匹配当前账户（防御上游 fundsView 意外混入）
   if(curAccount && curAccount!=='全部') list=list.filter(f=> (effAccount(f.account)||effAccount('本人账户'))===curAccount || (effAccount(f.acc)||effAccount('本人账户'))===curAccount);
+  else list=list.filter(f=> !accHiddenOf(f)); // 首页「全部」视图：隐藏账户不展示
   if(holdCatFilter!=='全部') list=list.filter(f=>f.cat===holdCatFilter);
   // 已清仓（净份额=0 且无市值）不进活跃持仓列表，只在「清仓」Tab 展示
   list=list.filter(f=> !(f.shares===0 && !f.isBond && !f.pending && !(f.mv>0)) );
@@ -6815,13 +6836,14 @@ const IC={
   trend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/></svg>'
 };
 function renderOverview(){
-  const total=fundsView.reduce((a,f)=>a+f.mv,0);
-  const realized=fundsView.reduce((a,f)=>a+(f.realized||0),0);
-  const win=fundsView.filter(f=>f.ret>0).length, lose=fundsView.filter(f=>f.ret<0).length, flat=fundsView.filter(f=>f.ret===0).length;
-  const cnt=fundsView.length; const _holdF=f=>!(f.shares===0 && !f.isBond && !f.pending && !(f.mv>0)); const cntHold=fundsView.filter(_holdF).length;
+  const HF=homeFunds();
+  const total=HF.reduce((a,f)=>a+f.mv,0);
+  const realized=HF.reduce((a,f)=>a+(f.realized||0),0);
+  const win=HF.filter(f=>f.ret>0).length, lose=HF.filter(f=>f.ret<0).length, flat=HF.filter(f=>f.ret===0).length;
+  const cnt=HF.length; const _holdF=f=>!(f.shares===0 && !f.isBond && !f.pending && !(f.mv>0)); const cntHold=HF.filter(_holdF).length;
   let principal=0;
   // f.cost 已是正确成本基准：有逐笔交易走 FIFO，纯快照回退 costPx×份额（buildFundsView 算好），直接求和即可，勿用交易流重算（会漏掉无交易流的快照基金）
-  fundsView.forEach(f=>{ principal+=(f.cost||0); });
+  HF.forEach(f=>{ principal+=(f.cost||0); });
   const holdGain=total-principal, holdPct=principal>0?holdGain/principal*100:0;
   const topN=Math.min(3,Math.max(1,cnt));
   const topItems=getCatAllocation().slice(0,topN);
@@ -6897,7 +6919,7 @@ function toggleHeroDayMode(){ heroDayMode=(heroDayMode==='amt'?'pct':'amt'); try
 // 资产首页（Tab 0）顶部：只显示「总资产」精简条，不再重复资产趋势（趋势仅在分析页）；不含不可靠的累计投入本金
 function renderTrendSection(){
   const box=document.getElementById('trendSection'); if(!box) return;
-  const total=fundsView.reduce((a,f)=>a+f.mv,0);
+  const total=homeFunds().reduce((a,f)=>a+f.mv,0);
   const tg=todayGain==null?'—':(todayGain>=0?'+':'−')+M(Math.abs(todayGain));
   const tgcls=todayGain==null?'ov-zero':(todayGain>=0?'ov-pos':'ov-neg');
   const estPct=weightedEstChg();
@@ -13365,7 +13387,7 @@ async function rebuildHistory(){
 
 // ---------- 启动 ----------
 // ===== 账号云同步（GitHub 私有仓库） =====
-var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_us_watch','ft_bond_watch','ft_review','ft_notes','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_acc_note','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw','ft_manual_overrides'];
+var SYNC_KEYS=['ft_data','ft_vault','ft_bond','ft_watch','ft_us_watch','ft_bond_watch','ft_review','ft_notes','ft_tags','ft_tag_order','ft_account_order','ft_cat_order','ft_scope','ft_profile','ft_alerts','ft_growth','ft_hidden','ft_hidden_accs','ft_sort','ft_sort_ver','ft_theme','ft_accent','ft_style','ft_autorefresh','ft_bond_list','ft_analysis','ft_accounts','ft_acc_rename','ft_acc_note','ft_catoverride','ft_cols','ft_colorder','ft_lock_on','ft_lock_pw','ft_manual_overrides'];
 var _syncSuppress=false,_syncTimer=null,_syncBusy=false;
 function syncCfg(){ try{ return JSON.parse(localStorage.getItem('ft_sync_cfg')||'{}'); }catch(e){ return {}; } }
 function setSyncCfg(o){ try{ localStorage.setItem('ft_sync_cfg',JSON.stringify(o)); }catch(e){} }
@@ -14340,6 +14362,11 @@ function renderSyncCfg(){
 .acc-sel-tag-all{background:#eef3ff;color:#5b8def;}
 .acc-sel-note{font-size:12px;color:var(--text-3);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .acc-sel-go{font-size:20px;color:var(--text-3);flex:0 0 auto;padding:0 2px;line-height:1;}
+.acc-hide-btn{font-size:15px;line-height:1;background:transparent;border:none;padding:2px 3px;cursor:pointer;flex:0 0 auto;opacity:.5;}
+.acc-hide-btn.on{opacity:1;}
+.acc-sel-row.acc-hidden{opacity:.5;}
+.acc-sel-row.acc-hidden .acc-sel-name{text-decoration:line-through;}
+.acc-sel-tag-hid{color:#ff9500;background:rgba(255,149,0,.12);}
 .acc-sel-actions{display:flex;align-items:center;gap:18px;margin-top:10px;padding-left:2px;}
 .acc-sel-add{color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;}
 .acc-sel-sort{color:var(--text-3);font-size:15px;cursor:pointer;}
@@ -14725,8 +14752,11 @@ function renderSyncCfg(){
       var note=getAccNote(a)||'';
       var noteHtml=note?'<span class="acc-sel-note">'+escHtml(note)+'</span>':'';
       var tag='<span class="acc-sel-tag">'+((bi?'内置':'自定义'))+'</span>';
+      var hid=isAccHidden(a);
+      var hidTag=hid?'<span class="acc-sel-tag acc-sel-tag-hid">已隐藏</span>':'';
+      var hideBtn='<button class="acc-hide-btn'+(hid?' on':'')+'" data-acc="'+escAttr(a)+'" onclick="event.stopPropagation(); toggleAccHidden(this.getAttribute(\'data-acc\'))" title="'+(hid?'取消隐藏':'在首页隐藏')+'">'+(hid?'🙈':'👁')+'</button>';
       var go='<span class="acc-sel-go" data-acc="'+escAttr(a)+'" onclick="event.stopPropagation(); openAccEdit(this.getAttribute(\'data-acc\'))">›</span>';
-      return '<div class="acc-sel-row'+sel+'" data-acc="'+escAttr(a)+'" onclick="pickAccSetting(this.getAttribute(\'data-acc\'))"><span class="acc-sel-name">'+escHtml(a)+'</span>'+tag+noteHtml+go+'</div>';
+      return '<div class="acc-sel-row'+sel+(hid?' acc-hidden':'')+'" data-acc="'+escAttr(a)+'" onclick="pickAccSetting(this.getAttribute(\'data-acc\'))"><span class="acc-sel-name">'+escHtml(a)+'</span>'+tag+noteHtml+hidTag+hideBtn+go+'</div>';
     }).join('');
     box.innerHTML=rows;
   };

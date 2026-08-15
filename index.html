@@ -4181,6 +4181,44 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .lt-date{ font-weight:700; }
   .highlight-flash{ animation:hlFlash 1.5s ease-out; }
   @keyframes hlFlash{ 0%{ box-shadow:0 0 0 0 rgba(255,149,0,.4); } 50%{ box-shadow:0 0 0 6px rgba(255,149,0,.15); } 100%{ box-shadow:0 0 0 0 rgba(255,149,0,0); } }
+  /* 费率跳转：红框闪烁 3 次后停留 0.6s 再消失（共 2.4s） */
+  .tx-flash-highlight{
+    animation: txFlashAnim 0.6s ease-in-out 4, txFlashSettle 0.4s ease-out 2.4s 1 forwards;
+    position: relative; z-index: 2;
+  }
+  @keyframes txFlashAnim{
+    0%, 100%{ box-shadow: 0 0 0 0 rgba(229,69,59,0); border-color: transparent; }
+    50%{ box-shadow: 0 0 0 3px rgba(229,69,59,.55); border-color: #e5453b; }
+  }
+  @keyframes txFlashSettle{
+    0%{ box-shadow: 0 0 0 3px rgba(229,69,59,.55); border-color: #e5453b; }
+    100%{ box-shadow: 0 0 0 0 rgba(229,69,59,0); border-color: transparent; }
+  }
+  /* 桌面表格行需要 border 显示（tr 默认无 border） */
+  tr.tx-flash-highlight{ border: 2px solid #e5453b !important; border-radius: 8px; }
+  /* 移动端卡片已有 border，加粗变色即可 */
+  .tx-card.tx-flash-highlight{ border: 2px solid #e5453b !important; }
+  /* 详情页「持有天数 / 赎回费」状态条（FIFO 算最早一批） */
+  .fee-hold-status{
+    display: flex; align-items: center; gap: 10px;
+    margin: 12px 0 0; padding: 10px 12px;
+    border-radius: 10px; cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .fee-hold-status:hover{ transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .fee-hold-status:active{ transform: translateY(0); }
+  .fee-hold-ok{ background: var(--good-bg); border-color: rgba(14,203,129,.3); }
+  .fee-hold-mid{ background: var(--accent-soft); border-color: rgba(47,111,237,.3); }
+  .fee-hold-warn{ background: #fdeaea; border-color: rgba(229,69,59,.4); }
+  [data-theme="dark"] .fee-hold-warn{ background: rgba(229,69,59,.15); }
+  .fhs-ico{ font-size: 18px; line-height: 1; flex-shrink: 0; }
+  .fhs-body{ flex: 1; min-width: 0; line-height: 1.4; }
+  .fhs-l1{ font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .fhs-l2{ font-size: 11.5px; color: var(--text-2); }
+  .fee-hold-warn .fhs-l2{ color: #b91c1c; }
+  .fee-hold-mid .fhs-l2{ color: var(--accent); }
+  .fhs-arr{ font-size: 12px; color: var(--text-3); white-space: nowrap; padding-left: 6px; }
   .tr-ios .tx-card.cancelled{ opacity:.5; }
   .tr-ios .tx-note{ font-size:12px; color:var(--text-3); margin-top:2px; }
   tr.cancelled, .tr-locked.cancelled{ opacity:.5; }
@@ -8956,6 +8994,11 @@ function updateDetailHeader(f){
   const _netLiq=_tr.filter(function(t){ return t.confirm!=='pending' && t.confirm!=='cancelled'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); return s; },0);
   set('dhNet', _tr.length?(_liq?M(_netLiq):M(_net)):'—');
   const _k=document.getElementById('dhNet')?.previousElementSibling; if(_k) _k.textContent='累计投入（交易口径）';
+  // 费率状态条：基于 FIFO 算最早一批份额的持有天数，每天都会变化，刷新净值时重渲染
+  const _fhs=document.getElementById('feeHoldStatus');
+  if(_fhs){
+    _fhs.outerHTML=feeHoldStatusHtml(f);
+  }
 }
 function dhToggleMore(){
   const body=document.getElementById('dhMoreBody');

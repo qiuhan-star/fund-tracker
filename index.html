@@ -5016,6 +5016,8 @@ function migrate(raw){
   (function(){ const _cut=new Date(); _cut.setDate(_cut.getDate()-3); const _cutStr=_cut.getFullYear()+'-'+('0'+(1+_cut.getMonth())).slice(-2)+'-'+('0'+_cut.getDate()).slice(-2);
     (data.trades||[]).forEach(t=>{ if(t.dcaId && t.confirm==='confirmed' && t.date>=_cutStr){ t.confirm='pending'; t.nav=null; t.shares=null; } });
   })();
+  // 旧版定投交易类型从 buy 迁移为 dca（区分展示为"定投"而非"买入"）
+  (data.trades||[]).forEach(t=>{ if(t.dcaId && t.type==='buy') t.type='dca'; });
   return data;
 }
 // ---------- 数据容灾：导入/同步前自动备份 + 损坏自恢复 ----------
@@ -11357,6 +11359,8 @@ async function refresh(){
   if(currentView==='detail' && detailName){ const f=findFund(detailName,detailAcc); if(f) renderIntraday(f); }
   // 定投计划自动记账（非阻塞：按计划的年月用历史净值补记买入；拉不到净值则跳过，下次刷新自动补）
   runDcaPlans().catch(function(e){ console.error('runDcaPlans failed', e); });
+  // 已过确认日的定投自动补净值（非阻塞：批量拉历史净值，拉不到则维持待确认，下次刷新自动补）
+  autoConfirmPastDcaTrades().catch(function(e){ console.error('autoConfirmPastDcaTrades failed', e); });
 }
 
 // ---------- 定投计划自动记账 ----------
@@ -11487,7 +11491,7 @@ async function runDcaPlans(){
         const time=defaultTradeTimeVal();
         const _isQDII=(snaps.find(s=>s.name===plan.name)||{}).tags?.includes('QDII')||/QDII|海外/i.test(plan.name||'');
         const _dates=calcTradeDates(per.date, time, _isQDII);
-        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:time, type:'buy', amount:amt, nav:null, fee:0, shares:null, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey, confirm:'pending', confirmDate:_dates.confirmDate.getFullYear()+'-'+pad2(_dates.confirmDate.getMonth()+1)+'-'+pad2(_dates.confirmDate.getDate())});
+        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:time, type:'dca', amount:amt, nav:null, fee:0, shares:null, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey, confirm:'pending', confirmDate:_dates.confirmDate.getFullYear()+'-'+pad2(_dates.confirmDate.getMonth()+1)+'-'+pad2(_dates.confirmDate.getDate())});
         booked.add(per.periodKey);
         added++;
       }
@@ -11549,6 +11553,38 @@ async function autoFillDcaTrade(i){
   silentSave(); compute();
   try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(_){}
   toast('已自动填入净值 '+navFmt(nav)+'，份额 '+fmt(t.shares)+' 份');
+}
+// 已过确认日的定投自动补净值（启动时/刷新时调用）
+async function autoConfirmPastDcaTrades(){
+  const _now=new Date(); _now.setHours(0,0,0,0);
+  const _fmt=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+  // 按基金代码分组，批量拉历史净值
+  const _pending=trades.filter(t=>t.dcaId && t.confirm==='pending' && t.confirmDate && new Date(t.confirmDate.replace(/-/g,'/'))<=_now && !t._confirming);
+  if(!_pending.length) return;
+  const _codeMap={};
+  for(const t of _pending){
+    t._confirming=true;
+    const code=await resolveCode(t.name);
+    if(code) _codeMap[t.name]=code;
+  }
+  // 批量拉净值
+  for(const name of Object.keys(_codeMap)){
+    const code=_codeMap[name];
+    const hist=await fetchNavHistory(code);
+    if(!hist||!hist.length) continue;
+    // 广播到该基金所有 pending 定投
+    for(const t of trades){
+      if(!t.dcaId||t.confirm!=='pending'||t.name!==name||!t._confirming) continue;
+      const _isQDII=(snaps.find(s=>s.name===name)||{}).tags?.includes('QDII')||/QDII|海外/i.test(name||'');
+      const _dates=calcTradeDates(t.date, t.time, _isQDII);
+      let best=null; for(const p of hist){ if(p.t<=_dates.navDate&&p.nav!=null) best=p.nav; }
+      if(best==null) continue;
+      t.nav=best; t.shares=+(+t.amount/best).toFixed(4); t.confirm='confirmed';
+    }
+  }
+  // 清理标记
+  _pending.forEach(t=>{ delete t._confirming; });
+  if(_pending.some(t=>t.confirm==='confirmed')){ silentSave(); compute(); }
 }
 function buildDcaSection(){
   const total=dcaPlans.length, active=dcaActiveCount();

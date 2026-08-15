@@ -9256,8 +9256,8 @@ function buildTradeSection(f){
         const accTxt=accOf(t);
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
         const _pend=t.confirm==='pending';
-        const navTxt=_pend?(t.dcaId?'净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
-        const shareTxt=_pend?(t.dcaId?'份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
+        const navTxt=_pend?(t.dcaId?'⏳净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
+        const shareTxt=_pend?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
         const convertTxt=(t.type==='convert_out'||t.type==='convert')?function(){
           const ct=t.convertTarget;
           if(ct) return '<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(ct)+'</div>';
@@ -9313,7 +9313,7 @@ function buildTradeSection(f){
             <td class="num">${t.confirm==='pending'?(t.dcaId?`<button class="lk" onclick="event.stopPropagation();autoFillDcaTrade(${i})" title="自动填入当日净值并确认">一键确认</button>`:'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—')}</td>
             <td class="num">${t.fee?M(t.fee):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
-            <td class="num">${t.confirm==='pending'?(t.dcaId?'份额待确认':'待确认'):(t.shares!=null&&t.shares!==''?fmt(t.shares):'—')}</td>
+            <td class="num">${t.confirm==='pending'?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''?fmt(t.shares):'—')}</td>
             <td><button class="lk" title="编辑" onclick="openTradeEdit(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="lk" title="复制" onclick="copyTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>${ t.dcaId ? ' '+dcaActBtn(t,i) : '' }</td>
           </tr>`;
       });
@@ -10218,8 +10218,8 @@ function openAllTrades(){
     if(_mobile){
       const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
       const _pend=t.confirm==='pending';
-      const navTxt=_pend?(t.dcaId?'净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
-      const shareTxt=_pend?(t.dcaId?'份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
+      const navTxt=_pend?(t.dcaId?'⏳净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
+      const shareTxt=_pend?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
       return "<div class='at-card' onclick='atGo(\""+enc+"\",\""+esc(acc)+"\")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
     }
     return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?(t.dcaId?"<button class=\"lk\" onclick=\"event.stopPropagation();autoFillDcaTrade("+trades.indexOf(t)+")\">一键确认</button>":'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
@@ -11536,12 +11536,12 @@ async function autoFillDcaTrade(i){
         const _isQDII=(snaps.find(s=>s.name===name)||{}).tags?.includes('QDII')||/QDII|海外/i.test(name||'');
         const _dates=calcTradeDates(t.date, t.time, _isQDII);
         const navDate=_dates.navDate;
-        // 在历史净值中找到 navDate 当天或之前最近一个交易日的净值
-        let exact=null; for(const p of hist){ if(p.t.getFullYear()===navDate.getFullYear() && p.t.getMonth()===navDate.getMonth() && p.t.getDate()===navDate.getDate() && p.nav!=null){ exact=p.nav; break; } }
-          if(exact!=null) nav=exact;
-      }
+           // 优先精确匹配 navDate 当天；当天没有则回退到最近前一交易日
+        let exact=null; for(const p of hist){ if(p.t.getFullYear()===navDate.getFullYear() && p.t.getMonth()===navDate.getMonth() && p.getDate()===navDate.getDate() && p.nav!=null){ exact=p.nav; break; } }
+        let best=null; for(const p of hist){ if(p.t<=navDate && p.nav!=null) best=p.nav; }
+        nav=(exact!=null)?exact:best;      }
     }
-    // 严格模式：不回退到最新净值，避免用非 navDate 当天净值填错份额
+    // 兜底策略：优先精确日期，其次最近前值
   }
   if(nav==null){
     const cd=t.confirmDate;
@@ -11580,9 +11580,12 @@ async function autoConfirmPastDcaTrades(){
       if(!t.dcaId||t.confirm!=='pending'||t.name!==name||!t._confirming) continue;
       const _isQDII=(snaps.find(s=>s.name===name)||{}).tags?.includes('QDII')||/QDII|海外/i.test(name||'');
       const _dates=calcTradeDates(t.date, t.time, _isQDII);
+      // 优先精确匹配 navDate 当天；没有则回退到最近前一交易日
       let exact=null; for(const p of hist){ if(p.t.getFullYear()===_dates.navDate.getFullYear() && p.t.getMonth()===_dates.navDate.getMonth() && p.t.getDate()===_dates.navDate.getDate() && p.nav!=null){ exact=p.nav; break; } }
-      if(exact==null) continue;  // navDate 当天净值尚未公布，保持待确认
-      t.nav=exact; t.shares=+(+t.amount/exact).toFixed(4); t.confirm='confirmed';
+      let _best=null; for(const p of hist){ if(p.t<=_dates.navDate && p.nav!=null) _best=p.nav; }
+      const _nav=(exact!=null)?exact:_best;
+      if(_nav==null) continue;
+      t.nav=_nav; t.shares=+(+t.amount/_nav).toFixed(4); t.confirm='confirmed';
     }
   }
   // 清理标记

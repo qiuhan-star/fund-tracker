@@ -4553,7 +4553,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <div class="tq-more-head" onclick="teToggleMore()"><span>更多选项 <span class="tq-more-hint">净值、手续费、份额</span></span><span id="teMoreChev" class="tq-more-chev">▾</span></div>
           <div class="tq-more-body" id="teMoreFields">
             <div class="tq-more-row"><span>净值</span><span class="v"><input id="te-nav" class="num" type="number" step="any" inputmode="decimal" placeholder="留空 = T+1" oninput="teUpdateDerived()"></span></div>
-            <div class="tq-more-row"><span>手续费（元）</span><span class="v"><input id="te-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="0"></span></div>
+            <div class="tq-more-row"><span>手续费（元）</span><span class="v" style="display:flex;gap:6px;align-items:center"><input id="te-fee" class="num" type="number" step="any" inputmode="decimal" placeholder="实付 0" style="width:70px"> <span style="color:var(--text-3);font-size:11px">减</span> <input id="te-fee-waived" class="num" type="number" step="any" inputmode="decimal" placeholder="减免 0" style="width:70px" title="原应付 - 实付 = 减免额（可不填）"></span></div>
             <div class="tq-more-row" id="teSharesRow"><span>份额</span><span class="v"><input id="te-shares-more" class="num" type="number" step="any" inputmode="decimal" placeholder="自动换算" oninput="teSyncSharesMore()"></span></div>
             <div class="tq-more-row"><span>净值确认日</span><span class="v"><input id="te-confirmDate" type="date"></span></div>
           </div>
@@ -6686,7 +6686,7 @@ function homeMobileCellOf(fd,key){
   if(key==='day'){ const nc2=navCache[fd.name]||{}; const mkt=isMarketOpen(new Date()); const offChg=nc2.navChg!=null?nc2.navChg:null; const offDate=nc2.navChgDate?nc2.navChgDate:''; const fresh=offDate===fmtDate(new Date()); const est=nc2.gszzl!=null?nc2.gszzl:null; const estTime=fmtGzTime(nc2.gztime||''); if(fresh&&offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+' day-fresh">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; if(est!=null){ const sub=mkt?(estTime||'实时'):(estTime||'今日估算'); return '<td class="cnum '+(est>=0?'pos':'neg')+'">'+(est>=0?'+':'')+est.toFixed(2)+'%<div class="csub" style="margin-top:2px;color:var(--text-3)">'+sub+'</div></td>'; } if(offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+'">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; return '<td class="cnum zero">—</td>'; }
   if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
-  if(key==='fee'){ const _ft=(+fd.feeTotal||0); return _ft>0?'<td class="cnum">¥'+_ft.toFixed(2)+'<div class="csub" style="margin-top:2px">累计</div></td>':'<td class="cnum zero">—</td>'; }
+  if(key==='fee'){ const _ft=(+fd.feeTotal||0), _fw=(+fd.feeWaivedTotal||0); if(_ft<=0) return '<td class="cnum zero">—</td>'; const _sub=_fw>0?('<div class="csub" style="margin-top:2px">减¥'+_fw.toFixed(2)+'</div>'):''; return '<td class="cnum">¥'+_ft.toFixed(2)+_sub+'</td>'; }
   if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+_fmtRet(fd.ret)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='nav'){ const d=(nc.date!=null)?String(nc.date).slice(5):''; return nc.nav!=null?'<td class="cnum">'+navFmt(nc.nav)+'<div class="csub" style="margin-top:2px">'+d+'</div></td>':'<td class="cnum zero">—</td>'; }
   if(key==='mv'){ return fd.mv!=null?'<td class="cnum">'+M(fd.mv)+'</td>':'<td class="cnum zero">—</td>'; }
@@ -7978,16 +7978,23 @@ function buildFundsView(){
         if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+(+t.fee||0);
         return s;
       }, 0);
+      // 累计减免额（列表列用）：仅 buy/convert/dca/activity/reinvest；撤单不计入；t.feeWaived 缺省视为 0
+      const feeWaivedTotal=tr.reduce(function(s,t){
+        if(t.confirm==='cancelled') return s;
+        const ty=t.type||'buy';
+        if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+(+t.feeWaived||0);
+        return s;
+      }, 0);
       if(shares===0 && snap && !hasSell){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(navCache[name]?navCache[name].nav:null)),trades:tr,realized:0,feeTotal};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(navCache[name]?navCache[name].nav:null)),trades:tr,realized:0,feeTotal,feeWaivedTotal};
       } else if(shares===0 && invested>0 && !hasSell){
         // 待补全：有投入金额但份额/净值均缺失，且联网也查不到净值（离线 / 名称未匹配到代码）→ 成本认投入、市值待补全，避免被「份额=0 即隐藏」规则吞掉
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:0,cost:invested,mv:null,profit:null,ret:null,days:null,nav:null,costPx:null,trades:tr,realized:0,pending:true,feeTotal};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:0,cost:invested,mv:null,profit:null,ret:null,days:null,nav:null,costPx:null,trades:tr,realized:0,pending:true,feeTotal,feeWaivedTotal};
       } else {
         const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:(lastNav>0?lastNav:0));
         const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized,invested,feeTotal};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized,invested,feeTotal,feeWaivedTotal};
       }
     } else {
       // 纯快照基金：金额 = 份额 × 最新官方净值（navCache 联网刷新即重算）；离线/无净值时回退快照
@@ -7998,7 +8005,7 @@ function buildFundsView(){
       const mv=(ss&&liveNav!=null)?ss*liveNav:(snap?snap.mv:0);
       const profit=mv-cost, ret=cost>0?profit/cost*100:(snap?snap.ret:0);
       const nav=liveNav!=null?liveNav:(snap?snap.nav||null:null);
-      f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0,feeTotal:(snap&&snap.feeTotal!=null)?snap.feeTotal:0};
+      f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0,feeTotal:(snap&&snap.feeTotal!=null)?snap.feeTotal:0,feeWaivedTotal:(snap&&snap.feeWaivedTotal!=null)?snap.feeWaivedTotal:0};
     }
     // 买入待确认金额计入持有金额（支付宝逻辑：买入待确认部分已扣款，计入总资产）
     const _pendingBuy = tr.filter(t => t.confirm==='pending' && (t.type==='buy'||t.type==='dca'||t.type==='convert'))
@@ -9380,6 +9387,7 @@ function buildTradeSection(f){
             <td class="num">${M(t.amount)}</td>
             <td class="num">${t.confirm==='pending'?(t.dcaId?`<button class="lk" onclick="event.stopPropagation();autoFillDcaTrade(${i})" title="自动填入当日净值并确认">一键确认</button>`:'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—')}</td>
             <td class="num">${t.fee?M(t.fee):'—'}</td>
+            <td class="num">${t.feeWaived?M(t.feeWaived):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
             <td class="num">${t.confirm==='pending'?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''?fmt(t.shares):'—')}</td>
             <td><button class="lk" title="编辑" onclick="openTradeEdit(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="lk" title="复制" onclick="copyTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>${ t.dcaId ? ' '+dcaActBtn(t,i) : '' }</td>
@@ -9784,6 +9792,7 @@ function openTradeEdit(idx){
     // 填充更多选项
     var nav=g('te-nav'); if(nav) nav.value=(t.nav!=null&&t.nav!=='')?t.nav:'';
     var fee=g('te-fee'); if(fee) fee.value=t.fee||'';
+  var fw=g('te-fee-waived'); if(fw) fw.value=t.feeWaived||'';
     var cd=g('te-confirmDate'); if(cd) cd.value=t.confirmDate||'';
     var note=g('te-note'); if(note) note.value=t.note||'';
     // 折叠更多选项
@@ -9879,6 +9888,7 @@ function saveTradeEdit(){
   t.confirm=g('te-confirm').value||'confirmed';
   t.nav=(nav>0)?nav:null;
   t.fee=+g('te-fee').value||0;
+  t.feeWaived=+g('te-fee-waived').value||0;
   t.confirmDate=g('te-confirmDate').value||'';
   t.note=(g('te-note').value||'').trim();
   // 转换目标基金
@@ -12584,7 +12594,8 @@ const IMPORT_COLUMNS=[
   {key:'code',    label:'代码',        aliases:['代码','代号','证券代码','ticker','编码']},
   {key:'type',    label:'业务类型',    aliases:['业务类型','方向','类型','买卖','操作']},
   {key:'amount',  label:'申请金额(元)', aliases:['申请金额','申请金额(元)','金额','份额金额','成交金额','资金','金额元']},
-  {key:'fee',     label:'手续费(元)',  aliases:['手续费','手续费(元)','费用','佣金','申购费','赎回费']},
+  {key:'fee',     label:'手续费(元)',  aliases:['手续费','手续费(元)','费用','佣金','实付手续费']},
+  {key:'feeWaived', label:'减免额(元)',  aliases:['减免额','减免额(元)','减免','优惠','优惠额','手续费减免']},
   {key:'nav',     label:'确认净值',    aliases:['确认净值','净值','单价','成交净值','单位净值']},
   {key:'confirmDate', label:'净值确认日期', aliases:['净值确认日期','净值/确认日期','确认日期','份额确认日','净值确认日','T日','T+1日']},
   {key:'date',    label:'交易日',      aliases:['交易日','交易日（买入时间）','日期','时间','买入日','成交日','交易日期']},
@@ -12597,7 +12608,7 @@ function parseCSV(text, defaultAcc, forceAcc){
   if(!lines.length) return {count:0, dup:0, rows:[]};
   const split=l=>l.split(l.includes('\t')?/\t+/:/[,，]/).map(s=>s.trim().replace(/^"|"$/g,''));
   const head=split(lines[0]);
-  const col={name:-1,cat:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
+  const col={name:-1,cat:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,feeWaived:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
   const kw={};
   IMPORT_COLUMNS.forEach(function(c){ kw[c.key]=c.aliases; });
   kw.account=['账户','账号','平台','来源']; kw.market=['市场','交易所','地区']; kw.code=['代码','代号','证券代码','ticker']; kw.shares=['份额','份数','持仓份额','股数','数量','持股数','股份']; kw.price=['价格','成交价','现价','市价'];
@@ -12608,7 +12619,7 @@ function parseCSV(text, defaultAcc, forceAcc){
   let start=1; const added=[];
   // 无表头判断：只有「名称列 + 任一关键列(日期/金额/方向)」都被识别时才当表头；否则(首行就是数据、或基金名恰含「基金」被误命中名称列)按列序解析，避免首行数据被当表头跳过
   const looksLikeHeader = col.name>=0 && (col.date>=0||col.amount>=0||col.type>=0);
-  if(!looksLikeHeader){ col.name=0; col.date=1; col.type=2; col.amount=3; col.nav=4; col.fee=5; start=0; }
+  if(!looksLikeHeader){ col.name=0; col.date=1; col.type=2; col.amount=3; col.nav=4; col.fee=5; col.feeWaived=6; start=0; }
   for(let i=start;i<lines.length;i++){
     const c=split(lines[i]);
     if(c.length<2) continue;
@@ -12621,9 +12632,10 @@ function parseCSV(text, defaultAcc, forceAcc){
       const sh=col.shares>=0?parseFloat(String(c[col.shares]).replace(/[^\d.\-]/g,''))||0:0;
       const pr=col.price>=0?parseFloat(String(c[col.price]).replace(/[^\d.\-]/g,''))||0:0;
       const feS=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
+      const fwS=col.feeWaived>=0?parseFloat(String(c[col.feeWaived]).replace(/[^\d.\-]/g,''))||0:0;
       const amtS=col.amount>=0?parseFloat(String(c[col.amount]).replace(/[^\d.\-]/g,''))||0:0;
       if(!(sh||pr||amtS)) continue;
-      const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({type:'stock',market:m,code:codeRaw,name:nameS,date:dateS,ttype:tt,shares:sh,price:pr,fee:feS,amount:amtS,cat:catV});
+      const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({type:'stock',market:m,code:codeRaw,name:nameS,date:dateS,ttype:tt,shares:sh,price:pr,fee:feS,feeWaived:fwS,amount:amtS,cat:catV});
       continue;
     }
     const name=col.name>=0?c[col.name]:''; if(!name) continue;
@@ -12636,6 +12648,7 @@ function parseCSV(text, defaultAcc, forceAcc){
     const navRaw=col.nav>=0?c[col.nav]:null;
     const nav=(navRaw!=null&&navRaw!=='')?parseFloat(String(navRaw).replace(/[^\d.\-]/g,''))||0:null;
     const fee=col.fee>=0?parseFloat(String(c[col.fee]).replace(/[^\d.\-]/g,''))||0:0;
+    const feeWaived=col.feeWaived>=0?parseFloat(String(c[col.feeWaived]).replace(/[^\d.\-]/g,''))||0:0;
     const shRaw=col.shares>=0?c[col.shares]:null;
     const sh=(shRaw!=null&&shRaw!=='')?parseFloat(String(shRaw).replace(/[^\d.\-]/g,''))||0:null;
     const rawAcc = forceAcc ? (defaultAcc||'') : (col.account>=0 ? c[col.account] : (defaultAcc||''));
@@ -12644,7 +12657,7 @@ function parseCSV(text, defaultAcc, forceAcc){
     const confirm = col.confirm>=0 ? mapConfirm(c[col.confirm]) : 'confirmed';
     const note = col.note>=0 ? String(c[col.note]||'').trim() : '';
     const confirmDate = col.confirmDate>=0 ? String(c[col.confirmDate]||'').trim() : '';
-    const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({name,date,time,type,amount,nav,fee,account,shares:sh,confirm,note,cat:catV,confirmDate:confirmDate});
+    const catV=col.cat>=0?String(c[col.cat]||'').trim():''; added.push({name,date,time,type,amount,nav,fee,feeWaived,account,shares:sh,confirm,note,cat:catV,confirmDate:confirmDate});
   }
   // 注册导入中出现的未知账户，避免塌缩进「本人账户」或成孤儿账户（下拉/口径筛选都找不到）
   const _accSeen={}; added.forEach(t=>{ const a=normalizeAccount(t.account); if(a && !_accSeen[a]){ _accSeen[a]=1; registerImportAccount(a); } });
@@ -12660,7 +12673,7 @@ function parseCSV(text, defaultAcc, forceAcc){
   for(const t of added){
     const k=matchKey(t); const grp=byMatch[k]||[];
     let hit=grp.find(e=> normNum(e.nav)===normNum(t.nav));
-    if(!hit){ hit=grp.find(e=> !e.nav || normNum(e.nav)!==normNum(t.nav)); if(hit){ if(t.nav) hit.nav=t.nav; if(t.shares) hit.shares=t.shares; if(t.fee) hit.fee=t.fee; } }
+    if(!hit){ hit=grp.find(e=> !e.nav || normNum(e.nav)!==normNum(t.nav)); if(hit){ if(t.nav) hit.nav=t.nav; if(t.shares) hit.shares=t.shares; if(t.fee) hit.fee=t.fee; if(t.feeWaived) hit.feeWaived=t.feeWaived; } }
     if(hit) dup++; else fresh.push(t);
   }
   // 注意：解析阶段不要写入 trades —— 写入统一由 commitImpPreview 在确认导入时执行一次，
@@ -12679,14 +12692,14 @@ function parsePaste(text, defaultAcc, forceAcc){
   const kwP={}; IMPORT_COLUMNS.forEach(function(c){ kwP[c.key]=c.aliases; });
   kwP.account=['账户','账号','平台','来源']; kwP.market=['市场','交易所','地区']; kwP.code=['代码','代号','证券代码','ticker','编码']; kwP.shares=['份额','份数','持仓份额','股数','数量','持股数','股份']; kwP.price=['价格','成交价','现价','市价'];
   const head=splitCsv(rawLines[0]);
-  const col={name:-1,cat:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
+  const col={name:-1,cat:-1,date:-1,type:-1,amount:-1,nav:-1,fee:-1,feeWaived:-1,account:-1,market:-1,code:-1,shares:-1,price:-1,confirm:-1,note:-1};
   const find=(arr)=>{ let bi=-1,bs=0; for(let i=0;i<head.length;i++){ for(const k of arr){ if(head[i].includes(k)){ const sc=k.length*2+(head[i]===k?1:0); if(sc>bs){ bi=i; bs=sc; } } } } return bi; };
   Object.keys(kwP).forEach(function(k){ col[k]=find(kwP[k]); });
   const looksHeader = col.name>=0 && (col.date>=0||col.amount>=0||col.type>=0);
   let start=0;
-  if(looksHeader){ start=1; } else { col.name=0; col.cat=1; col.date=2; col.type=3; col.amount=4; col.nav=5; col.fee=6; col.shares=7; col.account=8; col.confirm=9; col.note=10; }
+  if(looksHeader){ start=1; } else { col.name=0; col.cat=1; col.date=2; col.type=3; col.amount=4; col.nav=5; col.fee=6; col.feeWaived=7; col.shares=8; col.account=9; col.confirm=10; col.note=11; }
   const added=[];
-  function pushRow(name,date,type,amount,nav,fee,shares,account,confirm,note,cat,confirmDate){
+  function pushRow(name,date,type,amount,nav,fee,feeWaived,shares,account,confirm,note,cat,confirmDate){
     if(!name) return;
     if(/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(name)) return; // 跳过模板说明行/示例行/注释行
     const _dt=(function(s){ s=String(s||'').trim(); const m=s.match(/^(\d{4}[-/]\d{1,2}[-/]\d{1,2})(?:[ T](\d{1,2}:\d{2}(?::\d{2})?))?/); return m?{date:m[1].replace(/\//g,'-'),time:(m[2]&&m[2].slice(0,5)!=='00:00'?m[2].slice(0,5):'')}:{date:String(s||'').replace(/\//g,'-'),time:''}; })(date);
@@ -12695,10 +12708,11 @@ function parsePaste(text, defaultAcc, forceAcc){
     const amt=parseFloat(String(amount).replace(/[^\d.\-]/g,''))||0;
     const nv=(nav!=null&&nav!=='')?parseFloat(String(nav).replace(/[^\d.\-]/g,''))||0:null;
     const feS=parseFloat(String(fee).replace(/[^\d.\-]/g,''))||0;
+    const fwS=parseFloat(String(feeWaived).replace(/[^\d.\-]/g,''))||0;
     const sh=(shares!=null&&shares!=='')?parseFloat(String(shares).replace(/[^\d.\-]/g,''))||0:null;
     const acc=normalizeAccount(account?account:(defaultAcc||''));
     if(!(amt||nv||sh)) return;
-    added.push({name:name,date:dt,time:tm,type:tType,amount:amt,nav:nv,fee:feS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||'',confirmDate:confirmDate||''});
+    added.push({name:name,date:dt,time:tm,type:tType,amount:amt,nav:nv,fee:feS,feeWaived:fwS,account:acc,shares:sh,confirm:(confirm?mapConfirmPaste(confirm):'confirmed'),note:note||'',cat:cat||'',confirmDate:confirmDate||''});
   }
   for(let i=start;i<rawLines.length;i++){
     const raw=rawLines[i];
@@ -12721,6 +12735,7 @@ function parsePaste(text, defaultAcc, forceAcc){
     const amount=col.amount>=0?c[col.amount]:'';
     const nav=col.nav>=0?c[col.nav]:'';
     const fee=col.fee>=0?c[col.fee]:'';
+    const feeWaived=col.feeWaived>=0?c[col.feeWaived]:'';
     const shares=col.shares>=0?c[col.shares]:'';
     const account=col.account>=0?c[col.account]:'';
     const confirm=col.confirm>=0?c[col.confirm]:'';
@@ -12729,7 +12744,7 @@ function parsePaste(text, defaultAcc, forceAcc){
     let cat='';
     if(looksHeader && col.cat>=0 && c[col.cat] && !/^(#|\/\/|说明[:：]|注释[:：]|样例[:：]|示例[:：])/.test(String(c[col.cat]))) cat=String(c[col.cat]).trim();
     const rawAcc=forceAcc?(defaultAcc||''):(account||(defaultAcc||''));
-    pushRow(name,date,type,amount,nav,fee,shares,rawAcc,confirm,note,cat,confirmDate);
+    pushRow(name,date,type,amount,nav,fee,feeWaived,shares,rawAcc,confirm,note,cat,confirmDate);
   }
   // 导入「类别」列 -> 写入分类覆盖（与页面内 catMenu 同一持久化通道），让持仓按 Excel 类别归类
   added.forEach(function(t){ if(t.cat){ catOverride[t.name]=t.cat; } });

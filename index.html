@@ -11388,6 +11388,57 @@ function navOnOrBefore(hist, dateStr){
   for(const p of arr){ const ds=p.t.getFullYear()+'-'+pad2(p.t.getMonth()+1)+'-'+pad2(p.t.getDate()); if(ds<=dateStr){ best=p.nav; } else break; }
   return best;
 }
+// ---------- 交易日历 ----------
+// 中国法定节假日（不含调休上班日，仅列出实际休市日期）
+// 来源：国务院办公厅每年发布，以下为 2026 年已知日期
+const HOLIDAYS=new Set([
+  '2026-01-01', // 元旦
+  '2026-01-02','2026-01-03',
+  '2026-02-14','2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-02-20', // 春节
+  '2026-04-04','2026-04-05','2026-04-06', // 清明
+  '2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05', // 劳动节
+  '2026-06-25','2026-06-26','2026-06-27', // 端午
+  '2026-09-26','2026-09-27','2026-09-28','2026-09-29','2026-09-30', // 中秋+国庆前段
+  '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07', // 国庆
+]);
+function isTradingDay(d){
+  const dow=d.getDay();
+  if(dow===0||dow===6) return false;
+  const y=d.getFullYear(), m=pad2(d.getMonth()+1), day=pad2(d.getDate());
+  return !HOLIDAYS.has(y+'-'+m+'-'+day);
+}
+function nextTradingDay(d){
+  const nd=new Date(d);
+  do{ nd.setDate(nd.getDate()+1); }while(!isTradingDay(nd));
+  return nd;
+}
+// 定投净值/确认日期计算
+// tradeDate: 扣款日期 "2026-03-10",  tradeTime: "15:00"
+// isQDII: 海外基金延迟一档
+// 返回 { navDate: Date, confirmDate: Date }
+function calcTradeDates(tradeDate, tradeTime, isQDII){
+  const d=new Date(String(tradeDate).replace(/-/g,'/'));
+  d.setHours(0,0,0,0);
+  // 若扣款日在非交易日，顺延至下一个交易日
+  let T=new Date(d);
+  while(!isTradingDay(T)) T.setDate(T.getDate()+1);
+  // 15:00 分界：15:00 后算下一交易日
+  const afterCutoff = tradeTime && tradeTime > '15:00';
+  if(afterCutoff){
+    T = nextTradingDay(T);
+  }
+  const navDate = new Date(T);
+  // 确认日
+  let confirmDate;
+  if(isQDII){
+    // QDII: T+2 确认份额
+    confirmDate = nextTradingDay(nextTradingDay(T));
+  } else {
+    // 普通基金: T+1 确认份额
+    confirmDate = nextTradingDay(T);
+  }
+  return { navDate, confirmDate: confirmDate };
+}
 let _dcaRunning=false;
 async function runDcaPlans(){
   if(_dcaRunning) return;
@@ -11408,7 +11459,10 @@ async function runDcaPlans(){
       for(const per of periods){
         if(booked.has(per.periodKey)) continue;
         const amt=+(plan.amount||0); if(amt<=0) continue;
-        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:defaultTradeTimeVal(), type:'buy', amount:amt, nav:null, fee:0, shares:null, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey, confirm:'pending'});
+        const time=defaultTradeTimeVal();
+        const _isQDII=(snaps.find(s=>s.name===plan.name)||{}).tags?.includes('QDII')||/QDII|海外/i.test(plan.name||'');
+        const _dates=calcTradeDates(per.date, time, _isQDII);
+        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:time, type:'buy', amount:amt, nav:null, fee:0, shares:null, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey, confirm:'pending', confirmDate:_dates.confirmDate.getFullYear()+'-'+pad2(_dates.confirmDate.getMonth()+1)+'-'+pad2(_dates.confirmDate.getDate())});
         booked.add(per.periodKey);
         added++;
       }

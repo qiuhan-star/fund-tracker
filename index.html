@@ -3775,7 +3775,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
           <button type="button" class="flt-btn" id="filterBtn" onclick="toggleFilterPop(event)">筛选<span class="flt-caret"></span><span class="flt-badge" id="filterBadge" style="display:none"></span></button>
           <div class="filter-pop" id="filterPop" style="display:none">
             <div class="pop-sec">标签</div>
-            <div class="cat-filter" id="tagFilter"><button class="cat-chip on" onclick="toggleTag(null)">全部</button><button class="cat-chip" onclick="toggleTag('观察')">观察</button></div>
+            <div class="cat-filter" id="tagFilter"><button class="cat-chip on" onclick="toggleTag(null)">全部</button></div>
             <div class="pop-sec">分组</div>
             <div class="cat-filter" id="groupByFilter"><div class="seg"><button class="on" onclick="filterGroupBy('none')">不分组</button><button class="" onclick="filterGroupBy('asset')">资产大类</button><button class="" onclick="filterGroupBy('market')">市场区域</button></div></div>
           </div>
@@ -4905,7 +4905,6 @@ function _renameAccountRaw(oldName, nv){
 }
 function updateScopeUI(){ renderScopeBar(); }
 let curAccount='全部', pendingAcc=null;
-const GROUP_OBS_MV=700;
 function accOf(x){ return (x&&x.account)?x.account:effAccount('本人账户'); }
 function accKey(acc,name){ return acc+'||'+name; }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
@@ -6068,11 +6067,9 @@ let holdComp=false;
 function holdSearchInputEv(e){ if(e.isComposing||holdComp) return; setHoldSearch(e.target.value); }
 function setHoldSearch(v){ holdSearch=v; if(currentView==='home'&&activeTab===0) renderHomeList(); }
 
-// ---------- 标签筛选（你打的标签 + 自动「观察」，可多选叠加）----------
+// ---------- 标签筛选（你打的标签，可多选叠加）----------
 function effectiveTags(f){
-  const t=(userTags[syncCode(f.name)]||f.tags||[]).slice();
-  if((f.mv||0)<=GROUP_OBS_MV && t.indexOf('观察')<0) t.push('观察');
-  return t;
+  return (userTags[syncCode(f.name)]||f.tags||[]).slice();
 }
 // 标签显示顺序：默认按出现顺序，再按 ft_tag_order 排序；排过序的在前，未排的追加在后
 function tagListOrdered(){
@@ -6487,7 +6484,7 @@ function renderHomeList(){
   // 动态标题：跟随当前账户
   const ht=document.getElementById('holdTitle'); if(ht) ht.textContent=(curAccount==='全部'||!curAccount)?'全部持仓':(effAccount(curAccount)+'持仓');
   if(holdSearch){ const q=holdSearch.trim().toLowerCase(); list=list.filter(f=> f.name.toLowerCase().includes(q) || (syncCode(f.name)||'').toLowerCase().includes(q) || (f.cat||'').toLowerCase().includes(q)); }
-  // 标签多选叠加：选中的标签必须全部命中（观察=小仓位自动打 + 手动标签）
+  // 标签多选叠加：选中的标签必须全部命中
   if(tagFilter.size){ list=list.filter(f=>{ const et=effectiveTags(f); return [...tagFilter].every(t=> et.indexOf(t)>=0); }); }
   // 自选（未持仓）区块 —— 已移除（自选只在自选 Tab 展示，避免与持仓重复）
   const obsHtml='';

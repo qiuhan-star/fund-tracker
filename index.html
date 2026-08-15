@@ -994,6 +994,14 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .dt-name { font-size: 13.5px; line-height: 1.3; }
   .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; display: flex; flex-wrap: nowrap; white-space: nowrap; }
   .dense-table .dt-sub .val { font-size: 11px; font-weight: 600; color: var(--text); }
+  .dense-table .col-note { width: 44px; min-width: 44px; text-align: center; padding: 0 4px; }
+  .dense-table .note-btn { display: inline-flex; align-items: center; justify-content: center; gap: 2px; min-width: 30px; height: 30px; padding: 0 5px; border: none; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
+  .dense-table .note-btn.has { color: var(--accent, #3b82f6); }
+  .dense-table .note-btn:active { background: var(--surface-2, #f1f3f5); }
+  .dense-table .note-btn .note-ico { display: inline-flex; width: 15px; height: 15px; }
+  .dense-table .note-btn .note-ico svg { width: 15px; height: 15px; display: block; }
+  .dense-table .note-btn .note-cnt { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .dense-table .note-btn .note-add { font-size: 16px; line-height: 1; color: var(--text-3); opacity: .55; }
   .dense-table .dt-sub .tog-mini { width: 18px; height: 18px; font-size: 10px; }
   .dense-table .dcode { font-size: 10.5px; color: var(--text-2); font-weight: 500; font-variant-numeric: tabular-nums; }
   .dense-table .dt-streak { margin-top: 2px; min-height: 0; }
@@ -5954,20 +5962,21 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false};
+let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
-const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额'};
-const COL_KEYS=['nav','day','ret','hold'];
-const DEFAULT_COL_ORDER=['day','ret','hold','nav'];
-const COL_ORDER_VER='8';
-const COLVIS_VER='3';
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,note:o.note!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
+const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',note:'笔记'};
+const NOTE_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const COL_KEYS=['nav','day','ret','hold','note'];
+const DEFAULT_COL_ORDER=['day','ret','hold','note','nav'];
+const COL_ORDER_VER='9';
+const COLVIS_VER='4';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
 try{ if(localStorage.getItem('ft_colorder_ver')!==COL_ORDER_VER){ colOrder=DEFAULT_COL_ORDER.slice(); saveColOrder(); } }catch(e){}
-try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
+try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; colExtraTouched=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_cols_extra','1'); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }
@@ -6487,10 +6496,12 @@ function denseHeadHtml(){
   let headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const cls = 'sortable col-'+c.key+(active?' sort-on':'')+(c.key==='name'?'':' col-drag');
-    const drag = c.key==='name' ? '' : ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"`;
-    const tip = c.key==='name' ? '' : ` title="点击排序 · 拖动列头换列"`;
-    return `<th class="${cls}" onclick="toggleSortHeader('${c.key}')"${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
+    const _sortable = (c.key!=='name' && c.key!=='note');
+    const cls = (_sortable?'sortable ':'')+'col-'+c.key+(active?' sort-on':'')+(_sortable?' col-drag':'');
+    const drag = _sortable ? ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"` : '';
+    const tip = _sortable ? ` title="点击排序 · 拖动列头换列"` : '';
+    const _onclick = _sortable ? ` onclick="toggleSortHeader('${c.key}')"` : '';
+    return `<th class="${cls}"${_onclick}${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
   }).join('');
   headHtml += `<th class="th-col" style="position:relative"><button type="button" class="col-toggle" onclick="toggleColPop(event)">≡ 列</button><div class="col-pop" id="colPop"></div></th>`;
   return headHtml;
@@ -6540,6 +6551,7 @@ function denseRowsHtml(list){
       else if(c.key==='hold'){ const _pc=(f.profit==null||f.pending)?'—':((f.profit>=0?'+':'')+M(f.profit)); const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.profit==null||f.pending)?'zero':(f.profit>=0?'pos':'neg'); tds+=`<td class="col-hold ${_cc}"><div class="dt-big">${_pc}</div><div class="dt-sub2">${_rc}</div></td>`; }
       else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="col-holdpct ${_cc}"><div class="dt-big">${_rc}</div></td>`; }
       else if(c.key==='mv')  tds+=`<td class="col-mv"><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
+      else if(c.key==='note'){ const _nc2=fundNoteCount(f.name); tds+=`<td class="col-note"><button type="button" class="note-btn${_nc2?' has':''}" onclick="event.stopPropagation();openFundReview('${esc(f.name)}')" title="${_nc2?('查看 '+_nc2+' 条笔记'):'添加笔记'}">${_nc2?('<span class="note-ico">'+NOTE_ICON+'</span><span class="note-cnt">'+_nc2+'</span>'):'<span class="note-add">＋</span>'}</button></td>`; }
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：盘中优先用实时估算 gszzl；收盘后用基金公司确认的 navChg，与官方昨日收益对齐。
         const _chg=effectiveDayChg(nc);
@@ -8245,6 +8257,10 @@ function reviewExportJSON(){ const p={app:'fund-tracker',type:'review-notes',ver
 function reviewImport(input){ const f=input.files[0]; if(!f) return; const r=new FileReader(); r.onload=function(){ try{ const d=JSON.parse(r.result); const arr=Array.isArray(d)?d:(d&&d.notes)||[]; if(!Array.isArray(arr)||!arr.length) throw 0; ftConfirm('导入将覆盖当前 '+reviewNotes.length+' 条笔记，确定继续？', function(ok){ if(!ok) return; reviewNotes=arr; reviewSave(); reviewRender(reviewCurFund); }); }catch(e){ ftAlert('文件格式不对，无法导入（需本 app 导出的 JSON）'); } }; r.readAsText(f); input.value=''; }
 
 
+// 持仓列表「笔记」列：点图标直接打开某基金的复盘笔记（复用 ft_review 系统，不另建存储）
+function fundNoteCount(name){ let c=0; try{ if(Array.isArray(reviewNotes)) c=reviewNotes.filter(n=>(n.fund||'')===name).length; }catch(e){} return c; }
+function openFundReview(name){ try{ reviewRender(name); reviewSheetOpen(); }catch(e){} }
+
 // ---------- 渲染调度 ----------
 function render(){
   captureFocus();
@@ -9156,8 +9172,9 @@ function buildTradeSection(f){
         const idTxt=typeLabel(t.type);
         const accTxt=accOf(t);
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
-        const navTxt=(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'净值待确认';
-        const shareTxt=(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'份额待确认';
+        const _pend=t.confirm==='pending';
+        const navTxt=_pend?'待确认':(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
+        const shareTxt=_pend?'待确认':(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
         const convertTxt=(t.type==='convert_out'||t.type==='convert')?function(){
           const ct=t.convertTarget;
           if(ct) return '<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(ct)+'</div>';
@@ -9210,10 +9227,10 @@ function buildTradeSection(f){
             }():''}</td>
             <td>${_confBadge}</td>
             <td class="num">${M(t.amount)}</td>
-            <td class="num">${t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'<span class="pending-nav">净值待确认</span>'}</td>
+            <td class="num">${t.confirm==='pending'?'待确认':(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—')}</td>
             <td class="num">${t.fee?M(t.fee):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
-            <td class="num">${t.shares!=null&&t.shares!==''?fmt(t.shares):'份额待确认'}</td>
+            <td class="num">${t.confirm==='pending'?'待确认':(t.shares!=null&&t.shares!==''?fmt(t.shares):'—')}</td>
             <td><button class="lk" title="编辑" onclick="openTradeEdit(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="lk" title="复制" onclick="copyTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></td>
           </tr>`;
       });
@@ -10117,11 +10134,12 @@ function openAllTrades(){
     const confCls=confirmClass(t.confirm);
     if(_mobile){
       const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
-      const navTxt=(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'净值待确认';
-      const shareTxt=(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'份额待确认';
+      const _pend=t.confirm==='pending';
+      const navTxt=_pend?'待确认':(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
+      const shareTxt=_pend?'待确认':(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
       return "<div class='at-card' onclick='atGo(\""+enc+"\",\""+esc(acc)+"\")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
     }
-    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'<span class=\"pending-nav\">净值待确认</span>')+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
+    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?'待确认':(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
   }).join('');
   box.innerHTML=_mobile
     ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"
@@ -11357,7 +11375,7 @@ async function runDcaPlans(){
         if(nav==null) continue; // 拉不到该日净值：跳过，下次刷新自动补（不伪造）
         const amt=+(plan.amount||0); if(amt<=0) continue;
         const sh=amt/nav;
-        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:defaultTradeTimeVal(), type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey});
+        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:defaultTradeTimeVal(), type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey, confirm:'pending'});
         booked.add(per.periodKey);
         added++;
       }

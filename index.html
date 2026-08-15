@@ -7847,6 +7847,8 @@ function buildFundsView(){
         let sh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:(histNav>0?amt/histNav:(liveNav>0?amt/liveNav:0)));
         if(nav===0 && !(t.shares!=null&&+t.shares>0) && histNav==null) _fundNeedsHist=true;
         if((!sh||!isFinite(sh)) && amt>0 && lastNav>0) sh=amt/lastNav;
+        // 卖出兜底：净值/历史净值/lastNav 都不可用时，用持仓均价反推份额（黄金等无净值基金）
+        if(sh<=0 && (ty==='sell'||ty==='convert_out') && amt>0 && shares>0 && cost>0) sh=amt/(cost/shares);
         // 份额自动写回：仅在「无任何外部数据来源（CSV 导入等）时根据 t.amount + 该笔 t.nav 反推」的情形才写回。
         // 不再写回 liveNav（实时联网最新净值）反推的份额 — 黄金等基金净值每日波动，用今天的净值反推 T-1 买入的份额会偏离真实值。
         // 注意：line 7793 的 sh 仍用 liveNav/lastNav 兜底，用于本函数内的市值/成本/收益计算（不污染用户的交易记录）。

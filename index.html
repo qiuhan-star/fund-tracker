@@ -446,6 +446,20 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .peer-v{ font-weight:600; }
 .peer-bad{ color:#dc2626; } .peer-good{ color:#047857; }
 .peer-spark{ margin-top:6px; display:block; }
+.peer-table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:4px; }
+.peer-table th{ text-align:right; padding:5px 4px; color:var(--text-3); font-weight:500; border-bottom:1px solid var(--border-2); font-size:11px; white-space:nowrap; }
+.peer-table th:first-child{ text-align:left; }
+.peer-table td{ text-align:right; padding:5px 4px; border-bottom:1px solid var(--border-2); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.peer-table td:first-child{ text-align:left; color:var(--text-2); }
+.peer-table .peer-ret.pos{ color:var(--up); } .peer-table .peer-ret.neg{ color:var(--down); }
+.peer-table .peer-rank{ color:var(--text-3); font-size:12px; }
+.peer-table .peer-pct{ font-weight:600; }
+.peer-table .peer-pct.good{ color:#047857; } .peer-table .peer-pct.bad{ color:#dc2626; } .peer-table .peer-pct.mid{ color:var(--text-2); }
+.peer-stars{ font-size:16px; letter-spacing:2px; }
+.peer-risk{ display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; padding-top:6px; border-top:1px solid var(--border-2); }
+.peer-risk-item{ flex:1; min-width:80px; }
+.peer-risk-item .pr-lbl{ font-size:11px; color:var(--text-3); }
+.peer-risk-item .pr-val{ font-size:14px; font-weight:600; color:var(--text); margin-top:1px; }
 
 .dash-head{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-2); }
 .dash-head svg{ width:14px; height:14px; }
@@ -8693,43 +8707,66 @@ function peerSpark(arr){
   const d=pts.map(function(p,i){ return (i?'L':'M')+xf(i).toFixed(1)+' '+yf(p.y).toFixed(1); }).join(' ');
   return '<svg class="peer-spark" width="100%" height="36" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><path d="'+d+'" fill="none" stroke="#3b82f6" stroke-width="1.5"/></svg><div class="hint" style="font-size:11px">同类日排名走势（数值越低 = 排名越靠前）</div>';
 }
-function loadPeerCard(f){
+function _peerPctDisplay(rank, total){
+  if(!rank||!total||+total<2) return null;
+  const pct=+rank/+total*100;
+  const better=100-pct;
+  let cls='mid', label='中';
+  if(pct<=30){ cls='good'; label='前'; }
+  else if(pct>=70){ cls='bad'; label='后'; }
+  return {pct, better, cls, label};
+}
+async function loadPeerCard(f){
   const body=document.getElementById('peerBody'); if(!body) return;
-  const code=f.code||(getAnalysis(f.name)&&getAnalysis(f.name).code)||null;
-  if(!code){ body.innerHTML='该基金未记录代码，无法加载同类对比；可在「＋ 加一只基金」补全代码后再看。'; return; }
-  const s=document.createElement('script');
-  const done=function(){
-    try{
-      const persent=(window.Data_rateInSimilarPersent||[]).slice();
-      const simType=(window.Data_rateInSimilarType||[]).slice();
-      const pe=(window.Data_performanceEvaluation||{});
-      const typeName=(window.Data_fundTypeName||'');
-      let h='';
-      if(typeName) h+='<div class="peer-row"><span class="peer-k">基金类型</span><span class="peer-v">'+esc(typeName)+'</span></div>';
-      if(persent.length){
-        const last=persent[persent.length-1][1];
-        const good=last<=50;
-        h+='<div class="peer-row"><span class="peer-k">近1年同类收益排名</span><span class="peer-v '+(good?'peer-good':'peer-bad')+'">'+(good?('前 '+last.toFixed(1)+'%'):('后 '+last.toFixed(1)+'%'))+'</span></div>';
-        h+='<div class="hint" style="font-size:11px">优于 '+(100-last).toFixed(1)+'% 的同类基金</div>';
+  body.innerHTML='<span class="hint">加载中…（天天基金）</span>';
+  const code=f.code||null;
+  const _code=code||(await resolveCode(f.name));
+  if(!_code){ body.innerHTML='该基金未记录代码，无法加载同类对比；可在「＋ 加一只基金」补全代码后再看。'; return; }
+  try{
+    const prof=await loadProfile(_code, false);
+    const d=prof&&prof.data;
+    if(!d){ body.innerHTML='<p class="hint">同类对比接口暂未返回（可能被拦截/离线）。</p>'; return; }
+    const periods=[
+      {l:'近1周',   ret:d.SYL_Z,   rank:d.RANKW,  total:d.WSC},
+      {l:'近1月',   ret:d.SYL_Y,   rank:d.RANKM,  total:d.MSC},
+      {l:'近3月',   ret:d.SYL_3Y,  rank:d.RANKQ,  total:d.QSC},
+      {l:'近6月',   ret:d.SYL_6Y,  rank:d.RANKHY, total:d.HYSC},
+      {l:'近1年',   ret:d.SYL_1N,  rank:d.RANKY,  total:d.YSC},
+      {l:'近3年',   ret:d.SYL_3N,  rank:d.RANKTRY,total:d.TRYSC},
+      {l:'近5年',   ret:d.SYL_5N,  rank:d.RANKFY, total:d.FYSC}
+    ];
+    let h='';
+    if(d.FTYPE) h+='<div class="peer-row"><span class="peer-k">基金类型</span><span class="peer-v">'+esc(d.FTYPE)+'</span></div>';
+    h+='<table class="peer-table"><thead><tr><th>周期</th><th>收益率</th><th>同类排名</th><th>百分位</th></tr></thead><tbody>';
+    periods.forEach(function(p){
+      if(p.ret==null||p.ret==='--') return;
+      const r=+p.ret; const retCls=r>=0?'pos':'neg';
+      const retStr=(r>0?'+':'')+r.toFixed(2)+'%';
+      const pd=_peerPctDisplay(p.rank, p.total);
+      let rankStr='—', pctStr='';
+      if(pd){
+        rankStr=(+p.rank).toLocaleString('zh-CN')+' / '+(+p.total).toLocaleString('zh-CN');
+        pctStr='<span class="peer-pct '+pd.cls+'">'+pd.label+pd.better.toFixed(1)+'%</span>';
       }
-      if(simType.length){
-        const last=simType[simType.length-1];
-        h+='<div class="peer-row"><span class="peer-k">同类日排名（越低越好）</span><span class="peer-v">第 '+last.y+' 名</span></div>';
-        if(loadAnalysisCfg().peer.spark) h+=peerSpark(simType);
-      }
-      if(pe&&pe.avr && loadAnalysisCfg().peer.score){
-        h+='<div class="peer-row"><span class="peer-k">综合评分</span><span class="peer-v">'+esc(pe.avr)+' / 100</span></div>';
-        if(pe.categories&&pe.categories.length) h+='<div style="margin-top:4px">'+pe.categories.map(function(c){return '<span class="tag">'+esc(c)+'</span>';}).join('')+'</div>';
-      }
-      if(!h) h='<p class="hint">未获取到同类数据（可能为纯债/货币，或接口未返回）。</p>';
-      body.innerHTML=h;
-    }catch(e){ body.innerHTML='同类对比解析失败'; }
-    s.remove();
-  };
-  s.onload=done;
-  s.onerror=function(){ body.innerHTML='同类对比接口未连接（天天基金），可稍后重试'; s.remove(); };
-  s.src='https://fund.eastmoney.com/pingzhongdata/'+encodeURIComponent(code)+'.js';
-  document.body.appendChild(s);
+      h+='<tr><td>'+p.l+'</td><td class="peer-ret '+retCls+'">'+retStr+'</td><td class="peer-rank">'+rankStr+'</td><td>'+pctStr+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    // 星级评级
+    if(d.HTPJ&&d.HTPJ!=='--'){
+      const stars=d.HTPJ.replace(/★/g,'★').replace(/☆/g,'☆');
+      h+='<div class="peer-row"><span class="peer-k">综合评级</span><span class="peer-v peer-stars">'+esc(stars)+'</span></div>';
+    }
+    // 风险指标
+    const hasRisk=(d.STDDEV1!=null&&d.STDDEV1!=='--')||(d.SHARP1!=null&&d.SHARP1!=='--')||(d.MAXRETRA1!=null&&d.MAXRETRA1!=='--');
+    if(hasRisk){
+      h+='<div class="peer-risk">';
+      if(d.STDDEV1!=null&&d.STDDEV1!=='--') h+='<div class="peer-risk-item"><div class="pr-lbl">波动率(1年)</div><div class="pr-val">'+(+d.STDDEV1).toFixed(2)+'%</div></div>';
+      if(d.SHARP1!=null&&d.SHARP1!=='--') h+='<div class="peer-risk-item"><div class="pr-lbl">夏普比率(1年)</div><div class="pr-val">'+(+d.SHARP1).toFixed(2)+'</div></div>';
+      if(d.MAXRETRA1!=null&&d.MAXRETRA1!=='--') h+='<div class="peer-risk-item"><div class="pr-lbl">最大回撤(1年)</div><div class="pr-val">'+(+d.MAXRETRA1).toFixed(2)+'%</div></div>';
+      h+='</div>';
+    }
+    body.innerHTML=h;
+  }catch(e){ body.innerHTML='同类对比解析失败：'+esc(e.message||e); }
 }
 function loadAnalysisCfg(){
   var def={ maxShare:30, top3:70, bond:10, preset:'balanced',
@@ -8813,8 +8850,8 @@ function renderDetailLive(arg){
   live.innerHTML += sourceCardHtml(f.name);
   live.innerHTML += reviewCardHtml(f.name);
   try{ const _dcaCard=dcaCardHtml(f); if(_dcaCard) live.innerHTML += _dcaCard; }catch(e){ console.error(e); }
-  try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   live.innerHTML += noteCardHtml(f.name);
+  try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   live.innerHTML += peerCardHtml(f.name);
   try{ loadPeerCard(f); }catch(e){ console.error(e); }
   try{ retroScenarioCards(f).then(function(html){ if(typeof detailName!=='undefined'&&detailName===f.name){ var el=document.getElementById('detailLive'); if(el&&html) el.innerHTML+=html; } }); }catch(e){ console.error(e); }

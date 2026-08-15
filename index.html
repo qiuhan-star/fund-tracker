@@ -4671,8 +4671,9 @@ function effAccount(n){ return n==null? n : (ACC_RENAME_MAP[n]||n); }
 function effBuiltins(){ return BUILTIN_ACCOUNTS.map(effAccount); }
 // 账户名归一化（与 migrate 内 _accNorm 一致）：先套旧名映射 ACCOUNT_RENAME（小号→代管账户、微信债券→投资账户…），再套用户改名映射 effAccount；空值回退本人账户。导入统一走这里，避免 CSV/粘贴里写「小号/微信债券/代管账户」被误归到本人账户。
 function normalizeAccount(a){ if(!a) return effAccount('本人账户'); a=String(a).trim(); return effAccount(ACCOUNT_RENAME[a]||a); }
-function accIsBuiltin(n){ const m=ACCOUNT_META[effAccount(n)]; return !!(m&&m.builtin); }
+function accIsBuiltin(n){ return BUILTIN_ACCOUNTS.indexOf(accountCanonical(n))>=0; }
 function renameOrigin(n){ for(const k in ACC_RENAME_MAP){ if(ACC_RENAME_MAP[k]===n) return k; } return n; }
+function accountCanonical(n){ const e=effAccount(n); return renameOrigin(e)||e; }
 function firstPersonalAccount(){ const list=effBuiltins().concat(CUSTOM_ACCOUNTS); for(const a of list){ if(accIsPersonal(a)) return a; } return list[0]||'本人账户'; }
 function firstManagedAccount(){ const list=effBuiltins().concat(CUSTOM_ACCOUNTS); for(const a of list){ if(!accIsPersonal(a)) return a; } return list[0]||'代管账户'; }
 // 用户自定义账户（持久化于 localStorage ft_accounts）：在内置账户之外自行添加，默认计入本人个人资产
@@ -4701,8 +4702,8 @@ function saveAccountOrder(arr){ try{ localStorage.setItem('ft_account_order', JS
 function escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function accIsPersonal(acc){ const m=ACCOUNT_META[effAccount(acc)]; return m? (m.isPersonal!==false) : true; }
-function accOwner(acc){ const m=ACCOUNT_META[effAccount(acc)]; return m? m.owner : '本人'; }
+function accIsPersonal(acc){ const m=ACCOUNT_META[accountCanonical(acc)]; return m? (m.isPersonal!==false) : true; }
+function accOwner(acc){ const m=ACCOUNT_META[accountCanonical(acc)]; return m? m.owner : '本人'; }
 // 账户（账户级）：本人账户 / 代管账户 / 投资账户 / 自定义 / all(全量)；兼容旧值 personal→本人账户、managed→代管账户
 // 默认资产口径就是「本人账户」：每次打开都从主账户开始（若已重命名则跟随改名后的名称，保证视图不为空）
 let scopeAcc=effAccount('本人账户');

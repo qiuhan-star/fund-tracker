@@ -8012,7 +8012,7 @@ function buildFundsView(){
       f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0,feeTotal:(snap&&snap.feeTotal!=null)?snap.feeTotal:0,feeWaivedTotal:(snap&&snap.feeWaivedTotal!=null)?snap.feeWaivedTotal:0};
     }
     // 买入待确认金额计入持有金额（支付宝逻辑：买入待确认部分已扣款，计入总资产）
-    const _pendingBuy = tr.filter(t => t.confirm==='pending' && (t.type==='buy'||t.type==='dca'||t.type==='convert'))
+    const _pendingBuy = tr.filter(t => t.confirm==='pending' && (t.type==='buy'||t.type==='dca'||t.type==='activity'||t.type==='reinvest'||t.type==='convert'))
       .reduce((s,t) => s + (+t.amount||0) + (+t.fee||0), 0);
     if(_pendingBuy > 0) f.mv = (f.mv||0) + _pendingBuy;
     f.asset=guessAsset(name); f.market=guessMarket(name); f.currency=(snap&&snap.currency)||'CNY';

@@ -11375,11 +11375,8 @@ async function runDcaPlans(){
       const hist=code? await fetchNavHistory(code) : null;
       for(const per of periods){
         if(booked.has(per.periodKey)) continue;
-        const nav=hist? navOnOrBefore(hist, per.date) : null;
-        if(nav==null) continue; // 拉不到该日净值：跳过，下次刷新自动补（不伪造）
         const amt=+(plan.amount||0); if(amt<=0) continue;
-        const sh=amt/nav;
-        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:defaultTradeTimeVal(), type:'buy', amount:amt, nav:nav, fee:0, shares:sh, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey, confirm:'pending'});
+        trades.push({name:plan.name, account:plan.account||effAccount('本人账户'), date:per.date, time:defaultTradeTimeVal(), type:'buy', amount:amt, nav:null, fee:0, shares:null, locked:true, dcaId:plan.id, dcaPeriod:per.periodKey, confirm:'pending'});
         booked.add(per.periodKey);
         added++;
       }

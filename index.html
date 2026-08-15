@@ -559,6 +559,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .dca-card-actions .btn { margin:0; padding:6px 10px; font-size:13px; }
 .dca-card-actions .btn.danger-text { color:var(--danger); border-color:var(--danger); }
 .dca-card-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-sec-meta { font-size:13px; color:var(--text-3); margin-top:6px; line-height:1.5; }.dca-range { white-space:nowrap; }.dca-sec-item { position:relative; overflow:hidden; border-radius:12px; margin-bottom:10px; touch-action:pan-y; }.dca-sec-item:last-of-type { margin-bottom:0; }.dca-sec-actions-bg { position:absolute; top:0; right:0; bottom:0; display:flex; z-index:1; }.dca-sw-action { display:flex; align-items:center; justify-content:center; width:65px; font-size:14px; font-weight:600; color:#fff; -webkit-user-select:none; user-select:none; flex-shrink:0; }.dca-sw-action.edit { background:#007AFF; }.dca-sw-action.pause { background:#8E8E93; }.dca-sw-action.resume { background:#34C759; }.dca-sw-action.del { background:#FF3B30; }.dca-sec-swipe { position:relative; z-index:2; width:100%; flex-shrink:0; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; will-change:transform; }.dca-sec-swipe.open { transition:transform .25s ease; }.dca-manage-hint { color:var(--text-3); font-size:12px; }.dca-sec-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }.dca-sec-name { font-size:15px; font-weight:600; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.status { font-size:12px; font-weight:600; padding:2px 9px; border-radius:20px; white-space:nowrap; flex:0 0 auto; }.status.ok { background:var(--down-bg); color:var(--down); }.status.ended { background:rgba(0,0,0,.04); color:var(--text-3); }.status.paused { background:rgba(0,0,0,.06); color:var(--text-3); }.status.due { background:var(--accent-soft); color:var(--accent-text); }.dca-sec-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:11px; }.dca-booked { font-size:12px; color:var(--text-3); }.dca-booked b { color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; }.dca-sec-acts { display:flex; align-items:center; gap:8px; }.dca-empty { color:var(--text-3); font-size:13px; padding:4px 0; }.dca-del-btn { display:block; width:100%; border:none; background:transparent; color:var(--danger); font-size:15px; font-weight:600; text-align:center; padding:14px 0 2px; font-family:inherit; cursor:pointer; }
+.dca-card { margin-bottom:12px; }.dca-card-item { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-top:10px; }.dca-card-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }.dca-card-freq { font-size:15px; font-weight:600; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.dca-card-edit { font-size:13px; font-weight:600; color:var(--accent, #3b82f6); background:var(--accent-soft, rgba(59,130,246,.1)); border:1px solid var(--border); border-radius:20px; padding:5px 14px; flex:0 0 auto; cursor:pointer; }.dca-card-edit:active { background:rgba(59,130,246,.2); }
 .dca-section-header { font-size:13px; font-weight:600; color:var(--text-3); margin:18px 0 8px 2px; }
 .dca-group { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
 .dca-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 14px; min-height:48px; border-bottom:1px solid var(--border-2); }
@@ -1041,6 +1042,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     .dense-table th.col-day, .dense-table td.col-day { min-width: 64px; }
     .dense-table th.col-ret, .dense-table td.col-ret { min-width: 70px; }
     .dense-table th.col-hold, .dense-table td.col-hold { min-width: 76px; }
+    .dense-table th.col-fee, .dense-table td.col-fee { min-width: 64px; width: 64px; }
     .dense-table th.col-nav, .dense-table td.col-nav { min-width: 60px; width: 60px; padding-left: 10px; }
     .dense-table th.th-col { width: 30px; min-width: 30px; }
     /* 加大行内垂直 padding：让 dt-big（粗数字）和 dt-sub2（细注）有上下呼吸空间 */
@@ -5973,21 +5975,21 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true};
+let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true,fee:true};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,note:o.note!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
-const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',note:'笔记'};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,note:o.note!==false,fee:o.fee!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
+const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',note:'笔记',fee:'手续费'};
 const NOTE_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
-const COL_KEYS=['nav','day','ret','hold','note'];
-const DEFAULT_COL_ORDER=['day','ret','hold','note','nav'];
-const COL_ORDER_VER='9';
-const COLVIS_VER='4';
+const COL_KEYS=['nav','day','ret','hold','fee','note'];
+const DEFAULT_COL_ORDER=['day','ret','hold','fee','note','nav'];
+const COL_ORDER_VER='10';
+const COLVIS_VER='5';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
 try{ if(localStorage.getItem('ft_colorder_ver')!==COL_ORDER_VER){ colOrder=DEFAULT_COL_ORDER.slice(); saveColOrder(); } }catch(e){}
-try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
+try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true,fee:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; colExtraTouched=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_cols_extra','1'); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }
@@ -6560,6 +6562,7 @@ function denseRowsHtml(list){
         }
       }
       else if(c.key==='hold'){ const _pc=(f.profit==null||f.pending)?'—':((f.profit>=0?'+':'')+M(f.profit)); const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.profit==null||f.pending)?'zero':(f.profit>=0?'pos':'neg'); tds+=`<td class="col-hold ${_cc}"><div class="dt-big">${_pc}</div><div class="dt-sub2">${_rc}</div></td>`; }
+      else if(c.key==='fee'){ const _ft=(+f.feeTotal||0); tds+=`<td class="col-fee"><div class="dt-big">${_ft>0?('¥'+_ft.toFixed(2)):'—'}</div>${_ft>0?`<div class="dt-sub2">累计</div>`:''}</td>`; }
       else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="col-holdpct ${_cc}"><div class="dt-big">${_rc}</div></td>`; }
       else if(c.key==='mv')  tds+=`<td class="col-mv"><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
       else if(c.key==='note'){ const _nc2=fundNoteCount(f.name); const _pin=fundPinnedNote(f.name); const _active=_nc2||_pin; tds+=`<td class="col-note"><button type="button" class="note-btn${_active?' has':''}" onclick="event.stopPropagation();openFundPinnedNote('${esc(f.name)}')" title="${_pin?'查看精选笔记':(_nc2?('查看 '+_nc2+' 条笔记'):'添加笔记')}">${_pin?('<span class="note-ico note-pin">★</span>'):(_nc2?('<span class="note-ico">'+NOTE_ICON+'</span><span class="note-cnt">'+_nc2+'</span>'):'<span class="note-add">＋</span>')}</button></td>`; }
@@ -6628,6 +6631,7 @@ function homeMobileCellOf(fd,key){
   if(key==='day'){ const nc2=navCache[fd.name]||{}; const mkt=isMarketOpen(new Date()); const offChg=nc2.navChg!=null?nc2.navChg:null; const offDate=nc2.navChgDate?nc2.navChgDate:''; const fresh=offDate===fmtDate(new Date()); const est=nc2.gszzl!=null?nc2.gszzl:null; const estTime=fmtGzTime(nc2.gztime||''); if(fresh&&offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+' day-fresh">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; if(est!=null){ const sub=mkt?(estTime||'实时'):(estTime||'今日估算'); return '<td class="cnum '+(est>=0?'pos':'neg')+'">'+(est>=0?'+':'')+est.toFixed(2)+'%<div class="csub" style="margin-top:2px;color:var(--text-3)">'+sub+'</div></td>'; } if(offChg!=null) return '<td class="cnum '+(offChg>=0?'pos':'neg')+'">'+(offChg>=0?'+':'')+offChg.toFixed(2)+'%<div class="csub" style="margin-top:2px">'+offDate.slice(5)+'</div></td>'; return '<td class="cnum zero">—</td>'; }
   if(key==='ret'){ const a=dayGainOf(fd); return a!=null?'<td class="cnum '+(a>=0?'pos':'neg')+'">'+(a>=0?'+':'')+M(a)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='hold'){ return fd.profit!=null?'<td class="cnum '+(fd.profit>=0?'pos':'neg')+'">'+(fd.profit>=0?'+':'')+M(fd.profit)+'</td>':'<td class="cnum zero">—</td>'; }
+  if(key==='fee'){ const _ft=(+fd.feeTotal||0); return _ft>0?'<td class="cnum">¥'+_ft.toFixed(2)+'<div class="csub" style="margin-top:2px">累计</div></td>':'<td class="cnum zero">—</td>'; }
   if(key==='holdpct'){ return fd.ret!=null?'<td class="cnum '+(fd.ret>=0?'pos':'neg')+'">'+_fmtRet(fd.ret)+'</td>':'<td class="cnum zero">—</td>'; }
   if(key==='nav'){ const d=(nc.date!=null)?String(nc.date).slice(5):''; return nc.nav!=null?'<td class="cnum">'+navFmt(nc.nav)+'<div class="csub" style="margin-top:2px">'+d+'</div></td>':'<td class="cnum zero">—</td>'; }
   if(key==='mv'){ return fd.mv!=null?'<td class="cnum">'+M(fd.mv)+'</td>':'<td class="cnum zero">—</td>'; }
@@ -7890,7 +7894,7 @@ function buildFundsView(){
           if(_hn>0){ t.nav=_hn; }
           else if(lastNav>0 && lastNav!==liveNav){ t.nav=lastNav; }
         }
-        if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt+fee; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
+        if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ invested+=amt; if(sh>0){ const cp=(amt+fee)/sh; lots.push({sh,cp}); shares+=sh; cost+=amt+fee; } if(nav>0) lastNav=nav; else if(liveNav>0) lastNav=liveNav; /* 手动份额优先，否则金额÷净值（T+1 待确认 / 联网实时净值回退） */ }
         else if(ty==='sell'||ty==='convert_out'){ if(shares>0 && sh>0){ let sellSh=Math.min(sh,shares); const avgCp=shares>0?cost/shares:0; const sellPx=nav>0?nav:lastNav; realized+=(sellPx-avgCp)*sellSh; cost-=avgCp*sellSh; shares-=sellSh; const remRatio=shares/(shares+sellSh); lots.forEach(l=>l.sh*=remRatio); lots=lots.filter(l=>l.sh>1e-9); realized-=fee; } }   // 平均成本法（与支付宝一致）：卖出按加权平均扣减，剩余持仓成本单价不变
         else if(ty==='dividend'){ realized+=amt; }   // 现金分红：成本不变，仅计入已实现收益（与支付宝一致：分红不影响持仓成本）
         else if(ty==='reinvest'){ const rsh=(t.shares!=null&&+t.shares>0)?+t.shares:(nav>0?amt/nav:0); if(rsh>0){ const cp=rsh>0?amt/rsh:0; lots.push({sh:rsh,cp}); shares+=rsh; cost+=amt; } }        // 红利再投：增份额、加成本（无申购费）
@@ -7911,16 +7915,23 @@ function buildFundsView(){
         const _rmv = _nav>0 ? shares*_nav : 0;
         if(_rmv < 1 || (shares < 1 && _rmv <= 0)) shares=0;
       }
+      // 累计手续费（列表列用）：买入/转换/定投/活动/再投 的手续费相加，撤单不计入；待确认/已确认都算（钱已扣）。
+      const feeTotal=tr.reduce(function(s,t){
+        if(t.confirm==='cancelled') return s;
+        const ty=t.type||'buy';
+        if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+(+t.fee||0);
+        return s;
+      }, 0);
       if(shares===0 && snap && !hasSell){
         const mv=snap.mv, ret=snap.ret, c0=mv/(1+ret/100);
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(navCache[name]?navCache[name].nav:null)),trades:tr,realized:0};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:snap.shares!=null?snap.shares:0,cost:c0,mv,profit:mv-c0,ret,days:null,nav:navCache[name]?navCache[name].nav:null,costPx:(snap.shares?c0/snap.shares:(navCache[name]?navCache[name].nav:null)),trades:tr,realized:0,feeTotal};
       } else if(shares===0 && invested>0 && !hasSell){
         // 待补全：有投入金额但份额/净值均缺失，且联网也查不到净值（离线 / 名称未匹配到代码）→ 成本认投入、市值待补全，避免被「份额=0 即隐藏」规则吞掉
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:0,cost:invested,mv:null,profit:null,ret:null,days:null,nav:null,costPx:null,trades:tr,realized:0,pending:true};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:0,cost:invested,mv:null,profit:null,ret:null,days:null,nav:null,costPx:null,trades:tr,realized:0,pending:true,feeTotal};
       } else {
         const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:(lastNav>0?lastNav:0));
         const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized,invested};
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized,invested,feeTotal};
       }
     } else {
       // 纯快照基金：金额 = 份额 × 最新官方净值（navCache 联网刷新即重算）；离线/无净值时回退快照
@@ -7931,7 +7942,7 @@ function buildFundsView(){
       const mv=(ss&&liveNav!=null)?ss*liveNav:(snap?snap.mv:0);
       const profit=mv-cost, ret=cost>0?profit/cost*100:(snap?snap.ret:0);
       const nav=liveNav!=null?liveNav:(snap?snap.nav||null:null);
-      f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0};
+      f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:ss,cost,mv,profit,ret,days:null,nav,costPx:cpx,trades:tr,realized:0,feeTotal:(snap&&snap.feeTotal!=null)?snap.feeTotal:0};
     }
     // 买入待确认金额计入持有金额（支付宝逻辑：买入待确认部分已扣款，计入总资产）
     const _pendingBuy = tr.filter(t => t.confirm==='pending' && (t.type==='buy'||t.type==='dca'||t.type==='convert'))
@@ -8671,6 +8682,7 @@ function renderDetailLive(arg){
   live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
   live.innerHTML += sourceCardHtml(f.name);
   live.innerHTML += reviewCardHtml(f.name);
+  try{ const _dcaCard=dcaCardHtml(f); if(_dcaCard) live.innerHTML += _dcaCard; }catch(e){ console.error(e); }
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   live.innerHTML += noteCardHtml(f.name);
   live.innerHTML += peerCardHtml(f.name);
@@ -11503,7 +11515,33 @@ async function runDcaPlans(){
   }catch(e){ console.error('定投自动记账失败', e); }
   finally{ _dcaRunning=false; }
 }
-function dcaPlanOf(name){ return dcaPlans.filter(p=>p.name===name); }
+function dcaPlanOf(name, account){ return dcaPlans.filter(p=>p.name===name && (!account || (p.account||effAccount('本人账户'))===account)); }
+function dcaFreq(p){
+  const _per=p.period||'month';
+  return _per==='month' ? ('每月 '+String(p.day||1)+' 号')
+       : _per==='week' ? ('每周 '+wdName(p.weekday||1))
+       : _per==='biweek' ? ('每两周 '+wdName(p.weekday||1))
+       : '每个交易日';
+}
+function dcaCardHtml(f){
+  if(!f) return '';
+  const acc=f.account||effAccount('本人账户');
+  const plans=dcaPlanOf(f.name, acc);
+  if(!plans.length) return '';
+  const items=plans.map(function(p){
+    const booked=dcaBookedCount(p);
+    const freq=dcaFreq(p);
+    const isEnded=dcaIsEnded(p);
+    const statusCls=p.paused?'status paused':(isEnded?'status ended':'status ok');
+    const statusTxt=p.paused?'已暂停':(isEnded?'已结束':'进行中');
+    return '<div class="dca-card-item">'
+      +'<div class="dca-card-top"><span class="dca-card-freq">'+escHtml(freq)+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+'</span><span class="'+statusCls+'">'+statusTxt+'</span></div>'
+      +'<div class="dca-card-meta">'+escHtml(acc)+' · 起 '+(p.start||'—')+(p.end?' · 止 '+p.end:' · 长期')+' · 已记账 <b>'+booked+'</b> 期</div>'
+      +'<button type="button" class="dca-card-edit" onclick="dcaManage(\''+escHtml(p.id)+'\')">编辑</button>'
+      +'</div>';
+  }).join('');
+  return '<div class="card dca-card"><div class="sec-head"><h2 style="margin:0;font-size:15px">🗓️ 定投计划</h2><span class="hint" style="font-size:12px;margin-left:auto">'+escHtml(f.name)+' · '+escHtml(acc)+'</span></div>'+items+'</div>';
+}
 function dcaBookedCount(plan){ return trades.filter(t=>t.dcaId===plan.id).length; }
 
 // 全局偏好：自动补记总开关 / 默认记账时间 / 快速记账默认账户

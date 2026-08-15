@@ -8097,6 +8097,8 @@ function autoConfirmPendingTrades(){
     const ty=(t.type||'buy').toLowerCase();
     // 仅对买入类交易自动确认
     if(ty!=='buy'&&ty!=='dca'&&ty!=='convert'&&ty!=='reinvest'&&ty!=='activity') return;
+    // 待确认且无净值/份额的，不自动确认（如刚定投记上的），等用户手动填
+    if(t.nav==null || t.shares==null) return;
     const nc=navCache[t.name];
     if(!nc) return;
     // 取净值日期（优先 navChgDate，其次是 date）

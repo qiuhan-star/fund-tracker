@@ -8869,6 +8869,7 @@ function headerHtml(f){
           <button class="dh-action" onclick="openDcaModal('${encodeURIComponent(f.name)}')"><span class="ico">↻</span><span>我的定投</span></button>
           <button class="dh-action" onclick="detailScrollAlert()"><span class="ico">!</span><span>提醒设置</span></button>
         </div>
+        ${feeHoldStatusHtml(f)}
       </div>
       <div class="dh-sync">
         <span id="dhSyncText">${syncText}</span>

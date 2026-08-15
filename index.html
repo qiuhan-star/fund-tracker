@@ -7840,6 +7840,7 @@ function buildFundsView(){
   trades.forEach(t=>{ if(t.locked===undefined) t.locked=true; });
   // 历史脏份额迁移标记：buildFundsView 内清理了 t.nav 为空但 t.shares 已被旧版本用 liveNav 反推写入的交易 → 函数末尾 silentSave 持久化
   let _tradesMigrated = false;
+  const _todayStr=fmtDate(new Date());
   // 复合键 (账户||基金名)：同一基金可在多个账户分别持有
   const keys=[...new Set([
     ...snaps.filter(s=>(s.type||'fund')!=='stock').map(s=>accKey(accOf(s),s.name)),

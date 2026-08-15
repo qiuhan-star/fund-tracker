@@ -1012,18 +1012,16 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .dt-name { font-size: 13.5px; line-height: 1.3; }
   .dense-table .dt-sub { font-size: 11px; gap: 4px; margin-top: 3px; display: flex; flex-wrap: nowrap; white-space: nowrap; }
   .dense-table .dt-sub .val { font-size: 11px; font-weight: 600; color: var(--text); }
-  .dense-table .col-note { width: 44px; min-width: 44px; text-align: center; padding: 0 4px; }
-  .dense-table .note-btn { display: inline-flex; align-items: center; justify-content: center; gap: 2px; min-width: 30px; height: 30px; padding: 0 5px; border: none; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
-  .dense-table .note-btn.has { color: var(--accent, #3b82f6); }
-  .dense-table .note-btn:active { background: var(--surface-2, #f1f3f5); }
-  .dense-table .note-btn .note-ico { display: inline-flex; width: 15px; height: 15px; }
-  .dense-table .note-btn .note-ico svg { width: 15px; height: 15px; display: block; }
-  .dense-table .note-btn .note-cnt { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .dense-table .note-btn .note-add { font-size: 16px; line-height: 1; color: var(--text-3); opacity: .55; }
-  .dense-table .note-btn .note-pin { color: var(--accent, #3b82f6); font-size: 17px; line-height: 1; }
+  .dense-table .col-source { width: 76px; min-width: 76px; text-align: center; padding: 0 4px; }
+  .dense-table th.col-source { white-space: normal; line-height: 1.25; font-size: 10px; }
+  .dense-table .source-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 5px; border: none; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
+  .dense-table .source-btn.has { color: var(--accent, #3b82f6); }
+  .dense-table .source-btn:active { background: var(--surface-2, #f1f3f5); }
+  .dense-table .source-btn .src-chip { display: inline-block; max-width: 64px; padding: 2px 6px; font-size: 10px; font-weight: 600; color: var(--accent, #3b82f6); background: rgba(59,130,246,.1); border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+  .dense-table .source-btn .source-add { font-size: 16px; line-height: 1; color: var(--text-3); opacity: .55; }
   .rv-pin { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--accent, #3b82f6); background: rgba(59,130,246,.12); padding: 1px 6px; border-radius: 6px; }
-  /* 持仓列表名称副行第三行：来源缩略（蓝色，超出省略号） */
-  .dense-table .dt-src { font-size: 11px; color: var(--accent, #3b82f6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; margin-top: 2px; }
+  /* 持仓列表名称副行：来源缩略已拆到独立列 */
+  .dense-table .dt-src { display: none; }
   /* 详情页「持仓理由 · 参考来源」卡片 */
   .src-text { font-size: 14px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-word; }
   .src-text .tag, .tags .tag { font-size: 11px; color: var(--accent, #3b82f6); background: rgba(59,130,246,.1); padding: 2px 8px; border-radius: 8px; margin: 0 6px 6px 0; display: inline-block; }
@@ -6067,21 +6065,21 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true,fee:true};
+let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,source:true,fee:true};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,note:o.note!==false,fee:o.fee!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
-const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',note:'笔记',fee:'手续费'};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,source:o.source!==false,fee:o.fee!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
+const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',source:'持仓理由 · 参考来源',fee:'手续费'};
 const NOTE_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
-const COL_KEYS=['nav','day','ret','hold','fee','note'];
-const DEFAULT_COL_ORDER=['day','ret','hold','fee','note','nav'];
-const COL_ORDER_VER='10';
-const COLVIS_VER='5';
+const COL_KEYS=['nav','day','ret','hold','fee','source'];
+const DEFAULT_COL_ORDER=['day','ret','hold','fee','source','nav'];
+const COL_ORDER_VER='11';
+const COLVIS_VER='6';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
 try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
 try{ if(localStorage.getItem('ft_colorder_ver')!==COL_ORDER_VER){ colOrder=DEFAULT_COL_ORDER.slice(); saveColOrder(); } }catch(e){}
-try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,note:true,fee:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
+try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,source:true,fee:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; colExtraTouched=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_cols_extra','1'); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }
@@ -6620,7 +6618,7 @@ function denseHeadHtml(){
   let headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const _sortable = (c.key!=='name' && c.key!=='note');
+    const _sortable = (c.key!=='name' && c.key!=='source');
     const cls = (_sortable?'sortable ':'')+'col-'+c.key+(active?' sort-on':'')+(_sortable?' col-drag':'');
     const drag = _sortable ? ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"` : '';
     const tip = _sortable ? ` title="点击排序 · 拖动列头换列"` : '';
@@ -6650,7 +6648,7 @@ function denseRowsHtml(list){
     const code=syncCode(f.name);
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}${noteDot(f.name)}<span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button>${f.source?`<div class="dt-src">· ${rvEsc(srcSnippet(f.source))}</div>`:''}</div></td>`;
+      if(c.key==='name') tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}${noteDot(f.name)}<span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
       else if(c.key==='nav') tds+=`<td class="col-nav"><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='day'){
         // 当日涨跌：单列双态 — 估算中显示灰色时间，官方已出显示蓝色日期
@@ -6676,7 +6674,7 @@ function denseRowsHtml(list){
       else if(c.key==='fee'){ const _ft=(+f.feeTotal||0); tds+=`<td class="col-fee"><div class="dt-big">${_ft>0?('¥'+_ft.toFixed(2)):'—'}</div>${_ft>0?`<div class="dt-sub2">累计</div>`:''}</td>`; }
       else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="col-holdpct ${_cc}"><div class="dt-big">${_rc}</div></td>`; }
       else if(c.key==='mv')  tds+=`<td class="col-mv"><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
-      else if(c.key==='note'){ const _nc2=fundNoteCount(f.name); const _pin=fundPinnedNote(f.name); const _active=_nc2||_pin; tds+=`<td class="col-note"><button type="button" class="note-btn${_active?' has':''}" onclick="event.stopPropagation();openFundPinnedNote('${esc(f.name)}')" title="${_pin?'查看精选笔记':(_nc2?('查看 '+_nc2+' 条笔记'):'添加笔记')}">${_pin?('<span class="note-ico note-pin">★</span>'):(_nc2?('<span class="note-ico">'+NOTE_ICON+'</span><span class="note-cnt">'+_nc2+'</span>'):'<span class="note-add">＋</span>')}</button></td>`; }
+      else if(c.key==='source'){ const _src=f.source||''; const _has=!!_src.trim(); tds+=`<td class="col-source"><button type="button" class="source-btn${_has?' has':''}" onclick="event.stopPropagation();sourceEditOpen('${esc(f.name)}')" title="${_has?('持仓理由 · 参考来源：'+rvEsc(_src)):'添加持仓理由 · 参考来源'}">${_has?('<span class="src-chip">'+rvEsc(srcSnippet(_src))+'</span>'):'<span class="source-add">＋</span>'}</button></td>`; }
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：盘中优先用实时估算 gszzl；收盘后用基金公司确认的 navChg，与官方昨日收益对齐。
         const _chg=effectiveDayChg(nc);
@@ -8746,15 +8744,15 @@ async function loadPeerCard(f){
       let rankStr='—', pctStr='';
       if(pd){
         rankStr=(+p.rank).toLocaleString('zh-CN')+' / '+(+p.total).toLocaleString('zh-CN');
-        pctStr='<span class="peer-pct '+pd.cls+'">'+pd.label+pd.better.toFixed(1)+'%</span>';
+        pctStr='<span class="peer-pct '+pd.cls+'">'+pd.label+pd.pct.toFixed(1)+'%</span>';
       }
       h+='<tr><td>'+p.l+'</td><td class="peer-ret '+retCls+'">'+retStr+'</td><td class="peer-rank">'+rankStr+'</td><td>'+pctStr+'</td></tr>';
     });
     h+='</tbody></table>';
     // 星级评级
     if(d.HTPJ&&d.HTPJ!=='--'){
-      const stars=d.HTPJ.replace(/★/g,'★').replace(/☆/g,'☆');
-      h+='<div class="peer-row"><span class="peer-k">综合评级</span><span class="peer-v peer-stars">'+esc(stars)+'</span></div>';
+      const stars=esc(d.HTPJ);
+      h+='<div class="peer-row"><span class="peer-k">综合评级</span><span class="peer-v peer-stars">'+stars+'</span></div>';
     }
     // 风险指标
     const hasRisk=(d.STDDEV1!=null&&d.STDDEV1!=='--')||(d.SHARP1!=null&&d.SHARP1!=='--')||(d.MAXRETRA1!=null&&d.MAXRETRA1!=='--');

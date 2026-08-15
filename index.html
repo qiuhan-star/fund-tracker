@@ -4265,6 +4265,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sheet-row.danger{ color:var(--danger); font-weight:600; }
   .sheet-row.cat-opt{ display:flex; align-items:center; justify-content:space-between; text-align:left; }
   .sheet-row.cat-opt .check{ color:var(--accent); font-weight:700; }
+  .cat-grid{ display:flex; flex-wrap:wrap; gap:8px; padding:6px 14px 12px; }
+  .cat-grid .cat-chip{ display:inline-flex; align-items:center; gap:5px; margin:0; }
+  .cat-grid .check{ color:var(--accent); font-weight:700; }
+  .sheet-row.reset{ border-bottom:none; }
   .sheet-cancel{ background:var(--surface); border-radius:14px; padding:16px; text-align:center; font-size:17px; font-weight:600; color:var(--accent); border:none; width:100%; font-family:inherit; }
   /* 复盘编辑：复用底部 sheet 弹层（去内联展开，避免遮挡列表） */
   .rv-sheet-card{ margin-bottom:8px; max-height:82vh; overflow:auto; -webkit-overflow-scrolling:touch; }
@@ -6201,7 +6205,9 @@ function catMenu(name, ev){
   const customVal=(cur && CAT_LIST.indexOf(cur)<0)?cur:'';
   let html='<div class="sheet-card" style="max-height:78vh;overflow:auto">'
     + '<div class="sheet-head">修改分类（系统按名称自动判定，可手动覆盖）</div>'
-    + CAT_LIST.map(c=>`<button class="sheet-row cat-opt" onclick="setCatOverride('${esc(name)}','${c}')"><span>${c}</span>${c===cur?'<span class="check">✓</span>':''}</button>`).join('')
+    + '<div class="cat-grid">'
+    + CAT_LIST.map(c=>`<button class="cat-chip${c===cur?' on':''}" onclick="setCatOverride('${esc(name)}','${c}')">${c}${c===cur?' <span class="check">✓</span>':''}</button>`).join('')
+    + '</div>'
     + `<button class="sheet-row reset" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`
     + '<div class="sheet-custom"><input class="fm-input" id="catCustom" placeholder="或自己输入分类名：半导体、红利…" value="'+esc(customVal)+'"><button class="save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button></div>'
     + '</div>'
@@ -10202,6 +10208,7 @@ function ftOverlayOpen(){
   if(document.querySelector('.drawer.open')) return true;
   if(document.querySelector('.idx-modal.show')) return true;
   if(document.querySelector('.dca-mask.show')) return true;
+  if(document.querySelector('.sheet-mask.show')) return true;
   const at=document.getElementById('allTradesModal'); if(at && getComputedStyle(at).display!=='none') return true;
   const tp=document.getElementById('tradePicker'); if(tp && getComputedStyle(tp).display!=='none') return true;
   return false;

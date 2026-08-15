@@ -5002,6 +5002,8 @@ function migrate(raw){
   (data.snaps||[]).forEach(s=>{ if(s.account) s.account=_accNorm(s.account); });
   ['personal','managed','all'].forEach(k=>{ (data.daily_snapshots[k]||[]).forEach(d=>{ if(d&&d.account) d.account=_accNorm(d.account); }); });
   (data.dcaPlans||[]).forEach(p=>{ if(p&&p.account) p.account=_accNorm(p.account); if(p&&!p.period) p.period='month'; });
+  // 定投自动补记的交易默认应为待确认（QDII 等海外基金有确认周期）
+  (data.trades||[]).forEach(t=>{ if(t.dcaId && !t.confirm) t.confirm='pending'; });
   return data;
 }
 
@@ -8261,7 +8263,7 @@ function reviewImport(input){ const f=input.files[0]; if(!f) return; const r=new
 
 // 持仓列表「笔记」列：点图标直接打开某基金的复盘笔记（复用 ft_review 系统，不另建存储）
 function fundNoteCount(name){ let c=0; try{ if(Array.isArray(reviewNotes)) c=reviewNotes.filter(n=>(n.fund||'')===name).length; }catch(e){} return c; }
-function openFundReview(name){ try{ reviewRender(name); reviewSheetOpen(); }catch(e){} }
+function openFundReview(name){ try{ reviewCurFund=name; const b=document.getElementById('rvSheetBody'); if(b) b.innerHTML=reviewCardHtml(name); var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent=(name||'全局')+' · 复盘笔记'; reviewSheetOpen(); }catch(e){} }
 
 // ---------- 渲染调度 ----------
 function render(){
@@ -11420,8 +11422,9 @@ function buildDcaSection(){
       const isEnded = dcaIsEnded(p);
       const statusCls = p.paused ? 'status paused' : (isEnded ? 'status ok' : (due ? 'status due' : 'status ok'));
       const statusTxt = p.paused ? '已暂停' : (isEnded ? '已结束' : (due ? '待记账 '+due+' 期' : '进行中'));
-      return '<div class="dca-sec-item" data-id="'+escHtml(p.id)+'">'
+      return '<div class="dca-sec-item" data-id="'+escHtml(p.id)+'" data-name="'+escHtml(p.name)+'" data-acc="'+escHtml(p.account||effAccount('本人账户'))+'">'
         +'<div class="dca-sec-actions-bg">'
+          +'<div class="dca-sw-action edit" data-id="'+escHtml(p.id)+'" data-act="edit">编辑</div>'
           +'<div class="dca-sw-action '+(p.paused?'resume':'pause')+'" data-id="'+escHtml(p.id)+'" data-act="toggle">'+(p.paused?'恢复':'暂停')+'</div>'
           +'<div class="dca-sw-action del" data-id="'+escHtml(p.id)+'" data-act="del">删除</div>'
         +'</div>'
@@ -11430,7 +11433,6 @@ function buildDcaSection(){
           +'<div class="dca-sec-meta">账户：'+(p.account||effAccount('本人账户'))+' · '+freq+' 投 ¥'+(+p.amount||0).toLocaleString('zh-CN')+' · <span class="dca-range">'+(p.start||'—')+' 起'+(p.end?' · '+p.end:' · 长期')+'</span></div>'
           +'<div class="dca-sec-foot">'
             +'<span class="dca-booked">已自动记账 <b>'+booked+'</b> 期</span>'
-            +'<span class="dca-manage-hint">管理 ›</span>'
           +'</div>'
         +'</div>'
       +'</div>';
@@ -11449,7 +11451,7 @@ function bindDcaSwipe(){
     var fg=item.querySelector('.dca-sec-swipe'), bg=item.querySelector('.dca-sec-actions-bg');
     if(!fg||!bg) return;
     var max=bg.offsetWidth||130, startX=0, base=0, dragging=false, moved=0;
-    var id=item.getAttribute('data-id');
+    var id=item.getAttribute('data-id'), nm=item.getAttribute('data-name'), acc=item.getAttribute('data-acc');
     item.addEventListener('pointerdown', function(e){
       if(e.target.closest('.dca-sw-action')) return;
       dragging=true; startX=e.clientX; moved=0;
@@ -11471,7 +11473,7 @@ function bindDcaSwipe(){
       fg.style.transform='translateX('+(open? -max:0)+'px)';
       if(moved<6){
         if(open){ fg.style.transform='translateX(0)'; }
-        else if(base===0 && id){ dcaManage(id); }
+        else if(base===0 && nm && acc){ goDetail(encodeURIComponent(nm), acc); }
       }
     }
     item.addEventListener('pointerup', end);
@@ -11479,7 +11481,9 @@ function bindDcaSwipe(){
     Array.prototype.forEach.call(item.querySelectorAll('.dca-sw-action'), function(btn){
       btn.addEventListener('click', function(){
         var aid=btn.getAttribute('data-id'), act=btn.getAttribute('data-act');
-        if(act==='toggle') dcaToggle(aid); else if(act==='del') dcaDelete(aid);
+        if(act==='edit') dcaManage(aid);
+        else if(act==='toggle') dcaToggle(aid);
+        else if(act==='del') dcaDelete(aid);
       });
     });
   });

@@ -7961,8 +7961,8 @@ function buildFundsView(){
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||t.date<firstDate) firstDate=t.date;
       });
-      // 定投待确认金额计入累计投入（已扣款但未确认份额）
-      tr.filter(t=>t.dcaId && t.confirm==='pending' && (t.type==='buy'||t.type==='dca')).forEach(t=>{ invested+=+t.amount||0; });
+      // 买入待确认计入累计投入（支付宝逻辑：已扣款即算投入，手动买入与定投一致；与 金额/mv 口径统一）
+      tr.filter(t=>t.confirm==='pending' && (t.type==='buy'||t.type==='dca'||t.type==='activity'||t.type==='reinvest'||t.type==='convert')).forEach(t=>{ invested+=+t.amount||0; });
       if(_fundNeedsHist && !codeFailed.has(name) && !(code&&histFailed.has(code))) _navlessNames.push(name);
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
       // 例外：若已有卖出且净份额=0（已清仓），不再回退快照，让它进「清仓」Tab
@@ -7996,8 +7996,9 @@ function buildFundsView(){
         f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares:0,cost:invested,mv:null,profit:null,ret:null,days:null,nav:null,costPx:null,trades:tr,realized:0,pending:true,feeTotal,feeWaivedTotal};
       } else {
         const nav=navCache[name]?navCache[name].nav:(snap&&shares?snap.mv/shares:(lastNav>0?lastNav:0));
-        const mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
-        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized,invested,feeTotal,feeWaivedTotal};
+        const _pendBuy=tr.filter(t=>t.confirm==='pending' && (t.type==='buy'||t.type==='dca'||t.type==='activity'||t.type==='reinvest'||t.type==='convert')).reduce((s,t)=>s+(+t.amount||0)+(+t.fee||0),0);
+        const cost2=cost+_pendBuy, mv=shares*nav, profit=mv-cost, ret=cost>0?profit/cost*100:0, days=firstDate?Math.round((Date.now()-new Date(firstDate))/864e5):0;
+        f={name,cat,account:acc,tags:snap?snap.tags:undefined,shares,cost:cost2,mv,profit,ret,days,nav,costPx:shares?cost/shares:0,trades:tr,realized,invested,feeTotal,feeWaivedTotal};
       }
     } else {
       // 纯快照基金：金额 = 份额 × 最新官方净值（navCache 联网刷新即重算）；离线/无净值时回退快照
@@ -8834,7 +8835,8 @@ function headerHtml(f){
   })();
   const _tr=(trades||[]).filter(t=>t.name===f.name);
   const _tradeCount=_tr.length;
-  const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
+      const _pendSell=function(t){ return t.confirm==='pending' && (t.type==='sell'||t.type==='convert_out'||t.type==='dividend'); };
+      const _net=_tr.filter(function(t){ return !_pendSell(t); }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   const _netLiq=_tr.filter(function(t){ return t.confirm!=='pending' && (t.confirm!=='cancelled'); }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); return s; },0);
   const _netTxt=_tr.length?(_liq?M(_netLiq):M(_net)):'—';
   const _netLabel='累计投入（交易口径）';
@@ -8944,7 +8946,8 @@ function updateDetailHeader(f){
     _ltK.style.height='20px';
     _ltK.style.position='relative';
   }
-  const _net=_tr.filter(function(t){ return t.confirm!=='pending'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
+      const _pendSell=function(t){ return t.confirm==='pending' && (t.type==='sell'||t.type==='convert_out'||t.type==='dividend'); };
+      const _net=_tr.filter(function(t){ return !_pendSell(t); }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); if(ty==='sell'||ty==='convert_out'||ty==='dividend') return s-amt; return s; },0);
   const _netLiq=_tr.filter(function(t){ return t.confirm!=='pending' && t.confirm!=='cancelled'; }).reduce(function(s,t){ const ty=t.type, amt=+t.amount||0; if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest') return s+amt+(+t.fee||0); return s; },0);
   set('dhNet', _tr.length?(_liq?M(_netLiq):M(_net)):'—');
   const _k=document.getElementById('dhNet')?.previousElementSibling; if(_k) _k.textContent='累计投入（交易口径）';

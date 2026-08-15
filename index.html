@@ -11511,7 +11511,7 @@ function dcaAutoEnabled(){ try{ return localStorage.getItem('ft_dca_auto')!=='0'
 function getDefaultTradeTime(){ try{ return localStorage.getItem('ft_default_time')||'1500'; }catch(e){ return '1500'; } }
 function defaultTradeTimeVal(){ const v=getDefaultTradeTime(); if(v==='now'){ const d=new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes()); } return '15:00'; }
 function defBookAcc(){ try{ const a=localStorage.getItem('ft_def_acc'); if(a) return a; }catch(e){} return effAccount('本人账户'); }
-function dcaIsEnded(p){ return p&&p.end && p.end < new Date().getFullYear()+'-'+pad2(new Date().getMonth()+1)+'-'+pad2(new Date().getDate()); }
+function dcaIsEnded(p){ if(!(p&&p.end)) return false; const e=String(p.end).split('-').map(Number); const endD=(e.length===2)?new Date(e[0],e[1],0):new Date(e[0],e[1]-1,e[2]); const now=new Date(); now.setHours(0,0,0,0); return endD<now; }
 function dcaActiveCount(){ return dcaPlans.filter(p=>p&&!p.paused&&!dcaIsEnded(p)).length; }
 function dcaDueCount(){
   const t=new Date(); const todayStr=t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate());

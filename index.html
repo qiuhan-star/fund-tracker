@@ -5012,10 +5012,6 @@ function migrate(raw){
   (data.dcaPlans||[]).forEach(p=>{ if(p&&p.account) p.account=_accNorm(p.account); if(p&&!p.period) p.period='month'; });
   // 定投自动补记的交易默认应为待确认（QDII 等海外基金有确认周期）
   (data.trades||[]).forEach(t=>{ if(t.dcaId && !t.confirm) t.confirm='pending'; });
-  // 修复旧版定投交易：仅 T+2 内被自动确认的改回待确认，不碰历史已确认数据
-  (function(){ const _cut=new Date(); _cut.setDate(_cut.getDate()-3); const _cutStr=_cut.getFullYear()+'-'+('0'+(1+_cut.getMonth())).slice(-2)+'-'+('0'+_cut.getDate()).slice(-2);
-    (data.trades||[]).forEach(t=>{ if(t.dcaId && t.confirm==='confirmed' && t.date>=_cutStr){ t.confirm='pending'; t.nav=null; t.shares=null; } });
-  })();
   // 旧版定投交易类型从 buy 迁移为 dca（区分展示为"定投"而非"买入"）
   (data.trades||[]).forEach(t=>{ if(t.dcaId && t.type==='buy') t.type='dca'; });
   return data;

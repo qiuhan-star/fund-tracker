@@ -11500,10 +11500,12 @@ async function autoFillDcaTrade(i){
     if(code){
       const hist=await fetchNavHistory(code);
       if(hist&&hist.length){
-        const sd=new Date(String(t.date).replace(/-/g,'/'));
-        if(t.time&&t.time>'15:00') sd.setDate(sd.getDate()+1);
-        sd.setHours(0,0,0,0);
-        let best=null; for(const p of hist){ if(p.t<=sd&&p.nav!=null) best=p.nav; }
+        // 用 calcTradeDates 算出正确的净值日期（考虑15:00分界、非交易日顺延、QDII 延迟）
+        const _isQDII=(snaps.find(s=>s.name===name)||{}).tags?.includes('QDII')||/QDII|海外/i.test(name||'');
+        const _dates=calcTradeDates(t.date, t.time, _isQDII);
+        const navDate=_dates.navDate;
+        // 在历史净值中找到 navDate 当天或之前最近一个交易日的净值
+        let best=null; for(const p of hist){ if(p.t<=navDate&&p.nav!=null) best=p.nav; }
         if(best!=null) nav=best;
       }
     }

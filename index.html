@@ -11631,12 +11631,14 @@ async function autoConfirmPastDcaTrades(){
   if(_pending.some(t=>t.confirm==='confirmed')){ silentSave(); compute(); }
 }
 function buildDcaSection(){
-  const total=dcaPlans.length, active=dcaActiveCount();
-  let h='<div class="card dca-sec-card"><div class="sec-head"><h2 style="margin:0;font-size:15px">🗓️ 定投计划</h2><span class="hint" style="font-size:12px;margin-left:auto">已设 '+total+' 个 · 进行中 '+active+'</span></div>';
-  if(!dcaPlans.length){
-    h+='<div class="dca-empty">还没有定投计划。点「＋ 新增定投计划」开启自动记账。</div>';
+  const _acc = (curAccount && curAccount!=='全部') ? curAccount : null;
+  const _plans = _acc ? dcaPlans.filter(function(p){ return (p.account||effAccount('本人账户'))===_acc; }) : dcaPlans;
+  const total=_plans.length, active=_plans.filter(function(p){ return !p.paused && !dcaIsEnded(p); }).length;
+  let h='<div class="card dca-sec-card"><div class="sec-head"><h2 style="margin:0;font-size:15px">🗓️ 定投计划'+( _acc ? (' · '+escHtml(_acc)) : '' )+'</h2><span class="hint" style="font-size:12px;margin-left:auto">已设 '+total+' 个 · 进行中 '+active+'</span></div>';
+  if(!_plans.length){
+    h+='<div class="dca-empty">'+( _acc ? ('「'+escHtml(_acc)+'」账户下还没有定投计划。') : '还没有定投计划。')+'点「＋ 新增定投计划」开启自动记账。</div>';
   } else {
-    h+=dcaPlans.map(function(p){
+    h+=_plans.map(function(p){
       const booked=dcaBookedCount(p);
       const periods=dcaPeriods(p, new Date().getFullYear()+'-'+pad2(new Date().getMonth()+1)+'-'+pad2(new Date().getDate()));
       const due=periods.filter(function(per){ return !dcaIsBooked(p, per.periodKey); }).length;

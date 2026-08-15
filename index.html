@@ -9361,8 +9361,8 @@ async function renderFundProfitCurve(f){
   const pts=[];
   navArr.forEach(function(nv){
     while(evIdx<myTr.length && myTr[evIdx].date<=nv.d){
-      const t=myTr[evIdx], ty=t.type||'buy', amt=+t.amount||0, navAt=(+t.nav>0)?+t.nav:nv.nav, sh=(+t.amount||0)/navAt;
-      if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ shares+=sh; principal+=amt; } else if(ty==='sell'||ty==='convert_out'){ shares-=sh; principal-=amt; }
+      const t=myTr[evIdx], ty=t.type||'buy', amt=+t.amount||0, fee=+t.fee||0, waived=+t.feeWaived||0, navAt=(+t.nav>0)?+t.nav:nv.nav, sh=(+t.amount||0)/navAt;
+      if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ shares+=sh; principal+=amt+fee-waived; } else if(ty==='sell'||ty==='convert_out'){ shares-=sh; principal-=amt-fee; } else if(ty==='reinvest'){ const rsh=navAt>0?amt/navAt:0; if(rsh>0){ shares+=rsh; principal+=amt; } } else if(ty==='dividend'){ principal-=amt; } else if(ty==='split'){ const r=amt||1; if(r>0) shares*=r; }
       evIdx++;
     }
     if(shares>1e-6){ const mv=shares*nv.nav; pts.push({d:nv.d, profit:+(mv-principal).toFixed(2)}); }
@@ -9374,10 +9374,10 @@ async function renderFundProfitCurve(f){
 function fundProfitSparse(myTr){
   let shares=0, principal=0; const pts=[];
   myTr.forEach(function(t){
-    const ty=t.type||'buy', amt=+t.amount||0, navAt=(+t.nav>0)?+t.nav:null;
+    const ty=t.type||'buy', amt=+t.amount||0, fee=+t.fee||0, waived=+t.feeWaived||0, navAt=(+t.nav>0)?+t.nav:null;
     if(navAt==null) return;
     const sh=amt/navAt;
-    if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ shares+=sh; principal+=amt; } else if(ty==='sell'||ty==='convert_out'){ shares-=sh; principal-=amt; }
+    if(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'){ shares+=sh; principal+=amt+fee-waived; } else if(ty==='sell'||ty==='convert_out'){ shares-=sh; principal-=amt-fee; } else if(ty==='reinvest'){ const rsh=navAt>0?amt/navAt:0; if(rsh>0){ shares+=rsh; principal+=amt; } } else if(ty==='dividend'){ principal-=amt; } else if(ty==='split'){ const r=amt||1; if(r>0) shares*=r; }
     pts.push({d:t.date, profit:+(shares*navAt-principal).toFixed(2)});
   });
   return pts;
@@ -9545,7 +9545,14 @@ function refreshDetailTradesByName(name){
 function buildTradeSection(f){
   const idx=fundsView.indexOf(f);
   let h='';
-  const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const tr=trades.filter(t=>t.name===f.name);
+  tr.sort(function(a,b){
+    const d=(b.date||'').localeCompare(a.date||'');
+    if(d!==0) return d;
+    const tm=(b.time||'').localeCompare(a.time||'');
+    if(tm!==0) return tm;
+    return trades.indexOf(b)-trades.indexOf(a); // 同日期同时间：数组越靠后（越晚录入/复制）越靠前，顺序确定不漂
+  });
   const _tc={buy:0,sell:0,conv:0,oth:0};
   tr.forEach(function(t){ const k=t.type; if(k==='buy'||k==='dca'||k==='activity')_tc.buy++; else if(k==='sell')_tc.sell++; else if(k==='convert'||k==='convert_out')_tc.conv++; else _tc.oth++; });
   const tradeHead = `交易记录`;
@@ -9582,7 +9589,7 @@ function buildTradeSection(f){
         if(t._deleted){
           h+=`<div class="tx-card tx-deleted" data-tx-idx="${i}"><div class="tx-card-inner"><div class="tx-deleted-bar"><span>已删除</span><button class="tx-undo-btn" type="button" onclick="undoSoftDelete(${i})">撤销</button></div></div></div>`;
         } else {
-        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${convertTxt}${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-copy" type="button" onclick="copyTrade(${i})">复制</button>${ t.dcaId ? dcaActBtn(t,i) : '<button class="tx-act-btn tx-act-del" type="button" onclick="event.stopPropagation();deleteTrade('+i+')">删除</button>' }</div></div></div>`;
+        h+=`<div class="tx-card${_canc?' cancelled':''}" data-tx-idx="${i}"><div class="tx-card-inner" onclick="if(event.target.closest('.tx-act-edit,.tx-act-copy,.tx-act-del,.tx-conf'))return;openTradeEdit(${i})"><div class="tx-line1"><span class="tx-id ${dc}"><span class="dot ${dc}"></span>${esc(idTxt)}</span><span class="tx-date">${esc(dateTxt)}</span></div><div class="tx-line2"><div><div class="tx-amount">${M(t.amount)}</div><div class="tx-sub">${navTxt}${shareTxt?(' · '+shareTxt):''} · ${esc(accTxt)}</div>${convertTxt}${_note}</div><div class="tx-right">${_confBadge}</div></div><div class="tx-card-actions"><button class="tx-act-btn tx-act-edit" type="button" onclick="openTradeEdit(${i})">编辑</button><button class="tx-act-btn tx-act-copy" type="button" onclick="copyTrade(${i})">复制</button>${ t.dcaId ? dcaActBtn(t,i) : '<button class="tx-act-btn tx-act-del" type="button" onclick="event.stopPropagation();deleteTrade('+i+')">删除</button>' }</div></div></div>`;
         }
       });
       h+=`</div>`;
@@ -9607,7 +9614,7 @@ function buildTradeSection(f){
         }
         const _canc = t.confirm==='cancelled';
         const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
-        h+=`<tr class="tr-locked${_canc?' cancelled':''}" data-tx-idx="${i}" style="cursor:pointer" onclick="openTradeEdit(${i})" title="点击编辑">
+        h+=`<tr class="tr-locked${_canc?' cancelled':''}" data-tx-idx="${i}" style="cursor:pointer" onclick="if(event.target.closest('.tx-act-edit,.tx-act-copy,.tx-act-del,.tx-conf'))return;openTradeEdit(${i})" title="点击编辑">
             <td>${esc(accOf(t))}</td>
             <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
             <td>${typeLabel(t.type)}${(t.type==='convert_out'||t.type==='convert')?function(){
@@ -9686,7 +9693,14 @@ function closeDetailTrades(){
 function liveSection(f){
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   let h='';
-  const tr=trades.filter(t=>t.name===f.name).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const tr=trades.filter(t=>t.name===f.name);
+  tr.sort(function(a,b){
+    const d=(b.date||'').localeCompare(a.date||'');
+    if(d!==0) return d;
+    const tm=(b.time||'').localeCompare(a.time||'');
+    if(tm!==0) return tm;
+    return trades.indexOf(b)-trades.indexOf(a); // 同日期同时间：数组越靠后（越晚录入/复制）越靠前，顺序确定不漂
+  });
   // 交易记录已移到详情页顶部独立区块（detailTrades），此处不再重复渲染
   // 若后续需要在详情底部再加一条快速入口，可单独放一个跳转按钮
 

@@ -7885,6 +7885,8 @@ function buildFundsView(){
         if(shares<0) shares=0; if(cost<0) cost=0;
         if(!firstDate||t.date<firstDate) firstDate=t.date;
       });
+      // 定投待确认金额计入累计投入（已扣款但未确认份额）
+      tr.filter(t=>t.dcaId && t.confirm==='pending' && (t.type==='buy'||t.type==='dca')).forEach(t=>{ invested+=+t.amount||0; });
       if(_fundNeedsHist && !codeFailed.has(name) && !(code&&histFailed.has(code))) _navlessNames.push(name);
       // 没有可定价的买入（份额仍为 0）但有快照 → 回退快照，避免显示 0
       // 例外：若已有卖出且净份额=0（已清仓），不再回退快照，让它进「清仓」Tab

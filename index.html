@@ -8492,6 +8492,8 @@ function enterDetail(f){
   renderFundProfile(f);
   renderFundHoldings(f);
 }
+function genericDetail(f){
+  const tr=(trades||[]).filter(t=>t.name===f.name);
 /**
  * 「平行宇宙」复盘推演 —— 数据流向
  *

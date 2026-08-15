@@ -160,6 +160,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .theme-toggle .icon-btn.on { color:var(--accent); background:var(--surface); box-shadow:0 1px 3px rgba(0,0,0,.10); }
   .theme-toggle .icon-btn svg { width:18px; height:18px; }
   .status-line { display:flex; align-items:center; gap:8px; font-size:13px; line-height:1.25; color:var(--text-3); margin-bottom:12px; padding:0 2px; }
+.fetch-warn{ display:flex; align-items:center; gap:6px; margin:0 2px 12px; padding:9px 12px; border-radius:10px; background:var(--warn-bg); color:var(--warn); font-size:13px; font-weight:600; cursor:pointer; }
   .status-line .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; align-self:center; }
   .status-line .dot.closed { background:#b6bcc4; }
   .status-line .dot.open { background:#1f9d4d; }
@@ -236,7 +237,9 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   #tradePicker { display:none; position: fixed; inset:0; z-index:1000; align-items:center; justify-content:center; }.tp-mask { position:absolute; inset:0; background:rgba(0,0,0,.35); }.tp-pop { position:relative; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); width:min(420px,92vw); max-height:80vh; overflow:auto; padding:16px; }.tp-title { font-size: 14px; font-weight:600; margin-bottom:10px; }.tp-search { width:100%; padding:8px 10px; border:1px solid var(--border-strong); border-radius:9px; font-size: 14px; margin-bottom:10px; box-sizing:border-box; font-family:inherit; }.tp-list { display:flex; flex-direction:column; gap:4px; }.tp-item { text-align:left; padding:9px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface-2); cursor:pointer; font-size: 14px; color:var(--text); }@media (hover: hover) { .tp-item:hover {  border-color:var(--accent-text); background:var(--accent-soft);  } }
 /* 全部交易聚合弹窗 */
   #allTradesModal { display:none; position: fixed; inset:0; z-index:1000; align-items:center; justify-content:center; }.at-pop { position:relative; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); width:min(680px,94vw); max-height:84vh; display:flex; flex-direction:column; padding:16px; }.at-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }.at-head h3 { margin:0; font-size: 15px; }.at-head .count { font-size: 14px; color:var(--text-3); }.at-search { width:100%; padding:8px 10px; border:1px solid var(--border-strong); border-radius:9px; font-size: 14px; margin-bottom:8px; box-sizing:border-box; font-family:inherit; }.at-scroll { overflow:auto; flex:1; }.at-table { width:100%; }.at-table tbody tr { cursor:pointer; }@media (hover: hover) { .at-table tbody tr:hover {  background:var(--accent-soft);  } }
-.at-row .nm { font-weight:600; }.at-row .tag { font-size: 12px; margin-left:2px; }.at-row .pending-nav { color:var(--warn); font-weight:600; }.at-empty { padding:28px 10px; text-align:center; color:var(--text-3); font-size: 14px; line-height:1.7; }.at-foot { text-align:right; margin-top:10px; }/* 全部交易弹窗 - 移动端卡片 */
+.at-row .nm { font-weight:600; }.at-row .tag { font-size: 12px; margin-left:2px; }.at-row .pending-nav { color:var(--warn); font-weight:600; }
+.at-card.at-problem{ background:var(--warn-bg); }
+.at-row.at-problem{ background:var(--warn-bg); }.at-empty { padding:28px 10px; text-align:center; color:var(--text-3); font-size: 14px; line-height:1.7; }.at-foot { text-align:right; margin-top:10px; }/* 全部交易弹窗 - 移动端卡片 */
 .at-card-list{ display:flex; flex-direction:column; gap:10px; padding:2px 0; }
 .at-card{ background:var(--surface); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.04),0 0 1px rgba(0,0,0,.06); border:1px solid var(--border-2); cursor:pointer; position:relative; transition:all .12s; }
 .at-card:active{ background:var(--surface-2); transform:scale(.98); }
@@ -3725,6 +3728,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
       <span class="dot closed" id="statusDot" style="display: inline-block;"></span>
       <span id="statusText">已收盘 · 21:13:04</span>
     </div>
+    <div class="fetch-warn" id="fetchWarn" style="display:none" onclick="openAllTrades('problem')">⚠️ <span id="fetchWarnN">0</span> 笔交易缺净值/份额，点此查看并补录</div>
 
     <!-- 账户下拉菜单（由 Header 账户名触发；整合原 scope-bar 账户切换 + 全量 + 新增） -->
     <div class="acc-menu" id="accMenu"><div class="acc-menu-head"><span>账户选择</span></div><div class="acc-menu-item on" data-acc="本人账户" onclick="pickAcc(this.dataset.acc)"><span class="acc-left"><span class="acc-check">✓</span><span class="acc-name">本人账户</span></span><span class="acc-right"><span class="acc-cnt">3只</span></span></div><div class="acc-menu-item" data-acc="投资账户" onclick="pickAcc(this.dataset.acc)"><span class="acc-left"><span class="acc-check"></span><span class="acc-name">投资账户</span></span><span class="acc-right"><span class="acc-cnt">0只</span></span></div><div class="acc-menu-item" data-acc="代管账户" onclick="pickAcc(this.dataset.acc)"><span class="acc-left"><span class="acc-check"></span><span class="acc-name">代管账户</span></span><span class="acc-right"><span class="acc-cnt">1只</span></span></div><div class="acc-menu-item" data-acc="all" onclick="pickAcc(this.dataset.acc)"><span class="acc-left"><span class="acc-check"></span><span class="acc-name">全部</span></span><span class="acc-right"><span class="acc-cnt">4只</span></span></div><div class="acc-menu-item acc-menu-add" onclick="addAccount()"><span class="acc-left"><span class="acc-name">＋ 新增账户</span></span></div></div>
@@ -4263,6 +4267,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sheet-row{ display:block; width:100%; border:none; background:transparent; padding:16px; font-size:17px; text-align:center; color:var(--text); border-bottom:1px solid var(--border); font-family:inherit; }
   .sheet-row:last-child{ border-bottom:none; }
   .sheet-row.danger{ color:var(--danger); font-weight:600; }
+.sheet-row.warn{ color:var(--warn); font-weight:600; }
   .sheet-row.cat-opt{ display:flex; align-items:center; justify-content:space-between; text-align:left; }
   .sheet-row.cat-opt .check{ color:var(--accent); font-weight:700; }
   .cat-grid{ display:flex; flex-wrap:wrap; gap:8px; padding:6px 14px 12px; }
@@ -4298,6 +4303,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     <div class="sheet-card">
       <button class="sheet-row" onclick="closeDetailMore();detailScrollTrades()">交易记录</button>
       <button class="sheet-row" onclick="closeDetailMore();detailAddWatch()">添加自选</button>
+      <button class="sheet-row warn" onclick="closeDetailMore();openAllTrades('problem')">⚠️ 待补净值/份额<span id="dmProblemBadge"></span></button>
       <button class="sheet-row danger" onclick="closeDetailMore();detailDelHolding()">删除持有</button>
     </div>
     <button class="sheet-cancel" onclick="closeDetailMore()">取消</button>
@@ -8187,7 +8193,7 @@ function autoConfirmPendingTrades(){
     if(t.dcaId) return;  // 定投单保持待确认，不自动确认
     const ty=(t.type||'buy').toLowerCase();
     // 仅对买入类交易自动确认
-    if(ty!=='buy'&&ty!=='dca'&&ty!=='convert'&&ty!=='reinvest'&&ty!=='activity') return;
+    if(ty!=='buy'&&ty!=='dca'&&ty!=='convert'&&ty!=='reinvest'&&ty!=='activity'&&ty!=='sell') return;
     // 待确认且无净值/份额的，不自动确认（如刚定投记上的），等用户手动填
     if(t.nav==null || t.shares==null) return;
     const nc=navCache[t.name];
@@ -8222,7 +8228,31 @@ function migrateConvertTarget(){
     }
   });
 }
-function compute(){ autoConfirmPendingTrades(); migrateConvertTarget(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); ensureNavlessHist(); ensureFundCodes(); }
+function problemTrades(){
+  const _today=new Date(); _today.setHours(0,0,0,0);
+  const _res=[];
+  trades.forEach(function(t,i){
+    if(!t||t.confirm==='cancelled') return;
+    const _navMiss=(t.nav==null||t.nav===''||isNaN(+t.nav));
+    const _shMiss=(t.shares==null||t.shares===''||isNaN(+t.shares));
+    if(!_navMiss&&!_shMiss) return;
+    let _cd=t.confirmDate||'';
+    if(!_cd){ try{ const _r=calcTradeDates(t.date||'',t.time||'',false); if(_r&&_r.confirmDate){ const _d=_r.confirmDate; _cd=_d.getFullYear()+'-'+('0'+(_d.getMonth()+1)).slice(-2)+'-'+('0'+_d.getDate()).slice(-2); } }catch(e){} }
+    if(!_cd) return;
+    const _sd=new Date(String(_cd).replace(/-/g,'/')); if(isNaN(_sd)) return; _sd.setHours(0,0,0,0);
+    if(!(_sd<=_today)) return;
+    _res.push({i:i, navMiss:_navMiss, shMiss:_shMiss});
+  });
+  return _res;
+}
+function updateFetchWarn(){
+  const _el=document.getElementById('fetchWarn'); if(!_el) return;
+  const _n=problemTrades().length;
+  const _nb=document.getElementById('fetchWarnN');
+  if(_n>0){ _el.style.display='flex'; if(_nb) _nb.textContent=_n; } else { _el.style.display='none'; }
+  const _mb=document.getElementById('dmProblemBadge'); if(_mb) _mb.textContent=(_n>0?(' ('+_n+')'):'');
+}
+function compute(){ autoConfirmPendingTrades(); migrateConvertTarget(); buildFundsView(); detectCrossAccountDups(); render(); silentSave(); ensureNavlessHist(); ensureFundCodes(); updateFetchWarn(); }
 // 每日资产快照：盘后/刷新时落一条结存（同一天去重只更新），支撑历史收益曲线与回撤
 function scopeTotals(scope){
   const list=_allHoldings.filter(f=> scope==='all'?true:(scope==='managed'? !accIsPersonal(f.account) : accIsPersonal(f.account)));
@@ -10276,11 +10306,14 @@ function setupDrawerSwipeClose(){
   });
 }
 
-function openAllTrades(){
-  const list=trades.slice().sort(function(a,b){return (b.date+' '+(b.time||'')).localeCompare(a.date+' '+(a.time||''));});
+function openAllTrades(mode){
+  let list=trades.slice();
+  if(mode==='problem'){ const _ps=new Set(problemTrades().map(function(p){return p.i;})); list=list.filter(function(t){ return _ps.has(trades.indexOf(t)); }); }
+  list.sort(function(a,b){return (b.date+' '+(b.time||'')).localeCompare(a.date+' '+(a.time||''));});
   const box=document.getElementById('allTradesModal');
   if(!list.length){
-    box.innerHTML="<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3></div><div class=\"at-empty\">还没有任何交易记录。<br>点「⋯ 更多 → + 记一笔交易」开始记录第一笔。</div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
+    const _msg=(mode==='problem')?'🎉 没有缺净值/份额的交易，很棒！':"还没有任何交易记录。<br>点「⋯ 更多 → + 记一笔交易」开始记录第一笔。";
+    box.innerHTML="<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3></div><div class=\"at-empty\">"+_msg+"</div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
     box.style.display='flex'; return;
   }
   const _mobile=isMobile();
@@ -10303,6 +10336,7 @@ function openAllTrades(){
   box.innerHTML=_mobile
     ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"
     :"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><table class=\"am-t at-table\"><thead><tr><th>基金 / 账户</th><th>日期</th><th>方向</th><th class=\"num\">金额</th><th class=\"num\">净值</th><th class=\"num\">手续费</th><th></th></tr></thead><tbody>"+rows+"</tbody></table></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>";
+  if(mode==='problem'){ const _h=box.querySelector('.at-head'); if(_h){ const _b=document.createElement('span'); _b.className='count'; _b.style.color='var(--warn)'; _b.textContent=' · 待补净值/份额 '+list.length+' 笔'; _h.appendChild(_b); const _btn=document.createElement('button'); _btn.className='btn sm'; _btn.textContent='查看全部'; _btn.style.marginLeft='8px'; _btn.onclick=function(){ openAllTrades(); }; _h.appendChild(_btn); } }
   box.style.display='flex';
 }
 function closeAllTrades(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('allTradesModal'); if(b) b.style.display='none'; }
@@ -11366,14 +11400,14 @@ async function refresh(){
     // 历史兼容：t.date 内嵌时间拆到 t.time；并自动补净值确认日期（无需联网）
     trades.forEach(t=>{
       if(t.confirm==='cancelled') return;
-      if(!['buy','reinvest','convert'].includes(t.type||'buy')) return;
+      if(!['buy','reinvest','convert','sell'].includes(t.type||'buy')) return;
       if(t.date && !t.time){ const sp=splitDT(t.date); if(sp.time){ t.time=sp.time; t.date=sp.date; filled++; } }
       if(!t.confirmDate){ const cd=deriveCD(t.date,t.time); if(cd){ t.confirmDate=cd; filled++; } }
     });
     const cands=trades.filter(t=>{
       if(t.confirm==='cancelled') return false;
       if(t.dcaId) return false;                  // 定投单不自动补净值/份额，保持待确认
-      if(!['buy','reinvest','convert'].includes(t.type||'buy')) return false;
+      if(!['buy','reinvest','convert','sell'].includes(t.type||'buy')) return false;
       const navOk=!!(t.nav!=null&&t.nav!==''&&!isNaN(+t.nav));
       const amt=+t.amount||0, sh=+t.shares||0;
       if(navOk&&amt&&sh) return false;            // 三字段齐全，无需处理
@@ -11407,6 +11441,7 @@ async function refresh(){
       if(nav==null) continue;
       if(!navOk){ t.nav=nav; t.navConfirmed=true; filled++; }   // 补净值（结算日历史净值）
       if(!amt0&&sh0){ t.amount=+(sh0*nav).toFixed(2); filled++; } // 只填份额→反推金额
+      if(!sh0&&amt0){ t.shares=+(amt0/nav).toFixed(4); filled++; } // 只填金额→反推份额
     }
     if(filled) silentSave();
   })();

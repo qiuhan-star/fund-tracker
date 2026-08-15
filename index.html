@@ -4263,6 +4263,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .sheet-row{ display:block; width:100%; border:none; background:transparent; padding:16px; font-size:17px; text-align:center; color:var(--text); border-bottom:1px solid var(--border); font-family:inherit; }
   .sheet-row:last-child{ border-bottom:none; }
   .sheet-row.danger{ color:var(--danger); font-weight:600; }
+  .sheet-row.cat-opt{ display:flex; align-items:center; justify-content:space-between; text-align:left; }
+  .sheet-row.cat-opt .check{ color:var(--accent); font-weight:700; }
   .sheet-cancel{ background:var(--surface); border-radius:14px; padding:16px; text-align:center; font-size:17px; font-weight:600; color:var(--accent); border:none; width:100%; font-family:inherit; }
   /* 复盘编辑：复用底部 sheet 弹层（去内联展开，避免遮挡列表） */
   .rv-sheet-card{ margin-bottom:8px; max-height:82vh; overflow:auto; -webkit-overflow-scrolling:touch; }
@@ -6168,24 +6170,29 @@ function editTags(code){
 }
 // ---------- 分类手动覆盖（系统自动判定，可点 ✎ 改）----------
 const CAT_LIST=['芯片','周期资源','医药','军工','制造','海外','科技','债基','混合','黄金','其他'];
-function closeMenus(){ document.querySelectorAll('.float-menu').forEach(m=>m.remove()); }
+function closeCatSheet(){
+  const m=document.getElementById('catSheetMask'); if(m) m.classList.remove('show');
+  const s=document.getElementById('catSheet'); if(s) s.classList.remove('show');
+}
+function closeMenus(){ document.querySelectorAll('.float-menu').forEach(m=>m.remove()); closeCatSheet(); }
 function catMenu(name, ev){
-  closeMenus();
+  closeCatSheet();
   const cur=catOverride[name]||((fundsView.find(f=>f.name===name)||{}).cat)||'';
   const customVal=(cur && CAT_LIST.indexOf(cur)<0)?cur:'';
-  const m=document.createElement('div'); m.className='float-menu';
-  m.innerHTML='<div class="fm-title">修改分类（系统按名称自动判定，可手动覆盖）</div>'
-    + CAT_LIST.map(c=>`<button class="fm-opt${c===cur?' on':''}" onclick="setCatOverride('${esc(name)}','${c}')">${c}</button>`).join('')
-    + `<button class="fm-opt" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`
-    + '<div class="fm-sep"></div>'
-    + '<div style="font-size: 12px;color:var(--text-3);padding:2px 8px 4px;">或自己输入分类名：</div>'
-    + '<input class="fm-input" id="catCustom" placeholder="如：半导体、红利、黄金…" value="'+esc(customVal)+'">'
-    + '<button class="fm-save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button>';
-  document.body.appendChild(m);
-  const inp=m.querySelector('#catCustom'); if(inp){ inp.focus(); inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); applyCatCustom(name); } }); }
-  const r=(ev&&ev.currentTarget?ev.currentTarget:ev&&ev.target?ev.target:document.body).getBoundingClientRect();
-  m.style.left=Math.min(r.left, window.innerWidth-180)+'px'; m.style.top=(r.bottom+4)+'px';
-  setTimeout(function(){ document.addEventListener('click', function h(e){ if(!m.contains(e.target)){ m.remove(); document.removeEventListener('click',h); } }); },0);
+  let html='<div class="sheet-card" style="max-height:78vh;overflow:auto">'
+    + '<div class="sheet-head">修改分类（系统按名称自动判定，可手动覆盖）</div>'
+    + CAT_LIST.map(c=>`<button class="sheet-row cat-opt" onclick="setCatOverride('${esc(name)}','${c}')"><span>${c}</span>${c===cur?'<span class="check">✓</span>':''}</button>`).join('')
+    + `<button class="sheet-row reset" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`
+    + '<div class="sheet-custom"><input class="fm-input" id="catCustom" placeholder="或自己输入分类名：半导体、红利…" value="'+esc(customVal)+'"><button class="save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button></div>'
+    + '</div>'
+    + '<button class="sheet-cancel" onclick="closeCatSheet()">取消</button>';
+  let mask=document.getElementById('catSheetMask');
+  let sheet=document.getElementById('catSheet');
+  if(!mask){ mask=document.createElement('div'); mask.className='sheet-mask'; mask.id='catSheetMask'; mask.onclick=closeCatSheet; document.body.appendChild(mask); }
+  if(!sheet){ sheet=document.createElement('div'); sheet.className='sheet'; sheet.id='catSheet'; document.body.appendChild(sheet); }
+  sheet.innerHTML=html;
+  const inp=sheet.querySelector('#catCustom'); if(inp){ inp.focus(); inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); applyCatCustom(name); } }); }
+  mask.classList.add('show'); sheet.classList.add('show');
 }
 function setCatOverride(name, cat){
   if(cat) catOverride[name]=cat; else delete catOverride[name];

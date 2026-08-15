@@ -7868,6 +7868,12 @@ function buildFundsView(){
         // 不再写回 liveNav（实时联网最新净值）反推的份额 — 黄金等基金净值每日波动，用今天的净值反推 T-1 买入的份额会偏离真实值。
         // 注意：line 7793 的 sh 仍用 liveNav/lastNav 兜底，用于本函数内的市值/成本/收益计算（不污染用户的交易记录）。
         const _needSh=(ty==='buy'||ty==='convert'||ty==='dca'||ty==='activity'||ty==='reinvest');
+        // 清理已存在的脏数据：t.nav 等于今天实时净值（非今天交易）→ 旧版 navCache 自动填充的脏净值，清除后由历史净值补填逻辑修正
+        if(t.confirm==='confirmed' && _needSh && t.nav && +t.nav>0 && liveNav>0 && Math.abs(+t.nav-liveNav)/liveNav<0.001 && t.date && t.date!==_todayStr){
+          t.nav=null;
+          if(t.shares!=null && +t.shares>0){ const _autoSh=amt>0?amt/liveNav:0; if(_autoSh>0 && Math.abs(+t.shares-_autoSh)/_autoSh<0.01) t.shares=null; }
+          _tradesMigrated=true;
+        }
         // 清理已存在的脏数据：t.nav 为空 + t.shares 与 amt/liveNav 接近（误差 1% 内）→ 显然是旧版用 liveNav 反推写入的脏份额
         // 用户的真实录入份额通常与「金额/最新实时净值」不会精确匹配；只有脏数据才匹配。
         if(t.confirm==='confirmed' && _needSh && (!t.nav || +t.nav===0) && t.shares!=null && +t.shares>0 && amt>0 && liveNav>0){
@@ -9894,7 +9900,7 @@ function tradeQuickSave(){
   const dtRaw=g('tq-datetime').value; const date=dtRaw?dtRaw.slice(0,10):''; if(!date){ toast('请选择日期时间'); return; }
   let amount=+(g('tq-amount')?.value||0);
   const navInput=+(g('tq-nav')?.value||0);
-  const nav=navInput>0?navInput:((navCache[name]&&navCache[name].nav>0)?navCache[name].nav:0);
+  const nav=navInput>0?navInput:0;
   const shRaw=(g('tq-shares')?.value||g('tq-shares-more')?.value||'');
   let shares=(shRaw===''||shRaw==null)?null:+shRaw;
   if(!amount && shares==null){ toast('请填写金额或份额'); return; }

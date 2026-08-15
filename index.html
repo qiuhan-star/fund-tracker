@@ -9077,6 +9077,40 @@ function jumpToEarliestBatch(name){
     }
   },350);
 }
+
+/* 详情页「持有天数 / 赎回费」状态条（基于 FIFO 算最早一批份额）
+   - 思路文档：思路文档/费率功能代码思路.md §3.2
+   - 整个区域可点击 → 跳到对应交易记录 + 红框闪烁
+   - 三种状态：< 7 天警告 / 7-30 天过渡 / ≥ 30 天免赎
+*/
+function feeHoldStatusHtml(f){
+  const eb=earliestBatch(f.name);
+  if(!eb) return '';
+  const days=earliestBatchDays(f.name);
+  const enc=encodeURIComponent(f.name);
+  let cls='ok', icon='✅', l1='', l2='';
+  if(days<7){
+    cls='warn'; icon='⚠️';
+    l1='最早一批份额购于 '+eb.date+'，持有 '+days+' 天';
+    l2='现在卖出将收 1.5% 惩罚性赎回费 · 建议等 '+(7-days)+' 天后再卖';
+  } else if(days<30){
+    cls='mid'; icon='📅';
+    l1='最早一批份额购于 '+eb.date+'，持有 '+days+' 天';
+    l2='现在卖出将收 0.5% 短期赎回费 · 再等 '+(30-days)+' 天可全免';
+  } else {
+    cls='ok'; icon='✅';
+    l1='最早一批份额购于 '+eb.date+'，已持有 '+days+' 天';
+    l2='全部份额已过 30 天免赎期 · 现在卖出都免赎回费';
+  }
+  return '<div class="fee-hold-status fee-hold-'+cls+'" id="feeHoldStatus" onclick="jumpToEarliestBatch(decodeURIComponent(\''+enc+'\'))" title="点击查看这笔交易">'
+    +'<div class="fhs-ico">'+icon+'</div>'
+    +'<div class="fhs-body">'
+      +'<div class="fhs-l1">'+l1+'</div>'
+      +'<div class="fhs-l2">'+l2+'</div>'
+    +'</div>'
+    +'<div class="fhs-arr">查看 ›</div>'
+  +'</div>';
+}
 function genericDetail(f){
   const tr=(trades||[]).filter(t=>t.name===f.name);
   // 交易型基金：基础数据全部由交易流水 FIFO 自动算出，详情页头部 + 下方「交易流水 / 回本计算器 / 止盈止损」

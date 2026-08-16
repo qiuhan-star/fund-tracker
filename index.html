@@ -8628,6 +8628,39 @@ function enterDetail(f){
   renderDetailLive(f);
   renderFundProfile(f);
   renderFundHoldings(f);
+  // 若来自「全部交易」点击的待定位索引，渲染完成后滚动 + 闪烁该笔交易
+  try{
+    const jIdx=window.__atJumpIdx;
+    if(typeof jIdx==='number' && jIdx>=0 && trades[jIdx] && trades[jIdx].name===f.name){
+      window.__atJumpIdx=-1;
+      let tries=0;
+      const _tryFlash=function(){
+        tries++;
+        // 若列表被折叠，先展开所有交易
+        try{
+          if(window.innerWidth<=768){
+            document.querySelectorAll('.tx-list').forEach(function(list){
+              if(!list.classList.contains('tx-expanded')){
+                list.classList.add('tx-expanded');
+                list.querySelectorAll('.tx-card').forEach(function(c){ c.classList.remove('tx-hidden'); });
+                window.__detailTxExpanded=true;
+              }
+            });
+          }
+        }catch(e){}
+        const card=document.querySelector('.tx-card[data-tx-idx="'+jIdx+'"]')
+                 || document.querySelector('tr.tr-locked[data-tx-idx="'+jIdx+'"]');
+        if(card){
+          try{ card.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+          card.classList.add('tx-flash-highlight');
+          setTimeout(function(){ card.classList.remove('tx-flash-highlight'); },2200);
+        }else if(tries<20){
+          setTimeout(_tryFlash,150);
+        }
+      };
+      setTimeout(_tryFlash,250);
+    }
+  }catch(e){}
 }
 /**
  * 「平行宇宙」复盘推演 —— 数据流向
@@ -10688,14 +10721,16 @@ function openAllTrades(mode){
     const col=t.type==='sell'?'var(--down)':'var(--up)';
     const confLbl=confirmLabel(t.confirm);
     const confCls=confirmClass(t.confirm);
+    const tidx=trades.indexOf(t);
+    const tidxStr=String(tidx);
     if(_mobile){
       const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
       const _pend=t.confirm==='pending';
       const navTxt=_pend?(t.dcaId?'⏳净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
       const shareTxt=_pend?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
-      return "<div class='at-card' onclick='atGo(\""+enc+"\",\""+esc(acc)+"\")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
+      return "<div class='at-card' onclick='atGo("+tidxStr+")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
     }
-    return "<tr class='at-row' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo(this.dataset.nm,this.dataset.acc)'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?(t.dcaId?"<button class=\"lk\" onclick=\"event.stopPropagation();autoFillDcaTrade("+trades.indexOf(t)+")\">一键确认</button>":'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
+    return "<tr class='at-row' data-tx-idx='"+tidxStr+"' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo("+tidxStr+")'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?(t.dcaId?"<button class=\"lk\" onclick=\"event.stopPropagation();autoFillDcaTrade("+tidx+")\">一键确认</button>":'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
   }).join('');
   box.innerHTML=_mobile
     ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"
@@ -10705,7 +10740,17 @@ function openAllTrades(mode){
 }
 function closeAllTrades(e){ if(e&&e.target&&!e.target.classList.contains('tp-mask')) return; const b=document.getElementById('allTradesModal'); if(b) b.style.display='none'; }
 function atFilter(v){ const q=(v||'').trim(); document.querySelectorAll('#allTradesModal .at-row, #allTradesModal .at-card').forEach(function(r){ r.style.display=(!q||r.textContent.includes(q))?'':'none'; }); }
-function atGo(nm,acc){ closeAllTrades(); goDetail(nm,acc); }
+function atGo(idx){
+  const i=(typeof idx==='number')?idx:parseInt(idx,10);
+  const t=(!isNaN(i)&&trades[i])?trades[i]:null;
+  const nm=t?t.name:'';
+  const acc=t?accOf(t):'';
+  closeAllTrades();
+  if(!nm) return;
+  // 跳详情页后，定位并闪烁这一笔交易
+  window.__atJumpIdx=isNaN(i)?-1:i;
+  goDetail(encodeURIComponent(nm), acc);
+}
 function delFundByIndex(enc){
   const nm=decodeURIComponent(enc); if(!nm) return;
   ftConfirm('确定删除「'+nm+'」？删除后本地已自动备份，可从「设置 → 从备份恢复」。', function(ok){ if(!ok) return;

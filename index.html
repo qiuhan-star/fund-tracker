@@ -6085,15 +6085,15 @@ function watchFeeLine(x){
   const hasS = x.sellFee!=null && String(x.sellFee).trim()!=='';
   const wrap='display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;padding:2px 0 4px;flex-wrap:wrap';
   if(!hasB && !hasS){
-    return `<span style="${wrap}"><span style="color:#9aa0aa;border:1px dashed #c7ccd4;border-radius:8px;padding:2px 8px;cursor:pointer" onclick="event.stopPropagation();editWatchFee('${x.code}')">✎ 填买入/卖出费率</span></span>`;
+    return `<span style="${wrap}"><span style="color:#9aa0aa;border:1px dashed #c7ccd4;border-radius:8px;padding:2px 8px;cursor:pointer" onclick="event.stopPropagation();editWatchFee('${x.code}','${escAttr(x.name)}')">✎ 填买入/卖出费率</span></span>`;
   }
   let parts=[];
   if(hasB) parts.push(`<span>买入 <b style="color:#111827">${esc(x.buyFee)}%</b></span>`);
   if(hasS) parts.push(`<span>卖出 <b style="color:#111827">${esc(x.sellFee)}</b></span>`);
-  return `<span style="${wrap}">${parts.join('<span style="color:#d0d4da">·</span>')}<span style="margin-left:auto;color:#9aa0aa;cursor:pointer" onclick="event.stopPropagation();editWatchFee('${x.code}')" title="编辑费率">✎</span></span>`;
+  return `<span style="${wrap}">${parts.join('<span style="color:#d0d4da">·</span>')}<span style="margin-left:auto;color:#9aa0aa;cursor:pointer" onclick="event.stopPropagation();editWatchFee('${x.code}','${escAttr(x.name)}')" title="编辑费率">✎</span></span>`;
 }
-function editWatchFee(code){
-  const w=loadWatch(); const it=w.find(x=>x.code===code); if(!it) return;
+function editWatchFee(code, name){
+  const w=loadWatch(); const it=code?w.find(x=>x.code===code):w.find(x=>x.name===name); if(!it) return;
   let m=document.getElementById('wfModal');
   if(!m){
     m=document.createElement('div'); m.id='wfModal';
@@ -6106,7 +6106,7 @@ function editWatchFee(code){
         <label style="display:block;margin-bottom:14px">赎回费（卖出，自由填写）<input id="wfSell" style="width:100%;margin-top:4px;padding:8px;border:1px solid #d0d4da;border-radius:8px;font-size:15px;box-sizing:border-box" placeholder="如 ＜7天1.5%·满7天免"></label>
         <div style="display:flex;gap:10px">
           <button onclick="closeWatchFee()" style="flex:1;padding:10px;border:1px solid #d0d4da;border-radius:10px;background:#f2f3f5;color:#111827;font-size:15px">取消</button>
-          <button onclick="saveWatchFee('${code}')" style="flex:1;padding:10px;border:none;border-radius:10px;background:#007aff;color:#fff;font-size:15px">保存</button>
+          <button id="wfSaveBtn" style="flex:1;padding:10px;border:none;border-radius:10px;background:#007aff;color:#fff;font-size:15px">保存</button>
         </div>
       </div>`;
     document.body.appendChild(m);
@@ -6115,17 +6115,18 @@ function editWatchFee(code){
   const bEl=document.getElementById('wfBuy'); const sEl=document.getElementById('wfSell');
   bEl.value=(it.buyFee!=null && String(it.buyFee).trim()!=='')?it.buyFee:'';
   sEl.value=(it.sellFee!=null && String(it.sellFee).trim()!=='')?it.sellFee:'';
+  document.getElementById('wfSaveBtn').onclick=function(){ saveWatchFee(code, name); };
   m.style.display='block';
   setTimeout(function(){ try{ bEl.focus(); }catch(e){} },50);
 }
-function saveWatchFee(code){
+function saveWatchFee(code, name){
   const bEl=document.getElementById('wfBuy'); const sEl=document.getElementById('wfSell');
   const b=bEl.value.trim(); const sv=sEl.value.trim();
-  const w=loadWatch(); const it=w.find(x=>x.code===code); if(!it){ closeWatchFee(); return; }
+  const w=loadWatch(); const it=code?w.find(x=>x.code===code):w.find(x=>x.name===name); if(!it){ closeWatchFee(); return; }
   it.buyFee = b==='' ? '' : b;
   it.sellFee = sv;
   try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
-  closeWatchFee(); renderWatch(); toast('已保存费率');
+  closeWatchFee(); renderWatch(); if(typeof renderWatchTab==='function') renderWatchTab(); toast('已保存费率');
 }
 function closeWatchFee(){ const m=document.getElementById('wfModal'); if(m) m.style.display='none'; }
 
@@ -15716,14 +15717,133 @@ function uwRow(it){
   var acts=it.isBond
     ? '<span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="delByData(this)">删除</span>'
     : '<span class="sa act" data-name="'+escAttr(it.name||'')+'" onclick="openByData(this)">记账</span><span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this)">删除</span>';
-  return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'">'
+  // 分类标签
+  var catLabel=it.isBond?'债基':guessCat(it.name);
+  // 手续费行
+  var hasBF=it.buyFee&&String(it.buyFee).trim()!=='';
+  var hasSF=it.sellFee&&String(it.sellFee).trim()!=='';
+  var feeHtml='';
+  if(hasBF||hasSF){
+    var parts=[];
+    if(hasBF) parts.push('<span class="wf-buy">买入 <b>'+escHtml(it.buyFee)+'%</b></span>');
+    if(hasSF) parts.push('<span class="wf-sell">卖出 <b>'+escHtml(it.sellFee)+'</b></span>');
+    feeHtml='<span class="wf-fees">'+parts.join('<span class="wf-dot">·</span>')+'</span>';
+  } else {
+    feeHtml='<span class="wf-fees wf-empty"><span class="wf-add" onclick="event.stopPropagation();editWatchFee('+JSON.stringify(it.code||'')+','+JSON.stringify(it.name||'')+')">✎ 填费率</span></span>';
+  }
+  return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" draggable="true" ondragstart="uwDragStart(event)" ondragend="uwDragEnd(event)">'
     +'<div class="swipe-inner" onclick="goDetail(\''+encodeURIComponent(it.name||'')+'\',\''+encodeURIComponent(it.acc||'')+'\')">'
-      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span>'+chg+'</div>'
+      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span><span class="cat-tag">'+escHtml(catLabel)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span>'+chg+'</div>'
       +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="y1">近1年 '+it.y1+'</span><button type="button" class="buy-flag'+(it.buy?' on':'')+'" data-key="'+escAttr(it.isBond?(it.code||''):(it.name||''))+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="toggleWatchBuy(this);event.stopPropagation()" title="准备买入？点亮后进入买入决策测算" aria-label="待买开关">🛒</button></div>'
       +'<div class="r3" onclick="openWatchNote('+JSON.stringify(it.key)+','+(it.isBond?1:0)+');event.stopPropagation();event.preventDefault();return false"><span class="pin">📝</span><span class="ntxt'+(it.note?'':' empty')+'">'+(it.note?escHtml(it.note):'添加备注…')+'</span></div>'
+      +'<div class="r4" onclick="event.stopPropagation()">'+feeHtml+'</div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
   +'</div>';
+}
+// ---------- 拖拽分组 ----------
+var _uwDragKey=null;
+function uwDragStart(e){
+  var row=e.currentTarget; if(!row) return;
+  var name=row.getAttribute('data-name')||'';
+  var code=row.getAttribute('data-code')||'';
+  _uwDragKey=name||code;
+  try{ e.dataTransfer.setData('text/plain',_uwDragKey||''); e.dataTransfer.effectAllowed='move'; }catch(_){}
+  row.classList.add('dragging');
+}
+function uwDragEnd(e){
+  var row=e.currentTarget; if(row) row.classList.remove('dragging');
+  document.querySelectorAll('#tp3 .wrow.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+  _uwDragKey=null;
+}
+function uwDragOver(e){
+  e.preventDefault();
+  try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+  var card=e.currentTarget;
+  if(card) card.classList.add('drag-over');
+}
+function uwDrop(e){
+  e.preventDefault();
+  document.querySelectorAll('#tp3 .card.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+  var card=e.currentTarget; if(!card) return;
+  var grpName=card.getAttribute('data-grp')||'未分组';
+  if(!_uwDragKey) return;
+  // 查找是基金还是债券
+  var w=loadWatch(); var fIdx=w.findIndex(function(x){ return (x.code&&x.code===_uwDragKey)||x.name===_uwDragKey; });
+  if(fIdx>=0){ w[fIdx].grp=grpName; try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){} }
+  else {
+    var bw=loadBondWatch(); var bIdx=bw.findIndex(function(x){ return x.code===_uwDragKey; });
+    if(bIdx>=0){ bw[bIdx].grp=grpName; saveBondWatch(); }
+  }
+  _uwDragKey=null;
+  renderWatchTab();
+}
+// ---------- 分组管理 ----------
+function uwManageGroups(){
+  var w=loadWatch(); var bw=loadBondWatch();
+  var allGroups={};
+  w.forEach(function(x){ var g=x.grp||'未分组'; allGroups[g]=true; });
+  bw.forEach(function(x){ var g=x.grp||'未分组'; allGroups[g]=true; });
+  var names=Object.keys(allGroups).sort(function(a,b){ if(a==='未分组') return -1; if(b==='未分组') return 1; return a.localeCompare(b,'zh'); });
+  var ov=document.createElement('div'); ov.id='uwGroupOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;z-index:2100';
+  var html='<div style="background:var(--surface);color:var(--text);width:100%;max-width:600px;margin:0 auto;border-radius:16px 16px 0 0;padding:18px 20px calc(28px + env(safe-area-inset-bottom))">'
+    +'<h3 style="margin:0 0 4px;font-size:17px;font-weight:700">管理分组</h3>'
+    +'<p style="margin:0 0 12px;font-size:13px;color:var(--text-3)">拖拽自选基金到不同分组，或在此管理分组名称。</p>'
+    +'<div style="margin-bottom:12px;display:flex;gap:8px">'
+    +'<input id="uwNewGrp" placeholder="新分组名称" style="flex:1;padding:10px;border:1px solid var(--border-strong);border-radius:10px;font-size:14px;background:var(--surface-2);color:var(--text);outline:none;box-sizing:border-box">'
+    +'<button id="uwAddGrpBtn" style="padding:10px 16px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">添加</button>'
+    +'</div>';
+  names.forEach(function(g){
+    var cnt=(w.filter(function(x){return (x.grp||'未分组')===g;}).length+bw.filter(function(x){return (x.grp||'未分组')===g;}).length);
+    var isDefault=(g==='未分组');
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border-2)">'
+      +'<span style="flex:1;font-size:15px;font-weight:600">'+escHtml(g)+' <span class="hint">('+cnt+')</span></span>'
+      +(isDefault?'':'<span class="grp-act" data-grp="'+escAttr(g)+'" onclick="uwRenameGrp(this)" style="font-size:12px;color:var(--accent);cursor:pointer;padding:4px 8px">重命名</span>')
+      +(isDefault?'':'<span class="grp-act" data-grp="'+escAttr(g)+'" onclick="uwDelGrp(this)" style="font-size:12px;color:var(--up,#d93025);cursor:pointer;padding:4px 8px">删除</span>')
+      +'</div>';
+  });
+  html+='<div style="display:flex;gap:10px;margin-top:14px">'
+    +'<button onclick="closeUwGroup()" style="flex:1;padding:12px;border:0;border-radius:12px;background:var(--surface-2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;cursor:pointer">完成</button>'
+    +'</div></div>';
+  ov.innerHTML=html;
+  ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+  document.body.appendChild(ov);
+  document.getElementById('uwAddGrpBtn').onclick=function(){
+    var inp=document.getElementById('uwNewGrp'); var v=(inp.value||'').trim();
+    if(!v){ toast('请输入分组名称'); return; }
+    if(allGroups[v]){ toast('分组已存在'); return; }
+    allGroups[v]=true; toast('已添加分组「'+v+'」');
+    ov.remove(); uwManageGroups();
+  };
+  document.getElementById('uwNewGrp').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){ document.getElementById('uwAddGrpBtn').click(); }
+  });
+}
+function closeUwGroup(){ var ov=document.getElementById('uwGroupOverlay'); if(ov) ov.remove(); }
+function uwRenameGrp(el){
+  var old=el.getAttribute('data-grp'); if(!old) return;
+  var v=prompt('重命名分组「'+old+'」为：',old);
+  if(!v||v.trim()===old||!v.trim()) return;
+  v=v.trim();
+  var w=loadWatch(); var changed=false;
+  w.forEach(function(x){ if((x.grp||'未分组')===old){ x.grp=v; changed=true; } });
+  if(changed) try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+  var bw=loadBondWatch();
+  bw.forEach(function(x){ if((x.grp||'未分组')===old){ x.grp=v; changed=true; } });
+  if(changed) saveBondWatch();
+  if(changed){ closeUwGroup(); uwManageGroups(); renderWatchTab(); toast('已重命名'); }
+}
+function uwDelGrp(el){
+  var g=el.getAttribute('data-grp'); if(!g||g==='未分组') return;
+  if(!confirm('确定删除分组「'+g+'」？该分组下的自选将移回「未分组」。')) return;
+  var w=loadWatch(); var changed=false;
+  w.forEach(function(x){ if(x.grp===g){ x.grp=''; changed=true; } });
+  if(changed) try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+  var bw=loadBondWatch();
+  bw.forEach(function(x){ if(x.grp===g){ x.grp=''; changed=true; } });
+  if(changed) saveBondWatch();
+  if(changed){ closeUwGroup(); uwManageGroups(); renderWatchTab(); toast('已删除分组'); }
 }
 
 function openWatchNote(key, isBond){
@@ -15876,10 +15996,10 @@ function renderWatchTab(){
   const items=[];
   fWatch.forEach(function(x){
     const held=_allHoldings.find(function(f){ const c=syncCode(f.name); return (x.code&&c&&x.code===c)||(f.name===x.name); });
-    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name, buy: !!x.buy, note:(x.note||'')});
+    items.push({isBond:false, code:x.code||'', name:x.name, acc:'本人账户', quoteCode:x.code||'', y1:'—', grp:x.grp||'', key:x.name, buy: !!x.buy, note:(x.note||''), buyFee: x.buyFee||'', sellFee: x.sellFee||''});
   });
   bWatch.forEach(function(f){
-    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code, buy: !!f.buy, note:(f.note||'')});
+    items.push({isBond:true, code:f.code, name:f.name, acc:f.acc||'—', quoteCode:'', y1:(f.y1!=null?f.y1.toFixed(2)+'%':'—'), grp:f.grp||'', key:f.code, buy: !!f.buy, note:(f.note||''), buyFee: f.buyFee||'', sellFee: f.sellFee||''});
   });
 
   // 是否买：债券部分复用 bondAnalysis；基金侧按分类查同类重复
@@ -15927,7 +16047,21 @@ function renderWatchTab(){
     +'.wrow .r3{display:flex;align-items:flex-start;gap:4px;padding:0 16px 12px;font-size:12px;color:var(--text-3);line-height:1.45;cursor:pointer}'
     +'.wrow .r3 .pin{flex:0 0 auto;font-size:10px;opacity:.6;margin-top:3px}'
     +'.wrow .r3 .ntxt{flex:1;min-width:0;word-break:break-word}'
-    +'.wrow .r3 .ntxt.empty{opacity:.5}'
++'.wrow .r3 .ntxt.empty{opacity:.5}'
++'.wrow .r4{display:flex;align-items:center;padding:0 16px 10px;font-size:11px;color:var(--text-3);line-height:1.3}'
++'.wrow .wf-fees{display:flex;align-items:center;gap:6px;flex-wrap:wrap}'
++'.wrow .wf-fees b{color:var(--text);font-weight:600}'
++'.wrow .wf-dot{color:var(--border-strong)}'
++'.wrow .wf-empty .wf-add{cursor:pointer;color:var(--text-3);border:1px dashed var(--border-strong);border-radius:6px;padding:1px 7px;font-size:10px}'
++'.wrow .wf-empty .wf-add:hover{color:var(--accent);border-color:var(--accent)}'
++'.wrow .cat-tag{display:inline-block;font-size:10px;font-weight:600;color:var(--text-2);background:var(--surface-2);padding:1px 6px;border-radius:4px;margin-left:4px;flex-shrink:0;line-height:1.6}'
++'.wrow.dragging{opacity:.35}'
++'.wrow.drag-over{outline:2px dashed var(--accent);outline-offset:-2px;background:var(--surface-2)}'
++'.card.drag-over{background:var(--surface-2) !important;outline:2px dashed var(--accent);outline-offset:-2px}'
++'.grp-head .grp-acts{display:inline-flex;gap:4px;margin-left:8px;font-size:11px;font-weight:500;color:var(--text-3);cursor:pointer;vertical-align:middle}'
++'.grp-head .grp-acts span{padding:1px 6px;border-radius:6px;background:var(--surface-2)}'
++'.grp-head .grp-acts span:active{opacity:.6}'
++'.grp-act:hover{opacity:.7}'
     +'.wrow .swipe-actions{position:absolute;top:0;right:0;height:100%;display:flex;z-index:0}'
     +'.wrow .swipe-actions .sa{display:flex;align-items:center;justify-content:center;width:72px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;-webkit-user-select:none;user-select:none}'
     +'.wrow .swipe-actions .sa.act{background:var(--accent)}'
@@ -16017,8 +16151,12 @@ function renderWatchTab(){
     const names=Object.keys(groups);
     names.sort(function(a,b){ if(a==='未分组') return -1; if(b==='未分组') return 1; return a.localeCompare(b,'zh'); });
     names.forEach(function(g){
-      listHtml+='<div class="grp-head">'+escHtml(g)+' <span class="hint">('+groups[g].length+')</span></div>';
-      listHtml+='<div class="card">'+groups[g].map(function(it,idx){ return (showHint&&idx===0?markHint(uwRow(it)):uwRow(it)); }).join('')+'</div>';
+      listHtml+='<div class="grp-head">'+escHtml(g)+' <span class="hint">('+groups[g].length+')</span>'
+        +'<span class="grp-acts">'
+          +'<span onclick="event.stopPropagation();uwManageGroups()" title="管理分组">⚙️</span>'
+        +'</span>'
+        +'</div>';
+      listHtml+='<div class="card" data-grp="'+escAttr(g)+'" ondragover="uwDragOver(event)" ondrop="uwDrop(event)">'+groups[g].map(function(it,idx){ return (showHint&&idx===0?markHint(uwRow(it)):uwRow(it)); }).join('')+'</div>';
     });
   } else {
     listHtml='<div class="card">'+items.map(function(it,idx){ return (showHint&&idx===0?markHint(uwRow(it)):uwRow(it)); }).join('')+'</div>';
@@ -16120,6 +16258,7 @@ function wtAttachSwipe(){
       if(lpFired){ lpFired=false; e.preventDefault(); e.stopPropagation(); return; }
       if(e.target.closest('.swipe-actions')) return;
       if(e.target.closest('.r3')) return;
+      if(e.target.closest('.r4')) return;
       if(e.target.closest('.buy-flag')) return;
       if(open){ open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; return; }
       const code=row.getAttribute('data-code'), name=row.getAttribute('data-name'), isBond=row.getAttribute('data-bond')==='1';

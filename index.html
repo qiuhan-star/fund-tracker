@@ -8583,7 +8583,7 @@ function sourceSave(name){
   const text=ta.value;
   const s=(snaps||[]).find(x=>x.name===name); if(s) s.source=text;
   const f=fundsView.find(x=>x.name===name); if(f) f.source=text;
-  try{ flushSilentSave(); }catch(e){}
+  try{ _silentSaveWrite(); }catch(e){}
   reviewSheetClose();
   try{ renderDetailLive(name); }catch(e){}
 }

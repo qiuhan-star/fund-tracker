@@ -7492,7 +7492,7 @@ function appendWatch(f){ if(bondWatch.some(x=>x.code===f.code)){ toast('已在�
 function delBondWatch(code){ bondWatch=bondWatch.filter(x=>x.code!==code); saveBondWatch(); renderBond(); }
 function setWatchField(code,field,val){
   const f=bondWatch.find(x=>x.code===code); if(!f) return;
-  if(field==='y1'||field==='since'){ const n=parseFloat(val); f[field]=isNaN(n)?null:n; }
+  if(field==='y1'||field==='since'||field==='buyFee'){ const n=parseFloat(val); f[field]=isNaN(n)?null:n; }
   else if(field==='lock'){ const n=parseInt(val,10); f[field]=isNaN(n)?0:n; }
   else { f[field]=val; }
   saveBondWatch(); renderBond();
@@ -7609,7 +7609,7 @@ function renderBond(){
 
   let bwRows=wsBonds.map(f=>{
     const mc=f.mix?'<span class="tag-mix">混合</span>':'';
-    return '<tr>'
+    return '<tr data-code="escHtml(f.code)" onclick="openBondDrawer(this.dataset.code)" style="cursor:pointer">'
       +'<td><b>'+escHtml(f.code)+'</b><br><span class="nm">'+escHtml(f.name)+'</span></td>'
       +'<td>'+escHtml(effAccount(f.acc)||'—')+mc+'</td>'
       +'<td><input class="mini-in" value="'+escHtml(f.type)+'" data-c="'+escHtml(f.code)+'" data-f="type" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"></td>'
@@ -7640,7 +7640,7 @@ function renderBond(){
   bc.innerHTML='<style>.bond-tbl{width:100%;border-collapse:collapse;font-size:14px}.bond-tbl th,.bond-tbl td{border-bottom:1px solid var(--border-2);padding:8px 6px;text-align:left;vertical-align:top}.bond-tbl th{color:var(--text-3);font-weight:600;white-space:nowrap}.bond-tbl .nm{color:var(--text-3);font-size:12px}.tag-mix{display:inline-block;background:rgba(199,119,0,.14);color:#d99a3a;border:1px solid rgba(199,119,0,.35);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.tag-lock{display:inline-block;background:var(--accent-soft);color:var(--accent-text);border:1px solid rgba(58,91,217,.4);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.st-ok{color:#1f9d55}.st-warn{color:#e0962a}.st-lock{color:#3a5bd9}.st-none{color:var(--text-3)}.cmp-best{color:#1f9d55;font-weight:700}.cmp-worst{color:#d8453a;font-weight:700}.rules{margin:0;padding-left:18px;line-height:1.9;font-size:14px;color:var(--text-2)}.rules li{margin:3px 0}.amt-in,.date-in{border:1px solid var(--border-strong);border-radius:6px;padding:3px 5px;font-size:14px;background:var(--surface-2);color:var(--text)}.mcard.hl{background:var(--accent-soft);border-color:rgba(58,91,217,.4)}.tbl-wrap{overflow-x:auto}.tag-dur{display:inline-block;background:rgba(58,110,165,.16);color:#7fb0e0;border:1px solid rgba(58,110,165,.4);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.tag-credit{display:inline-block;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border-strong);padding:0 6px;border-radius:6px;font-size:12px;margin-left:4px}.cmp-bar{height:6px;background:var(--border-2);border-radius:3px;margin-top:5px;overflow:hidden}.cmp-bar .fill{height:100%;border-radius:3px}.bar-green{background:#1f9d55}.bar-amber{background:#e0962a}.bar-blue{background:#3a5bd9}.addbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.addbar input{border:1px solid var(--border-strong);border-radius:8px;padding:7px 10px;font-size:16px;font-family:inherit;width:200px;background:var(--surface-2);color:var(--text)}.mini-in{border:1px solid var(--border-strong);border-radius:6px;padding:3px 5px;font-size:14px;width:74px;background:var(--surface-2);color:var(--text)}.mini-in.num{width:58px}.seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;margin-bottom:8px}.seg button{border:none;background:var(--surface);padding:6px 14px;font-size:14px;cursor:pointer;color:var(--text-2);font-family:inherit}.seg button.on{background:var(--accent);color:#fff}.pool-h{display:inline-block;background:var(--accent-soft);color:var(--accent-text);padding:1px 7px;border-radius:6px;font-size:12px}.pool-w{display:inline-block;background:rgba(199,119,0,.14);color:#d99a3a;padding:1px 7px;border-radius:6px;font-size:12px}.alert{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.6}.alert.red{background:rgba(216,69,58,.12);border:1px solid rgba(216,69,58,.4);color:#e8736a}.alert.amber{background:rgba(224,168,59,.12);border:1px solid rgba(224,168,59,.4);color:#d99a3a}.alert.ok{background:rgba(31,157,69,.12);border:1px solid rgba(31,157,69,.4);color:#4caf6e}.alert .ttl{font-weight:700}.suggest{border-left:3px solid var(--accent);background:var(--accent-soft);padding:8px 12px;margin:6px 0;border-radius:0 8px 8px 0;font-size:14px;line-height:1.6}.suggest b{color:var(--accent-text)}.placeholder{background:var(--surface-2);border:1px dashed var(--border-strong);border-radius:10px;padding:14px;color:var(--text-3);font-size:14px}.btn.tiny{padding:2px 8px;font-size:12px;border-radius:7px;cursor:pointer;font-family:inherit;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text-2)}.btn.tiny.danger{background:var(--surface-2);color:#d8453a;border:1px solid rgba(216,69,58,.4)}</style>'
     +'<div class="card"><h2>本人账户债基明细 · 卖出时点 &amp; 锁定期</h2>'+detailHtml+'</div>'
     ''
-    +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
+    +'<div class="card"><h2>统一对比 <span class="hint">（持仓 + 自选，截至 2026-08-04）</span></h2><div class="seg" id="bondCmpSeg">'+segHtml+'</div><div class="tbl-wrap"><table class="bond-tbl"><thead><tr><th>基金</th><th>池子</th><th>类型</th><th>公司</th><th>久期</th><th>信用</th><th>近1年</th><th>成立以来</th><th>风险</th><th>锁</th><th>买入/卖出费</th></tr></thead><tbody id="bondCmpBody"></tbody></table></div><p class="hint" style="margin-top:8px">绿=近1年最高，红=最低。混合(含股票)不与纯债直接比收益。</p></div>'
     +'<div class="card"><h2>同质化预警 <span class="hint">（持仓 + 自选，防不知不觉买成同一类）</span></h2>'+warnHtml+'</div>'
     +'<div class="card"><h2>决策建议 <span class="hint">（基于持仓 + 自选）</span></h2>'+sugHtml+'</div>'
     +'<div class="card"><h2>债基规则速记 <span class="hint">（小白必看）</span></h2><ul class="rules">'
@@ -7674,6 +7674,7 @@ function renderBondCmp(){
     +'<td>'+(f.since!=null?f.since.toFixed(2)+'%':'—')+'</td>'
     +'<td>'+escHtml(f.risk)+'</td>'
     +'<td>'+(f.lock>0?f.lock+'个月':'—')+'</td>'
+    +'<td>'+(f.buyFee!=null&&String(f.buyFee).trim()!==''?('买入 '+f.buyFee+'%'):'买入 —')+' · 卖出 '+(f.sellFee!=null&&String(f.sellFee).trim()!==''?escHtml(f.sellFee):'默认阶梯')+'</td>'
   +'</tr>'; }).join('');
 }
 function setBondCmp(f,el){ bondCmpFilter=f; document.querySelectorAll('#bondCmpSeg button').forEach(b=>b.classList.remove('on')); if(el)el.classList.add('on'); renderBondCmp(); }
@@ -7702,7 +7703,8 @@ function openBondDrawer(code){
     +'<div class="bd-cell"><div class="bd-k">风险/锁</div><div class="bd-v">'+(b.risk||'—')+' · '+(b.lock>0?b.lock+'个月锁':'无锁')+'</div></div>'
     +'<div class="bd-cell"><div class="bd-k">近1年/成立以来</div><div class="bd-v">'+(b.y1!=null?b.y1.toFixed(2)+'%':'—')+' / '+(b.since!=null?b.since.toFixed(2)+'%':'—')+'</div></div>'
     +'</div>'
-    +'<div class="bd-sec"><div class="bd-k">赎回费阶梯</div><div class="bd-v">'+feeLadder+'</div></div>'
+    +'<div class="bd-sec"><div class="bd-k">申购费（买入）</div><div class="bd-v">'+(isWatch?('<input data-c="'+escHtml(b.code)+'" data-f="buyFee" class="amt-in num" style="width:84px" value="'+ (b.buyFee!=null&&String(b.buyFee).trim()!==''?b.buyFee:'') + '" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"> %'):'—')+'</div></div>'
+    +'<div class="bd-sec"><div class="bd-k">赎回费阶梯</div><div class="bd-v">'+feeLadder+'</div></div>
     +'<div class="bd-sec"><div class="bd-k">卖出状态</div><div class="bd-v '+(st.cls||'')+'">'+st.txt+(st.sub?('<br><span class="sub2">'+st.sub+'</span>'):'')+'</div></div>'
     +'<div class="bd-sec"><div class="bd-k">备注</div><textarea class="bd-note" id="bdNote" placeholder="记点什么（如：这只是代管账户里的、目标收益 3% 就卖…）" oninput="setBondNote(\''+escJs(code)+'\',this.value)">'+escHtml(note)+'</textarea></div>';
   d.classList.add('open');

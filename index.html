@@ -4437,6 +4437,15 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   </div>
 
   <style>
+    .fr-mask{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
+    .fr-mask.show{opacity:1;pointer-events:auto}
+    .fr-pop{width:min(92vw,400px);background:var(--surface);border:1px solid var(--border-2);border-radius:14px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.18);transform:translateY(8px);transition:transform .18s}
+    .fr-mask.show .fr-pop{transform:translateY(0)}
+    .fr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .fr-head h3{margin:0;font-size:16px;color:var(--text)}
+    .fr-x{cursor:pointer;color:var(--text-3);font-size:16px;padding:2px 6px}
+    .fr-x:hover{color:var(--text-2)}
+  </style>
     .af-suggest{position:absolute;left:0;right:0;top:100%;z-index:30;max-height:240px;overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);margin-top:4px}
     .af-item{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;font-size: 14px}
     .af-item:hover{background:#f3f4f6}

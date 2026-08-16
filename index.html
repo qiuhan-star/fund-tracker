@@ -4316,6 +4316,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .tx-add-btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:5px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; }
   .tx-add-btn:active{ opacity:.8; }
   .tx-convert{ font-size:12px; color:var(--text-2); margin-top:3px; padding:2px 8px; background:var(--surface-2); border-radius:4px; display:inline-block; }
+.tx-convert.tx-link{ cursor:pointer; color:var(--accent); } .tx-convert.tx-link:active{ opacity:.6; }
   /* 删除状态的卡片（卡片内撤销） */
   .tx-deleted{ opacity:.7; }
   .tx-deleted .tx-card-inner{ cursor:default; }
@@ -8688,6 +8689,8 @@ function enterDetail(f){
   renderDetailLive(f);
   renderFundProfile(f);
   renderFundHoldings(f);
+  // 补录场景：直接进入该基金的「交易记录」弹层，便于补录缺失净值/份额
+  try{ if(window.__atJumpTrades){ window.__atJumpTrades=false; openDetailTrades(); } }catch(e){ console.error(e); }
   // 若来自「全部交易」点击的待定位索引，渲染完成后滚动 + 闪烁该笔交易
   try{
     const jIdx=window.__atJumpIdx;
@@ -9376,6 +9379,24 @@ function jumpToEarliestBatch(name){
     }
   },350);
 }
+// 跳转到转换配对交易记录
+function jumpToPairTrade(idx){
+  const t=trades[idx]; if(!t||!t.pairId) return;
+  const pairIdx=trades.findIndex(function(x,i){ return i!==idx && x.pairId===t.pairId; });
+  if(pairIdx<0){ toast('未找到配对交易记录'); return; }
+  openDetailTrades();
+  setTimeout(function(){
+    const card=document.querySelector('.tx-card[data-tx-idx="'+pairIdx+'"]')
+             || document.querySelector('tr.tr-locked[data-tx-idx="'+pairIdx+'"]');
+    if(card){
+      card.scrollIntoView({behavior:'smooth',block:'center'});
+      card.classList.add('tx-flash-highlight');
+      setTimeout(function(){ card.classList.remove('tx-flash-highlight'); },2200);
+    } else {
+      toast('已打开交易列表，但未定位到配对记录');
+    }
+  },350);
+}
 /* 状态条点击跳转：事件委托（避免在字符串里转义 onclick） */
 (function bindFeeStatusClick(){
   if(bindFeeStatusClick._done) return;
@@ -9880,11 +9901,11 @@ function buildTradeSection(f){
         const shareTxt=_pend?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
         const convertTxt=(t.type==='convert_out'||t.type==='convert')?function(){
           const ct=t.convertTarget;
-          if(ct) return '<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(ct)+'</div>';
+          if(ct) return '<div class="tx-convert tx-link" onclick="event.stopPropagation();jumpToPairTrade('+i+')" title="跳转到配对的'+(t.type==='convert_out'?'转入':'转出')+'记录">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(ct)+' ›</div>';
           // 兜底：通过 pairId 查找配对记录
           if(t.pairId){
             const pair=(trades||[]).find(x=>x!==t && x.pairId===t.pairId);
-            if(pair) return '<div class="tx-convert">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(pair.name)+'</div>';
+            if(pair) return '<div class="tx-convert tx-link" onclick="event.stopPropagation();jumpToPairTrade('+i+')" title="跳转到配对的'+(t.type==='convert_out'?'转入':'转出')+'记录">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(pair.name)+' ›</div>';
           }
           return '';
         }():'';
@@ -9921,10 +9942,10 @@ function buildTradeSection(f){
             <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
             <td>${typeLabel(t.type)}${(t.type==='convert_out'||t.type==='convert')?function(){
               const ct=t.convertTarget;
-              if(ct) return '<br><span style="font-size:11px;color:var(--text-3)">'+(t.type==='convert_out'?'→ '+esc(ct):'← '+esc(ct))+'</span>';
+              if(ct) return '<br><span style="font-size:11px;color:var(--accent);cursor:pointer" onclick="event.stopPropagation();jumpToPairTrade('+i+')" title="跳转到配对记录">'+(t.type==='convert_out'?'→ ':'← ')+esc(ct)+' ›</span>';
               if(t.pairId){
                 const pair=(trades||[]).find(x=>x!==t && x.pairId===t.pairId);
-                if(pair) return '<br><span style="font-size:11px;color:var(--text-3)">'+(t.type==='convert_out'?'→ '+esc(pair.name):'← '+esc(pair.name))+'</span>';
+                if(pair) return '<br><span style="font-size:11px;color:var(--accent);cursor:pointer" onclick="event.stopPropagation();jumpToPairTrade('+i+')" title="跳转到配对记录">'+(t.type==='convert_out'?'→ ':'← ')+esc(pair.name)+' ›</span>';
               }
               return '';
             }():''}</td>
@@ -10883,6 +10904,7 @@ function setupDrawerSwipeClose(){
 }
 
 function openAllTrades(mode){
+  window.__atOpenTrades=(mode==='problem');
   let list=trades.slice();
   if(mode==='problem'){ const _ps=new Set(problemTrades().map(function(p){return p.i;})); list=list.filter(function(t){ return _ps.has(trades.indexOf(t)); }); }
   list.sort(function(a,b){return (b.date+' '+(b.time||'')).localeCompare(a.date+' '+(a.time||''));});
@@ -10926,8 +10948,10 @@ function atGo(idx){
   const acc=t?accOf(t):'';
   closeAllTrades();
   if(!nm) return;
-  // 跳详情页后，定位并闪烁这一笔交易
+  // 跳详情页后，定位并闪烁这一笔交易；补录（问题交易）场景直接打开该基金交易记录
   window.__atJumpIdx=isNaN(i)?-1:i;
+  window.__atJumpTrades=!!window.__atOpenTrades;
+  window.__atOpenTrades=false;
   goDetail(encodeURIComponent(nm), acc);
 }
 function delFundByIndex(enc){

@@ -6204,21 +6204,21 @@ function toggleSortHeader(key){
   if(currentView==='home'&&activeTab===0) renderHomeList();
 }
 // ---------- 自定义列显隐 + 顺序（紧凑表 ⚙️ 列设置）----------
-let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,source:true,fee:true};
+let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,source:true,fee:true,idea:true};
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
-try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,source:o.source!==false,fee:o.fee!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
-const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',source:'参考来源',fee:'手续费'};
+try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,source:o.source!==false,fee:o.fee!==false,idea:o.idea!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
+const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',source:'参考来源',fee:'手续费',idea:'想法'};
 const NOTE_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
-const COL_KEYS=['nav','day','ret','hold','fee','source'];
-const DEFAULT_COL_ORDER=['day','ret','hold','fee','source','nav'];
+const COL_KEYS=['idea','nav','day','ret','hold','fee','source'];
+const DEFAULT_COL_ORDER=['idea','day','ret','hold','fee','source','nav'];
 const COL_ORDER_VER='11';
 const COLVIS_VER='6';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
-try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } }); } } }catch(e){}
+try{ const _co=localStorage.getItem('ft_colorder'); if(_co){ const a=JSON.parse(_co); if(Array.isArray(a)&&a.length){ colOrder=a.filter(k=>COL_KEYS.includes(k)); COL_KEYS.forEach(k=>{ if(!colOrder.includes(k)){ if(k==='idea'){ colOrder.unshift(k); } else { const _i=colOrder.indexOf('ret'); if(k==='hold'&&_i>=0) colOrder.splice(_i+1,0,k); else colOrder.push(k); } } }); } } }catch(e){}
 try{ if(localStorage.getItem('ft_colorder_ver')!==COL_ORDER_VER){ colOrder=DEFAULT_COL_ORDER.slice(); saveColOrder(); } }catch(e){}
-try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,source:true,fee:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
+try{ if(localStorage.getItem('ft_colvis_ver')!==COLVIS_VER){ colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,source:true,fee:true,idea:true}; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_colvis_ver',COLVIS_VER); }catch(e){} } }catch(e){}
 function toggleCol(k,on){ colVis[k]=!!on; colExtraTouched=true; try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); localStorage.setItem('ft_cols_extra','1'); }catch(e){} renderColSet(); renderHomeList(); }
 function toggleColPop(e){ e.stopPropagation(); const p=document.getElementById('colPop'); if(p) p.classList.toggle('show'); }
 function syncColSetChecks(){ renderColSet(); }
@@ -6748,7 +6748,7 @@ function bindTableScrollFade(){
   });
 }
 function denseCols(){
-  const cols=[{key:'name',label:'基金 / 标签'},{key:'idea',label:'想法'}];
+  const cols=[{key:'name',label:'基金 / 标签'}];
   colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   return cols;
 }
@@ -6757,8 +6757,8 @@ function denseHeadHtml(){
   let headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const _sortable = (c.key!=='name' && c.key!=='source' && c.key!=='idea');
-    const _draggable = (c.key!=='name' && c.key!=='idea'); // source 列可拖动换位置，但不可排序
+    const _sortable = (c.key!=='source' && c.key!=='idea'); // 名称列可排序(升/降)；想法/参考来源仅可换列、不可排序
+    const _draggable = (c.key!=='name'); // 想法 / 参考来源 均可拖动换列（与参考来源行为一致）
     const cls = (_sortable?'sortable ':'')+'col-'+c.key+(active?' sort-on':'')+(_draggable?' col-drag':'');
     const drag = _draggable ? ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"` : '';
     const tip = _draggable ? ` title="${_sortable?'点击排序 · ':''}拖动列头换列"` : '';

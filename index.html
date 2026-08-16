@@ -7704,7 +7704,7 @@ function openBondDrawer(code){
     +'<div class="bd-cell"><div class="bd-k">近1年/成立以来</div><div class="bd-v">'+(b.y1!=null?b.y1.toFixed(2)+'%':'—')+' / '+(b.since!=null?b.since.toFixed(2)+'%':'—')+'</div></div>'
     +'</div>'
     +'<div class="bd-sec"><div class="bd-k">申购费（买入）</div><div class="bd-v">'+(isWatch?('<input data-c="'+escHtml(b.code)+'" data-f="buyFee" class="amt-in num" style="width:84px" value="'+ (b.buyFee!=null&&String(b.buyFee).trim()!==''?b.buyFee:'') + '" onchange="setWatchField(this.dataset.c,this.dataset.f,this.value)"> %'):'—')+'</div></div>'
-    +'<div class="bd-sec"><div class="bd-k">赎回费阶梯</div><div class="bd-v">'+feeLadder+'</div></div>
+    +'<div class="bd-sec"><div class="bd-k">赎回费阶梯</div><div class="bd-v">'+feeLadder+'</div></div>'
     +'<div class="bd-sec"><div class="bd-k">卖出状态</div><div class="bd-v '+(st.cls||'')+'">'+st.txt+(st.sub?('<br><span class="sub2">'+st.sub+'</span>'):'')+'</div></div>'
     +'<div class="bd-sec"><div class="bd-k">备注</div><textarea class="bd-note" id="bdNote" placeholder="记点什么（如：这只是代管账户里的、目标收益 3% 就卖…）" oninput="setBondNote(\''+escJs(code)+'\',this.value)">'+escHtml(note)+'</textarea></div>';
   d.classList.add('open');

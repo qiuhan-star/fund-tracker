@@ -6037,11 +6037,63 @@ function renderWatch(){
       <div class="wg-item"><span class="wg-label">近1年</span><span class="wg-val" data-period="1y">—</span></div>
     </div>`;
     const onClick=held?`goDetail('${encodeURIComponent(x.name)}','')`:`goDetail('${encodeURIComponent(x.name)}','')`;
-    return `<li class="watch-item" onclick="${onClick}">${topHtml}${heldHtml}${gridHtml}</li>`;
+    const feeHtml=`<div class="watch-fee" data-code="${x.code}">${watchFeeLine(x)}</div>`;
+    return `<li class="watch-item" onclick="${onClick}">${topHtml}${heldHtml}${feeHtml}${gridHtml}</li>`;
   }).join('');
   fillWatchQuotes();
   fillWatchHistoryAll();
 }
+
+// ---------- 自选（⭐自选 Tab）买入 / 卖出手续费 ----------
+// 申购费率 buyFee（%，如 0.15）；赎回费说明 sellFee（自由文本，如 “＜7天1.5%·满7天免”）
+function watchFeeLine(x){
+  const hasB = x.buyFee!=null && String(x.buyFee).trim()!=='';
+  const hasS = x.sellFee!=null && String(x.sellFee).trim()!=='';
+  const wrap='display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;padding:2px 0 4px;flex-wrap:wrap';
+  if(!hasB && !hasS){
+    return `<span style="${wrap}"><span style="color:#9aa0aa;border:1px dashed #c7ccd4;border-radius:8px;padding:2px 8px;cursor:pointer" onclick="event.stopPropagation();editWatchFee('${x.code}')">✎ 填买入/卖出费率</span></span>`;
+  }
+  let parts=[];
+  if(hasB) parts.push(`<span>买入 <b style="color:#111827">${esc(x.buyFee)}%</b></span>`);
+  if(hasS) parts.push(`<span>卖出 <b style="color:#111827">${esc(x.sellFee)}</b></span>`);
+  return `<span style="${wrap}">${parts.join('<span style="color:#d0d4da">·</span>')}<span style="margin-left:auto;color:#9aa0aa;cursor:pointer" onclick="event.stopPropagation();editWatchFee('${x.code}')" title="编辑费率">✎</span></span>`;
+}
+function editWatchFee(code){
+  const w=loadWatch(); const it=w.find(x=>x.code===code); if(!it) return;
+  let m=document.getElementById('wfModal');
+  if(!m){
+    m=document.createElement('div'); m.id='wfModal';
+    m.style.cssText='position:fixed;inset:0;z-index:9999;display:none;';
+    m.innerHTML=`<div onclick="closeWatchFee()" style="position:absolute;inset:0;background:rgba(0,0,0,.4)"></div>
+      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,360px);background:#fff;color:#111827;border-radius:14px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.25);font-size:14px">
+        <div style="font-weight:600;margin-bottom:4px">买入 / 卖出手续费</div>
+        <div style="color:#8a8f98;font-size:12px;margin-bottom:12px" id="wfName"></div>
+        <label style="display:block;margin-bottom:10px">申购费率（买入，%）<input id="wfBuy" inputmode="decimal" style="width:100%;margin-top:4px;padding:8px;border:1px solid #d0d4da;border-radius:8px;font-size:15px;box-sizing:border-box"></label>
+        <label style="display:block;margin-bottom:14px">赎回费（卖出，自由填写）<input id="wfSell" style="width:100%;margin-top:4px;padding:8px;border:1px solid #d0d4da;border-radius:8px;font-size:15px;box-sizing:border-box" placeholder="如 ＜7天1.5%·满7天免"></label>
+        <div style="display:flex;gap:10px">
+          <button onclick="closeWatchFee()" style="flex:1;padding:10px;border:1px solid #d0d4da;border-radius:10px;background:#f2f3f5;color:#111827;font-size:15px">取消</button>
+          <button onclick="saveWatchFee('${code}')" style="flex:1;padding:10px;border:none;border-radius:10px;background:#007aff;color:#fff;font-size:15px">保存</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+  }
+  document.getElementById('wfName').textContent=it.name||it.code||'';
+  const bEl=document.getElementById('wfBuy'); const sEl=document.getElementById('wfSell');
+  bEl.value=(it.buyFee!=null && String(it.buyFee).trim()!=='')?it.buyFee:'';
+  sEl.value=(it.sellFee!=null && String(it.sellFee).trim()!=='')?it.sellFee:'';
+  m.style.display='block';
+  setTimeout(function(){ try{ bEl.focus(); }catch(e){} },50);
+}
+function saveWatchFee(code){
+  const bEl=document.getElementById('wfBuy'); const sEl=document.getElementById('wfSell');
+  const b=bEl.value.trim(); const sv=sEl.value.trim();
+  const w=loadWatch(); const it=w.find(x=>x.code===code); if(!it){ closeWatchFee(); return; }
+  it.buyFee = b==='' ? '' : b;
+  it.sellFee = sv;
+  try{ localStorage.setItem('ft_watch', JSON.stringify(w)); }catch(e){}
+  closeWatchFee(); renderWatch(); toast('已保存费率');
+}
+function closeWatchFee(){ const m=document.getElementById('wfModal'); if(m) m.style.display='none'; }
 
 function setSort(s){
   if(s===''||s==='default'){ holdSort=''; holdSortDir=''; }
@@ -8842,11 +8894,17 @@ function renderRisk(){
 function renderDetailLive(arg){
   const f=(typeof arg==='string')?fundsView.find(x=>x.name===arg):arg; if(!f) return;
   const live=document.getElementById('detailLive'); if(!live) return; captureFocus();
-  live.innerHTML=liveSection(f); updateDetailHeader(f); restoreFocus();
-  live.innerHTML += sourceCardHtml(f.name);
+  // 主区块（头部+数据源）抛错不能阻断后续卡片渲染
+  var _headOk=false;
+  try{ live.innerHTML=liveSection(f); _headOk=true; }catch(e){ console.error('renderDetailLive.liveSection',e); }
+  if(!_headOk){ try{ live.innerHTML=''; }catch(_){} }
+  try{ updateDetailHeader(f); }catch(e){ console.error('renderDetailLive.updateDetailHeader',e); }
+  restoreFocus();
+  // 各卡片独立渲染，互不影响：持仓理由卡片绝不被其它卡片异常阻断
+  try{ live.innerHTML += sourceCardHtml(f.name); }catch(e){ console.error('renderDetailLive.sourceCard',e); }
   try{ const _dcaCard=dcaCardHtml(f); if(_dcaCard) live.innerHTML += _dcaCard; }catch(e){ console.error(e); }
-  live.innerHTML += reviewCardHtml(f.name);
-  live.innerHTML += noteCardHtml(f.name);
+  try{ live.innerHTML += reviewCardHtml(f.name); }catch(e){ console.error(e); }
+  try{ live.innerHTML += noteCardHtml(f.name); }catch(e){ console.error(e); }
   try{ live.innerHTML += retroLazyHoldCard(f); }catch(e){ console.error(e); }
   // 平行宇宙与同类对比均等历史净值加载后统一插入：平行宇宙连续整块 + 同类对比置底
   try{ retroScenarioCards(f).then(function(shtml){

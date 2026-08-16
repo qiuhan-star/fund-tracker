@@ -4846,6 +4846,7 @@ function setScope(s){ // 兼容旧调用（设置弹窗）→ 同步到账户口
   try{ localStorage.setItem('ft_scope', scopeAcc==='all'?'all':scopeAcc); }catch(e){}
   updateScopeUI();
   compute();
+  holdGroupBy = (curAccount==='全部')?'account':'none';
 }
 // 账户（账户级）：本人账户 / 代管账户 / 投资账户 / 自定义 / all
 function setScopeAcc(acc){
@@ -4855,6 +4856,7 @@ function setScopeAcc(acc){
   try{ localStorage.setItem('ft_scope', scopeAcc==='all'?'all':scopeAcc); }catch(e){}
   updateScopeUI();
   compute(); // 重建 _allHoldings(scope) + fundsView(curAccount)
+  holdGroupBy = (curAccount==='全部')?'account':'none';
   closeAccMenu();
 }
 function cntSpan(n){ return (n>0)? ' <span class="acc-cnt">'+n+'</span>' : ''; }
@@ -5053,6 +5055,8 @@ function fundAccountOf(name){ const f=_allHoldings.find(x=>x.name===name); retur
 let flashMap={}, todayGain=null;
 const DEFAULT_SORT={key:'day',dir:'desc'}; const SORT_VER='2';
 let holdSort=DEFAULT_SORT.key, holdSortDir=DEFAULT_SORT.dir, holdCatFilter='全部', holdSearch='', holdGroupBy='none';
+// 全部账户视图默认按账户分组（可在筛选里切回「不分组」），单账户视图默认不分组
+if(typeof curAccount!=='undefined' && curAccount==='全部') holdGroupBy='account';
 let tagFilter=new Set(); // 标签多选叠加筛选（空=不过滤）
 let catOverride={}; try{ catOverride=JSON.parse(localStorage.getItem('ft_catoverride')||'{}'); }catch(e){ console.warn('分类覆盖数据损坏，已重置为默认', e); _cfgCorrupt=true; }
 let userTags={}; try{ userTags=JSON.parse(localStorage.getItem('ft_tags')||'{}'); }catch(e){ console.warn('标签数据损坏，已重置为默认', e); _cfgCorrupt=true; }
@@ -6450,7 +6454,7 @@ function filterCat(c){
 }
 // ---------- 分组（Group-By）：不分组 / 资产大类 / 市场区域 ----------
 function renderGroupBy(){
-  const opts=[['none','不分组'],['asset','资产大类'],['market','市场区域']];
+  const opts=[['none','不分组'],['account','按账户'],['asset','资产大类'],['market','市场区域']];
   const box=document.getElementById('groupByFilter'); if(!box) return;
   box.innerHTML='<div class="seg">'+opts.map(o=>`<button class="${o[0]===holdGroupBy?'on':''}" onclick="filterGroupBy('${o[0]}')">${o[1]}</button>`).join('')+'</div>';
 }
@@ -6775,7 +6779,6 @@ function mvOrShares(f){
   if(nameMvMode[key]==='shares') return hidden?'•••• 份':((f.shares!=null&&f.shares>0)?fmt(f.shares)+' 份':'—');
   return (f.mv!=null)?M(f.mv):'—';
 }
-function accTint(acc){ if(typeof currentScope==='undefined'||currentScope!=='all') return ''; const tints=['#FF9500','#007AFF','#34C759','#AF52DE','#FF2D55','#5AC8FA']; const s=effAccount(acc)||'本人账户'; let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return tints[h%tints.length]+'66'; }
 function denseRowsHtml(list){
   const cols=denseCols();
   const todayStr=fmtDate(new Date()); // 今晚已更新净值的判定基准：收盘日期==今天
@@ -6784,10 +6787,9 @@ function denseRowsHtml(list){
     const attrTags=(f.tags||[]).map(t=>`<span class="tag tag-attr">${t}</span>`).join('');
     const sharesTxt=hidden?'•••• 份':(f.shares!=null&&f.shares>0?fmt(f.shares)+' 份':'');
     const code=syncCode(f.name);
-    const _bar=(currentScope==='all')?('box-shadow:inset 3px 0 0 0 '+accTint(f.account)+';'):'';
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td class="col-name" style="${_bar}"><div class="dt-name">${esc(f.name)}<span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
+      if(c.key==='name') tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}<span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
       else if(c.key==='nav') tds+=`<td class="col-nav"><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='day'){
         // 当日涨跌：单列双态 — 估算中显示灰色时间，官方已出显示蓝色日期
@@ -6895,9 +6897,8 @@ function homeMobileRow(f, cols){
   // 第一行：基金名 + 分类标签（同行） + 自定义标签
   const nameLine='<div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+'<span class="tag tag-'+f.cat+'" style="margin-left:4px;vertical-align:middle">'+f.cat+'</span>'+attrTags+streakEl+'</div>';
   // 第二行：代码 + 金额/份额 + 切换按钮
-  const _bar=(currentScope==='all')?('box-shadow:inset 3px 0 0 0 '+accTint(f.account)+';'):'';
   const subParts='<span class="tag-code">'+esc(code||'')+'</span><span class="dsep">·</span><span class="val">'+mvOrShares(f)+'</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv(\''+esc(f.name)+'\',\''+esc(f.account)+'\')" title="切换金额/份额">⇄</button>';
-  let tds='<td style="'+_bar+'">'+nameLine+'<div class="csub">'+subParts+'</div></td>';
+  let tds='<td>'+nameLine+'<div class="csub">'+subParts+'</div></td>';
   cols.slice(1).forEach(c=>{ tds+=homeMobileCellOf(f,c.key); });
   return '<tr onclick="goDetail(\''+encodeURIComponent(f.name)+'\',\''+esc(f.account)+'\')">'+tds+'</tr>';
 }
@@ -6979,17 +6980,19 @@ function applyStreak(code, days, dir){
 function groupSortKey(dim,k){
   if(dim==='asset'){ const o=['股票型','混合','货币·理财','黄金','债券']; const i=o.indexOf(k); return i<0?99:i; }
   if(dim==='market'){ return k==='国内'?0:1; }
-  return 0; // 账户：保持原顺序
+  if(dim==='account'){ return (k.indexOf('本人')>=0)?0:1; } // 本人账户置顶，其余随后
+  return 0;
 }
 function grpLabel(dim,k){
   if(dim==='asset') return k;
   if(dim==='market') return k==='海外'?'🌏 海外':'🏠 国内';
+  if(dim==='account') return (k.indexOf('代管')>=0?'🤝 ':'👤 ')+k;
   return k;
 }
 function renderGrouped(list){
-  const dim=(holdGroupBy==='asset')?'asset':'market';
+  const dim=(holdGroupBy==='account')?'account':(holdGroupBy==='asset'?'asset':'market');
   const groups={};
-  list.forEach(f=>{ const k=(f[dim]||(dim==='account'?effAccount('本人账户'):'其他')); (groups[k]=groups[k]||[]).push(f); });
+  list.forEach(f=>{ const k=(dim==='account')?effAccount(f.account||'本人账户'):(f[dim]||'其他'); (groups[k]=groups[k]||[]).push(f); });
   const order=Object.keys(groups).sort((a,b)=>groupSortKey(dim,a)-groupSortKey(dim,b));
   // 与「不分组」同格式：单张 dense 表 + 表内组分隔行（原 多张表 + .grp-head 独立块 已废弃）
   const colspan=denseCols().length+1; // 数据列 + 最右「≡ 列」按钮列

@@ -8585,7 +8585,7 @@ function sourceSave(name){
   const f=fundsView.find(x=>x.name===name); if(f) f.source=text;
   try{ _silentSaveWrite(); }catch(e){}
   reviewSheetClose();
-  try{ renderDetailLive(name); }catch(e){}
+  try{ render(); }catch(e){}
 }
 
 // ---------- 渲染调度 ----------

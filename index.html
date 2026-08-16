@@ -9388,11 +9388,20 @@ function jumpToEarliestBatch(name){
     }
   },350);
 }
-// 跳转到转换配对交易记录
+// 跳转到转换配对基金的交易记录
 function jumpToPairTrade(idx){
   const t=trades[idx]; if(!t||!t.pairId) return;
   const pairIdx=trades.findIndex(function(x,i){ return i!==idx && x.pairId===t.pairId; });
   if(pairIdx<0){ toast('未找到配对交易记录'); return; }
+  const pair=trades[pairIdx];
+  // 配对记录在另一只基金：跳到该基金的交易记录页
+  if(pair && pair.name!==detailName){
+    window.__atJumpIdx=pairIdx;
+    window.__atJumpTrades=true;
+    goDetail(encodeURIComponent(pair.name), accOf(pair));
+    return;
+  }
+  // 同基金兜底：在当前交易记录弹层内滚动闪烁
   openDetailTrades();
   setTimeout(function(){
     const card=document.querySelector('.tx-card[data-tx-idx="'+pairIdx+'"]')

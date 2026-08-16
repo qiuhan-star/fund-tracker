@@ -5289,13 +5289,29 @@ function flushSilentSave(){ if(_silentSaveTimer){ clearTimeout(_silentSaveTimer)
 function loadManualOverrides(){ try{ manualOverrides=JSON.parse(localStorage.getItem('ft_manual_overrides')||'{}')||{}; }catch(e){ manualOverrides={}; } }
 function saveManualOverrides(){ try{ localStorage.setItem('ft_manual_overrides', JSON.stringify(manualOverrides)); }catch(e){} }
 /* 赎回费率规则：独立存储（_allHoldings 由 compute() 每次重建，费率配置不能放基金对象里）
-   结构：ft_fee_rules = { "基金名": {freeDays:7, rate:1.5} }
-   - freeDays: 持有满多少天免赎回费（0=不免费，setup 时配置）
-   - rate: 未满 freeDays 时的通用赎回费率（%）
-   未配置该基金 → 状态条显示中性提示+引导配置，不做错误断言 */
+   结构：ft_fee_rules = { "基金名": {src:'auto'|'manual', freeDays, rate, tiers:[...]} }
+   - src: auto=来自天天基金自动抓取，manual=用户手动配置
+   - tiers: [{d:起始天数, rate:费率%, desc:原始期限描述}] 按 d 升序
+   - freeDays: 费率=0% 的起始天数（免赎天数）；rate 仅兼容旧数据=首档费率
+   未配置该基金 → 状态条显示中性提示+引导配置，不做错误断言
+   参考：思路文档/费率功能代码思路.md */
 function loadFeeRules(){ try{ feeRules=JSON.parse(localStorage.getItem('ft_fee_rules')||'{}')||{}; }catch(e){ feeRules={}; } }
 function saveFeeRules(){ try{ localStorage.setItem('ft_fee_rules', JSON.stringify(feeRules)); }catch(e){} }
 function getFeeRule(name){ return feeRules ? (feeRules[name]||null) : null; }
+/* 用费率档位算：持有 days 天对应的赎回费率（%）；未配置返回 null */
+function feeRateForDays(rule, days){
+  if(!rule) return null;
+  days=Math.max(0, Math.floor(+days||0));
+  // 优先 tier 档位
+  if(rule.tiers && rule.tiers.length){
+    let r=null;
+    for(const t of rule.tiers){ if(days>=t.d && !isNaN(t.rate)) r=t.rate; } // 取最后一个 d<=days 的档
+    return r;
+  }
+  // 旧数据兼容：freeDays+rate
+  if(rule.freeDays>0 && days<rule.freeDays) return (rule.rate!=null?rule.rate:1.5);
+  return 0;
+}
 function getOverrideKey(acc,name){ return (acc||'本人账户')+'||'+(name||''); }
 function getManualOverride(acc,name){ return manualOverrides[getOverrideKey(acc,name)]; }
 function setManualOverride(acc,name,data){

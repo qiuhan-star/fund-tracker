@@ -13924,11 +13924,15 @@ function simulateReducePosition(enc){
     if(r1n){ const _need=d.remNeed; r1n.textContent=_need>0?'+'+_need.toFixed(2)+'%':'已回本'; r1n.className=_need>0?'pos':'done'; }
   }
   if(ex){
-    const _g=d.thisGain;
+    const _t=(function(){const d=new Date();const p=n=>(''+n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());})();
+    let fee=0;
+    try{ const ef=estRedemptionFee(f.name, f.acc, _t, sell); if(ef&&ef.fee) fee=ef.fee; }catch(e){ fee=0; }
+    const _g=d.thisGain-fee;
     ex.innerHTML=`<div class="bk-sim-d-grid">
       <div class="bk-sim-d-i"><span>成交价依据</span><b>${basis}</b></div>
       <div class="bk-sim-d-i"><span>卖出份额</span><b>${fmt(d.sellSh)}</b></div>
-      <div class="bk-sim-d-i"><span>本次盈亏(未计费)</span><b class="${_g>=0?'pos':'neg'}">${_g>=0?'+':''}${M(_g)}</b></div>
+      <div class="bk-sim-d-i"><span>赎回费</span><b>${fee>0?M(fee):'免'}</b></div>
+      <div class="bk-sim-d-i"><span>本次盈亏(已计费)</span><b class="${_g>=0?'pos':'neg'}">${_g>=0?'+':''}${M(_g)}</b></div>
       <div class="bk-sim-d-i"><span>剩余份额</span><b>${fmt(d.remSh)}</b></div>
       ${d.over?'<div class="bk-sim-d-i"><span>提示</span><b style="color:#e6a23c">超过持仓市值，将全部清仓</b></div>':''}
     </div>`;

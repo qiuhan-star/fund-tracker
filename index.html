@@ -8583,9 +8583,12 @@ function sourceSave(name){
   const text=ta.value;
   const s=(snaps||[]).find(x=>x.name===name); if(s) s.source=text;
   const f=fundsView.find(x=>x.name===name); if(f) f.source=text;
-  try{ _silentSaveWrite(); }catch(e){}
   reviewSheetClose();
-  try{ render(); }catch(e){}
+  // 保存和重绘异步执行，避免大账本写 localStorage 阻塞导致按钮看起来没反应
+  setTimeout(function(){
+    try{ _silentSaveWrite(); }catch(e){ console.error('_silentSaveWrite failed', e); }
+    try{ render(); }catch(e){ console.error('render failed', e); }
+  }, 0);
 }
 
 // ---------- 渲染调度 ----------

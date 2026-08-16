@@ -439,7 +439,6 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
 .note-ta{ display:block; width:100%; box-sizing:border-box; min-height:64px; border:1px solid var(--border, rgba(0,0,0,.12)); border-radius:10px; padding:8px 10px; font-family:inherit; font-size:14px; resize:vertical; background:var(--surface,#fff); color:var(--text,#1f2933); margin-top:8px; }
 .note-bar{ display:flex; align-items:center; gap:10px; margin-top:8px; }
 .note-saved{ margin-top:8px; font-size:12px; color:var(--text-3,#94a3b8); white-space:pre-wrap; }
-.note-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:#3b82f6; margin-left:5px; vertical-align:middle; }
 .peer-row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border, rgba(0,0,0,.06)); font-size:13px; }
 .peer-row:last-child{ border-bottom:none; }
 .peer-k{ color:var(--text-2,#3c4654); }
@@ -8762,7 +8761,6 @@ try{ ftFundNotes=JSON.parse(localStorage.getItem('ft_notes')||'{}')||{}; }catch(
 function saveFundNotes(){ try{ localStorage.setItem('ft_notes', JSON.stringify(ftFundNotes)); }catch(e){} }
 function getNote(name){ return ftFundNotes[name]||''; }
 function setNote(name, text){ const t=(text||'').trim(); if(t) ftFundNotes[name]=t; else delete ftFundNotes[name]; saveFundNotes(); }
-function noteDot(name){ return getNote(name)?'<span class="note-dot" title="有策略便签"></span>':''; }
 function openIdeasSheet(){ try{ buildIdeasList(); }catch(e){ console.error('buildIdeasList', e); } var m=document.getElementById('ideasMask'), sh=document.getElementById('ideasSheet'); if(m)m.classList.add('show'); if(sh)sh.classList.add('show'); }
 function closeIdeasSheet(){ var m=document.getElementById('ideasMask'), sh=document.getElementById('ideasSheet'); if(m)m.classList.remove('show'); if(sh)sh.classList.remove('show'); }
 function toggleIdeaItem(el){ if(el&&el.classList) el.classList.toggle('exp'); }

@@ -1020,6 +1020,28 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .source-btn:active { background: var(--surface-2, #f1f3f5); }
   .dense-table .source-btn .src-chip { display: inline-block; max-width: 64px; padding: 2px 6px; font-size: 10px; font-weight: 600; color: var(--accent, #3b82f6); background: rgba(59,130,246,.1); border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
   .dense-table .source-btn .source-add { font-size: 16px; line-height: 1; color: var(--text-3); opacity: .55; }
+  .dense-table .col-idea { width: 34px; min-width: 34px; text-align: center; padding: 0 2px; }
+  .dense-table th.col-idea { font-size: 10px; }
+  .dense-table .idea-btn { display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:30px; padding:0 4px; border:none; background:transparent; color:var(--text-3); cursor:pointer; border-radius:8px; -webkit-tap-highlight-color:transparent; font-size:15px; line-height:1; }
+  .dense-table .idea-btn.has { color:#f5a623; }
+  .dense-table .idea-btn:active { background:var(--surface-2,#f1f3f5); }
+  #ideasSheet .sheet-card{ max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+  .ideas-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
+  .ideas-head .t{ font-size:16px; font-weight:700; }
+  .ideas-head .c{ font-size:12px; color:var(--text-3); }
+  #ideasBody{ overflow:auto; -webkit-overflow-scrolling:touch; padding:4px 12px 12px; }
+  .idea-item{ border-bottom:1px solid var(--border); padding:11px 2px; cursor:pointer; }
+  .idea-item:last-child{ border-bottom:none; }
+  .idea-head{ display:flex; align-items:center; gap:8px; }
+  .idea-sw{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .idea-name{ font-size:14px; font-weight:600; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .idea-acc{ font-size:11px; color:var(--text-3); background:var(--surface-2); padding:1px 6px; border-radius:6px; flex-shrink:0; }
+  .idea-open{ flex-shrink:0; border:none; background:var(--accent-soft, rgba(59,130,246,.1)); color:var(--accent-text,#3b82f6); font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px; font-family:inherit; cursor:pointer; }
+  .idea-prev{ font-size:12px; color:var(--text-2); margin-top:5px; line-height:1.45; }
+  .idea-full{ display:none; font-size:13px; color:var(--text); margin-top:7px; line-height:1.6; word-break:break-word; }
+  .idea-item.exp .idea-full{ display:block; }
+  .idea-item.exp .idea-prev{ display:none; }
+  .idea-empty{ text-align:center; color:var(--text-3); font-size:13px; padding:44px 20px; line-height:1.8; }
   .rv-pin { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--accent, #3b82f6); background: rgba(59,130,246,.12); padding: 1px 6px; border-radius: 6px; }
   /* 持仓列表名称副行：来源缩略已拆到独立列 */
   .dense-table .dt-src { display: none; }
@@ -4375,6 +4397,15 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     </div>
   </div>
 
+  <!-- 策略想法汇总弹层 -->
+  <div class="sheet-mask" id="ideasMask" onclick="closeIdeasSheet()"></div>
+  <div class="sheet" id="ideasSheet">
+    <div class="sheet-card">
+      <div class="ideas-head"><span class="t">我的策略想法</span><span class="c" id="ideasCount"></span></div>
+      <div id="ideasBody"></div>
+    </div>
+    <button class="sheet-cancel" onclick="closeIdeasSheet()">关闭</button>
+  </div>
   <!-- 交易选择器弹窗 -->
   <div id="tradePicker"></div>
   <div id="allTradesModal"></div>
@@ -6662,7 +6693,7 @@ function bindTableScrollFade(){
   });
 }
 function denseCols(){
-  const cols=[{key:'name',label:'基金 / 标签'}];
+  const cols=[{key:'name',label:'基金 / 标签'},{key:'idea',label:'想法'}];
   colOrder.forEach(k=>{ if(colVis[k]) cols.push({key:k,label:COL_DEFS[k]}); });
   return cols;
 }
@@ -6671,7 +6702,7 @@ function denseHeadHtml(){
   let headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const _sortable = (c.key!=='name' && c.key!=='source');
+    const _sortable = (c.key!=='name' && c.key!=='source' && c.key!=='idea');
     const cls = (_sortable?'sortable ':'')+'col-'+c.key+(active?' sort-on':'')+(_sortable?' col-drag':'');
     const drag = _sortable ? ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"` : '';
     const tip = _sortable ? ` title="点击排序 · 拖动列头换列"` : '';
@@ -6729,6 +6760,7 @@ function denseRowsHtml(list){
       else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="col-holdpct ${_cc}"><div class="dt-big">${_rc}</div></td>`; }
       else if(c.key==='mv')  tds+=`<td class="col-mv"><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
       else if(c.key==='source'){ const _src=f.source||''; const _has=!!_src.trim(); tds+=`<td class="col-source"><button type="button" class="source-btn${_has?' has':''}" onclick="event.stopPropagation();sourceEditOpen('${esc(f.name)}')" title="${_has?('持仓理由 · 参考来源：'+rvEsc(_src)):'添加持仓理由 · 参考来源'}">${_has?('<span class="src-chip">'+rvEsc(srcSnippet(_src))+'</span>'):'<span class="source-add">＋</span>'}</button></td>`; }
+      else if(c.key==='idea'){ const _note=getNote(f.name); const _has=!!(_note&&_note.trim()); tds+=`<td class="col-idea"><button type="button" class="idea-btn${_has?' has':''}" onclick="event.stopPropagation();openIdeasSheet()" title="查看全部策略想法">${_has?'💡':'·'}</button></td>`; }
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：盘中优先用实时估算 gszzl；收盘后用基金公司确认的 navChg，与官方昨日收益对齐。
         const _chg=effectiveDayChg(nc);
@@ -8730,6 +8762,32 @@ function saveFundNotes(){ try{ localStorage.setItem('ft_notes', JSON.stringify(f
 function getNote(name){ return ftFundNotes[name]||''; }
 function setNote(name, text){ const t=(text||'').trim(); if(t) ftFundNotes[name]=t; else delete ftFundNotes[name]; saveFundNotes(); }
 function noteDot(name){ return getNote(name)?'<span class="note-dot" title="有策略便签"></span>':''; }
+function openIdeasSheet(){ try{ buildIdeasList(); }catch(e){ console.error('buildIdeasList', e); } var m=document.getElementById('ideasMask'), sh=document.getElementById('ideasSheet'); if(m)m.classList.add('show'); if(sh)sh.classList.add('show'); }
+function closeIdeasSheet(){ var m=document.getElementById('ideasMask'), sh=document.getElementById('ideasSheet'); if(m)m.classList.remove('show'); if(sh)sh.classList.remove('show'); }
+function toggleIdeaItem(el){ if(el&&el.classList) el.classList.toggle('exp'); }
+function ideaOpen(btn){ var n=btn.getAttribute('data-n'); closeIdeasSheet(); if(n) showDetail(n); }
+function buildIdeasList(){
+  var body=document.getElementById('ideasBody'); if(!body) return;
+  var names=Object.keys(ftFundNotes||{}).filter(function(n){ return (ftFundNotes[n]||'').trim(); }).sort(function(a,b){ return a.localeCompare(b,'zh-CN'); });
+  var cnt=document.getElementById('ideasCount'); if(cnt) cnt.textContent=names.length? (names.length+' 条') : '0 条';
+  if(!names.length){ body.innerHTML='<div class="idea-empty">还没有任何策略想法。<br>在基金详情里写下的便签，会自动汇总到这里。</div>'; return; }
+  body.innerHTML=names.map(function(n){
+    var f=(fundsView.filter(function(x){ return x.name===n; })[0])||{};
+    var cat=f.cat||'其他'; var c=(typeof CAT_COLORS!=='undefined'&&CAT_COLORS[cat])||'#9aa0a6';
+    var note=ftFundNotes[n]; var acc=f.account?effAccount(f.account):'';
+    var full=esc(note).replace(/\n/g,'<br>');
+    var prevTxt=note.replace(/\n/g,' '); var prev=esc(prevTxt.slice(0,42))+(prevTxt.length>42?'…':'');
+    return '<div class="idea-item" onclick="toggleIdeaItem(this)">'
+      +'<div class="idea-head"><i class="idea-sw" style="background:'+c+'"></i>'
+      +'<span class="idea-name">'+esc(n)+'</span>'
+      +(acc?'<span class="idea-acc">'+esc(acc)+'</span>':'')
+      +'<button type="button" class="idea-open" data-n="'+esc(n)+'" onclick="event.stopPropagation();ideaOpen(this)">打开</button>'
+      +'</div>'
+      +'<div class="idea-prev">'+prev+'</div>'
+      +'<div class="idea-full">'+full+'</div>'
+      +'</div>';
+  }).join('');
+}
 function noteCardHtml(name){
   const t=getNote(name)||'';
   return '<div class="card" id="noteCard"><div class="sec-head"><h2 style="margin:0;font-size:14px">📝 策略便签 <span class="tag">本地保存</span></h2><span class="hint" style="font-size:12px">随手记一句买卖逻辑</span></div>'

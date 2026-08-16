@@ -1043,7 +1043,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .rv-pin { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--accent, #3b82f6); background: rgba(59,130,246,.12); padding: 1px 6px; border-radius: 6px; }
   /* 持仓列表名称副行：来源缩略已拆到独立列 */
   .dense-table .dt-src { display: none; }
-  /* 详情页「持仓理由 · 参考来源」卡片 */
+  /* 详情页「参考来源」卡片 */
   .src-text { font-size: 14px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-word; }
   .src-text .tag, .tags .tag { font-size: 11px; color: var(--accent, #3b82f6); background: rgba(59,130,246,.1); padding: 2px 8px; border-radius: 8px; margin: 0 6px 6px 0; display: inline-block; }
   .src-meta { font-size: 12px; color: var(--text-3); margin-top: 8px; }
@@ -6151,7 +6151,7 @@ let colVis={nav:false,day:true,mv:false,ret:true,hold:true,holdpct:false,source:
 let colExtraTouched=false;
 try{ colExtraTouched=localStorage.getItem('ft_cols_extra')==='1'; }catch(e){}
 try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv); colVis={nav:o.nav===true,day:o.day!==false,mv:o.mv!==false,ret:o.ret!==false,hold:o.hold!==false,holdpct:o.holdpct!==false,source:o.source!==false,fee:o.fee!==false}; const shown=Object.keys(colVis).filter(k=>colVis[k]).length; if(shown<3){ ['day','ret','hold'].forEach(k=>{ if(colVis[k]===false) colVis[k]=true; }); try{ localStorage.setItem('ft_cols',JSON.stringify(colVis)); }catch(e2){} } } }catch(e){}
-const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',source:'持仓理由 · 参考来源',fee:'手续费'};
+const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',source:'参考来源',fee:'手续费'};
 const NOTE_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const COL_KEYS=['nav','day','ret','hold','fee','source'];
 const DEFAULT_COL_ORDER=['day','ret','hold','fee','source','nav'];
@@ -6701,9 +6701,10 @@ function denseHeadHtml(){
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
     const _sortable = (c.key!=='name' && c.key!=='source' && c.key!=='idea');
-    const cls = (_sortable?'sortable ':'')+'col-'+c.key+(active?' sort-on':'')+(_sortable?' col-drag':'');
-    const drag = _sortable ? ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"` : '';
-    const tip = _sortable ? ` title="点击排序 · 拖动列头换列"` : '';
+    const _draggable = (c.key!=='name' && c.key!=='idea'); // source 列可拖动换位置，但不可排序
+    const cls = (_sortable?'sortable ':'')+'col-'+c.key+(active?' sort-on':'')+(_draggable?' col-drag':'');
+    const drag = _draggable ? ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"` : '';
+    const tip = _draggable ? ` title="${_sortable?'点击排序 · ':''}拖动列头换列"` : '';
     const _onclick = _sortable ? ` onclick="toggleSortHeader('${c.key}')"` : '';
     return `<th class="${cls}"${_onclick}${tip}${drag}>${c.label}<span class="sort-ico ${active?'on':''}">${ico}</span></th>`;
   }).join('');
@@ -6758,7 +6759,7 @@ function denseRowsHtml(list){
       else if(c.key==='fee'){ const _ft=(+f.feeTotal||0); tds+=`<td class="col-fee"><div class="dt-big">${_ft>0?('¥'+_ft.toFixed(2)):'—'}</div>${_ft>0?`<div class="dt-sub2">累计</div>`:''}</td>`; }
       else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="col-holdpct ${_cc}"><div class="dt-big">${_rc}</div></td>`; }
       else if(c.key==='mv')  tds+=`<td class="col-mv"><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
-      else if(c.key==='source'){ const _src=f.source||''; const _has=!!_src.trim(); tds+=`<td class="col-source"><button type="button" class="source-btn${_has?' has':''}" onclick="event.stopPropagation();sourceEditOpen('${esc(f.name)}')" title="${_has?('持仓理由 · 参考来源：'+rvEsc(_src)):'添加持仓理由 · 参考来源'}">${_has?('<span class="src-chip">'+rvEsc(srcSnippet(_src))+'</span>'):'<span class="source-add">＋</span>'}</button></td>`; }
+      else if(c.key==='source'){ const _src=f.source||''; const _has=!!_src.trim(); tds+=`<td class="col-source"><button type="button" class="source-btn${_has?' has':''}" onclick="event.stopPropagation();sourceEditOpen('${esc(f.name)}')" title="${_has?('参考来源：'+rvEsc(_src)):'添加参考来源'}">${_has?('<span class="src-chip">'+rvEsc(srcSnippet(_src))+'</span>'):'<span class="source-add">＋</span>'}</button></td>`; }
       else if(c.key==='idea'){ const _note=getNote(f.name); const _has=!!(_note&&_note.trim()); tds+=`<td class="col-idea"><button type="button" class="idea-btn${_has?' has':''}" onclick="event.stopPropagation();openIdeasSheet()" title="查看全部策略想法">${_has?'💡':'·'}</button></td>`; }
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：盘中优先用实时估算 gszzl；收盘后用基金公司确认的 navChg，与官方昨日收益对齐。
@@ -8556,9 +8557,9 @@ function sourceCardHtml(name){
   const f=fundsView.find(x=>x.name===name)||{};
   const src=f.source||'';
   if(!src.trim()){
-    return '<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">持仓理由 · 参考来源</h2></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;color:var(--text-3)">还没记录买入依据</div><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">添加</button></div></div>';
+    return '<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">参考来源</h2></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;color:var(--text-3)">还没记录买入依据</div><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">添加</button></div></div>';
   }
-  let h='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">持仓理由 · 参考来源</h2><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">编辑</button></div>';
+  let h='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">参考来源</h2><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">编辑</button></div>';
   h+='<div class="src-text">'+srcTextHtml(src)+'</div>';
   h+='</div>';
   return h;
@@ -8568,8 +8569,8 @@ function sourceEditOpen(name){
   const f=fundsView.find(x=>x.name===name)||{};
   const cur=f.source||'';
   const b=document.getElementById('rvSheetBody'); if(!b) return;
-  b.innerHTML='<div class="rv-ed"><label style="font-size:13px;color:var(--text-2)">持仓理由 / 参考来源</label><textarea id="srcTa" placeholder="例如：参考赛里木湖先生，看他去年那篇半导体周期文章。用 # 开头写标签，如 #赛里木湖 #半导体">'+rvEsc(cur)+'</textarea><div class="rv-acts" style="margin-top:10px"><button class="btn" onclick="sourceSave(\''+esc(name)+'\')">保存</button><button class="btn ghost" onclick="reviewSheetClose()">取消</button></div></div>';
-  var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent='持仓理由 · 参考来源';
+  b.innerHTML='<div class="rv-ed"><label style="font-size:13px;color:var(--text-2)">参考来源</label><textarea id="srcTa" placeholder="例如：参考赛里木湖先生，看他去年那篇半导体周期文章。用 # 开头写标签，如 #赛里木湖 #半导体">'+rvEsc(cur)+'</textarea><div class="rv-acts" style="margin-top:10px"><button class="btn" onclick="sourceSave(\''+esc(name)+'\')">保存</button><button class="btn ghost" onclick="reviewSheetClose()">取消</button></div></div>';
+  var _tt=document.getElementById('rvSheetTitle'); if(_tt)_tt.textContent='参考来源';
   reviewSheetOpen();
 }
 function sourceSave(name){
@@ -8577,7 +8578,7 @@ function sourceSave(name){
   const text=ta.value;
   const s=(snaps||[]).find(x=>x.name===name); if(s) s.source=text;
   const f=fundsView.find(x=>x.name===name); if(f) f.source=text;
-  try{ silentSave(); }catch(e){}
+  try{ flushSilentSave(); }catch(e){}
   reviewSheetClose();
   try{ renderDetailLive(name); }catch(e){}
 }

@@ -10023,6 +10023,7 @@ function closeDetailTrades(){
 }
 
 function liveSection(f){
+  rdcMode='amt';
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   let h='';
   const tr=trades.filter(t=>t.name===f.name);
@@ -10079,11 +10080,15 @@ function liveSection(f){
         </div>
       </div>
       <div class="cc-panel" id="dt-p-sell">
+        <div class="cc-tabs" id="rdcModeBar">
+          <div class="cc-tab on" id="rdc-tab-amt" onclick="switchRdcMode('amt')">按金额</div>
+          <div class="cc-tab" id="rdc-tab-shares" onclick="switchRdcMode('shares')">按份额</div>
+        </div>
         <div class="bk-sim">
           <div class="bk-sim-input">
-            <span>卖出金额</span>
+            <span id="rdcLbl">卖出金额</span>
             <input id="rdcAmt" type="number" step="any" inputmode="decimal" placeholder="输入金额" oninput="simulateReducePosition('${encodeURIComponent(f.name)}')">
-            <span class="unit">元</span>
+            <span class="unit" id="rdcUnit">元</span>
           </div>
           <div class="bk-sim-result" id="rdcSimResult">
             <div class="bk-sim-row">
@@ -13884,14 +13889,28 @@ function switchCalcTab(kind){
   if(ps) ps.classList.toggle('on', kind==='sell');
 }
 
+var rdcMode='amt';
+function switchRdcMode(mode){
+  rdcMode=mode;
+  const a=document.getElementById('rdc-tab-amt'), s=document.getElementById('rdc-tab-shares');
+  const lbl=document.getElementById('rdcLbl'), unit=document.getElementById('rdcUnit'), inp=document.getElementById('rdcAmt');
+  if(a) a.classList.toggle('on', mode==='amt');
+  if(s) s.classList.toggle('on', mode==='shares');
+  if(lbl) lbl.textContent=mode==='shares'?'卖出份额':'卖出金额';
+  if(unit) unit.textContent=mode==='shares'?'份':'元';
+  if(inp){ inp.placeholder=mode==='shares'?'输入份额':'输入金额'; inp.value=''; }
+  if(detailName){ simulateReducePosition(encodeURIComponent(detailName)); }
+}
+
 function simulateReducePosition(enc){
   const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return;
   const amtEl=document.getElementById('rdcAmt'), r1=document.getElementById('r1cost'), r1n=document.getElementById('r1need'), ex=document.getElementById('rdcExtra');
   if(!r1||!amtEl) return;
-  const sell=+amtEl.value||0; const nc=navCache[f.name]||{};
+  const sellRaw=+amtEl.value||0; const nc=navCache[f.name]||{};
   let nav, basis;
   if(nc.gsz!=null){ nav=nc.gsz; basis='盘中估算'; }
   else { nav=f.nav||(f.shares?f.mv/f.shares:0); basis='最新净值'; }
+  const sell = rdcMode==='shares' ? sellRaw*nav : sellRaw;
   const d=PU.computeReducePosition(f, sell, nav);
   if(d.empty||sell<=0){
     r1.textContent='—'; r1.className=''; if(r1n){ r1n.textContent='—'; r1n.className=''; } if(ex) ex.innerHTML='<span class="bk-sim-hint">输入卖出金额查看效果</span>';

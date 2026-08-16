@@ -194,10 +194,30 @@
     return { empty: false, nav, curCost, add: a, totCost, newShares, newCostPx, newNeed, dir };
   }
 
+  // 减仓模拟：卖出部分份额后，剩余持仓的成本价与回本需涨（与 computeAddPosition 对称）
+  function computeReducePosition(f, sell, nav) {
+    if (nav == null) nav = f.nav || (f.shares ? f.mv / f.shares : 0);
+    const curCost = f.costPx || (f.shares ? f.cost / f.shares : 0);
+    const a = +sell || 0;
+    if (a <= 0 || nav <= 0 || !f.shares) return { empty: true, reason: 'invalid' };
+    const mv = (f.mv != null) ? f.mv : f.shares * nav;
+    const sellSh = Math.min(a / nav, f.shares);
+    const remSh = f.shares - sellSh;
+    const thisCost = curCost * sellSh;
+    const thisGain = a - thisCost; // 未计赎回费
+    const totCost = (f.cost != null ? f.cost : curCost * f.shares);
+    const remCost = totCost - thisCost;
+    const liquidated = remSh <= 1e-6;
+    const remCostPx = (!liquidated && remSh > 0) ? remCost / remSh : null;
+    const remNeed = (remCostPx != null && nav > 0 && remCostPx > 0) ? (remCostPx - nav) / nav * 100 : null;
+    const over = a > mv + 1e-6;
+    return { empty: false, nav, curCost, sell: a, sellSh, remSh, thisCost, thisGain, remCost, remCostPx, remNeed, liquidated, over };
+  }
+
   const PU = {
     navOnOrBefore, buyLots, curUnitOf,
     computeLazyHold, computeDCA, computeBatchBuild,
-    computeStopTarget, computeConvertSource, computeAddPosition
+    computeStopTarget, computeConvertSource, computeAddPosition, computeReducePosition
   };
 
   if (typeof window !== 'undefined') window.PU = PU;

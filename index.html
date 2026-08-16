@@ -9916,6 +9916,36 @@ function liveSection(f){
         </div>
       </div>
     </div>`;
+    h+=`<div class="card"><h2>减仓计算器</h2>
+      <div class="bk-grid">
+        <div class="bk-g-row">
+          <span class="bk-g-lbl">当前成本价</span>
+          <span class="bk-g-val">${curCost.toFixed(4)}</span>
+        </div>
+        <div class="bk-g-row">
+          <span class="bk-g-lbl">当前净值</span>
+          <span class="bk-g-val">${defaultNav.toFixed(4)} <b class="bk-est-tag">${basisShort}</b></span>
+        </div>
+      </div>
+      <div class="bk-sim">
+        <div class="bk-sim-input">
+          <span>卖出金额</span>
+          <input id="rdcAmt" type="number" step="any" inputmode="decimal" placeholder="输入金额" oninput="simulateReducePosition('${encodeURIComponent(f.name)}')">
+          <span class="unit">元</span>
+        </div>
+        <div class="bk-sim-result" id="rdcSimResult">
+          <div class="bk-sim-row">
+            <span>剩余成本价</span>
+            <b id="r1cost">—</b>
+          </div>
+          <div class="bk-sim-row">
+            <span>剩余回本需涨</span>
+            <b id="r1need" class="">—</b>
+          </div>
+          <div class="bk-sim-detail" id="rdcExtra"><span class="bk-sim-hint">输入卖出金额查看效果</span></div>
+        </div>
+      </div>
+    </div>`;
   }
   (function(){ var ab=document.getElementById('alertSheetBody'); if(ab){ ab.innerHTML=buildAlertCardHtml(f); } })();
 
@@ -10195,7 +10225,7 @@ function openTradeEdit(idx){
     // 显示/隐藏转换目标基金
     var tc=g('teConvertTarget'); if(tc) tc.style.display=(t.type==='convert'||t.type==='convert_out')?'':'none';
     // 填充转换目标基金
-    var tgt=g('te-convert-target'); if(tgt) tgt.value=t.convertTarget||'';
+    var tgt=g('te-convert-target'); if(tgt){ var _ct=t.convertTarget||''; if(!_ct&&t.pairId){ const _p=(trades||[]).find(function(x){return x!==t&&x.pairId===t.pairId;}); if(_p) _ct=(t.type==='convert')?_p.name:(_p.type==='convert_out'?_p.name:''); } tgt.value=_ct; }
     // 默认按金额模式
     teSetAmtMode('amount');
     // 填充金额
@@ -13688,6 +13718,38 @@ function simulateAddPosition(enc){
       <div class="bk-sim-d-i"><span>节省回本</span><b>${_saved>=0?'+':''}${_saved.toFixed(2)+'%'}</b></div>
     </div>`;
   }
+
+function simulateReducePosition(enc){
+  const f=fundsView.find(x=>x.name===decodeURIComponent(enc)); if(!f) return;
+  const amtEl=document.getElementById('rdcAmt'), r1=document.getElementById('r1cost'), r1n=document.getElementById('r1need'), ex=document.getElementById('rdcExtra');
+  if(!r1||!amtEl) return;
+  const sell=+amtEl.value||0; const nc=navCache[f.name]||{};
+  let nav, basis;
+  if(nc.gsz!=null){ nav=nc.gsz; basis='盘中估算'; }
+  else { nav=f.nav||(f.shares?f.mv/f.shares:0); basis='最新净值'; }
+  const d=PU.computeReducePosition(f, sell, nav);
+  if(d.empty||sell<=0){
+    r1.textContent='—'; r1.className=''; if(r1n){ r1n.textContent='—'; r1n.className=''; } if(ex) ex.innerHTML='<span class="bk-sim-hint">输入卖出金额查看效果</span>';
+    return;
+  }
+  if(d.liquidated){
+    r1.textContent='已全部卖出'; r1.className='done';
+    if(r1n){ r1n.textContent='—'; r1n.className=''; }
+  } else {
+    r1.textContent=d.remCostPx.toFixed(4);
+    if(r1n){ const _need=d.remNeed; r1n.textContent=_need>0?'+'+_need.toFixed(2)+'%':'已回本'; r1n.className=_need>0?'pos':'done'; }
+  }
+  if(ex){
+    const _g=d.thisGain;
+    ex.innerHTML=`<div class="bk-sim-d-grid">
+      <div class="bk-sim-d-i"><span>成交价依据</span><b>${basis}</b></div>
+      <div class="bk-sim-d-i"><span>卖出份额</span><b>${fmt(d.sellSh)}</b></div>
+      <div class="bk-sim-d-i"><span>本次盈亏(未计费)</span><b class="${_g>=0?'pos':'neg'}">${_g>=0?'+':''}${M(_g)}</b></div>
+      <div class="bk-sim-d-i"><span>剩余份额</span><b>${fmt(d.remSh)}</b></div>
+      ${d.over?'<div class="bk-sim-d-i"><span>提示</span><b style="color:#e6a23c">超过持仓市值，将全部清仓</b></div>':''}
+    </div>`;
+  }
+}
 }
 
 function tpSet(enc,field,val,el){ setAlert(enc,field,String(val)); if(el&&el.parentElement){ el.parentElement.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); el.classList.add('on'); } tpRedraw(enc); }

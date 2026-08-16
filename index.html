@@ -6763,7 +6763,7 @@ function denseRowsHtml(list){
       else if(c.key==='fee'){ const _ft=(+f.feeTotal||0); tds+=`<td class="col-fee"><div class="dt-big">${_ft>0?('¥'+_ft.toFixed(2)):'—'}</div>${_ft>0?`<div class="dt-sub2">累计</div>`:''}</td>`; }
       else if(c.key==='holdpct'){ const _rc=(f.ret==null||f.pending)?'—':_fmtRet(f.ret); const _cc=(f.ret==null||f.pending)?'zero':(f.ret>=0?'pos':'neg'); tds+=`<td class="col-holdpct ${_cc}"><div class="dt-big">${_rc}</div></td>`; }
       else if(c.key==='mv')  tds+=`<td class="col-mv"><div class="dt-big">${f.mv!=null?M(f.mv):'待补全'}</div>${sharesTxt?`<div class="dt-sub2">${sharesTxt}</div>`:''}</td>`;
-      else if(c.key==='source'){ const _src=f.source||''; const _has=!!_src.trim(); tds+=`<td class="col-source"><button type="button" class="source-btn${_has?' has':''}" onclick="event.stopPropagation();sourceEditOpen('${esc(f.name)}')" title="${_has?('参考来源：'+rvEsc(_src)):'添加参考来源'}">${_has?('<span class="src-chip">'+rvEsc(srcSnippet(_src))+'</span>'):'<span class="source-add">＋</span>'}</button></td>`; }
+      else if(c.key==='source'){ const _src=f.source||''; const _has=!!_src.trim(); tds+=`<td class="col-source"><button type="button" class="source-btn${_has?' has':''}" onclick="event.stopPropagation();sourceEditOpen('${esc(f.name)}','${esc(f.account)}')" title="${_has?('参考来源：'+rvEsc(_src)):'添加参考来源'}">${_has?('<span class="src-chip">'+rvEsc(srcSnippet(_src))+'</span>'):'<span class="source-add">＋</span>'}</button></td>`; }
       else if(c.key==='idea'){ const _note=getNote(f.name); const _has=!!(_note&&_note.trim()); tds+=`<td class="col-idea"><button type="button" class="idea-btn${_has?' has':''}" onclick="event.stopPropagation();openIdeasSheet()" title="查看全部策略想法">${_has?'💡':'·'}</button></td>`; }
       else if(c.key==='ret'){
         // 当日收益 = 今天一天的盈亏：盘中优先用实时估算 gszzl；收盘后用基金公司确认的 navChg，与官方昨日收益对齐。
@@ -8429,6 +8429,7 @@ function recordSnapshot(){
 const REVIEW_KEY='ft_review';
 let reviewNotes=reviewLoad();
 let reviewCurFund='';
+let reviewCurAccount='';
 let reviewEditing=null, reviewDraft=null;
 function reviewLoad(){ try{ const a=JSON.parse(localStorage.getItem(REVIEW_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function reviewSave(){ try{ localStorage.setItem(REVIEW_KEY, JSON.stringify(reviewNotes)); }catch(e){} }
@@ -8558,19 +8559,19 @@ function openFundPinnedNote(name){ try{ const pin=fundPinnedNote(name); if(!pin)
 // ---------- 持仓理由 / 参考来源（基金级，拆出复盘笔记） ----------
 function srcSnippet(s){ return (s||'').trim(); }
 function srcTextHtml(s){ return rvEsc(s).replace(/#([^\s#]+)/g, '<span class="tag">#$1</span>'); }
-function sourceCardHtml(name){
+function sourceCardHtml(name, account){
   const f=fundsView.find(x=>x.name===name)||{};
   const src=f.source||'';
   if(!src.trim()){
-    return '<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">参考来源</h2></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;color:var(--text-3)">还没记录买入依据</div><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">添加</button></div></div>';
+    return '<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">参考来源</h2></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;color:var(--text-3)">还没记录买入依据</div><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\',\''+esc(account)+'\')">添加</button></div></div>';
   }
-  let h='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">参考来源</h2><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\')">编辑</button></div>';
+  let h='<div class="card"><div class="sec-head"><h2 style="margin:0;font-size:14px">参考来源</h2><button class="btn tiny" onclick="sourceEditOpen(\''+esc(name)+'\',\''+esc(account)+'\')">编辑</button></div>';
   h+='<div class="src-text">'+srcTextHtml(src)+'</div>';
   h+='</div>';
   return h;
 }
-function sourceEditOpen(name){
-  reviewCurFund=name;
+function sourceEditOpen(name, account){
+  reviewCurFund=name; reviewCurAccount=account||'';
   const f=fundsView.find(x=>x.name===name)||{};
   const cur=f.source||'';
   const b=document.getElementById('rvSheetBody'); if(!b) return;
@@ -8581,8 +8582,16 @@ function sourceEditOpen(name){
 function sourceSave(name){
   const ta=document.getElementById('srcTa'); if(!ta) return;
   const text=ta.value;
-  const s=(snaps||[]).find(x=>x.name===name); if(s) s.source=text;
-  const f=fundsView.find(x=>x.name===name); if(f) f.source=text;
+  // 按账户+名称查找snap，找不到则创建新snap条目确保持久化
+  const acc=reviewCurAccount||effAccount('本人账户');
+  let s=(snaps||[]).find(x=>accOf(x)===acc && x.name===name);
+  if(!s) s=(snaps||[]).find(x=>x.name===name);
+  if(s){ s.source=text; } else {
+    snaps.push({name,account:acc,source:text});
+  }
+  // 同时更新 fundsView 内存对象（render 直接用）
+  const f=fundsView.find(x=>x.name===name && (effAccount(x.account)||effAccount('本人账户'))===acc);
+  if(f) f.source=text;
   reviewSheetClose();
   // 保存和重绘异步执行，避免大账本写 localStorage 阻塞导致按钮看起来没反应
   setTimeout(function(){
@@ -9004,7 +9013,7 @@ function renderDetailLive(arg){
   try{ updateDetailHeader(f); }catch(e){ console.error('renderDetailLive.updateDetailHeader',e); }
   restoreFocus();
   // 各卡片独立渲染，互不影响：持仓理由卡片绝不被其它卡片异常阻断
-  try{ live.innerHTML += sourceCardHtml(f.name); }catch(e){ console.error('renderDetailLive.sourceCard',e); }
+  try{ live.innerHTML += sourceCardHtml(f.name, f.account); }catch(e){ console.error('renderDetailLive.sourceCard',e); }
   try{ const _dcaCard=dcaCardHtml(f); if(_dcaCard) live.innerHTML += _dcaCard; }catch(e){ console.error(e); }
   try{ live.innerHTML += reviewCardHtml(f.name); }catch(e){ console.error(e); }
   try{ live.innerHTML += noteCardHtml(f.name); }catch(e){ console.error(e); }

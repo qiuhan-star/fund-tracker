@@ -9377,6 +9377,12 @@ function computeFifoBatches(name){
     } else if(ty==='sell'||ty==='convert_out'){
       let need=+t.shares||0;
       if(!need && t.nav){ need=amt/t.nav; }
+      if(!need && amt>0){
+        // 缺份额也无净值 → 用剩余批次的总成本均价反推需扣份额（仅依赖买入成本，不用实时净值）
+        let remSh=0, remCost=0;
+        for(const b of batches){ remSh+=b.remaining; remCost+=b.remaining*b.cost; }
+        if(remSh>0 && remCost>0){ need=amt/(remCost/remSh); }
+      }
       for(let b=0;b<batches.length && need>0.0001;b++){
         const take=Math.min(batches[b].remaining, need);
         batches[b].remaining-=take;
@@ -13982,6 +13988,7 @@ function simulateAddPosition(enc){
       <div class="bk-sim-d-i"><span>节省回本</span><b>${_saved>=0?'+':''}${_saved.toFixed(2)+'%'}</b></div>
     </div>`;
   }
+}
 
 function switchCalcTab(kind){
   const a=document.getElementById('dt-tab-add'), s=document.getElementById('dt-tab-sell');
@@ -14040,7 +14047,6 @@ function simulateReducePosition(enc){
       ${d.over?'<div class="bk-sim-d-i"><span>提示</span><b style="color:#e6a23c">超过持仓市值，将全部清仓</b></div>':''}
     </div>`;
   }
-}
 }
 
 function tpSet(enc,field,val,el){ setAlert(enc,field,String(val)); if(el&&el.parentElement){ el.parentElement.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');}); el.classList.add('on'); } tpRedraw(enc); }

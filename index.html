@@ -15719,24 +15719,21 @@ function uwRow(it){
     : '<span class="sa act" data-name="'+escAttr(it.name||'')+'" onclick="openByData(this)">记账</span><span class="sa del" data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" onclick="rmByData(this)">删除</span>';
   // 分类标签
   var catLabel=it.isBond?'债基':guessCat(it.name);
-  // 手续费行
+  // 手续费紧凑标签（集成到 r1）
   var hasBF=it.buyFee&&String(it.buyFee).trim()!=='';
   var hasSF=it.sellFee&&String(it.sellFee).trim()!=='';
-  var feeHtml='';
+  var feeTag='';
   if(hasBF||hasSF){
     var parts=[];
-    if(hasBF) parts.push('<span class="wf-buy">买入 <b>'+escHtml(it.buyFee)+'%</b></span>');
-    if(hasSF) parts.push('<span class="wf-sell">卖出 <b>'+escHtml(it.sellFee)+'</b></span>');
-    feeHtml='<span class="wf-fees">'+parts.join('<span class="wf-dot">·</span>')+'</span>';
-  } else {
-    feeHtml='<span class="wf-fees wf-empty"><span class="wf-add" onclick="event.stopPropagation();editWatchFee('+JSON.stringify(it.code||'')+','+JSON.stringify(it.name||'')+')">✎ 填费率</span></span>';
+    if(hasBF) parts.push('买'+escHtml(it.buyFee)+'%');
+    if(hasSF) parts.push('卖'+escHtml(it.sellFee));
+    feeTag='<span class="fee-tag" onclick="event.stopPropagation();editWatchFee(\''+escAttr(it.code||'')+'\',\''+escAttr(it.name||'')+'\')" title="点击编辑费率">'+parts.join(' ')+'</span>';
   }
   return '<div class="wrow"'+bondAttr+' data-code="'+escAttr(it.code||'')+'" data-name="'+escAttr(it.name||'')+'" draggable="true" ondragstart="uwDragStart(event)" ondragend="uwDragEnd(event)">'
     +'<div class="swipe-inner" onclick="goDetail(\''+encodeURIComponent(it.name||'')+'\',\''+encodeURIComponent(it.acc||'')+'\')">'
-      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span><span class="cat-tag">'+escHtml(catLabel)+'</span>'+codeHtml+'<span class="nav">'+nav+'</span>'+chg+'</div>'
+      +'<div class="r1"><span class="ico">'+ico+'</span><span class="name">'+escHtml(it.name)+'</span><span class="cat-tag">'+escHtml(catLabel)+'</span>'+feeTag+codeHtml+'<span class="nav">'+nav+'</span>'+chg+'</div>'
       +'<div class="r2"><span class="acc-tag">'+accTag+'</span><span class="y1">近1年 '+it.y1+'</span><button type="button" class="buy-flag'+(it.buy?' on':'')+'" data-key="'+escAttr(it.isBond?(it.code||''):(it.name||''))+'" data-bond="'+(it.isBond?'1':'0')+'" onclick="toggleWatchBuy(this);event.stopPropagation()" title="准备买入？点亮后进入买入决策测算" aria-label="待买开关">🛒</button></div>'
-      +'<div class="r3" onclick="openWatchNote('+JSON.stringify(it.key)+','+(it.isBond?1:0)+');event.stopPropagation();event.preventDefault();return false"><span class="pin">📝</span><span class="ntxt'+(it.note?'':' empty')+'">'+(it.note?escHtml(it.note):'添加备注…')+'</span></div>'
-      +'<div class="r4" onclick="event.stopPropagation()">'+feeHtml+'</div>'
+      +'<div class="r3" onclick="openWatchNote(\''+encodeURIComponent(it.key)+'\','+(it.isBond?1:0)+');event.stopPropagation();event.preventDefault();return false"><span class="pin">📝</span><span class="ntxt'+(it.note?'':' empty')+'">'+(it.note?escHtml(it.note):'添加备注…')+'</span></div>'
     +'</div>'
     +'<div class="swipe-actions">'+acts+'</div>'
   +'</div>';
@@ -15847,6 +15844,7 @@ function uwDelGrp(el){
 }
 
 function openWatchNote(key, isBond){
+  key=decodeURIComponent(key);
   var note='';
   if(isBond){ var bw=loadBondWatch(); var f=bw.find(function(x){return x.code===key;}); if(f) note=f.note||''; }
   else { var w=loadWatch(); var x=w.find(function(y){return y.name===key;}); if(x) note=x.note||''; }
@@ -16048,12 +16046,8 @@ function renderWatchTab(){
     +'.wrow .r3 .pin{flex:0 0 auto;font-size:10px;opacity:.6;margin-top:3px}'
     +'.wrow .r3 .ntxt{flex:1;min-width:0;word-break:break-word}'
 +'.wrow .r3 .ntxt.empty{opacity:.5}'
-+'.wrow .r4{display:flex;align-items:center;padding:0 16px 10px;font-size:11px;color:var(--text-3);line-height:1.3}'
-+'.wrow .wf-fees{display:flex;align-items:center;gap:6px;flex-wrap:wrap}'
-+'.wrow .wf-fees b{color:var(--text);font-weight:600}'
-+'.wrow .wf-dot{color:var(--border-strong)}'
-+'.wrow .wf-empty .wf-add{cursor:pointer;color:var(--text-3);border:1px dashed var(--border-strong);border-radius:6px;padding:1px 7px;font-size:10px}'
-+'.wrow .wf-empty .wf-add:hover{color:var(--accent);border-color:var(--accent)}'
++'.wrow .fee-tag{display:inline-block;font-size:9px;font-weight:600;color:var(--text-2);background:var(--surface-2);padding:1px 5px;border-radius:3px;margin-left:4px;flex-shrink:0;line-height:1.5;cursor:pointer;border:1px solid var(--border-2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
++'.wrow .fee-tag:hover{color:var(--accent);border-color:var(--accent)}'
 +'.wrow .cat-tag{display:inline-block;font-size:10px;font-weight:600;color:var(--text-2);background:var(--surface-2);padding:1px 6px;border-radius:4px;margin-left:4px;flex-shrink:0;line-height:1.6}'
 +'.wrow.dragging{opacity:.35}'
 +'.wrow.drag-over{outline:2px dashed var(--accent);outline-offset:-2px;background:var(--surface-2)}'
@@ -16258,7 +16252,6 @@ function wtAttachSwipe(){
       if(lpFired){ lpFired=false; e.preventDefault(); e.stopPropagation(); return; }
       if(e.target.closest('.swipe-actions')) return;
       if(e.target.closest('.r3')) return;
-      if(e.target.closest('.r4')) return;
       if(e.target.closest('.buy-flag')) return;
       if(open){ open=false; inner.style.transition='transform .2s'; inner.style.transform='translateX(0)'; return; }
       const code=row.getAttribute('data-code'), name=row.getAttribute('data-name'), isBond=row.getAttribute('data-bond')==='1';

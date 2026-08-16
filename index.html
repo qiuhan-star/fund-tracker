@@ -4262,6 +4262,17 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .fee-hold-warn .fhs-l2{ color: #b91c1c; }
   .fee-hold-mid .fhs-l2{ color: var(--accent); }
   .fhs-arr{ font-size: 12px; color: var(--text-3); white-space: nowrap; padding-left: 6px; }
+  .fhs-src{ display:inline-block; margin-top:3px; font-size:10px; color:var(--text-3); background:var(--surface-2); border:1px solid var(--border-2); border-radius:99px; padding:0 6px; line-height:1.6; }
+  .fhs-src.auto{ color:var(--accent-text); background:var(--accent-soft); border-color:rgba(47,111,237,.3); }
+  .fr-tiers{ width:100%; border-collapse:collapse; margin:4px 0 12px; }
+  .fr-tiers th,.fr-tiers td{ text-align:left; padding:6px 8px; font-size:12.5px; border-bottom:1px solid var(--border-2); }
+  .fr-tiers th{ color:var(--text-3); font-weight:600; }
+  .fr-tiers td:last-child{ color:var(--text); font-variant-numeric:tabular-nums; }
+  .fr-auto{ display:flex; align-items:center; gap:8px; padding:9px 11px; background:var(--accent-soft); border:1px dashed rgba(47,111,237,.4); border-radius:9px; margin-bottom:12px; font-size:12.5px; color:var(--text-2); }
+  .fr-auto button{ border:none; background:var(--accent); color:#fff; padding:6px 12px; border-radius:8px; font-size:12.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .fr-auto button.busy{ opacity:.6; pointer-events:none; }
+  .fr-auto.err{ border-color:rgba(229,69,59,.4); background:#fdeaea; color:#b91c1c; }
+  .fr-ctx{ font-size:11px; color:var(--text-3); margin-top:4px; }
   .tr-ios .tx-card.cancelled{ opacity:.5; }
   .tr-ios .tx-note{ font-size:12px; color:var(--text-3); margin-top:2px; }
   tr.cancelled, .tr-locked.cancelled{ opacity:.5; }
@@ -6227,8 +6238,8 @@ try{ const _cv=localStorage.getItem('ft_cols'); if(_cv){ const o=JSON.parse(_cv)
 const COL_DEFS={nav:'单位净值',day:'当日涨跌',ret:'当日收益',hold:'持有收益',holdpct:'持有收益率',mv:'持仓金额',source:'参考来源',fee:'手续费',idea:'想法'};
 const NOTE_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const COL_KEYS=['idea','nav','day','ret','hold','fee','source'];
-const DEFAULT_COL_ORDER=['idea','day','ret','hold','fee','source','nav'];
-const COL_ORDER_VER='11';
+const DEFAULT_COL_ORDER=['day','ret','hold','nav','idea','source','fee'];
+const COL_ORDER_VER='12';
 const COLVIS_VER='6';
 function saveColOrder(){ try{ localStorage.setItem('ft_colorder',JSON.stringify(colOrder)); localStorage.setItem('ft_colorder_ver',COL_ORDER_VER); }catch(e){} }
 let colOrder=DEFAULT_COL_ORDER.slice();
@@ -9458,52 +9469,74 @@ function feeHoldStatusHtml(f){
   const days=earliestBatchDays(f.name);
   const enc=encodeURIComponent(f.name);
   const rule=getFeeRule(f.name);
+  const cur=feeRateForDays(rule, days); // 当前持有天对应的费率；null=未配置
   let cls='ok', icon='✅', l1='', l2='';
-  if(rule && rule.freeDays>0){
-    // 已配置费率规则 → 按真实档位计算
-    const free=+rule.freeDays||7, rate=+rule.rate||1.5;
-    if(days<free){
-      const wait=free-days;
+  if(rule && cur!=null){
+    if(cur>0.001){
+      // 当前需收费：找免赎天数=第一个 rate<=0 的档位
+      const free=rule.freeDays>0?rule.freeDays:(rule.tiers&&rule.tiers.length?(()=>{for(const t of rule.tiers){if(t.rate<=0.001)return t.d;}return null;})():rule.freeDays);
+      const wait=(free!=null&&free>days)?(free-days):null;
       cls='warn'; icon='⚠️';
       l1='最早一批份额购于 '+eb.date+'，持有 '+days+' 天';
-      l2='未满 '+free+' 天，现在卖出按 '+rate+'% 收赎回费 · 建议等 '+wait+' 天后再卖';
+      l2=wait!=null ? ('现在卖出按 '+fmtRate(cur)+' 收赎回费 · '+(free===days?'满'+free+'天正好免了':'建议等 '+wait+' 天后再卖'))
+         : ('现在卖出按 '+fmtRate(cur)+' 收赎回费');
     } else {
       cls='ok'; icon='✅';
       l1='最早一批份额购于 '+eb.date+'，已持有 '+days+' 天';
-      l2='已满 '+free+' 天免赎期 · 现在卖出免赎回费';
+      l2='现在卖出免赎回费'+(rule.freeDays>0?('（已满 '+rule.freeDays+' 天免赎期）'):'');
     }
   } else {
     // 未配置费率规则 → 中性提示 + 引导（不写死 7/30 天错误断言）
     cls='mid'; icon='📋';
     l1='最早一批份额购于 '+eb.date+'，持有 '+days+' 天';
-    l2='赎回费率未设置 · 到「更多数据 → 赎回费率规则」配置后自动判断';
+    l2='赎回费率未设置 · 点「更多数据 → 赎回费率规则」自动识别或手动配置';
   }
+  const srcTag=(rule&&rule.src==='auto')?'<span class="fhs-src auto">⚡ 自动</span>':(rule?'<span class="fhs-src">手设</span>':'');
   return '<div class="fee-hold-status fee-hold-'+cls+'" id="feeHoldStatus" data-fn="'+enc+'" title="点击查看这笔交易">'
     +'<div class="fhs-ico">'+icon+'</div>'
     +'<div class="fhs-body">'
       +'<div class="fhs-l1">'+l1+'</div>'
       +'<div class="fhs-l2">'+l2+'</div>'
+      +srcTag
     +'</div>'
     +'<div class="fhs-arr">查看 ›</div>'
   +'</div>';
 }
+function fmtRate(r){ r=+r; if(r===Math.floor(r)) return r+'%'; return r.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')+'%'; }
 /* 「更多数据」区的费率规则摘要文字 */
 function feeRuleSummaryHtml(f){
   const rule=getFeeRule(f.name);
   if(rule && rule.freeDays>0){
-    return '满 '+rule.freeDays+' 天免赎 ›';
+    return (rule.src==='auto'?'⚡':'')+'满 '+rule.freeDays+' 天免赎 ›';
   }
+  if(rule){ return (rule.src==='auto'?'⚡':'')+'已设费率 ›'; }
   return '未设置 ›';
 }
 /* 费率规则配置弹窗 */
 function openFeeRuleModal(nameEnc){
   const name=decodeURIComponent(nameEnc); if(!name) return;
-  const rule=getFeeRule(name);
-  const freeDays=(rule&&rule.freeDays>0)?rule.freeDays:'';
-  const rate=(rule&&rule.freeDays>0?rule.rate:1.5);
   const fb=document.getElementById('feeRuleFields');
   if(!fb){ return; }
-  // 常见预置：7天/30天/31天/1年
+  fb.dataset.name=name;
+  const fn=document.getElementById('feeRuleFundName'); if(fn) fn.textContent=name;
+  // 自动识别区：显示当前来源 + 「自动识别」按钮
+  fillFeeRuleAuto(name);
+  // 档位表 + 手动输入
+  const rule=getFeeRule(name);
+  const tiersBody=document.getElementById('feeRuleTiers');
+  if(tiersBody){
+    if(rule && rule.tiers && rule.tiers.length){
+      tiersBody.innerHTML=rule.tiers.map(function(t){
+        return '<tr><td>'+(t.d>0?('满 '+t.d+' 天以上'):'小于 '+(rule.tiers[1]?rule.tiers[1].d+' 天':'7 天'))+'</td><td>'+fmtRate(t.rate)+'</td></tr>';
+      }).join('');
+    } else if(rule && rule.freeDays>0){
+      tiersBody.innerHTML='<tr><td>小于 '+rule.freeDays+' 天</td><td>'+fmtRate(rule.rate||1.5)+'</td></tr><tr><td>满 '+rule.freeDays+' 天</td><td>0%</td></tr>';
+    } else {
+      tiersBody.innerHTML='';
+    }
+  }
+  const freeDays=(rule&&rule.freeDays>0)?rule.freeDays:'';
+  const rate=(rule&&rule.freeDays>0?rule.rate:1.5);
   const presets=[
     {l:'满7天免', d:7, r:1.5}, {l:'满30天免', d:30, r:0.5},
     {l:'满31天免', d:31, r:0.5}, {l:'满1年免', d:365, r:0.5}
@@ -9515,9 +9548,53 @@ function openFeeRuleModal(nameEnc){
   }).join('&nbsp;');
   const ffd=document.getElementById('feeRuleFreeDays'); if(ffd) ffd.value=freeDays;
   const frt=document.getElementById('feeRuleRate'); if(frt) frt.value=rate;
-  const fn=document.getElementById('feeRuleFundName'); if(fn) fn.textContent=name;
-  fb.dataset.name=name;
   const m=document.getElementById('feeRuleMask'); if(m) m.classList.add('show');
+}
+/* 填充弹窗顶部「自动识别」区 */
+function fillFeeRuleAuto(name){
+  const box=document.getElementById('feeRuleAuto');
+  if(!box) return;
+  const rule=getFeeRule(name);
+  if(rule && rule.src==='auto'){
+    box.className='fr-auto';
+    box.innerHTML='<span>⚡ 已自动识别费率档位</span><button onclick="feeRuleAutoFetch()">重新识别</button>';
+  } else if(rule){
+    box.className='fr-auto';
+    box.innerHTML='<span>📝 当前为手动配置</span><button onclick="feeRuleAutoFetch()">改由自动识别</button>';
+  } else {
+    box.className='fr-auto';
+    box.innerHTML='<span>📡 从天天基金自动识别赎回费率</span><button onclick="feeRuleAutoFetch()">自动识别</button>';
+  }
+  box.dataset.name=name;
+}
+/* 调用后端自动抓取赎回费率（带失败回落） */
+function feeRuleAutoFetch(){
+  const box=document.getElementById('feeRuleAuto');
+  if(!box) return;
+  const name=box.dataset.name; if(!name) return;
+  box.className='fr-auto';
+  box.innerHTML='<span>⏳ 识别中…</span><button class="busy">自动识别</button>';
+  // 取基金代码
+  Promise.resolve(resolveCode?(resolveCode(name).catch(function(){return syncCode(name);})):(syncCode(name)))
+    .then(function(code){
+      if(!code){ throw new Error('没有该基金的代码'); }
+      return fetch(API_BASE+'/fee?code='+encodeURIComponent(code), {cache:'no-store'}).then(function(r){ return r.ok?r.json():null; })
+        .then(function(d){ if(!d||d.ok!==true){ throw new Error('未取到费率'); } return d; });
+    })
+    .then(function(d){
+      feeRules[name]={src:'auto', freeDays:d.freeDays, rate:d.tiers&&d.tiers.length?d.tiers[0].rate:null, tiers:d.tiers, ts:d.ts};
+      saveFeeRules();
+      fillFeeRuleAuto(name);
+      openFeeRuleModal(encodeURIComponent(name));
+      try{
+        if(currentView==='detail'&&detailName===name){ const f=findFund(name,detailAcc); if(f) updateDetailHeader(f); }
+      }catch(e){}
+      toast('已自动识别赎回费率');
+    })
+    .catch(function(e){
+      box.className='fr-auto err';
+      box.innerHTML='<span>⚠ '+esc((e&&e.message)||'识别失败')+'</span><button onclick="feeRuleAutoFetch()">重试</button>';
+    });
 }
 function feeRulePickPreset(el){
   document.querySelectorAll('#feeRulePresets .tag-c').forEach(function(t){ t.style.boxShadow=''; t.style.color='var(--text)'; if(t.textContent.indexOf(' ✓')>=0)t.textContent=t.textContent.replace(' ✓',''); });
@@ -9532,7 +9609,8 @@ function feeRuleSave(){
   const ffd=document.getElementById('feeRuleFreeDays'), frt=document.getElementById('feeRuleRate');
   const fd=parseInt((ffd?ffd.value:''),10), rt=parseFloat((frt?frt.value:''),10);
   if(!(fd>0)||!(rt>=0)){ toast('请填写有效的免赎天数(>0)和费率(≥0)'); return; }
-  feeRules[name]={freeDays:fd, rate:rt};
+  const prev=getFeeRule(name);
+  feeRules[name]={src:'manual', freeDays:fd, rate:rt, tiers:(prev&&prev.tiers&&prev.tiers.length)?prev.tiers:null};
   saveFeeRules();
   closeFeeRuleModal();
   // 刷新详情页状态条 + 更多数据摘要

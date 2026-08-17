@@ -9441,9 +9441,18 @@ function jumpToEarliestBatch(name){
 }
 // 跳转到转换配对基金的交易记录
 function jumpToPairTrade(idx){
-  const t=trades[idx]; if(!t||!t.pairId) return;
-  const pairIdx=trades.findIndex(function(x,i){ return i!==idx && x.pairId===t.pairId; });
-  if(pairIdx<0){ toast('未找到配对交易记录'); return; }
+  const t=trades[idx]; if(!t) return;
+  // 优先按 pairId 找配对；老数据/非标路径缺 pairId 时，按 convertTarget/基金名反向匹配兜底
+  let pairIdx=-1;
+  if(t.pairId){ pairIdx=trades.findIndex(function(x,i){ return i!==idx && x.pairId===t.pairId; }); }
+  if(pairIdx<0){
+    for(let i=0;i<trades.length;i++){
+      const x=trades[i]; if(x===t) continue;
+      if(!(x.type==='convert_out'||x.type==='convert')) continue;
+      if((t.convertTarget && x.name===t.convertTarget) || (t.name && x.convertTarget===t.name)){ pairIdx=i; break; }
+    }
+  }
+  if(pairIdx<0){ toast('未找到配对的转换记录（可能缺少配对信息）'); return; }
   // 用「全部交易」列表定位：不过滤清仓/账户口径，已清仓基金照样能跳到配对的转入/转出记录
   openAllTrades();
   setTimeout(function(){

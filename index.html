@@ -4241,6 +4241,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   tr.tx-flash-highlight{ border: 2px solid #e5453b !important; border-radius: 8px; }
   /* 移动端卡片已有 border，加粗变色即可 */
   .tx-card.tx-flash-highlight{ border: 2px solid #e5453b !important; }
+  .at-card.tx-flash-highlight{ border: 2px solid #e5453b !important; }
+  .at-row.tx-flash-highlight{ border: 2px solid #e5453b !important; border-radius: 8px; }
   /* 详情页「持有天数 / 赎回费」状态条（FIFO 算最早一批） */
   .fee-hold-status{
     display: flex; align-items: center; gap: 10px;
@@ -9426,27 +9428,18 @@ function jumpToPairTrade(idx){
   const t=trades[idx]; if(!t||!t.pairId) return;
   const pairIdx=trades.findIndex(function(x,i){ return i!==idx && x.pairId===t.pairId; });
   if(pairIdx<0){ toast('未找到配对交易记录'); return; }
-  const pair=trades[pairIdx];
-  // 配对记录在另一只基金：跳到该基金的交易记录页
-  if(pair && pair.name!==detailName){
-    window.__atJumpIdx=pairIdx;
-    window.__atJumpTrades=true;
-    goDetail(encodeURIComponent(pair.name), accOf(pair));
-    return;
-  }
-  // 同基金兜底：在当前交易记录弹层内滚动闪烁
-  openDetailTrades();
+  // 用「全部交易」列表定位：不过滤清仓/账户口径，已清仓基金照样能跳到配对的转入/转出记录
+  openAllTrades();
   setTimeout(function(){
-    const card=document.querySelector('.tx-card[data-tx-idx="'+pairIdx+'"]')
-             || document.querySelector('tr.tr-locked[data-tx-idx="'+pairIdx+'"]');
+    const card=document.querySelector('#allTradesModal [data-tx-idx="'+pairIdx+'"]');
     if(card){
       card.scrollIntoView({behavior:'smooth',block:'center'});
       card.classList.add('tx-flash-highlight');
       setTimeout(function(){ card.classList.remove('tx-flash-highlight'); },2200);
     } else {
-      toast('已打开交易列表，但未定位到配对记录');
+      toast('已打开全部交易，但未定位到配对记录');
     }
-  },350);
+  },300);
 }
 /* 状态条点击跳转：事件委托（避免在字符串里转义 onclick） */
 (function bindFeeStatusClick(){
@@ -11044,7 +11037,7 @@ function openAllTrades(mode){
       const _pend=t.confirm==='pending';
       const navTxt=_pend?(t.dcaId?'⏳净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
       const shareTxt=_pend?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
-      return "<div class='at-card' onclick='atGo("+tidxStr+")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
+      return "<div class='at-card' data-tx-idx='"+tidxStr+"' onclick='atGo("+tidxStr+")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
     }
     return "<tr class='at-row' data-tx-idx='"+tidxStr+"' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo("+tidxStr+")'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?(t.dcaId?"<button class=\"lk\" onclick=\"event.stopPropagation();autoFillDcaTrade("+tidx+")\">一键确认</button>":'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
   }).join('');

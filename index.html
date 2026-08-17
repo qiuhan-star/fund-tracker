@@ -9174,7 +9174,7 @@ function headerHtml(f){
   const _netLabel='累计投入（交易口径）';
   const _lt=latestTradeOf(f.name);
   const _ltIdx=_lt?trades.indexOf(_lt):-1;
-  const _latestLabel='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">待确认</span>':'');
+  const _latestLabel='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">'+pendLabel(_lt)+'</span>':'');
   const _latestTxt=_lt?'<span class="lt-date">'+_lt.date+'</span>':'—';
   // 清仓: 显示已实现收益
   if(_liq){
@@ -9275,7 +9275,7 @@ function updateDetailHeader(f){
   const _ltV=document.getElementById('dhLatestTrade');
   if(_ltK && _ltV){
     const _ltIdx=_lt?trades.indexOf(_lt):-1;
-    _ltK.innerHTML='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">待确认</span>':'');
+    _ltK.innerHTML='<span class="lt-lbl">最新交易</span>'+(_lt && _lt.confirm==='pending'?'<span class="tag-pend">'+pendLabel(_lt)+'</span>':'');
     _ltV.innerHTML=_lt?'<span class="lt-date">'+_lt.date+'</span>':'—';
     _ltV.style.cursor=_lt?'pointer':'default';
     _ltV.style.overflow='visible';
@@ -10001,15 +10001,14 @@ function buildTradeSection(f){
       tr.forEach(t=>{
         const i=trades.indexOf(t);
         const _canc = t.confirm==='cancelled';
-        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
+        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t)}</span>`;
         const _note = (t.note)?`<div class="tx-note">${esc(t.note)}</div>`:'';
         const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
         const idTxt=typeLabel(t.type);
         const accTxt=accOf(t);
         const dateTxt=(t.date||'—')+(t.time?(' '+t.time):'');
-        const _pend=t.confirm==='pending';
-        const navTxt=_pend?(t.dcaId?'⏳净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
-        const shareTxt=_pend?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
+        const navTxt=navCellText(t);
+        const shareTxt=shareCellText(t);
         const convertTxt=(t.type==='convert_out'||t.type==='convert')?function(){
           const ct=t.convertTarget;
           if(ct) return '<div class="tx-convert tx-link" onclick="event.stopPropagation();jumpToPairTrade('+i+')" title="跳转到配对的'+(t.type==='convert_out'?'转入':'转出')+'记录">'+(t.type==='convert_out'?'→ 转出至 ':'← 转入自 ')+esc(ct)+' ›</div>';
@@ -10047,7 +10046,7 @@ function buildTradeSection(f){
           return;
         }
         const _canc = t.confirm==='cancelled';
-        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t.confirm)}</span>`;
+        const _confBadge = `<span class="tx-conf ${confirmClass(t.confirm)}" onclick="event.stopPropagation();cycleConfirm(${i})">${confirmLabel(t)}</span>`;
         h+=`<tr class="tr-locked${_canc?' cancelled':''}" data-tx-idx="${i}" style="cursor:pointer" onclick="if(event.target.closest('.tx-act-edit,.tx-act-copy,.tx-act-del,.tx-conf'))return;openTradeEdit(${i})" title="点击编辑">
             <td>${esc(accOf(t))}</td>
             <td>${esc(t.date||'—')}${t.time?(' '+esc(t.time)):''}</td>
@@ -10062,11 +10061,11 @@ function buildTradeSection(f){
             }():''}</td>
             <td>${_confBadge}</td>
             <td class="num">${M(t.amount)}</td>
-            <td class="num">${t.confirm==='pending'?(t.dcaId?`<button class="lk" onclick="event.stopPropagation();autoFillDcaTrade(${i})" title="自动填入当日净值并确认">一键确认</button>`:'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—')}</td>
+            <td class="num">${t.confirm==='pending'&&t.dcaId?`<button class="lk" onclick="event.stopPropagation();autoFillDcaTrade(${i})" title="自动填入当日净值并确认">一键确认</button>`:navCellText(t)}</td>
             <td class="num">${t.fee?M(t.fee):'—'}</td>
             <td class="num">${t.feeWaived?M(t.feeWaived):'—'}</td>
             <td class="num">${t.confirmDate?esc(t.confirmDate):'—'}</td>
-            <td class="num">${t.confirm==='pending'?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''?fmt(t.shares):'—')}</td>
+            <td class="num">${shareCellText(t)}</td>
             <td><button class="lk" title="编辑" onclick="openTradeEdit(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="lk" title="复制" onclick="copyTrade(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>${ t.dcaId ? ' '+dcaActBtn(t,i) : '' }</td>
           </tr>`;
       });
@@ -10869,9 +10868,35 @@ function drawerSave(){
 }
 
 // ---------- 确认状态 / 撤单 / 预估份额 辅助 ----------
-function confirmLabel(c){ return c==='pending'?'待确认':c==='cancelled'?'撤单':'已确认'; }
+function pendLabel(t){
+  if(!t || t.confirm!=='pending') return '';
+  if(t.nav==null || t.nav==='' || +t.nav===0) return t.dcaId ? '⏳净值待确认' : '净值待确认';
+  if(t.shares==null || t.shares==='' || +t.shares===0) return t.dcaId ? '⏳份额待确认' : '份额待确认';
+  return '待确认';
+}
+function navCellText(t){
+  if(t.confirm==='pending'){
+    if(t.nav==null || t.nav==='' || +t.nav===0) return t.dcaId ? '⏳净值待确认' : '净值待确认';
+    return navFmt(t.nav);
+  }
+  return (t.nav!=null && t.nav!=='' && +t.nav!==0) ? navFmt(t.nav) : '—';
+}
+function shareCellText(t){
+  if(t.confirm==='pending'){
+    if(t.shares==null || t.shares==='' || +t.shares===0) return t.dcaId ? '⏳份额待确认' : '份额待确认';
+    return fmt(t.shares)+'份';
+  }
+  return (t.shares!=null && t.shares!=='' && +t.shares!==0) ? (fmt(t.shares)+'份') : '—';
+}
+function confirmLabel(t){
+  if(typeof t==='string' || t==null) return t==='pending'?'待确认':t==='cancelled'?'撤单':'已确认';
+  const c=t.confirm;
+  if(c==='cancelled') return '撤单';
+  if(c!=='pending') return '已确认';
+  return pendLabel(t) || '待确认';
+}
 function confirmClass(c){ return c==='pending'?'pend':c==='cancelled'?'cancel':''; }
-function cycleConfirm(i){ const t=trades[i]; if(!t) return; const order=['confirmed','pending','cancelled']; const cur=t.confirm||'confirmed'; const nx=order[(order.indexOf(cur)+1)%3]; trades[i].confirm=nx; silentSave(); compute(); if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} } toast('状态：'+(nx==='confirmed'?'已确认':nx==='pending'?'待确认':'已撤单（不计入盈亏）')); }
+function cycleConfirm(i){ const t=trades[i]; if(!t) return; const order=['confirmed','pending','cancelled']; const cur=t.confirm||'confirmed'; const nx=order[(order.indexOf(cur)+1)%3]; trades[i].confirm=nx; silentSave(); compute(); if(currentView==='detail'){ try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(e){} } toast('状态：'+(nx==='confirmed'?'已确认':nx==='pending'?(pendLabel(t)||'待确认'):'已撤单（不计入盈亏）')); }
 window.__detailTxExpanded=false;
 window.collapseDetailTx=function(){
   if(window.innerWidth>768) return;
@@ -11028,18 +11053,17 @@ function openAllTrades(mode){
     const acc=accOf(t);
     const bg=t.type==='sell'?'var(--down-bg)':'var(--up-bg)';
     const col=t.type==='sell'?'var(--down)':'var(--up)';
-    const confLbl=confirmLabel(t.confirm);
+    const confLbl=confirmLabel(t);
     const confCls=confirmClass(t.confirm);
     const tidx=trades.indexOf(t);
     const tidxStr=String(tidx);
     if(_mobile){
       const dc=(t.type==='buy'||t.type==='dca'||t.type==='activity')?'buy':'sell';
-      const _pend=t.confirm==='pending';
-      const navTxt=_pend?(t.dcaId?'⏳净值待确认':'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0)?navFmt(t.nav):'—';
-      const shareTxt=_pend?(t.dcaId?'⏳份额待确认':'待确认'):(t.shares!=null&&t.shares!==''&&+t.shares!==0)?(fmt(t.shares)+'份'):'—';
+      const navTxt=navCellText(t);
+      const shareTxt=shareCellText(t);
       return "<div class='at-card' data-tx-idx='"+tidxStr+"' onclick='atGo("+tidxStr+")'><div class='at-card-inner'><div class='at-card-line1'><span class='at-card-fund'>"+esc(t.name||'—')+"</span><span class='at-card-amt'>"+M(t.amount)+"</span></div><div class='at-card-line2'><span class='tx-id "+dc+"'><span class='dot "+dc+"'></span>"+typeLabel(t.type)+"</span><span class='at-card-date'>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</span></div><div class='at-card-line3'><span class='at-card-sub'>"+navTxt+(shareTxt?(' · '+shareTxt):'')+" · "+esc(acc)+"</span><span class='tx-conf "+confCls+"'>"+confLbl+"</span></div></div></div>";
     }
-    return "<tr class='at-row' data-tx-idx='"+tidxStr+"' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo("+tidxStr+")'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'?(t.dcaId?"<button class=\"lk\" onclick=\"event.stopPropagation();autoFillDcaTrade("+tidx+")\">一键确认</button>":'待确认'):(t.nav!=null&&t.nav!==''&&+t.nav!==0?navFmt(t.nav):'—'))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
+    return "<tr class='at-row' data-tx-idx='"+tidxStr+"' data-nm='"+enc+"' data-acc='"+esc(acc)+"' onclick='atGo("+tidxStr+")'><td><span class=\"nm\">"+esc(t.name||'—')+"</span> <span class=\"tag\">"+esc(acc)+"</span></td><td>"+(t.date||'—')+(t.time?(' '+esc(t.time)):'')+"</td><td><span class=\"tag\" style=\"background:"+bg+";color:"+col+"\">"+typeLabel(t.type)+"</span></td><td class=\"num\">"+M(t.amount)+"</td><td class=\"num\">"+(t.confirm==='pending'&&t.dcaId?"<button class=\"lk\" onclick=\"event.stopPropagation();autoFillDcaTrade("+tidx+")\">一键确认</button>":navCellText(t))+"</td><td class=\"num\">"+(t.fee?M(t.fee):'—')+"</td><td style=\"color:var(--accent-text)\">查看 →</td></tr>";
   }).join('');
   box.innerHTML=_mobile
     ?"<div class=\"tp-mask\" onclick=\"closeAllTrades(event)\"></div><div class=\"at-pop\"><div class=\"at-head\"><h3>📒 全部交易</h3><span class=\"count\">共 "+list.length+" 笔</span></div><input id=\"atSearch\" class=\"at-search\" placeholder=\"搜索基金名称…\" oninput=\"atFilter(this.value)\"><div class=\"at-scroll\"><div class=\"at-card-list\">"+rows+"</div></div><div class=\"at-foot\"><button class=\"btn\" onclick=\"closeAllTrades()\">关闭</button></div></div>"

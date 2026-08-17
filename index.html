@@ -5053,6 +5053,7 @@ function updateScopeUI(){ renderScopeBar(); }
 let curAccount='全部', pendingAcc=null;
 function accOf(x){ return (x&&x.account)?x.account:effAccount('本人账户'); }
 function accKey(acc,name){ return acc+'||'+name; }
+function fundTrades(f){ if(!f) return []; const _a=effAccount(f.account)||effAccount('本人账户'); return trades.filter(t=>t.name===f.name && accOf(t)===_a); }
 function findFund(name,acc){ const r=_allHoldings.filter(x=>x.name===name&&(!acc||x.account===acc)); return r[0]||_allHoldings.find(x=>x.name===name)||null; }
 function findWatchFund(nameOrCode){ const w=loadWatch(); return w.find(function(x){ return x.name===nameOrCode || (x.code && x.code===nameOrCode); }) || null; }
 function asDetailFund(name,acc){
@@ -9776,7 +9777,7 @@ function filterPtsByPeriod(pts, period){
 }
 async function renderFundProfitCurve(f){
   const box=document.getElementById('fundProfitCurve'); if(!box) return;
-  const myTr=trades.filter(t=>t.name===f.name && (t.type||'fund')!=='stock').slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+  const myTr=fundTrades(f).filter(t=>(t.type||'fund')!=='stock').slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
   if(!myTr.length){ box.innerHTML='<p class="hint" style="margin:6px 0 0">该基金暂无交易记录，无法绘制累计盈亏曲线。</p>'; return; }
   const firstDate=myTr[0].date;
   box.innerHTML='<p class="hint" style="margin:6px 0 0">正在根据交易记录与历史净值计算累计盈亏曲线…</p>';
@@ -9979,7 +9980,7 @@ function refreshDetailTradesByName(name){
 function buildTradeSection(f){
   const idx=fundsView.indexOf(f);
   let h='';
-  const tr=trades.filter(t=>t.name===f.name);
+  const tr=fundTrades(f);
   tr.sort(function(a,b){
     const d=(b.date||'').localeCompare(a.date||'');
     if(d!==0) return d;
@@ -10127,7 +10128,7 @@ function liveSection(f){
   rdcMode='amt';
   const si=snaps.findIndex(s=>s.name===f.name), idx=fundsView.indexOf(f);
   let h='';
-  const tr=trades.filter(t=>t.name===f.name);
+  const tr=fundTrades(f);
   tr.sort(function(a,b){
     const d=(b.date||'').localeCompare(a.date||'');
     if(d!==0) return d;
@@ -11430,10 +11431,10 @@ async function ensureFundCodes(){
 }
 const HIST_BUY_PRE_DAYS=10;
 let histRange='buy';
-function setHistRange(d){ histRange=d; const f=fundsView.find(x=>x.name===detailName); if(f) renderNavHistory(f); }
+function setHistRange(d){ histRange=d; const f=findFund(detailName,detailAcc); if(f) renderNavHistory(f); }
 async function renderNavHistory(f){
   const box=document.getElementById('detailHistory'); if(!box) return;
-  const _tr0=(trades.filter(t=>t.name===f.name && ['buy','sell','convert','convert_out','activity','dca'].indexOf(t.type)>=0)).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const _tr0=(fundTrades(f).filter(t=>['buy','sell','convert','convert_out','activity','dca'].indexOf(t.type)>=0)).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const fbDate=_tr0.length?_tr0[0].date:null;
   const startDate=fbDate?(()=>{const d=new Date(fbDate); d.setDate(d.getDate()-HIST_BUY_PRE_DAYS); const y=d.getFullYear(),m=('0'+(d.getMonth()+1)).slice(-2),day=('0'+d.getDate()).slice(-2); return y+'-'+m+'-'+day;})():null;
   const spanDays=startDate?Math.max(0,Math.round((Date.now()-new Date(startDate))/864e5)):0;
@@ -11445,7 +11446,7 @@ async function renderNavHistory(f){
   drawHist(all, f);
 }
 function drawHist(all, f){
-  const _tr0=(f?trades.filter(t=>t.name===f.name && ['buy','sell','convert','convert_out','activity','dca'].indexOf(t.type)>=0):[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+  const _tr0=(f?fundTrades(f).filter(t=>['buy','sell','convert','convert_out','activity','dca'].indexOf(t.type)>=0):[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
   const fbDate0=_tr0.length?_tr0[0].date:null;
   const startDate0=fbDate0?(()=>{const d=new Date(fbDate0); d.setDate(d.getDate()-HIST_BUY_PRE_DAYS); const y=d.getFullYear(),m=('0'+(d.getMonth()+1)).slice(-2),day=('0'+d.getDate()).slice(-2); return y+'-'+m+'-'+day;})():null;
   let data;
@@ -11466,7 +11467,7 @@ function drawHist(all, f){
   const last=vals[vals.length-1], first=vals[0], up=last>=first, line=up?TH().up:TH().down;
   const note=document.getElementById('histNote'); if(note) note.textContent=`区间 ${labels[0]} ~ ${labels[labels.length-1]} · ${data.length} 个交易日 · 单位净值 ${first.toFixed(4)} → ${last.toFixed(4)}（区间 ${up?'+':''}${(((last-first)/first)*100).toFixed(2)}%）`;
   // 交易点叠加：每一笔交易都画成一个独立圆点（不聚合，按你的要求每笔都展示）
-  const myTr=(f?trades.filter(t=>t.name===f.name && ['buy','sell','convert','convert_out','activity','dca'].indexOf(t.type)>=0):[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+  const myTr=(f?fundTrades(f).filter(t=>['buy','sell','convert','convert_out','activity','dca'].indexOf(t.type)>=0):[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
   const markers=[];
   let buyN=0,sellN=0,convN=0;
   myTr.forEach(t=>{

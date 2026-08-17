@@ -9470,27 +9470,68 @@ function jumpToPairTrade(idx){
      * 已配置：按 freeDays/rate 真实计算（如满 7 天 0 费）
      * 未配置：显示中性提示 + 引导到「更多数据」配置，不做错误断言
 */
+function fmtAmt(x){
+  const v=Math.round(x);
+  return v.toLocaleString('zh-CN', {useGrouping:true});
+}
+/* 详情页「持有天数 / 赎回费」状态条（基于 FIFO 逐批聚合费率档）
+   单档：给一行结论；跨档：展开多行，每行「份数（约¥金额）· 费率状态」
+*/
 function feeHoldStatusHtml(f){
-  const eb=earliestBatch(f.name);
-  if(!eb) return '';
+  const bs=computeFifoBatches(f.name);
+  if(!bs||!bs.length) return '';
+  const eb=bs[0];
   const days=earliestBatchDays(f.name);
   const enc=encodeURIComponent(f.name);
   const rule=getFeeRule(f.name);
-  const cur=feeRateForDays(rule, days); // 当前持有天对应的费率；null=未配置
+  const cur=feeRateForDays(rule, days);
+  const navNow=(f.nav&&f.nav>0)?f.nav:null;
+  const today=new Date();
+  // ------ 按费率档聚合剩余份额批次 ------
+  const groups=[];
+  bs.forEach(function(b){
+    const d=new Date(b.date);
+    const day=!isNaN(d.getTime())?Math.max(0,Math.floor((today-d)/86400000)):days;
+    const rate=(rule&&day!=null)?feeRateForDays(rule, day):null;
+    const amt=b.remaining*(navNow?navNow:(b.cost||0));
+    const key=(rate==null?-1:rate);
+    const g=groups.find(function(x){ return Math.abs(x.rate-key)<0.0001; });
+    if(g){ g.shares+=b.remaining; g.amt+=amt; g.minDay=Math.min(g.minDay,day); }
+    else { groups.push({rate:key, shares:b.remaining, amt:amt, minDay:day}); }
+  });
+  groups.sort(function(a,b){ return (a.rate-b.rate)||(a.minDay-b.minDay); }); // 免费(0)在前，费率低在前
+  const _shN=function(x){ return x.toLocaleString('zh-CN',{useGrouping:true}); };
+  const tierXml=function(g){
+    if(g.rate<=0.001){
+      return '<div class="fhs-tier ok"><span class="fhs-tier-k">✅ 免赎回费</span><span class="fhs-tier-v">'+_shN(Math.round(g.shares))+' 份（约 ¥'+fmtAmt(g.amt)+' · 已免）</span></div>';
+    }
+    // 找该批距免赎还要等几天
+    const free=rule.freeDays>0?rule.freeDays:(rule.tiers&&rule.tiers.length?(()=>{for(const t of rule.tiers){if(t.rate<=0.001)return t.d;}return null;})():rule.freeDays);
+    const wait=(free!=null&&g.minDay!=null&&g.minDay<free)?(free-g.minDay):null;
+    const lab=wait!=null?('再等 '+wait+' 天免'):'已接近免赎期';
+    return '<div class="fhs-tier warn"><span class="fhs-tier-k">⚠️ 需 '+fmtRate(g.rate)+' 赎回费</span><span class="fhs-tier-v">'+_shN(Math.round(g.shares))+' 份（约 ¥'+fmtAmt(g.amt)+' · '+lab+'）</span></div>';
+  };
+  // ------ 渲染 ------
   let cls='ok', icon='✅', l1='', l2='';
   if(rule && cur!=null){
-    if(cur>0.001){
-      // 当前需收费：找免赎天数=第一个 rate<=0 的档位
+    if(groups.length>1){
+      // 跨档：展开分堆
+      cls='warn'; icon='⚠️';
+      l1='剩余份额跨 '+groups.length+' 档，卖出费用如下：';
+      l2='<div class="fhs-tiers">'+groups.map(tierXml).join('')+'</div>';
+    } else if(cur>0.001){
+      const g=groups[0];
       const free=rule.freeDays>0?rule.freeDays:(rule.tiers&&rule.tiers.length?(()=>{for(const t of rule.tiers){if(t.rate<=0.001)return t.d;}return null;})():rule.freeDays);
       const wait=(free!=null&&free>days)?(free-days):null;
       cls='warn'; icon='⚠️';
-      l1='最早一批份额购于 '+eb.date+'，持有 '+days+' 天';
-      l2=wait!=null ? ('现在卖出按 '+fmtRate(cur)+' 收赎回费 · '+(free===days?'满'+free+'天正好免了':'建议等 '+wait+' 天后再卖'))
+      l1='剩余 '+_shN(Math.round(g.shares))+' 份（约 ¥'+fmtAmt(g.amt)+'）均未满免赎期';
+      l2=wait!=null?('现在卖出按 '+fmtRate(cur)+' 收赎回费 · '+(free===days?'满'+free+'天正好免了':'建议等 '+wait+' 天后再卖'))
          : ('现在卖出按 '+fmtRate(cur)+' 收赎回费');
     } else {
+      const g=groups[0];
       cls='ok'; icon='✅';
-      l1='最早一批份额购于 '+eb.date+'，已持有 '+days+' 天';
-      l2='现在卖出免赎回费'+(rule.freeDays>0?('（已满 '+rule.freeDays+' 天免赎期）'):'');
+      l1='剩余 '+_shN(Math.round(g.shares))+' 份（约 ¥'+fmtAmt(g.amt)+'）均可免赎回费';
+      l2='最早一批份额购于 '+eb.date+' · 已持有 '+days+' 天'+(rule.freeDays>0?('，已满 '+rule.freeDays+' 天免赎期'):'');
     }
   } else {
     // 未配置费率规则 → 中性提示 + 引导（不写死 7/30 天错误断言）

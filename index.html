@@ -1601,6 +1601,10 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
 .cc-tab{flex:1;text-align:center;padding:8px 0;border:1px solid var(--border-strong);border-radius:10px;font-size:13.5px;color:var(--text-2);cursor:pointer;background:var(--surface);transition:.15s}
 .cc-tab.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 .cc-panel{display:none}
+@media (max-width:768px){ .dca-pend-banner{font-size:12.5px} }
+.dca-pend-banner{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(255,167,38,.18),rgba(255,167,38,.06));border:1px solid rgba(255,167,38,.45);color:var(--text-1);font-size:13.5px}
+.dca-pend-banner .dca-pend-btn{margin-left:auto;padding:6px 14px;border-radius:9px;background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.dca-pend-banner .dca-pend-btn:active{opacity:.8}
 .cc-panel.on{display:block}
 </style>
 <script>
@@ -7092,6 +7096,7 @@ const IC={
   pie:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9h9a9 9 0 1 0-9-9z"/><path d="M12 3a9 9 0 0 1 9 9h-9z"/></svg>',
   trend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M21 8v4h-4"/></svg>'
 };
+function dcaPendingBanner(){ const pd=trades.filter(t=>t.dcaId&&t.confirm==='pending'); if(!pd.length) return ''; return '<div class="dca-pend-banner">💡 你有 '+pd.length+' 笔定投待确认 <span class="dca-pend-btn" onclick="autoFillDcaTradeBatch()">一键全部确认</span></div>'; }
 function renderOverview(){
   const HF=homeFunds();
   const total=HF.reduce((a,f)=>a+f.mv,0);
@@ -7119,6 +7124,7 @@ function renderOverview(){
   const trendNote=trendArr().length;
   const mask=v=>hidden?'****':v;
   document.getElementById('overview').innerHTML=`
+    ${dcaPendingBanner()}
     <div class="dash-wrap">
       <section class="dash-hero">
         <div class="dash-hero-head">
@@ -12408,12 +12414,12 @@ function dcaDueCount(){
   return n;
 }
 // 定投待确认单：一键自动填入历史净值并确认
-async function autoFillDcaTrade(i){
+async function autoFillDcaTrade(i, silent){
   const t=trades[i];
   if(!t||!t.dcaId||t.confirm!=='pending') return;
   const navOk=!!(t.nav!=null&&t.nav!==''&&!isNaN(+t.nav));
   const amt=+t.amount||0;
-  if(!amt) return toast('金额为空，无法自动确认');
+  if(!amt) return silent?null:toast('金额为空，无法自动确认');
   let nav=navOk?+t.nav:null;
   if(nav==null){
     const name=t.name, code=await resolveCode(name);
@@ -12436,15 +12442,29 @@ async function autoFillDcaTrade(i){
     if(cd){
       const _cd=new Date(cd.replace(/-/g,'/'));
       const _now=new Date(); _now.setHours(0,0,0,0);
-      if(_cd>_now) return toast('净值尚未公布，预计 '+cd+' 方可确认');
+      if(_cd>_now) return silent?null:toast('净值尚未公布，预计 '+cd+' 方可确认');
     }
-    return toast('未能获取 '+t.date+' 的净值，请手动填写');
+    return silent?null:toast('未能获取 '+t.date+' 的净值，请手动填写');
   }
   t.nav=nav; t.shares=+(amt/nav).toFixed(4); t.confirm='confirmed';
   silentSave(); compute();
   try{ renderDetailLive(detailName); refreshDetailTradesByName(detailName); }catch(_){}
-  toast('已自动填入净值 '+navFmt(nav)+'，份额 '+fmt(t.shares)+' 份');
+  if(!silent) toast('已自动填入净值 '+navFmt(nav)+'，份额 '+fmt(t.shares)+' 份');
 }
+// 一键批量确认所有待确认定投（保留人工卡点：逐笔跑 autoFillDcaTrade，未到确认日/抓取失败的自然跳过）
+async function autoFillDcaTradeBatch(){
+  const list=trades.map(function(t,i){return {t:t,i:i};}).filter(function(o){return o.t.dcaId && o.t.confirm==='pending';});
+  if(!list.length){ return toast('没有待确认的定投'); }
+  let done=0, skip=0;
+  for(const o of list){
+    if(o.t.confirm!=='pending') continue;
+    await autoFillDcaTrade(o.i, true);
+    if(o.t.confirm==='confirmed') done++; else skip++;
+  }
+  if(currentView==='home'){ try{ renderOverview(); renderHomeList(); }catch(e){} }
+  toast('已确认 '+done+' 笔定投'+(skip?('，'+skip+' 笔暂不可确认（净值未公布或抓取失败）'):''));
+}
+
 // 已过确认日的定投自动补净值（启动时/刷新时调用）
 async function autoConfirmPastDcaTrades(){
   const _now=new Date(); _now.setHours(0,0,0,0);

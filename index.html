@@ -6818,7 +6818,7 @@ function denseRowsHtml(list){
     const code=syncCode(f.name);
     let tds='';
     cols.forEach(c=>{
-      if(c.key==='name') tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}<span class="tag tag-${f.cat}">${f.cat}</span>${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`;
+      if(c.key==='name') { const _dc=f.cat||''; tds+=`<td class="col-name"><div class="dt-name">${esc(f.name)}${_dc?`<span class="tag tag-${_esc(_dc)}">${_esc(_dc)}</span>`:''}${attrTags}${code?`<span class="dense-streak" data-code="${esc(code)}" style="display:none"></span>`:''}</div><div class="dt-sub"><span class="dcode">${code||''}</span><span class="dsep">·</span><span class="val">${mvOrShares(f)}</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv('${esc(f.name)}','${esc(f.account)}')" title="切换金额/份额">⇄</button></div></td>`; }
       else if(c.key==='nav') tds+=`<td class="col-nav"><div class="dt-big">${navFmt(nc.nav)}</div><div class="dt-sub2">${nc.date?nc.date.slice(5):''}</div></td>`;
       else if(c.key==='day'){
         // 当日涨跌：单列双态 — 估算中显示灰色时间，官方已出显示蓝色日期
@@ -6924,7 +6924,8 @@ function homeMobileRow(f, cols){
   // 持仓行副信息：先代码 → 分类 → 自定义标签 → 连涨标签（连涨放最后，加载后补入）
   const streakEl='<span class="a-streak" data-code="'+esc(code||'')+'" style="display:none"></span>';
   // 第一行：基金名 + 分类标签（同行） + 自定义标签
-  const nameLine='<div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+'<span class="tag tag-'+f.cat+'" style="margin-left:4px;vertical-align:middle">'+f.cat+'</span>'+attrTags+streakEl+'</div>';
+  const _cat=f.cat||''; const catTag=_cat?'<span class="tag tag-'+_esc(_cat)+'" style="margin-left:4px;vertical-align:middle">'+_esc(_cat)+'</span>':'';
+  const nameLine='<div class="cname" title="'+esc(f.name)+'">'+esc(f.name)+catTag+attrTags+streakEl+'</div>';
   // 第二行：代码 + 金额/份额 + 切换按钮
   const subParts='<span class="tag-code">'+esc(code||'')+'</span><span class="dsep">·</span><span class="val">'+mvOrShares(f)+'</span><button type="button" class="tog-mini" onclick="event.stopPropagation();toggleNameMv(\''+esc(f.name)+'\',\''+esc(f.account)+'\')" title="切换金额/份额">⇄</button>';
   let tds='<td>'+nameLine+'<div class="csub">'+subParts+'</div></td>';
@@ -8032,7 +8033,7 @@ function renderLiquidated(){
     }
     return '<div class="liq-row">'
       +'<div class="liq-head"><span class="liq-nm">'+esc(f.name||'—')+'</span>'
-      +'<span class="tag">'+esc(f.cat)+'</span><span class="tag">'+esc(f.account)+'</span>'
+      +'<span class="tag">'+esc(f.cat||'')+'</span><span class="tag">'+esc(f.account)+'</span>'
       +'<span class="liq-date">'+(f.lastSell||'—')+'</span></div>'
       +'<div class="liq-body">'
       +'<div class="liq-metric"><span class="liq-lbl">投入</span><span class="liq-val">'+M(f.totalBuy)+'</span></div>'
@@ -9180,7 +9181,7 @@ function headerHtml(f){
   // 清仓: 显示已实现收益
   if(_liq){
     return `<div class="card detail-head">
-      <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}${snapshotBadge(f)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}<span class="tag tag-${f.cat}" style="cursor:pointer" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类">${f.cat}</span> &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr" style="cursor:pointer" onclick="event.stopPropagation();editTags('${esc(syncCode(f.name))}')" title="修改标签">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
+      <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}${snapshotBadge(f)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat?`<span class="tag tag-${esc(f.cat)}" style="cursor:pointer" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类">${esc(f.cat)}</span>`:''} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr" style="cursor:pointer" onclick="event.stopPropagation();editTags('${esc(syncCode(f.name))}')" title="修改标签">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
       <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
       <div class="dh-summary">
         <div class="dh-sec">已清仓（已实现）</div>
@@ -9210,7 +9211,7 @@ function headerHtml(f){
       </div>`;
   }
   return `<div class="card detail-head">
-    <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}${snapshotBadge(f)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}<span class="tag tag-${f.cat}" style="cursor:pointer" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类">${f.cat}</span> &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr" style="cursor:pointer" onclick="event.stopPropagation();editTags('${esc(syncCode(f.name))}')" title="修改标签">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
+    <div class="dh-top"><div><h1 style="margin:0;font-size: 18px">${esc(f.name)}${snapshotBadge(f)}</h1><p class="sub">${a?('代码 '+a.code+' · '):''}${f.cat?`<span class="tag tag-${esc(f.cat)}" style="cursor:pointer" onclick="event.stopPropagation();catMenu('${esc(f.name)}',event)" title="修改分类">${esc(f.cat)}</span>`:''} &nbsp; <span class="tag">${effAccount(f.account)||effAccount('本人账户')}</span> ${(f.tags||[]).map(t=>`<span class="tag tag-attr" style="cursor:pointer" onclick="event.stopPropagation();editTags('${esc(syncCode(f.name))}')" title="修改标签">${t}</span>`).join('')} <span class="tag tag-cur">¥${f.currency||'CNY'}</span></p></div>
     <div style="display:flex;gap:8px"><button class="btn hdr-extra" onclick="detailAddWatch()">★ 加自选</button><button class="btn btn-danger hdr-extra" onclick="delFundByIndex('${encodeURIComponent(f.name)}')">🗑 删除</button></div></div>
     <div class="dh-summary">
       <div class="dh-sec">金额（元）</div>

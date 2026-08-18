@@ -10060,7 +10060,7 @@ function buildTradeSection(f){
   const snapHint = `<div class="hint" style="font-size:12px;color:var(--text-3);margin:6px 0 8px;padding:6px 10px;background:var(--surface-2);border-radius:6px;line-height:1.5">持仓以快照为准，本表仅供参考</div>`;
   if(isMobile()){
     h+=`<div class="card trade-section">`;
-    h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn" onclick="event.stopPropagation();openTradeQuickFor('${encodeURIComponent(f.name)}')">＋ 记一笔</button></div></div>`;
+    h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn" onclick="event.stopPropagation();openTradeQuickFor('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">＋ 记一笔</button></div></div>`;
     h+=snapHint;
     if(tr.length){
       h+=`<div class="tx-list">`;
@@ -10477,13 +10477,19 @@ function unlockTrade(i){ if(trades[i]){ trades[i].locked=false; silentSave(); re
 function lockTrade(i){ if(trades[i]){ trades[i].locked=true; silentSave(); compute(); refreshDetailTradesByName(trades[i].name); } }
 function delTrade(i){ if(!trades[i]) return; softDeleteTrade(i); }
 var deleteTrade=delTrade;
-function addTradeMenu(){
+function addTradeMenu(preferredAcc){
   const list=(_allHoldings.length?_allHoldings:fundsView).slice().sort((a,b)=>b.mv-a.mv);
   if(!list.length){ toast('还没有基金，先点「＋ 加一只基金」添加'); return; }
   const dl=document.getElementById('tq-fund');
   if(dl) dl.innerHTML=[...new Set(list.map(f=>f.name))].map(n=>`<option value="${esc(n)}">`).join('');
   const accSel=document.getElementById('tq-acc');
-  if(accSel){ const cur=accSel.value||effAccount('本人账户'); accSel.innerHTML=effBuiltins().concat(CUSTOM_ACCOUNTS).map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join(''); }
+  if(accSel){
+    const _opts=effBuiltins().concat(CUSTOM_ACCOUNTS);
+    // 默认账户：优先调用方指定（详情页基金所属账户）> 当前口径 scopeAcc（非全量）> 上次选择 > 本人账户
+    let cur = preferredAcc || (scopeAcc && scopeAcc!=='all' ? scopeAcc : '') || accSel.value || effAccount('本人账户');
+    if(!_opts.includes(cur)) cur = effAccount('本人账户');
+    accSel.innerHTML=_opts.map(a=>`<option value="${esc(a)}" ${a===cur?'selected':''}>${esc(a)}</option>`).join('');
+  }
   const dt=document.getElementById('tq-datetime'); if(dt && !dt.value){ var d=new Date(), pad=function(n){return String(n).padStart(2,'0');}; var _def=(function(){try{return localStorage.getItem('ft_default_time')||'1500';}catch(e){return '1500';}})(); var _t=_def==='now'?(pad(d.getHours())+':'+pad(d.getMinutes())):'15:00'; dt.value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+_t; updateTimeIndicators(); }
   const ty=document.getElementById('tq-type'); if(ty && !ty.dataset.filled){ ty.innerHTML=TRADE_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); ty.dataset.filled='1'; }
   const disp=document.getElementById('tq-fund-name'); if(disp) disp.classList.remove('show');
@@ -10491,8 +10497,8 @@ function addTradeMenu(){
   const m=document.getElementById('tradeQuickMask'); if(m){ m.classList.add('show'); const el=document.getElementById('tq-fund'); if(el && !el.classList.contains('hide')) setTimeout(()=>{ try{ el.focus(); }catch(e){} },60); }
   draftRestore('ft_draft_tq', DRAFT_TQ_IDS, 'tqDraftPill');
 }
-function openTradeQuickFor(name){
-  addTradeMenu();
+function openTradeQuickFor(name, acc){
+  addTradeMenu(acc ? decodeURIComponent(acc) : '');
   const f=document.getElementById('tq-fund');
   const disp=document.getElementById('tq-fund-name');
   const decoded=name?decodeURIComponent(name):'';
@@ -10527,10 +10533,10 @@ function closeTradePicker(){ const m=document.getElementById('tradeQuickMask'); 
 
 // ---------- 记一笔：关闭详情弹窗再打开（避免嵌套遮罩） ----------
 var _origAddTradeMenu=addTradeMenu;
-addTradeMenu=function(){
+addTradeMenu=function(preferredAcc){
   var dm=document.getElementById('detailTradeModal');
   if(dm && dm.classList.contains('show')) closeDetailTrades();
-  _origAddTradeMenu();
+  _origAddTradeMenu(preferredAcc);
 };
 
 // ---------- 编辑交易弹窗 ----------

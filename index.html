@@ -8743,6 +8743,8 @@ function enterDetail(f){
   renderDetailLive(f);
   renderFundProfile(f);
   renderFundHoldings(f);
+  // 详情页打开即预拉历史净值（与持仓列表 ensureNavlessHist 同思路）：切到「业绩走势 / 累计盈亏」时已有缓存，免等待加载
+  try{ (async()=>{ try{ const _c=await resolveCode(f.name); if(_c) await fetchNavHistorySerial(_c); }catch(e){} })(); }catch(e){}
   // 补录场景：直接进入该基金的「交易记录」弹层，便于补录缺失净值/份额
   try{ if(window.__atJumpTrades){ window.__atJumpTrades=false; openDetailTrades(); } }catch(e){ console.error(e); }
   // 若来自「全部交易」点击的待定位索引，渲染完成后滚动 + 闪烁该笔交易

@@ -265,7 +265,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }.filter-lab { font-size: 14px; color: var(--text-3); min-width: 28px; flex: none; }.cat-filter { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }.hold-search { margin-bottom: 10px; }.hold-search input { width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 10px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); }.hold-search input:focus { outline: none; border-color: var(--accent-on); }.idx-card .sec-head { margin-bottom: 8px; }.idx-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 8px; }/* 大盘指数按市场分组：外层纵向堆叠，每组内仍是网格 */
 /* ===== 工具条重构：分类单行横滑 + 搜索/筛选同行 + 筛选弹层 Popover ===== */
 .cat-scroll-row { margin-bottom: 2px; }
-.cat-scroll { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.cat-scroll { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; }
 .cat-scroll::-webkit-scrollbar { display: none; }
 .sr-row { position: relative; display: flex; align-items: center; gap: 8px; }
 /* 搜索框：强制 16px（被移动端 input 全局规则覆盖 18px）；保留 ≥16px 防 iOS 聚焦缩放 */
@@ -959,8 +959,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     min-height: 0 !important;
     border-radius: 99px !important;
   }
-  /* 分类单行横滑：右侧微弱渐隐提示可滑动（仅移动端） */
-  .cat-scroll { -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%); mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%); }
+  /* 分类标签已改为自动换行（flex-wrap），不再横滑，故移除移动端右侧渐隐遮罩 */
   /* 分组 seg（在筛选弹层内，标准尺寸） */
   #groupByFilter .seg { padding: 2px; border-radius: 8px; gap: 2px; }
   #groupByFilter .seg button { padding: 5px 12px; font-size: 12px; border-radius: 6px; }

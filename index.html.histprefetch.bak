@@ -265,7 +265,7 @@ html[data-style="cream"][data-theme="dark"] { --bg:#191713; --surface:#211d18; -
   .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }.filter-lab { font-size: 14px; color: var(--text-3); min-width: 28px; flex: none; }.cat-filter { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }.hold-search { margin-bottom: 10px; }.hold-search input { width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 10px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); }.hold-search input:focus { outline: none; border-color: var(--accent-on); }.idx-card .sec-head { margin-bottom: 8px; }.idx-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 8px; }/* 大盘指数按市场分组：外层纵向堆叠，每组内仍是网格 */
 /* ===== 工具条重构：分类单行横滑 + 搜索/筛选同行 + 筛选弹层 Popover ===== */
 .cat-scroll-row { margin-bottom: 2px; }
-.cat-scroll { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; }
+.cat-scroll { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .cat-scroll::-webkit-scrollbar { display: none; }
 .sr-row { position: relative; display: flex; align-items: center; gap: 8px; }
 /* 搜索框：强制 16px（被移动端 input 全局规则覆盖 18px）；保留 ≥16px 防 iOS 聚焦缩放 */
@@ -959,7 +959,8 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
     min-height: 0 !important;
     border-radius: 99px !important;
   }
-  /* 分类标签已改为自动换行（flex-wrap），不再横滑，故移除移动端右侧渐隐遮罩 */
+  /* 分类单行横滑：右侧微弱渐隐提示可滑动（仅移动端） */
+  .cat-scroll { -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%); mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent 100%); }
   /* 分组 seg（在筛选弹层内，标准尺寸） */
   #groupByFilter .seg { padding: 2px; border-radius: 8px; gap: 2px; }
   #groupByFilter .seg button { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
@@ -8742,8 +8743,6 @@ function enterDetail(f){
   renderDetailLive(f);
   renderFundProfile(f);
   renderFundHoldings(f);
-  // 详情页打开即预拉历史净值（与持仓列表 ensureNavlessHist 同思路）：切到「业绩走势 / 累计盈亏」时已有缓存，免等待加载
-  try{ (async()=>{ try{ const _c=await resolveCode(f.name); if(_c) await fetchNavHistorySerial(_c); }catch(e){} })(); }catch(e){}
   // 补录场景：直接进入该基金的「交易记录」弹层，便于补录缺失净值/份额
   try{ if(window.__atJumpTrades){ window.__atJumpTrades=false; openDetailTrades(); } }catch(e){ console.error(e); }
   // 若来自「全部交易」点击的待定位索引，渲染完成后滚动 + 闪烁该笔交易
@@ -13627,172 +13626,9 @@ function parsePaste(text, defaultAcc, forceAcc){
 }
 function openImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.add('show'); fillQuickAccount(); fillImportAccounts(); }
 // 导入弹窗（文件/粘贴 tab）的账户下拉，默认选中当前正在看的账户，让导入前就能明确归到哪个账户
-function fillImportAccounts(){ const cur=(typeof scopeAcc!=='undefined' && scopeAcc && ACCOUNTS.indexOf(scopeAcc)>=0)?scopeAcc:effAccount('本人账户'); ['impFileAccount','impPasteAccount','impOcrAccount'].forEach(function(id){ const sel=document.getElementById(id); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); } sel.value=cur; }); }
-function closeImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.remove('show'); const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML=''; const qc=document.getElementById('impQuickCode'); if(qc) qc.value=''; const qa=document.getElementById('impQuickAmount'); if(qa) qa.value=''; const qi=document.getElementById('impQuickInfo'); if(qi) qi.innerHTML=''; const qp=document.getElementById('impQuickPreview'); if(qp) qp.innerHTML=''; quickFund=null; _impOcrRows=null; const po=document.getElementById('impOcrPreview'); if(po){ po.style.display='none'; document.getElementById('impOcrMeta').innerHTML=''; document.getElementById('impOcrRows').innerHTML=''; document.getElementById('impOcrStatus').style.display='none'; } }
-function switchImpTab(t){ const map={file:'impFileTab', paste:'impPasteTab', quick:'impQuickTab', ocr:'impOcrTab'}; for(const k in map){ const el=document.getElementById(map[k]); if(el) el.style.display=(k===t)?'':'none'; } const bs=document.querySelectorAll('#impTabSeg button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.t===t); } }
-
-/* 导入-「截图识别」页签：OCR 提取交易列表 → 识别代码/方向/日期/金额 → 回填净值 → 走通用预览导入 */
-let _impOcrRows=null;
-let _impOcrImgDataUrl=null;
-function _impOcrSetStatus(t, err){
-  const st=document.getElementById('impOcrStatus');
-  if(st){ st.style.display=''; st.style.color=err?'#c0392b':'var(--accent,#2f6fed)'; st.innerHTML=escHtml(t||''); }
-}
-function impOcrImage(input){
-  const file=input&&input.files&&input.files[0];
-  if(!file) return;
-  _impOcrRows=null;
-  const reader=new FileReader();
-  reader.onload=function(e){ _impOcrStart(e.target.result); };
-  reader.readAsDataURL(file);
-  input.value='';
-}
-function impOcrPaste(){
-  _impOcrRows=null;
-  if(navigator.clipboard&&navigator.clipboard.read){
-    navigator.clipboard.read().then(function(items){
-      for(const item of items){
-        const type=item.types.find(function(t){ return t.indexOf('image/')===0; });
-        if(type){ item.getType(type).then(function(blob){ const fr=new FileReader(); fr.onload=function(e){ _impOcrStart(e.target.result); }; fr.readAsDataURL(blob); }); return; }
-      }
-      _impOcrSetStatus('剪贴板中没有图片，请先截图后再粘贴', true);
-    }).catch(function(){ _impOcrSetStatus('无法读取剪贴板，请改用上传截图', true); });
-  } else {
-    _impOcrSetStatus('当前浏览器不支持粘贴读取，请改用上传截图', true);
-  }
-}
-async function _impOcrStart(dataUrl){
-  const prev=document.getElementById('impOcrPreview'), img=document.getElementById('impOcrImg');
-  if(prev) prev.style.display='';
-  if(img) img.src=dataUrl;
-  _impOcrImgDataUrl=dataUrl;
-  _impOcrSetStatus('加载 OCR 引擎…');
-  try{
-    const T=await loadTesseract();
-    if(!T) throw new Error('OCR 引擎加载失败');
-    const cdn=_tessCDN||TESS_CDNS[0];
-    const worker=await T.createWorker('chi_sim+eng', 1, { workerPath: cdn.worker, corePath: cdn.core, langPath: cdn.lang });
-    await worker.setParameters({ tessedit_char_whitelist:'0123456789.,+-%()（）元份额金额收益本价净值年月日时分买卖交易确认分进行中待撤转换赎回申购分红日期昨日前天', preserve_interword_spaces:'1', tessedit_pageseg_mode:'6' });
-    _impOcrSetStatus('识别中…');
-    const ret=await worker.recognize(_impOcrImgDataUrl, {});
-    await worker.terminate();
-    const txt=(ret&&ret.data&&ret.data.text)||'';
-    if(!txt.trim()){ _impOcrSetStatus('未识别到文字，请确认截图清晰', true); return; }
-    _impOcrSetStatus('识别完成，解析交易行…');
-    const parsed=_impOcrParse(txt);
-    if(!parsed.rows.length && !parsed.code){ _impOcrSetStatus('未能从截图解析出交易记录', true); return; }
-    _impOcrRows={txt:txt, code:parsed.code, name:parsed.name, rows:parsed.rows, pendingCheck:parsed.pendingLines};
-    _impOcrShowParsed();
-  }catch(e){
-    _impOcrSetStatus('识别失败：'+(e&&e.message||e), true);
-  }
-}
-// 解析 OCR 文本成交易行（含代码/基金名解析）
-function _impOcrParse(txt){
-  const lines=String(txt).split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
-  // 基金代码：优先取"代码"字样后的 6 位，其次首个独立 6 位数字（排除金额/时间）
-  let code='';
-  for(let i=0;i<lines.length;i++){
-    const m=lines[i].match(/代码[:：]?\s*(\d{6})/);
-    if(m){ code=m[1]; break; }
-  }
-  if(!code){
-    const all=(String(txt).match(/\d{6}/g)||[]);
-    for(const c of all){ if(/^(00|01|03|15|16|11|50)/.test(c)){ code=c; break; } }
-  }
-  const curAcc=document.getElementById('impOcrAccount'); const acc=curAcc?curAcc.value:'';
-  const rows=[];
-  let cur=null;
-  const push=function(){ if(cur&&cur.amount!=null){ rows.push({name:null,date:cur.date,time:cur.time,type:cur.type,amount:cur.amount,confirm:cur.confirm,line:cur.line}); } };
-  for(let i=0;i<lines.length;i++){
-    const l=lines[i];
-    const isBuy=/(买入|申购|定投|转换转入|再投)/.test(l) && !/卖出|赎回/.test(l);
-    const isSell=/(卖出|赎回|转换转出|清仓)/.test(l);
-    if(isBuy||isSell){
-      push();
-      cur={date:'',time:'',amount:null,type:isBuy?'buy':'sell',confirm:'confirmed',line:l};
-      cur.desc=l.replace(/[0-9,.\s]/g,'');
-      continue;
-    }
-    if(!cur) continue;
-    const dm=l.match(/(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})日?/);
-    if(dm){ if(cur.date) push(); cur={date:'',time:'',amount:null,type:cur.type,confirm:cur.confirm,line:l}; cur.date=dm[1]+'-'+(''+dm[2]).padStart(2,'0')+'-'+(''+dm[3]).padStart(2,'0'); cur.desc=l.replace(/[0-9,.\s-]/g,''); continue; }
-    const am=l.match(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*元/);
-    if(!cur.amount && am){ cur.amount=parseFloat(am[1].replace(/,/g,'')); continue; }
-    const tm=l.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
-    if(!cur.time&&tm){ cur.time=(''+tm[1]).padStart(2,'0')+':'+tm[2]; }
-    if(/待确认|进行中|待成交|确认中|pending/i.test(l)) cur.confirm='pending';
-  }
-  push();
-  // 归一到 parsePaste 兼容结构，但 name/净值稍后解析
-  return {code:code, name:'', rows:rows, pendingLines:0};
-}
-async function _impOcrResolveName(code){
-  if(!code) return '';
-  try{ const base=await fetchFundBaseInfo(code); return (base&&(base.NAME||base.SHORTNAME))||''; }catch(e){ return ''; }
-}
-async function _impOcrShowParsed(){
-  const rows=document.getElementById('impOcrRows'); if(!rows||!_impOcrRows) return;
-  const meta=document.getElementById('impOcrMeta');
-  const {code,name}=_impOcrRows;
-  const accSel=document.getElementById('impOcrAccount');
-  let fundName=name;
-  if(code){
-    _impOcrSetStatus('识别完成：'+ (code?'代码 '+code:'') +' · 查询基金名称并回填净值…');
-    fundName=await _impOcrResolveName(code);
-    if(_impOcrRows&&_impOcrRows.code===code) _impOcrRows.name=fundName;
-    try{ _impOcrRows.rows=await _impOcrResolveNav(code, _impOcrRows.rows); }catch(e){}
-  }
-  const rowsArr=_impOcrRows? _impOcrRows.rows : [];
-  if(meta){
-    let accInfo='';
-    if(accSel&&accSel.value) accInfo='　账户：'+escHtml(accSel.value);
-    const missingFund=code?'':'　<span style="color:#d97706">未识别到基金代码</span>';
-    meta.innerHTML='<b>'+escHtml(_impOcrRows? _impOcrRows.name||'(未识别到基金名)' : '')+'</b>'+(code?'（'+escHtml(code)+'）':'')+accInfo+missingFund+'<br>识别到 '+rowsArr.length+' 笔';
-  }
-  // 渲染行预览
-  if(rowsArr.length){
-    rows.innerHTML=rowsArr.map(function(r,i){
-      const dir=r.type==='buy'?'🟢 买入':'🔴 卖出';
-      const st=r.confirm==='pending'?'<span style="color:#d97706">待确认</span>':'已确认';
-      const estNavDesc=(r.estNav!=null)?('净 '+r.estNav+' ≈'+r.estShares.toFixed(2)+'份'):'<span style="color:#999">净值待回填</span>';
-      const val=(r.amount!=null?'¥'+r.amount.toFixed(2):'')+' · '+st;
-      return '<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd,#eee);font-size:12.5px">'
-        +'<div style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="font-weight:600">'+(r.type==='buy'?'买入':'卖出')+'</span>　'+(r.date||'?')+' '+(r.time||'')+'</div>'
-        +'<div style="text-align:right;flex-shrink:0"><div>'+val+'</div><div style="color:var(--text-2,#888);font-size:11.5px;white-space:nowrap">'+estNavDesc+'</div></div></div>';
-    }).join('');
-  } else { rows.innerHTML='<div style="color:#c0392b">未解析到交易行</div>'; }
-  const go=document.getElementById('impOcrGo'); if(go) go.textContent='📝 确认并导入 '+rowsArr.length+' 笔';
-  _impOcrSetStatus(code?('✅ 识别完成'+(fundName?'：'+fundName:'')):'✅ 扫描完成（未识别到代码）');
-}
-async function _impOcrResolveNav(code, rows){
-  if(!code||!rows||!rows.length) return rows;
-  const hist=await fetchNavHistory(code); // 全历史净值（含每个交易日的日期），histNavByDate 按日期往前取最近
-  rows.forEach(function(r){
-    if(r.date&&hist){
-      const nav=histNavByDate(code, r.date);
-      if(nav&&nav>0){ r.estNav=nav; r.estShares=r.amount/nav; }
-    }
-  });
-  return rows;
-}
-async function impOcrCommit(){
-  if(!_impOcrRows||!_impOcrRows.rows.length){ _impOcrSetStatus('没有可导入的记录', true); return; }
-  _impOcrSetStatus('回填净值并准备导入…');
-  const accSel=document.getElementById('impOcrAccount'); const acc=accSel?accSel.value:'';
-  const pendingFlag=document.getElementById('impOcrPending')&&document.getElementById('impOcrPending').checked;
-  const {code,name}=_impOcrRows;
-  const clone=_impOcrRows.rows.map(function(r){ return Object.assign({},r,{name:name||null}); });
-  // 回填净值
-  let rows=clone;
-  if(code){ rows=await _impOcrResolveNav(code, clone); }
-  else { const unseen=rows.filter(function(r){ return r.estNav==null; }); if(unseen.length) toast('未识别到基金代码，净值待手动补充'); }
-  // 构造成 parsePaste 兼容结构，走通用预览（复用去重/账户/确认逻辑）
-  const built=rows.map(function(r){
-    return {name:r.name||'?',date:r.date,time:r.time||'',type:r.type,amount:r.amount, nav:(r.estNav!=null?r.estNav:null), fee:0, feeWaived:0, account:acc, shares:(r.estShares!=null?r.estShares:null), confirm:(pendingFlag&&r.confirm==='pending')?'pending':'confirmed', note:'', cat:'', confirmDate:''};
-  });
-  showImpPreview(built, 'ocr', 0);
-}
+function fillImportAccounts(){ const cur=(typeof scopeAcc!=='undefined' && scopeAcc && ACCOUNTS.indexOf(scopeAcc)>=0)?scopeAcc:effAccount('本人账户'); ['impFileAccount','impPasteAccount'].forEach(function(id){ const sel=document.getElementById(id); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); } sel.value=cur; }); }
+function closeImportModal(){ const m=document.getElementById('importMask'); if(m) m.classList.remove('show'); const pv=document.getElementById('impPastePreview'); if(pv) pv.innerHTML=''; const qc=document.getElementById('impQuickCode'); if(qc) qc.value=''; const qa=document.getElementById('impQuickAmount'); if(qa) qa.value=''; const qi=document.getElementById('impQuickInfo'); if(qi) qi.innerHTML=''; const qp=document.getElementById('impQuickPreview'); if(qp) qp.innerHTML=''; quickFund=null; }
+function switchImpTab(t){ const map={file:'impFileTab', paste:'impPasteTab', quick:'impQuickTab'}; for(const k in map){ const el=document.getElementById(map[k]); if(el) el.style.display=(k===t)?'':'none'; } const bs=document.querySelectorAll('#impTabSeg button'); for(let i=0;i<bs.length;i++){ bs[i].classList.toggle('on', bs[i].dataset.t===t); } }
 let quickFund=null;
 function fillQuickAccount(){ const sel=document.getElementById('impQuickAccount'); if(!sel) return; if(!sel.options.length){ ACCOUNTS.forEach(function(a){ const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o); }); const cur=(typeof currentScope!=='undefined' && currentScope && ACCOUNTS.indexOf(currentScope)>=0)?currentScope:effAccount('本人账户'); sel.value=cur; } const dt=document.getElementById('impQuickDate'); if(dt && !dt.value) dt.value=fmtDate(new Date()); }
 function quickResolve(){
@@ -15376,7 +15212,6 @@ function renderSyncCfg(){
       <button data-t="file" class="on" onclick="switchImpTab('file')">📄 上传文件</button>
       <button data-t="paste" onclick="switchImpTab('paste')">📋 粘贴文本</button>
           <button data-t="quick" onclick="switchImpTab('quick')">⚡ 快捷录入</button>
-          <button data-t="ocr" onclick="switchImpTab('ocr')">📷 截图识别</button>
     </div>
     <div id="impFileTab" style="margin-top:12px">
       <p class="sm-note">支持 .csv/.txt/.tsv。表头可用「名称,日期,方向,金额,净值,账户」；无表头则按 名称｜日期｜方向｜金额｜净值 顺序解析。</p>
@@ -15426,31 +15261,6 @@ function renderSyncCfg(){
       </div>
       <div id="impQuickPreview" style="margin-top:8px;min-height:20px"></div>
       <button class="sm-act" style="width:100%;margin-top:8px;background:var(--accent,#2f6fed);color:#fff;border:none" onclick="doQuickAdd()">✅ 确认录入</button>
-    </div>
-    <div id="impOcrTab" style="margin-top:12px;display:none">
-      <p class="sm-note">上传基金 App 的「交易记录」截图，自动识别基金代码与每笔 <b>方向 / 日期 / 金额</b>，并按交易日期回填当日净值算出份额。状态含「待确认/进行中」的标记为待确认。</p>
-      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
-        <span style="margin-right:4px;white-space:nowrap">默认账户</span>
-        <select id="impOcrAccount" style="flex:1;min-width:120px;padding:9px 10px;border:1px solid var(--bd,#e3e3e8);border-radius:10px;background:var(--input,#fff);color:var(--fg,#222);outline:none"></select>
-      </div>
-      <label style="display:flex;gap:8px;margin-top:8px;align-items:center;font-size:13px;color:var(--text-2,#666)">
-        <input type="checkbox" id="impOcrPending"> 将状态为「进行中 / 待确认」的记录标记为待确认
-      </label>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <label class="sm-act" style="flex:1;text-align:center;cursor:pointer"><span>📷</span> 上传截图
-          <input type="file" accept="image/*" style="display:none" onchange="impOcrImage(this)">
-        </label>
-        <button class="sm-ghost" style="flex:1" onclick="impOcrPaste()">📋 粘贴截图</button>
-      </div>
-      <div id="impOcrPreview" style="display:none;margin-top:10px">
-        <div style="display:flex;gap:8px;align-items:center">
-          <img id="impOcrImg" alt="截图预览" style="max-height:120px;border-radius:8px;border:1px solid var(--bd,#e3e3e8)">
-          <div id="impOcrMeta" style="flex:1;min-width:0;font-size:12.5px;color:var(--text-2,#666)" ></div>
-        </div>
-        <div id="impOcrStatus" style="display:none;margin-top:8px;font-size:12.5px;color:var(--accent,#2f6fed)"></div>
-        <div id="impOcrRows" style="margin-top:8px"></div>
-        <button class="sm-act" id="impOcrGo" style="width:100%;margin-top:10px;background:var(--accent,#2f6fed);color:#fff;border:none" onclick="impOcrCommit()">📝 确认并导入 {N} 笔</button>
-      </div>
     </div>
   </div>
 </div>

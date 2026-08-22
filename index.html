@@ -4388,6 +4388,7 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .cat-pop .sheet-custom{ margin-top:10px; }
   .cat-pop .fm-input{ width:100%; margin:0 0 6px; box-sizing:border-box; }
   .cat-pop .save{ width:100%; padding:10px; border:none; border-radius:10px; background:var(--accent); color:var(--accent-on); font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; box-sizing:border-box; }
+  .cat-pop .pop-done{ display:block; width:100%; margin-top:8px; padding:10px; border:1px solid var(--border-strong); border-radius:10px; background:transparent; color:var(--text-1); font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; box-sizing:border-box; }
   .sheet-cancel{ background:var(--surface); border-radius:14px; padding:16px; text-align:center; font-size:17px; font-weight:600; color:var(--accent); border:none; width:100%; font-family:inherit; }
   /* 复盘编辑：复用底部 sheet 弹层（去内联展开，避免遮挡列表） */
   .rv-sheet-card{ margin-bottom:8px; max-height:82vh; overflow:auto; -webkit-overflow-scrolling:touch; }
@@ -6451,7 +6452,8 @@ function catMenu(name, ev){
     + CAT_LIST.map(c=>`<button class="cat-chip${c===cur?' on':''}" onclick="setCatOverride('${esc(name)}','${c}')">${c}${c===cur?' <span class="check">✓</span>':''}</button>`).join('')
     + '</div>'
     + `<button class="pop-reset" onclick="setCatOverride('${esc(name)}','')">↺ 恢复系统自动</button>`
-    + '<div class="sheet-custom"><input class="fm-input" id="catCustom" placeholder="或自己输入分类名：半导体、红利…" value="'+esc(customVal)+'"><button class="save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button></div>';
+    + '<div class="sheet-custom"><input class="fm-input" id="catCustom" placeholder="或自己输入分类名：半导体、红利…" value="'+esc(customVal)+'"><button class="save" onclick="applyCatCustom(\''+esc(name)+'\')">保存自定义分类</button></div>'
+    + '<button class="pop-done" onclick="closeCatSheet()">完成</button>';
   let mask=document.getElementById('catSheetMask');
   let pop=document.getElementById('catPop');
   if(!mask){ mask=document.createElement('div'); mask.className='sheet-mask'; mask.id='catSheetMask'; mask.onclick=closeCatSheet; document.body.appendChild(mask); }

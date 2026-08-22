@@ -1017,12 +1017,12 @@ input.num::placeholder { text-align:left; color:var(--text-3); }/* 记一笔交�
   .dense-table .source-btn:active { background: var(--surface-2, #f1f3f5); }
   .dense-table .source-btn .src-chip { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; max-width: 88px; padding: 3px 6px; font-size: 10px; font-weight: 600; color: var(--accent, #3b82f6); background: rgba(59,130,246,.1); border-radius: 8px; white-space: normal; word-break: break-all; line-height: 1.3; overflow: hidden; text-align: left; vertical-align: middle; }
   .dense-table .source-btn .source-add { font-size: 16px; line-height: 1; color: var(--text-3); opacity: .55; }
-  .dense-table .col-idea { width: 34px; min-width: 34px; text-align: center; padding: 0 2px; }
+  .dense-table .col-idea { width: 46px; min-width: 46px; text-align: center; padding: 0 2px; }
   .home-ctable td.cm-src { width: 92px; min-width: 92px; text-align: left; vertical-align: top; padding: 6px 4px; }
   .home-ctable .m-src-btn { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; width: 100%; padding: 3px 6px; font-size: 11px; line-height: 1.35; color: var(--text-2); background: var(--surface-2, #f1f3f5); border: none; border-radius: 8px; white-space: normal; word-break: break-all; overflow: hidden; text-align: left; cursor: pointer; }
   .home-ctable .m-src-btn.has { color: var(--accent, #3b82f6); background: rgba(59,130,246,.1); }
   .home-ctable .m-src-btn:active { filter: brightness(.96); }
-  .dense-table th.col-idea { font-size: 10px; }
+  .dense-table th.col-idea { font-size: 10px; white-space: nowrap; }
   .dense-table .idea-btn { display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:30px; padding:0 4px; border:none; background:transparent; color:var(--text-3); cursor:pointer; border-radius:8px; -webkit-tap-highlight-color:transparent; font-size:15px; line-height:1; }
   .dense-table .idea-btn.has { color:#f5a623; }
   .dense-table .idea-btn:active { background:var(--surface-2,#f1f3f5); }
@@ -6327,7 +6327,7 @@ function tagListOrdered(){
 }
 // 分类标签显示顺序：全部始终在前，其余按 ft_cat_order 排序
 function catListOrdered(){
-  const cats=['全部', ...new Set((typeof fundsView!=='undefined'?fundsView:[]).map(f=>f.cat))];
+  const cats=['全部', ...new Set((typeof fundsView!=='undefined'?fundsView:[]).map(f=>f.cat).filter(c=>c!=null&&c!==''))];
   const order=loadCatOrder();
   if(order && order.length){
     // 全部固定首位，只排其余
@@ -6733,6 +6733,8 @@ function renderHomeList(){
     else if(holdSort==='day'){ av=(navCache[a.name]&&navCache[a.name].navChg)||0; bv=(navCache[b.name]&&navCache[b.name].navChg)||0; }
     else if(holdSort==='name'){ cmp=a.name.localeCompare(b.name,'zh-CN'); }
     else if(holdSort==='nav'){ av=(navCache[a.name]&&navCache[a.name].nav)||0; bv=(navCache[b.name]&&navCache[b.name].nav)||0; }
+    else if(holdSort==='idea'){ av=getNote(a.name)||''; bv=getNote(b.name)||''; cmp=av.localeCompare(bv,'zh-CN'); }
+    else if(holdSort==='source'){ av=(a.source||''); bv=(b.source||''); cmp=av.localeCompare(bv,'zh-CN'); }
     else {
       // 默认多级排序：当日收益→持有收益→当日涨跌→持仓金额→净值（名称兜底）
 	      const _keys=['ret','hold','day','mv','nav','name'];
@@ -6798,7 +6800,7 @@ function denseHeadHtml(){
   let headHtml = cols.map(c=>{
     const active = holdSort===c.key;
     const ico = active ? (holdSortDir==='desc'?'↓':'↑') : '↕';
-    const _sortable = (c.key!=='source' && c.key!=='idea'); // 名称列可排序(升/降)；想法/参考来源仅可换列、不可排序
+    const _sortable = true; // 所有列（含 想法/参考来源）均可点击升降序；列头仍支持拖动换列
     const _draggable = (c.key!=='name'); // 想法 / 参考来源 均可拖动换列（与参考来源行为一致）
     const cls = (_sortable?'sortable ':'')+'col-'+c.key+(active?' sort-on':'')+(_draggable?' col-drag':'');
     const drag = _draggable ? ` data-col="${c.key}" draggable="true" ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)"` : '';
@@ -8150,7 +8152,8 @@ function buildFundsView(){
   const all=keys.map(({acc,name})=>{
     const tr=trades.filter(t=>accOf(t)===acc && t.name===name);
     const snap=snaps.find(s=>accOf(s)===acc && s.name===name);
-    const cat=snap?snap.cat:(tr[0]?guessCat(tr[0].name):guessCat(name));
+    // 快照存在但缺 cat 字段时退回 guessCat，避免 cat=undefined 导致分类筛选栏出现「undefined」分类
+    const cat=(snap&&snap.cat!=null&&snap.cat!=='')?snap.cat:(tr[0]?guessCat(tr[0].name):guessCat(name));
     let f;
     if(tr.length){
       let shares=0,cost=0,firstDate=null,realized=0,lots=[],lastNav=0,invested=0;  // lots：严格 FIFO 批次 {sh,cp}；lastNav：缺净值成交的近似净值；invested：累计买入/活动金额（份额或净值缺失时用于反推/兜底）
@@ -9720,7 +9723,7 @@ function genericDetail(f){
   const retIn = si>=0 ? `<input data-fld="s-ret-${si}" class="num" type="number" step="any" inputmode="decimal" value="${snaps[si].ret}" oninput="snaps[${si}].ret=+this.value;compute();silentSave()">` : (f.ret>=0?'+':'')+f.ret.toFixed(2)+'%';
   const navIn = si>=0 ? `<input data-fld="nav-${idx}" class="num" style="max-width:150px" value="${navVal}" placeholder="自动" oninput="navCache[fundsView[${idx}].name]={...(navCache[fundsView[${idx}].name]||{}),nav:+this.value,date:'手动'};compute();silentSave()">` : (navVal?mask4(navVal):'自动/未填');
   let h=`<div class="card" id="genericDetailCard"><h2>手动维护（快照）</h2><table class="am-t"><tbody>
-    <tr><th>类别</th><td>${f.cat}</td><th>当前市值</th><td>${mvIn}</td></tr>
+    <tr><th>类别</th><td>${f.cat||'—'}</td><th>当前市值</th><td>${mvIn}</td></tr>
     <tr><th>最新净值 ${navBadge(_nc)}</th><td>${navIn}</td><th>收益率</th><td>${retIn}</td></tr>
     ${estRow}
     </tbody></table>

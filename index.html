@@ -10066,7 +10066,7 @@ function buildTradeSection(f){
   const snapHint = `<div class="hint" style="font-size:12px;color:var(--text-3);margin:6px 0 8px;padding:6px 10px;background:var(--surface-2);border-radius:6px;line-height:1.5">持仓以快照为准，本表仅供参考</div>`;
   if(isMobile()){
     h+=`<div class="card trade-section">`;
-    h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn" onclick="event.stopPropagation();openTradeQuickFor('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">＋ 记一笔</button></div></div>`;
+    h+=`<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between"><h2>${tradeHead}</h2><div style="display:flex;align-items:center;gap:8px"><span class="hint">${tradeMeta}</span><button class="tx-add-btn ghost" style="background:var(--surface-2);color:var(--accent);border:1px solid var(--accent)" onclick="event.stopPropagation();detailTradeOcr('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">📷 截图</button><button class="tx-add-btn" onclick="event.stopPropagation();openTradeQuickFor('${encodeURIComponent(f.name)}','${encodeURIComponent(f.account||'')}')">＋ 记一笔</button></div></div>`;
     h+=snapHint;
     if(tr.length){
       h+=`<div class="tx-list">`;
@@ -10193,6 +10193,13 @@ function closeDetailTrades(){
 	  const mask=document.getElementById('detailTradeModal');
 	  if(mask) mask.classList.remove('show');
 	  if(currentView==='detail' && detailName){ try{ const f=findFund(detailName,detailAcc); if(f) updateDetailHeader(f); }catch(e){} }
+}
+function detailTradeOcr(encName, encAcc){
+  closeDetailTrades();
+  openImportModal();
+  switchImpTab('ocr');
+  const sel=document.getElementById('impOcrAccount');
+  if(sel){ const acc=decodeURIComponent(encAcc||''); if(acc) sel.value=acc; }
 }
 
 function liveSection(f){

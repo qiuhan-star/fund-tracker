@@ -13713,7 +13713,7 @@ async function _impOcrStart(dataUrl){
     if(!T) throw new Error('OCR 引擎加载失败');
     const cdn=_tessCDN||TESS_CDNS[0];
     const worker=await T.createWorker('chi_sim+eng', 1, { workerPath: cdn.worker, corePath: cdn.core, langPath: cdn.lang });
-    await worker.setParameters({ tessedit_char_whitelist:'0123456789.,+-%()（）元份额金额收益本价净值年月日时分买卖交易确认分进行中待撤转换赎回申购分红日期昨日前天', preserve_interword_spaces:'1', tessedit_pageseg_mode:'6' });
+    await worker.setParameters({ tessedit_char_whitelist:'0123456789.,+-%()（）元金额本价净值年月日时分买卖入出交记录确认定投申购赎回转换分红撤消完已进行中等待续费手续账账户户名称代码基', preserve_interword_spaces:'1', tessedit_pageseg_mode:'6' });
     _impOcrSetStatus('识别中…');
     const ret=await worker.recognize(_impOcrImgDataUrl, {});
     await worker.terminate();
@@ -13731,42 +13731,70 @@ async function _impOcrStart(dataUrl){
 // 解析 OCR 文本成交易行（含代码/基金名解析）
 function _impOcrParse(txt){
   const lines=String(txt).split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
-  // 基金代码：优先取"代码"字样后的 6 位，其次首个独立 6 位数字（排除金额/时间）
+  // 基金代码：括号内代码 > "代码"字样 > 纯6位数字
   let code='';
   for(let i=0;i<lines.length;i++){
-    const m=lines[i].match(/代码[:：]?\s*(\d{6})/);
-    if(m){ code=m[1]; break; }
+    const m2=lines[i].match(/[（(](\d{6})[）)]/);
+    if(m2){ code=m2[1]; break; }
+    const m1=lines[i].match(/代码[:：]?\s*(\d{6})/);
+    if(m1){ code=m1[1]; break; }
   }
   if(!code){
     const all=(String(txt).match(/\d{6}/g)||[]);
     for(const c of all){ if(/^(00|01|03|15|16|11|50)/.test(c)){ code=c; break; } }
   }
-  const curAcc=document.getElementById('impOcrAccount'); const acc=curAcc?curAcc.value:'';
+  // 提取基金名
+  let fundName='';
+  for(let i=0;i<lines.length;i++){
+    if(/(代码|(\d{6}))/.test(lines[i])){
+      const clean=lines[i].replace(/[\d（）()\s-]/g,'').trim();
+      if(clean&&clean.length>2){ fundName=clean; break; }
+    }
+  }
+  // 提取函数：从一行中提取日期、时间、金额
+  function _extractAll(l){
+    const dm=l.match(/(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})日?/);
+    const date=dm?dm[1]+'-'+(''+dm[2]).padStart(2,'0')+'-'+(''+dm[3]).padStart(2,'0'):null;
+    const am=l.match(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*元/);
+    const amount=am?parseFloat(am[1].replace(/,/g,'')):null;
+    const tm=l.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+    const time=tm?(''+tm[1]).padStart(2,'0')+':'+tm[2]:null;
+    const pending=/待确认|进行中|待成交|确认中|pending/i.test(l);
+    return {date:date,time:time,amount:amount,pending:pending};
+  }
+  // 逐行扫描：方向行触发新记录，数据行追加到当前记录
   const rows=[];
   let cur=null;
-  const push=function(){ if(cur&&cur.amount!=null){ rows.push({name:null,date:cur.date,time:cur.time,type:cur.type,amount:cur.amount,confirm:cur.confirm,line:cur.line}); } };
+  function pushCur(){ if(cur&&cur.amount!=null){ rows.push({name:null,date:cur.date,time:cur.time,type:cur.type,amount:cur.amount,confirm:cur.confirm}); } }
   for(let i=0;i<lines.length;i++){
     const l=lines[i];
-    const isBuy=/(买入|申购|定投|转换转入|再投)/.test(l) && !/卖出|赎回/.test(l);
-    const isSell=/(卖出|赎回|转换转出|清仓)/.test(l);
+    const isBuy=/买/.test(l) && !/卖|赎|清/.test(l);
+    const isSell=/卖/.test(l)||/赎/.test(l)||/清/.test(l);
     if(isBuy||isSell){
-      push();
-      cur={date:'',time:'',amount:null,type:isBuy?'buy':'sell',confirm:'confirmed',line:l};
-      cur.desc=l.replace(/[0-9,.\s]/g,'');
+      pushCur();
+      cur={date:'',time:'',amount:null,type:isBuy?'buy':'sell',confirm:'confirmed'};
+      // 同一行可能还有日期/时间/金额（如"买入 2026-08-20 14:46:26 50.00元"）
+      const ex=_extractAll(l);
+      if(ex.date) cur.date=ex.date;
+      if(ex.time) cur.time=ex.time;
+      if(ex.amount!=null) cur.amount=ex.amount;
+      if(ex.pending) cur.confirm='pending';
       continue;
     }
     if(!cur) continue;
-    const dm=l.match(/(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})日?/);
-    if(dm){ if(cur.date) push(); cur={date:'',time:'',amount:null,type:cur.type,confirm:cur.confirm,line:l}; cur.date=dm[1]+'-'+(''+dm[2]).padStart(2,'0')+'-'+(''+dm[3]).padStart(2,'0'); cur.desc=l.replace(/[0-9,.\s-]/g,''); continue; }
-    const am=l.match(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*元/);
-    if(!cur.amount && am){ cur.amount=parseFloat(am[1].replace(/,/g,'')); continue; }
-    const tm=l.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
-    if(!cur.time&&tm){ cur.time=(''+tm[1]).padStart(2,'0')+':'+tm[2]; }
-    if(/待确认|进行中|待成交|确认中|pending/i.test(l)) cur.confirm='pending';
+    const ex=_extractAll(l);
+    if(ex.date){
+      if(cur.date) pushCur(); // 日期重复 → 新记录
+      cur={date:ex.date,time:ex.time||'',amount:null,type:cur.type,confirm:cur.confirm};
+      if(ex.pending) cur.confirm='pending';
+    } else {
+      if(!cur.time && ex.time) cur.time=ex.time;
+      if(cur.amount==null && ex.amount!=null) cur.amount=ex.amount;
+      if(ex.pending) cur.confirm='pending';
+    }
   }
-  push();
-  // 归一到 parsePaste 兼容结构，但 name/净值稍后解析
-  return {code:code, name:'', rows:rows, pendingLines:0};
+  pushCur();
+  return {code:code, name:fundName, rows:rows, pendingLines:0};
 }
 async function _impOcrResolveName(code){
   if(!code) return '';

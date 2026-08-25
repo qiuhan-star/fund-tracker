@@ -13679,6 +13679,15 @@ function _impOcrSetStatus(t, err){
   const st=document.getElementById('impOcrStatus');
   if(st){ st.style.display=''; st.style.color=err?'#c0392b':'var(--accent,#2f6fed)'; st.innerHTML=escHtml(t||''); }
 }
+// 调试：显示 OCR 原始文本（临时）
+function _impOcrShowDebug(txt){
+  const rows=document.getElementById('impOcrRows');
+  if(!rows||!txt) return;
+  const lines=txt.split(/\r?\n/).filter(Boolean).length;
+  let preview=txt.slice(0,600);
+  rows.innerHTML='<div style="margin-bottom:6px;font-size:12px;color:var(--accent,#2f6fed)">📄 OCR 原始文本（'+lines+'行，预览前600字符）</div>'
+    +'<div style="font-size:11px;color:var(--text-2,#888);background:var(--surface-2,#f5f5f7);padding:8px;border-radius:6px;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto">'+escHtml(preview)+'</div>';
+}
 function impOcrImage(input){
   const file=input&&input.files&&input.files[0];
   if(!file) return;
@@ -13713,13 +13722,15 @@ async function _impOcrStart(dataUrl){
     if(!T) throw new Error('OCR 引擎加载失败');
     const cdn=_tessCDN||TESS_CDNS[0];
     const worker=await T.createWorker('chi_sim+eng', 1, { workerPath: cdn.worker, corePath: cdn.core, langPath: cdn.lang });
-    await worker.setParameters({ tessedit_char_whitelist:'0123456789.,+-%()（）元金额本价净值年月日时分买卖入出交记录确认定投申购赎回转换分红撤消完已进行中等待续费手续账账户户名称代码基', preserve_interword_spaces:'1', tessedit_pageseg_mode:'6' });
+    await worker.setParameters({ tessedit_char_whitelist:'0123456789.,+-%()（）元金额本价净值年月日时分买卖入出交记录确认定投申购赎回转换分红撤消完已进行中等待续费手续账账户户名称代码基', preserve_interword_spaces:'1', tessedit_pageseg_mode:'3' });
     _impOcrSetStatus('识别中…');
     const ret=await worker.recognize(_impOcrImgDataUrl, {});
     await worker.terminate();
     const txt=(ret&&ret.data&&ret.data.text)||'';
     if(!txt.trim()){ _impOcrSetStatus('未识别到文字，请确认截图清晰', true); return; }
     _impOcrSetStatus('识别完成，解析交易行…');
+    // 调试：显示 OCR 原始文本
+    _impOcrShowDebug(txt);
     const parsed=_impOcrParse(txt);
     if(!parsed.rows.length && !parsed.code){ _impOcrSetStatus('未能从截图解析出交易记录', true); return; }
     _impOcrRows={txt:txt, code:parsed.code, name:parsed.name, rows:parsed.rows, pendingCheck:parsed.pendingLines};
